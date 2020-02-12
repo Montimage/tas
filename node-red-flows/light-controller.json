@@ -1,0 +1,364 @@
+[
+    {
+        "id": "3de16d1b.365d42",
+        "type": "tab",
+        "label": "Flow 1",
+        "info": ""
+    },
+    {
+        "id": "f2708232.82dc9",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "sensor-01",
+        "topic": "sensors/sensor-01",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 120,
+        "y": 160,
+        "wires": [
+            [
+                "d9e86309.51be5",
+                "64e81d3c.97e864"
+            ]
+        ]
+    },
+    {
+        "id": "ab922270.b996",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "sensor-02",
+        "topic": "sensors/sensor-02",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 120,
+        "y": 280,
+        "wires": [
+            [
+                "61f37b50.ff3944",
+                "3af4f940.1f1b06"
+            ]
+        ]
+    },
+    {
+        "id": "f4e35734.cdd528",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "LightSwitcher",
+        "label": "Light Switcher",
+        "tooltip": "",
+        "group": "f6f1fffe.debb1",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 600,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "58ddc59b.20562c",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "actuator-01-listener",
+        "topic": "actuators/actuator-01",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 140,
+        "y": 520,
+        "wires": [
+            [
+                "5acec278.792b5c"
+            ]
+        ]
+    },
+    {
+        "id": "40405cda.3b41d4",
+        "type": "function",
+        "z": "3de16d1b.365d42",
+        "name": "handle signals",
+        "func": "const sensor01 = flow.get('sensor01');\nnode.debug(\"sensor01: \", sensor01);\nconst sensor02 = flow.get('sensor02');\nnode.debug(\"sensor02: \", sensor02);\nif (sensor01 == 1 && sensor02 < 6) {\n    msg.payload = 1;\n} else {\n    msg.payload = 0;\n}\nnode.status({fill:\"green\",shape:\"dot\",text:msg.payload});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 560,
+        "y": 220,
+        "wires": [
+            [
+                "13fd481e.c03f08"
+            ]
+        ]
+    },
+    {
+        "id": "d9e86309.51be5",
+        "type": "function",
+        "z": "3de16d1b.365d42",
+        "name": "store sensor-01",
+        "func": "flow.set('sensor01',msg.payload);\nnode.debug(\"sensor01: \", msg.payload);\nnode.status({fill:\"green\",shape:\"dot\",text:msg.payload});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 360,
+        "y": 160,
+        "wires": [
+            [
+                "40405cda.3b41d4"
+            ]
+        ]
+    },
+    {
+        "id": "61f37b50.ff3944",
+        "type": "function",
+        "z": "3de16d1b.365d42",
+        "name": "store sensor-02",
+        "func": "flow.set('sensor02',msg.payload);\nnode.debug(\"sensor02: \", msg.payload);\nnode.status({fill:\"green\",shape:\"dot\",text:msg.payload});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 360,
+        "y": 280,
+        "wires": [
+            [
+                "40405cda.3b41d4"
+            ]
+        ]
+    },
+    {
+        "id": "13fd481e.c03f08",
+        "type": "mqtt out",
+        "z": "3de16d1b.365d42",
+        "name": "actuator-01-broadcaster",
+        "topic": "actuators/actuator-01",
+        "qos": "",
+        "retain": "",
+        "broker": "8d356d97.cb653",
+        "x": 810,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "3af4f940.1f1b06",
+        "type": "ui_gauge",
+        "z": "3de16d1b.365d42",
+        "name": "sensor-02-ui",
+        "group": "f6f1fffe.debb1",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Light Ambient",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 350,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "1900f00e.edf6f",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "sensor-01-ui",
+        "label": "Detect Movement",
+        "tooltip": "",
+        "group": "f6f1fffe.debb1",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 590,
+        "y": 60,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "64e81d3c.97e864",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 370,
+        "y": 60,
+        "wires": [
+            [
+                "1900f00e.edf6f"
+            ]
+        ]
+    },
+    {
+        "id": "5acec278.792b5c",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 350,
+        "y": 520,
+        "wires": [
+            [
+                "f4e35734.cdd528",
+                "947f721d.b0688"
+            ]
+        ]
+    },
+    {
+        "id": "947f721d.b0688",
+        "type": "function",
+        "z": "3de16d1b.365d42",
+        "name": "formalizer",
+        "func": "const time = Date.now();\nmsg.payload = {actID: 'actuator-01',timestamp: time, value: msg.payload}\nnode.status({fill:\"green\",shape:\"dot\",text: JSON.stringify(msg.payload)});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 580,
+        "y": 620,
+        "wires": [
+            [
+                "fb1ebd68.9a971"
+            ]
+        ]
+    },
+    {
+        "id": "fb1ebd68.9a971",
+        "type": "mongodb out",
+        "z": "3de16d1b.365d42",
+        "mongodb": "c9f99463.5fa898",
+        "name": "store actuator output",
+        "collection": "actuators",
+        "payonly": true,
+        "upsert": false,
+        "multi": false,
+        "operation": "store",
+        "x": 840,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "8d356d97.cb653",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "mqtt-broker-localhost",
+        "broker": "192.168.0.12",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "f6f1fffe.debb1",
+        "type": "ui_group",
+        "z": "",
+        "name": "Dashboard",
+        "tab": "88693197.489de",
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "c9f99463.5fa898",
+        "type": "mongodb",
+        "z": "",
+        "hostname": "192.168.0.12",
+        "port": "27017",
+        "db": "admin",
+        "name": "mongodb-server"
+    },
+    {
+        "id": "88693197.489de",
+        "type": "ui_tab",
+        "z": "",
+        "name": "SmartHome",
+        "icon": "fa-home",
+        "disabled": false,
+        "hidden": false
+    }
+]

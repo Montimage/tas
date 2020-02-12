@@ -1,0 +1,57 @@
+const mongoose = require("mongoose");
+
+// Schemas
+const Sensor = require('./schemas/SensorSchema');
+const Actuator = require('./schemas/ActuatorSchema');
+
+function ENACTDB(host, port, dbName, auth = null) {
+  this.host = host;
+  this.port = port;
+  this.dbName = dbName;
+  this.auth = auth;
+  this.isConnected = false;
+}
+
+ENACTDB.prototype.connect = function(callback) {
+
+  if (this.isConnected) {
+    console.log('Already connected!');
+    return callback();
+  }
+
+  const connString = `mongodb://${this.host}:${this.port}`;
+
+  console.log("Connection string: ", connString);
+
+  const connectOptions = {
+    dbName: this.dbName,
+    useNewUrlParser: true,
+    autoIndex: false
+  };
+
+  if (this.auth) {
+    connectOptions['user'] = this.auth.userName;
+    connectOptions['pass'] = this.auth.password;
+  }
+
+  mongoose.connect(connString, connectOptions, error => {
+    if (error) {
+      console.error(error);
+      return callback(error);
+    }
+    console.log("New connection to database has been established!");
+    this.isConnected = true;
+    return callback(null);
+  });
+};
+
+ENACTDB.prototype.close = function() {
+  console.log("Going to close the connection");
+  mongoose.disconnect();
+};
+
+module.exports = {
+  ENACTDB,
+  Actuator,
+  Sensor,
+};

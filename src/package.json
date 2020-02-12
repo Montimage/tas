@@ -1,0 +1,20 @@
+{
+  "name": "enact-test-and-simulation-enabler",
+  "version": "1.0.0",
+  "description": "ENACT Test and Simulation Enabler",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Test",
+    "Simulation",
+    "ENACT",
+    "enabler"
+  ],
+  "author": "Montimage",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^3.0.0"
+  }
+}

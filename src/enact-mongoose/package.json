@@ -1,0 +1,19 @@
+{
+  "name": "enact-mongoose",
+  "version": "1.0.0",
+  "description": "Mongoose for Test and Simulation tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "mongodb",
+    "mongoose",
+    "enact"
+  ],
+  "author": "Montimage",
+  "license": "ISC",
+  "dependencies": {
+    "mongoose": "^5.8.10"
+  }
+}
