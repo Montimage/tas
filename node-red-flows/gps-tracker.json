@@ -1,0 +1,26 @@
+[
+    {
+        "id": "907a647d.15f728",
+        "type": "worldmap",
+        "z": "5cb2164c.787e78",
+        "name": "",
+        "lat": "",
+        "lon": "",
+        "zoom": "",
+        "layer": "",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "show",
+        "layers": "show",
+        "panit": "false",
+        "panlock": "false",
+        "zoomlock": "false",
+        "hiderightclick": "false",
+        "coords": "false",
+        "showgrid": "false",
+        "path": "/worldmap",
+        "x": 720,
+        "y": 160,
+        "wires": []
+    }
+]

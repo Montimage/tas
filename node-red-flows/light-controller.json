@@ -2,7 +2,8 @@
     {
         "id": "3de16d1b.365d42",
         "type": "tab",
-        "label": "Flow 1",
+        "label": "Light-controller",
+        "disabled": false,
         "info": ""
     },
     {
@@ -37,7 +38,8 @@
         "wires": [
             [
                 "61f37b50.ff3944",
-                "3af4f940.1f1b06"
+                "3af4f940.1f1b06",
+                "33594a07.c8d156"
             ]
         ]
     },
@@ -312,11 +314,53 @@
         "wires": []
     },
     {
+        "id": "33594a07.c8d156",
+        "type": "ui_chart",
+        "z": "3de16d1b.365d42",
+        "name": "Graph",
+        "group": "f6f1fffe.debb1",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "label": "chart",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "10",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 340,
+        "y": 420,
+        "wires": [
+            []
+        ]
+    },
+    {
         "id": "8d356d97.cb653",
         "type": "mqtt-broker",
         "z": "",
         "name": "mqtt-broker-localhost",
-        "broker": "192.168.0.12",
+        "broker": "192.168.0.11",
         "port": "1883",
         "clientid": "",
         "usetls": false,
@@ -347,7 +391,7 @@
         "id": "c9f99463.5fa898",
         "type": "mongodb",
         "z": "",
-        "hostname": "192.168.0.12",
+        "hostname": "192.168.0.11",
         "port": "27017",
         "db": "admin",
         "name": "mongodb-server"
