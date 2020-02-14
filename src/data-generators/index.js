@@ -85,7 +85,7 @@ const generateRandomData = () => {
   const dataDescription = JSON.parse(process.argv[5]);
   const timeInterval = Number(process.argv[6]);
 
-  const dataGenerator = new DataGenerator(dataDescription);
+  const dataGenerator = new DataGenerator(dataDescription, timeInterval);
   let startTime = Number(process.argv[7]);
   let timeDelta = 0;
   const timePeriod = Number(process.argv[8]);

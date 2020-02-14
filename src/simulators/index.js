@@ -104,7 +104,7 @@ const generateRandomData = () => {
   console.log(
     `Generate randomly data ${dataDescription.type} and publish the data in every ${timeInterval} seconds`
   );
-  const dataGenerator = new DataGenerator(dataDescription);
+  const dataGenerator = new DataGenerator(dataDescription, timeInterval);
   setInterval(() => {
     dataGenerator.generateData(data => {
       console.log(`device ${devID}: `, data);
