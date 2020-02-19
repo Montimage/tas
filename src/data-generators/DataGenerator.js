@@ -10,7 +10,9 @@ const { getDistanceFromLine, convertDistance } = require('geolib');
 const {
   randomBoolean,
   randomIntegerValue,
+  randomPoisonIntegerValue,
   randomDoubleValue,
+  randomPoisonDoubleValue,
   nextGPSPosition,
   getMin
 } = require("../utils");
@@ -56,10 +58,20 @@ const getRandomEnumValue = (lastValue, dataDesc, callback) => {
       "min": "14", // minimum of regular value
       "max": "20", // maximum of regular value
       "step": "2", // maximum different between 2 ajected values.
-    }
+    },
+    "malicious": "abnormal" // abnormal | poisoning | tbd ...
   }
 
-  { "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 } }
+  -> poisoning data
+    + the value is not in the regular range values
+  -> abnormal behaviour
+    + the next value is in the regular range value but does not respect the maximum different between 2 value
+
+  '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "malicious": "poisoning" }'
+  '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 }, "malicious": "poisoning" }'
+  '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 }, "malicious": "poisoning" }'
+  '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 }, "malicious": "abnormal" }'
+
  * @param {Function} callback The callback function
  */
 const generateIntegerValue = (lastValue, dataDesc, callback) => {
@@ -69,18 +81,41 @@ const generateIntegerValue = (lastValue, dataDesc, callback) => {
   } else {
     if (!dataDesc.regular) {
       // Generate randomly a value
-      return callback(randomIntegerValue(dataDesc.min, dataDesc.max));
-    } else {
-      if (lastValue === null) {
-        // generate the first value - it is sure that dataDesc.initValue === null
-        return callback(randomIntegerValue(dataDesc.regular.min, dataDesc.regular.max));
+      if (dataDesc.malicious && dataDesc.malicious === "poisoning") {
+        return callback(randomPoisonIntegerValue(dataDesc.min, dataDesc.max));
       } else {
-        // Generate a random value based on the last value
-        let min = lastValue - dataDesc.regular.step/2;
-        min = min < dataDesc.regular.min ? dataDesc.regular.min: min;
-        let max = lastValue + dataDesc.regular.step/2;
-        max = max > dataDesc.regular.max ? dataDesc.regular.max : max;
-        return callback(randomIntegerValue(min, max));
+        return callback(randomIntegerValue(dataDesc.min, dataDesc.max));
+      }
+    } else {
+      if (dataDesc.malicious && dataDesc.malicious === "poisoning") {
+        // Poisoning attack
+        return callback(randomPoisonIntegerValue(dataDesc.regular.min,dataDesc.regular.max));
+      } else {
+        if (lastValue === null) {
+          // generate the first value - it is sure that dataDesc.initValue === null
+          return callback(
+            randomIntegerValue(dataDesc.regular.min, dataDesc.regular.max)
+          );
+        } else {
+          let min = lastValue - dataDesc.regular.step;
+          let max = lastValue + dataDesc.regular.step;
+          // Generate a random value based on the last value
+          if (dataDesc.malicious && dataDesc.malicious === "abnormal") {
+            if (min <= dataDesc.regular.min) {
+              // The abnormal value must be close to the max value
+              return callback(randomIntegerValue(max + 1, dataDesc.regular.max));
+            } else if (max >= dataDesc.regular.max) {
+              // The abnormal value must be close to the min value
+              return callback(randomIntegerValue(dataDesc.regular.min, min - 1));
+            } else {
+              return callback(randomPoisonIntegerValue(min, max, {MIN: dataDesc.regular.min, MAX: dataDesc.regular.max}));
+            }
+          } else {
+            if (min < dataDesc.regular.min) min = dataDesc.regular.min;
+            if (max > dataDesc.regular.max) max = dataDesc.regular.max;
+            return callback(randomIntegerValue(min, max));
+          }
+        }
       }
     }
   }
@@ -99,10 +134,20 @@ const generateIntegerValue = (lastValue, dataDesc, callback) => {
       "min": "4.0", // minimum of regular value
       "max": "5.5", // maximum of regular value
       "step": "0.5", // maximum different between 2 ajected values.
-    }
+    },
+    "malicious": "abnormal" // abnormal | poisoning | tbd ...
   }
+  -> poisoning data
+    + the value is not in the regular range values
+  -> abnormal behaviour
+    + the next value is in the regular range value but does not respect the maximum different between 2 value
 
+  '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5}'
+  '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "malicious": "poisoning" }'
   '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "regular":{ "min": 4.0, "max": 5.5, "step": 0.5 } }'
+  '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "regular":{ "min": 4.0, "max": 5.5, "step": 0.5 }, "malicious": "poisoning"}'
+  '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "regular":{ "min": 4.0, "max": 5.5, "step": 0.5 }, "malicious": "abnormal"}'
+
  * @param {Function} callback The callback function
  */
 const generateDoubleValue = (lastValue, dataDesc, callback) => {
@@ -112,18 +157,41 @@ const generateDoubleValue = (lastValue, dataDesc, callback) => {
   } else {
     if (!dataDesc.regular) {
       // Generate randomly a value
-      return callback(randomDoubleValue(dataDesc.min, dataDesc.max));
-    } else {
-      if (lastValue === null) {
-        // generate the first value - it is sure that dataDesc.initValue === null
-        return callback(randomDoubleValue(dataDesc.regular.min, dataDesc.regular.max));
+      if (dataDesc.malicious && dataDesc.malicious === "poisoning") {
+        return callback(randomPoisonDoubleValue(dataDesc.min, dataDesc.max));
       } else {
-        // Generate a random value based on the last value
-        let min = lastValue - dataDesc.regular.step/2;
-        min = min < dataDesc.regular.min ? dataDesc.regular.min : min;
-        let max = lastValue + dataDesc.regular.step/2;
-        max = max > dataDesc.regular.max ? dataDesc.regular.max : max;
-        return callback(randomDoubleValue(min, max));
+        return callback(randomDoubleValue(dataDesc.min, dataDesc.max));
+      }
+    } else {
+      if (dataDesc.malicious && dataDesc.malicious === "poisoning") {
+        // Poisoning attack
+        return callback(randomPoisonDoubleValue(dataDesc.regular.min,dataDesc.regular.max));
+      } else {
+        if (lastValue === null) {
+          // generate the first value - it is sure that dataDesc.initValue === null
+          return callback(
+            randomDoubleValue(dataDesc.regular.min, dataDesc.regular.max)
+          );
+        } else {
+          let min = lastValue - dataDesc.regular.step;
+          let max = lastValue + dataDesc.regular.step;
+          // Generate a random value based on the last value
+          if (dataDesc.malicious && dataDesc.malicious === "abnormal") {
+            if (min <= dataDesc.regular.min) {
+              // The abnormal value must be close to the max value
+              return callback(randomDoubleValue(max + 0.01, dataDesc.regular.max));
+            } else if (max >= dataDesc.regular.max) {
+              // The abnormal value must be close to the min value
+              return callback(randomDoubleValue(dataDesc.regular.min, min - 0.01));
+            } else {
+              return callback(randomPoisonDoubleValue(min, max, {MIN: dataDesc.regular.min, MAX: dataDesc.regular.max}));
+            }
+          } else {
+            if (min < dataDesc.regular.min) min = dataDesc.regular.min;
+            if (max > dataDesc.regular.max) max = dataDesc.regular.max;
+            return callback(randomDoubleValue(min, max));
+          }
+        }
       }
     }
   }
@@ -151,14 +219,27 @@ const generateDoubleValue = (lastValue, dataDesc, callback) => {
       }
     },
     "bearingDirection": "180", // The bearing direction (degrees)
-    "velo": "5" // The velocity of the movement (km/h) -> can be NULL
+    "velo": "5",  // The velocity of the movement (km/h) -> can be NULL
+    "malicious": "abnormal" // abnormal | poisoning | tbd ...
   }
+  -> poisoning data
+    + the value is not in the limited zone
+  -> abnormal behaviour
+    + the next value is in the regular range value but does not respect the velocity of the movement
+    FACT: this simulation is only valid for a flying object without any limit on the route, so the limited zone is not very convient to define a regular movement.
+    -> So in this case the poisoning and the abnormal behaviour should be the same.
   p1: 48.888973, 2.253253
   p2: 48.813183, 2.435557
 
-  '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }'
+  '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }}'
+  '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "malicious":"poisoning"}'
   '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "bearingDirection": 90, "velo": 500 }'
+  '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "bearingDirection": 90, "velo": 500, "malicious":"poisoning" }'
+  '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "bearingDirection": 90, "velo": 500, "malicious":"abnormal" }'
   '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "limit": { "lat" : { "min": 48.813183, "max": 48.888973 }, "lng": { "min": 2.253253, "max": 2.435557 } }, "bearingDirection": 90, "velo": 50 }'
+  '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "limit": { "lat" : { "min": 48.813183, "max": 48.888973 }, "lng": { "min": 2.253253, "max": 2.435557 } }, "bearingDirection": 90, "velo": 50 , "malicious":"poisoning" }'
+  '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "limit": { "lat" : { "min": 48.813183, "max": 48.888973 }, "lng": { "min": 2.253253, "max": 2.435557 } }, "bearingDirection": 90, "velo": 50 , "malicious":"abnormal" }'
+
  * @param {Function} callback the callback function
  */
 const generateLocationValue = (lastValue, dataDesc, callback) => {
@@ -176,34 +257,64 @@ const generateLocationValue = (lastValue, dataDesc, callback) => {
       // Generate randomly a value without the limit
       if (!dataDesc.velo || lastValue === null) {
         // without the limit of velocity or this is the first value
-        return callback({
-          lat: randomDoubleValue(-90, 90),
-          lng: randomDoubleValue(-180, 80)
-        });
+        if (dataDesc.malicious && dataDesc.malicious === 'poisoning') {
+          // Poisoning attack
+          return callback({
+            lat: randomPoisonDoubleValue(-90, 90, 1),
+            lng: randomPoisonDoubleValue(-180, 80, 1)
+          });
+        } else {
+          return callback({
+            lat: randomDoubleValue(-90, 90),
+            lng: randomDoubleValue(-180, 80)
+          });
+        }
       } else {
-        // with the limit of velocity and this is not the first value
-        return callback(nextGPSPosition(lastValue.lat, lastValue.lng, randomDoubleValue(-bearingDirection, bearingDirection), randomDoubleValue(0,dataDesc.distanceInAMove)));
+        if (dataDesc.malicious && dataDesc.malicious === 'poisoning') {
+          // Poisoning attack
+          return callback({
+            lat: randomPoisonDoubleValue(-90, 90, 1),
+            lng: randomPoisonDoubleValue(-180, 80, 1)
+          });
+        } else if (dataDesc.malicious && dataDesc.malicious === 'abnormal') {
+          return callback(nextGPSPosition(lastValue.lat, lastValue.lng, randomDoubleValue(-bearingDirection, bearingDirection), randomDoubleValue(0, dataDesc.distanceInAMove)));
+        } else {
+          // with the limit of velocity and this is not the first value
+          return callback(nextGPSPosition(lastValue.lat, lastValue.lng, randomDoubleValue(-bearingDirection, bearingDirection), randomDoubleValue(dataDesc.distanceInAMove + 0.01, 10 * dataDesc.distanceInAMove)));
+        }
       }
     } else {
       if (!dataDesc.velo || lastValue === null) {
         // without the limit of velocity or this is the first value
-        return callback({
-          lat: randomDoubleValue(dataDesc.limit.lat.min, dataDesc.limit.lat.max),
-          lng: randomDoubleValue(dataDesc.limit.lng.min, dataDesc.limit.lng.max)
-        });
+        if (dataDesc.malicious && dataDesc.malicious === 'poisoning') {
+          // Poisoning attack
+          return callback({
+            lat: randomPoisonDoubleValue(dataDesc.limit.lat.min, dataDesc.limit.lat.max),
+            lng: randomPoisonDoubleValue(dataDesc.limit.lng.min, dataDesc.limit.lng.max)
+          });
+        } else {
+          return callback({
+            lat: randomDoubleValue(dataDesc.limit.lat.min, dataDesc.limit.lat.max),
+            lng: randomDoubleValue(dataDesc.limit.lng.min, dataDesc.limit.lng.max)
+          });
+        }
       } else {
-        // with the limit of velocity and this is not the first value and the next position need to be in a limit
         const point = {latitude: lastValue.lat, longitude: lastValue.lng};
         const point1 = {latitude: dataDesc.limit.lat.min, longitude: dataDesc.limit.lng.min};
         const point2 = {latitude: dataDesc.limit.lat.min, longitude: dataDesc.limit.lng.max};
         const point3 = {latitude: dataDesc.limit.lat.max, longitude: dataDesc.limit.lng.max};
         const point4 = {latitude: dataDesc.limit.lat.max, longitude: dataDesc.limit.lng.min};
-        const d1 = convertDistance(getDistanceFromLine(point,point1, point2), 'km');
-        const d2 = convertDistance(getDistanceFromLine(point,point1, point4),'km');
-        const d3 = convertDistance(getDistanceFromLine(point,point3, point2),'km');
-        const d4 = convertDistance(getDistanceFromLine(point,point3, point4),'km');
-        const min = getMin([d1,d2,d3,d4, dataDesc.distanceInAMove]);
-        return callback(nextGPSPosition(lastValue.lat, lastValue.lng, randomDoubleValue(-bearingDirection, bearingDirection), randomDoubleValue(0,min)));
+        if (dataDesc.malicious && dataDesc.malicious === 'abnormal') {
+          return callback(nextGPSPosition(lastValue.lat, lastValue.lng, randomDoubleValue(-bearingDirection, bearingDirection), randomDoubleValue(dataDesc.distanceInAMove + 0.01, 10 * dataDesc.distanceInAMove)));
+        } else {
+          // with the limit of velocity and this is not the first value and the next position need to be in a limit
+          const d1 = convertDistance(getDistanceFromLine(point,point1, point2), 'km');
+          const d2 = convertDistance(getDistanceFromLine(point,point1, point4),'km');
+          const d3 = convertDistance(getDistanceFromLine(point,point3, point2),'km');
+          const d4 = convertDistance(getDistanceFromLine(point,point3, point4),'km');
+          const min = getMin([d1,d2,d3,d4, dataDesc.distanceInAMove]);
+          return callback(nextGPSPosition(lastValue.lat, lastValue.lng, randomDoubleValue(-bearingDirection, bearingDirection), randomDoubleValue(0,min)));
+        }
       }
     }
   }
@@ -219,16 +330,20 @@ class DataGenerator {
     this.lastValue = null;
     this.generateFnc = generateBooleanValue;
     switch (this.type) {
+      case 'boolean':
       case "Boolean":
         this.generateFnc = generateBooleanValue;
         break;
       case "integer":
+      case "Integer":
         this.generateFnc = generateIntegerValue;
         break;
       case "double":
+      case "Double":
         this.generateFnc = generateDoubleValue;
         break;
       case "location":
+      case "Location":
         this.generateFnc = generateLocationValue;
         // Calculate the distance in a time period
         if (dataDescription.velo && timeInterval ) {
@@ -236,6 +351,7 @@ class DataGenerator {
         }
         break;
       case "enum":
+      case "Enum":
         this.generateFnc = getRandomEnumValue;
         break;
       default:
