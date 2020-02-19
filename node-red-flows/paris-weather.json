@@ -1,0 +1,162 @@
+[
+    {
+        "id": "787c8bfa.451124",
+        "type": "tab",
+        "label": "Paris Weather",
+        "disabled": false,
+        "info": "Paris weather live information\nBased on the data from WeatherOpenMap website"
+    },
+    {
+        "id": "9ae3ec4e.da4f9",
+        "type": "inject",
+        "z": "787c8bfa.451124",
+        "name": "Location",
+        "topic": "",
+        "payload": "{\"lat\":48.828886,\"lon\":2.353675,\"appid\":\"1914bd24a7215806f50e4479bf9edee1\"}",
+        "payloadType": "json",
+        "repeat": "30",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "3",
+        "x": 160,
+        "y": 280,
+        "wires": [
+            [
+                "a791b2d5.77cc5"
+            ]
+        ]
+    },
+    {
+        "id": "954db88e.0d5bc8",
+        "type": "function",
+        "z": "787c8bfa.451124",
+        "name": "convert to worldmap data format",
+        "func": "const {coord, weather, wind, main, name, sys} = msg.payload;\nconst position = {\n    name,\n    lat: coord.lat,\n    lon: coord.lon,\n    iconColor: \"Blue\",\n    icon: 'user-circle-o',\n    popped: true,\n    popup: `<div>\n    <div><strong>Country</strong>: ${sys.country}</div>\n    <div><strong>City</strong>: ${name}</div>\n    <div><strong>Location</strong>: ${coord.lat}, ${coord.lon}</div>\n    <div><strong>Temperature</strong>: ${Math.round(main.temp - 273)} &deg;C</div>\n    <div><strong>Humidity</strong>: ${main.humidity} %</div>\n    <div><strong>Pressure</strong>: ${main.pressure} hPa</div>\n    <div><strong>Wind Speed</strong>: ${wind.speed} m/s</div>\n    </div>`\n}\nmsg.payload = position;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 500,
+        "y": 420,
+        "wires": [
+            [
+                "d13dc10e.2d2db"
+            ]
+        ]
+    },
+    {
+        "id": "d13dc10e.2d2db",
+        "type": "worldmap",
+        "z": "787c8bfa.451124",
+        "name": "Paris Map",
+        "lat": "48.828886",
+        "lon": "2.353675",
+        "zoom": "",
+        "layer": "OSM",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "show",
+        "layers": "show",
+        "panit": "false",
+        "panlock": "false",
+        "zoomlock": "false",
+        "hiderightclick": "false",
+        "coords": "none",
+        "showgrid": "false",
+        "path": "/worldmap",
+        "x": 800,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "a791b2d5.77cc5",
+        "type": "http request",
+        "z": "787c8bfa.451124",
+        "name": "Request data from openweathermap.org",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": true,
+        "url": "https://api.openweathermap.org/data/2.5/weather",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 520,
+        "y": 280,
+        "wires": [
+            [
+                "28691e32.71c812"
+            ]
+        ]
+    },
+    {
+        "id": "28691e32.71c812",
+        "type": "json",
+        "z": "787c8bfa.451124",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 790,
+        "y": 280,
+        "wires": [
+            [
+                "954db88e.0d5bc8"
+            ]
+        ]
+    },
+    {
+        "id": "327288d5.308d98",
+        "type": "mqtt in",
+        "z": "787c8bfa.451124",
+        "d": true,
+        "name": "GPS-location",
+        "topic": "sensors/sensor-03",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 150,
+        "y": 160,
+        "wires": [
+            [
+                "52a18748.e8d5d8"
+            ]
+        ]
+    },
+    {
+        "id": "52a18748.e8d5d8",
+        "type": "function",
+        "z": "787c8bfa.451124",
+        "name": "Append AppID and convert location",
+        "func": "const location = JSON.parse(msg.payload);\nmsg.payload = {\n    lat: location.lat,\n    lon: location.lng,\n    appid:'1914bd24a7215806f50e4479bf9edee1'\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 510,
+        "y": 160,
+        "wires": [
+            [
+                "a791b2d5.77cc5"
+            ]
+        ]
+    },
+    {
+        "id": "8d356d97.cb653",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "mqtt-broker-localhost",
+        "broker": "192.168.0.11",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    }
+]

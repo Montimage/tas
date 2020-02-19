@@ -1,13 +1,54 @@
 [
     {
+        "id": "5cb2164c.787e78",
+        "type": "tab",
+        "label": "GPS-tracker",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "64768500.bf58bc",
+        "type": "mqtt in",
+        "z": "5cb2164c.787e78",
+        "name": "GPS-location",
+        "topic": "sensors/sensor-03",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 110,
+        "y": 100,
+        "wires": [
+            [
+                "124abfca.e986f"
+            ]
+        ]
+    },
+    {
+        "id": "124abfca.e986f",
+        "type": "function",
+        "z": "5cb2164c.787e78",
+        "name": "convert to worldmap data format",
+        "func": "const location = JSON.parse(msg.payload);\nconst position = {\n    name: `MyTrack`,\n    lat: location.lat,\n    lon: location.lng,\n    iconColor: \"Blue\",\n    lineColor: \"Red\", //\"rgb(4, 106, 255)\" or \"Blue\"\n    icon: 'user-circle-o'\n}\nmsg.payload = position;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 340,
+        "y": 260,
+        "wires": [
+            [
+                "907a647d.15f728",
+                "1eeb61b8.1c427e"
+            ]
+        ]
+    },
+    {
         "id": "907a647d.15f728",
         "type": "worldmap",
         "z": "5cb2164c.787e78",
-        "name": "",
-        "lat": "",
-        "lon": "",
+        "name": "Paris Map",
+        "lat": "48.828886",
+        "lon": "2.353675",
         "zoom": "",
-        "layer": "",
+        "layer": "OSM",
         "cluster": "",
         "maxage": "",
         "usermenu": "show",
@@ -16,11 +57,48 @@
         "panlock": "false",
         "zoomlock": "false",
         "hiderightclick": "false",
-        "coords": "false",
+        "coords": "none",
         "showgrid": "false",
         "path": "/worldmap",
         "x": 720,
         "y": 160,
         "wires": []
+    },
+    {
+        "id": "1eeb61b8.1c427e",
+        "type": "worldmap-tracks",
+        "z": "5cb2164c.787e78",
+        "name": "tracker",
+        "depth": "20",
+        "layer": "combined",
+        "x": 480,
+        "y": 100,
+        "wires": [
+            [
+                "907a647d.15f728"
+            ]
+        ]
+    },
+    {
+        "id": "8d356d97.cb653",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "mqtt-broker-localhost",
+        "broker": "192.168.0.11",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
     }
 ]
