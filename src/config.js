@@ -1,7 +1,14 @@
 module.exports = {
-  DB_HOST: '192.168.0.12',
-  DB_PORT: '27017',
-  DB_USER: 'mmtbox',
-  DB_PASSWORD: 'mmtbox',
-  DB_NAME: 'admin'
+  MONGODB: {
+    HOST: '192.168.0.11',
+    PORT: '27017',
+    USER: 'mmtbox',
+    PASSWORD: 'mmtbox',
+    DBNAME: 'admin',
+  },
+  MQTT_BROKER: {
+    HOST: 'localhost',
+    PORT: 1883,
+    options: null // mqtt client options
+  }
 }

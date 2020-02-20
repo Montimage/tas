@@ -4,8 +4,6 @@ data-sources:
     - random <data-define> <time-interval>: randomly generates regular data based on the data-define
       + data-define: a json file to defined the type of data
       + time-interval: time period to generate data
-    - file <path_to_input_file> <time-interval>: use the data values from an input file (each line is a data row)
-      + time-interval: time period to generate data
     - database <host> <port> <collections>: use data from a mongo database.
 */
 

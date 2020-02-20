@@ -1,6 +1,6 @@
 const { ENACTDB, Actuator, Sensor } = require("../enact-mongoose");
 const DataGenerator = require("./DataGenerator");
-const config = require("../config");
+const dbConfig = require("../config").MONGODB;
 
 const showHelp = () => {
   console.log(`Usage:
@@ -49,13 +49,13 @@ const cleanAndExit = () => {
 const devID = process.argv[3];
 
 let enactDB = null;
-if (config.DB_USER && config.DB_PASSWORD) {
-  enactDB = new ENACTDB(config.DB_HOST, config.DB_PORT, config.DB_NAME, {
-    userName: config.DB_USER,
-    password: config.DB_PASSWORD
+if (dbConfig.USER && dbConfig.PASSWORD) {
+  enactDB = new ENACTDB(dbConfig.HOST, dbConfig.PORT, dbConfig.DBNAME, {
+    userName: dbConfig.USER,
+    password: dbConfig.PASSWORD
   });
 } else {
-  enactDB = new ENACTDB(config.DB_HOST, config.DB_PORT, config.DB_NAME);
+  enactDB = new ENACTDB(dbConfig.HOST, dbConfig.PORT, dbConfig.DBNAME);
 }
 
 const saveData = (data, generatedTime) => {
