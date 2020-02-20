@@ -7,7 +7,7 @@
   },
   "sensors": [
     {
-      "id": "s-01",
+      "id": "movement-sensor",
       "dataSource": {
         "source":"random",
         "dataDescription": {
@@ -15,11 +15,23 @@
         },
         "timeInterval": 3
       }
+    },
+    {
+      "id": "light-ambient-sensor",
+      "dataSource": {
+        "source":"random",
+        "dataDescription": {
+          "type": "double",
+          "min" : 0.00,
+          "max" : 10.00
+        },
+        "timeInterval": 3
+      }
     }
   ],
   "actuators": [
     {
-      "id": "act-01"
+      "id": "light-switch-actuator"
     }
   ]
 }

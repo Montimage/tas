@@ -2,6 +2,15 @@
 
 Test and Simulation enabler
 
+## Setup
+
+### Node-RED
+
+```
+sudo npm install -g --unsafe-perm node-red
+```
+Additional packets: `node-red-mongodb`, `node-red-contrib-web-worldmap`, `node-red-dashboard`
+
 ## External Service
 
 There are some external services which is provided as docker container.
