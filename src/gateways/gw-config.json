@@ -1,0 +1,46 @@
+{
+  "id":"gw-01",
+  "things": [
+    {
+      "id":"thing-01",
+      "mqttConfig": {
+        "HOST":"localhost",
+        "PORT": "1883",
+        "options": null
+      }
+    },
+    {
+      "id":"thing-02",
+      "mqttConfig": {
+        "HOST":"localhost",
+        "PORT": "1883",
+        "options": null
+      }
+    }
+  ],
+  "externals":[
+    {
+      "id":"ext-01",
+      "mqttConfig": {
+        "HOST":"localhost",
+        "PORT": "1882",
+        "options": null
+      },
+      "subTopic": "ext-01-sub-topic"
+    }
+  ],
+  "routers": [
+    {
+      "in":"thing-01",
+      "out":["ext-01"]
+    },
+    {
+      "in":"thing-02",
+      "out":["ext-01"]
+    },
+    {
+      "in":"ext-01",
+      "out":["thing-01", "thing-02"]
+    }
+  ]
+}
