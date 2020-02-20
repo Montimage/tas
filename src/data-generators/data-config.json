@@ -1,0 +1,51 @@
+{
+  "dbConfig": {
+    "HOST": "192.168.0.11",
+    "PORT": "27017",
+    "USER": "mmtbox",
+    "PASSWORD": "mmtbox",
+    "DBNAME": "admin"
+  },
+  "sensors": [
+    {
+      "id": "sen-01",
+      "timeInterval": 5,
+      "startTime": null,
+      "duration": null,
+      "dataDescription": {
+        "type":"boolean"
+      }
+    },
+    {
+      "id": "sen-02",
+      "timeInterval": 3,
+      "startTime": null,
+      "duration": null,
+      "dataDescription": {
+        "type":"enum",
+        "values": ["Monday","Tuesday","Wednesday","Thursday","Friday"]
+      }
+    }
+  ],
+  "actuators": [
+    {
+      "id": "act-01",
+      "timeInterval": 5,
+      "startTime": null,
+      "duration": null,
+      "dataDescription": {
+        "type":"boolean"
+      }
+    },
+    {
+      "id": "act-02",
+      "timeInterval": 10,
+      "startTime": null,
+      "duration": null,
+      "dataDescription": {
+        "type":"enum",
+        "values": ["Lowest","Low","Medium","High","Highest"]
+      }
+    }
+  ]
+}
