@@ -1,0 +1,54 @@
+{
+  "id":"t01",
+  "mqttConfig":{
+    "HOST":"localhost",
+    "PORT":"1883",
+    "options": null
+  },
+  "sensors": [
+    {
+      "id": "s-01",
+      "dataSource": {
+        "source":"random",
+        "dataDescription": {
+          "type": "boolean"
+        },
+        "timeInterval": 3
+      }
+    },
+    {
+      "id": "s-02",
+      "dataSource": {
+        "source":"random",
+        "dataDescription": {
+          "type": "enum",
+          "values": ["Monday","Tuesday","Wednesday","Thursday","Friday"]
+        },
+        "timeInterval": 3
+      }
+    },
+    {
+      "id": "sensor-01",
+      "dataSource": {
+        "source":"database",
+        "dbConfig": {
+          "HOST": "192.168.0.11",
+          "PORT": "27017",
+          "USER": "mmtbox",
+          "PASSWORD": "mmtbox",
+          "DBNAME": "admin"
+        },
+        "startTime": 1580468013203,
+        "endTime": 1580468064242
+      }
+    }
+  ],
+  "actuators": [
+    {
+      "id": "act-01"
+    },
+    {
+      "id": "act-02"
+    }
+  ]
+}
