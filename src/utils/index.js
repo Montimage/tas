@@ -1,3 +1,35 @@
+const fs = require('fs');
+
+/**
+ * Read JSON file and return an JSON object
+ * @param {String} filePath Path to file
+ */
+const readJSONFileSync = (filePath) => {
+  try {
+    const data = fs.readFileSync(filePath);
+    return JSON.parse(data);
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Read async a JSON file
+ * @param {String} filePath The path to the data file
+ * @param {Function} callback The callback function
+ */
+const readJSONFile = (filePath, callback) => {
+  try {
+    fs.readFile(filePath, (err, data) => {
+      if (err) throw err;
+      const jsonData = JSON.parse(data);
+      return callback(null, jsonData);
+    })
+  } catch (error) {
+    return callback(error);
+  }
+}
+
 /**
  * Generate a random boolean value
  */
@@ -157,5 +189,7 @@ module.exports = {
   randomBoolean,
   nextGPSPosition,
   getMin,
-  getMax
+  getMax,
+  readJSONFile,
+  readJSONFileSync,
 }
