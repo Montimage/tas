@@ -44,16 +44,10 @@ class Sensor {
         setTimeout(() => {
           if (this.status === SIMULATING) {
             const dataToBePublished = JSON.parse(listData[index].value);
-            // console.log(
-            //   "Going to send data: ",
-            //   index,
-            //   Date.now(),
-            //   listData[index].timestamp
-            // );
-            // console.log(dataToBePublished);
-            console.log(`sensor ${this.id}: `, dataToBePublished);
+            console.log(`[${this.id}] `, dataToBePublished);
             this.publishData(dataToBePublished);
             if (index === listData.length - 1) {
+              console.log(`[${this.id}] Finished!`);
               this.status = OFFLINE;
             }
           }
@@ -74,7 +68,7 @@ class Sensor {
     const timerID = setInterval(() => {
       if (this.status === SIMULATING) {
         dataGenerator.generateData(data => {
-          console.log(`sensor ${this.id}: `, data);
+          console.log(`[${this.id}] `, data);
           this.publishData(data);
         });
       } else {
@@ -141,7 +135,7 @@ class Sensor {
    */
   start(mqttClient) {
     if (this.status === OFFLINE) {
-      console.log(`[Sensor ${this.id}] publishes data on channel: ${this.topic}`);
+      console.log(`[${this.id}] publishes data on channel: ${this.topic}`);
       this.mqttClient = mqttClient;
       if (this.dataSource.source === "random") {
         this.status = SIMULATING;
@@ -151,11 +145,11 @@ class Sensor {
         this.readDataFromDatabase();
       } else {
         console.error(
-          `[ERROR] Sensor ${this.id} does not support data source: ${this.dataSource.source}`
+          `[${this.id}] ERROR: does not support data source: ${this.dataSource.source}`
         );
       }
     } else {
-      console.log(`[SENSOR] Sensor ${this.id} is simulating!`);
+      console.log(`[${this.id}] is simulating!`);
     }
   }
 
@@ -164,13 +158,13 @@ class Sensor {
    */
   stop() {
     if (this.status === OFFLINE) {
-      console.log(`[SENSOR] Sensor ${this.id} is offline!`);
+      console.log(`[${this.id}] is offline!`);
     } else {
       this.status = OFFLINE;
       if (this.dbClient) {
         this.dbClient.close();
       }
-      console.log(`[Sensor ${this.id}] stopped!`);
+      console.log(`[${this.id}] stopped!`);
     }
   }
 }
