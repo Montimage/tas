@@ -12,9 +12,9 @@ const gwConfigFile = process.argv[2];
 
 readJSONFile(gwConfigFile, (err, gwConfig) => {
   if (err) {
-    console.error(`[ERROR] Cannot read the config of gateway:`, gwConfig);
+    console.error(`[ERROR] Cannot read the config of gateway:`, gwConfigFile);
   } else {
-    const {id, things, externals, routers } = gwConfig;
+    const {id, things, externals, upstreams } = gwConfig;
     const gw = new Gateway(id);
     // Add things
     for (let index = 0; index < things.length; index++) {
@@ -27,7 +27,7 @@ readJSONFile(gwConfigFile, (err, gwConfig) => {
       gw.addNewExternalComponent(id, mqttConfig, subTopic);
     }
     // Update the routers
-    gw.updateRouter(routers);
+    gw.updateUpstreams(upstreams);
     setTimeout(() => {
       gw.show();
     }, 3000);

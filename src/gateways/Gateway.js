@@ -14,7 +14,7 @@ class Gateway {
     this.id = id;
     this.thingComms = {};
     this.extComms = {};
-    this.routers = null;
+    this.upstreams = null;
   }
 
   /**
@@ -25,14 +25,14 @@ class Gateway {
    * @param {String} message The payload of the packet
    * @param {Object} packet The packet
    */
-  handleSensorData (thingID, topic, message, packet) {
-    if (this.routers) {
-      const filteredRouters = this.routers.filter((r) => r.in === thingID);
-      if (!filteredRouters || filteredRouters.length === 0) {
+  handleUpstreamData (thingID, topic, message, packet) {
+    if (this.upstreams) {
+      const filteredUpstreams = this.upstreams.filter((r) => r.in === thingID);
+      if (!filteredUpstreams || filteredUpstreams.length === 0) {
         console.warn(`[GW ${this.id}] Unhandled message from ${thingID}: ${topic}`);
       } else {
-        for (let index = 0; index < filteredRouters.length; index++) {
-          const fRouter = filteredRouters[index];
+        for (let index = 0; index < filteredUpstreams.length; index++) {
+          const fRouter = filteredUpstreams[index];
           const { out } = fRouter;
           for (let oi = 0; oi < out.length; oi++) {
             const pubID = out[oi];
@@ -50,33 +50,42 @@ class Gateway {
   }
 
   /**
-   * Handle the sensor's data which are published by a THING
+   * Handle the actuated's data which should be sent to the THING which contains the actuator
    * @param {String} extId The id of external communication
-   * @param {String} topic The topic of the packet
+   * @param {String} topic The topic of the packet, the topic should contain the id of the actuator which will received the actuated data
+   * TODO: should the topic contain the id of the thing?
+   *  - each downstream message should control 1 actuator which is belong to 1 thing
+   *  - How about a broadcast ??? - should not
    * @param {String} message The payload of the packet
    * @param {Object} packet The packet
    */
-  handleActuatedData (extId, topic, message, packet) {
-    if (this.routers) {
-      const filteredRouters = this.routers.filter((r) => r.in === extId);
-      if (!filteredRouters || filteredRouters.length === 0) {
-        console.warn(`[GW ${this.id}] Unhandled message from ${extId}: ${topic}`);
-      } else {
-        for (let index = 0; index < filteredRouters.length; index++) {
-          const fRouter = filteredRouters[index];
-          const { out } = fRouter;
-          for (let oi = 0; oi < out.length; oi++) {
-            const pubID = out[oi];
-            if (this.thingComms[pubID]) {
-              this.thingComms[pubID].publish(topic, message);
-            } else {
-              console.error(`[GW ${this.id}] Externals Communication does not exist! ${pubID}`);
-            }
-          }
-        }
+  handleDownstreamData (extId, topic, message, packet) {
+    console.log(`[GW ${this.id}] Handle message from ${extId}: ${topic}`);
+    const externalComm = this.extComms[extId];
+    const downstreamTopic = externalComm.subTopic.replace('#','');
+    const subTopic = topic.replace(downstreamTopic,'');
+    const array = subTopic.split('/');
+    // Remove duplicated token to avoid forward the message more than 1 time to 1 THING
+    const pubIDs = [];
+    for (let index = 0; index < array.length; index++) {
+      if (pubIDs.indexOf(array[index]) === -1) {
+        pubIDs.push(array[index]);
       }
-    } else {
-      console.warn(`[GW ${this.id}] Missing router!`);
+    }
+
+    let foundPub = false;
+    for (let index = 0; index < pubIDs.length; index++) {
+      const pubID = pubIDs[index];
+      if (this.thingComms[pubID]) {
+        foundPub = true;
+        const mergedTopic = `things/${pubID}/actuators/${topic}`;
+        // TODO: can add more rules here to specific the Thing to be transfer the message to
+        console.log(`[GW ${this.id}] Going to send message to channel ${mergedTopic}`);
+        this.thingComms[pubID].publish(mergedTopic, message);
+      }
+    }
+    if (!foundPub) {
+      console.log(`[GW ${this.id}] Cannot find any THING to forward the message ${topic}`);
     }
   }
 
@@ -87,7 +96,7 @@ class Gateway {
    */
   addNewThing ( thingID, mqttConfig ) {
     const newThingComm = new Communication(thingID, mqttConfig, (id, topic, message, packet) => {
-      this.handleSensorData(id, topic, message, packet);
+      this.handleUpstreamData(id, topic, message, packet);
     });
     const subTopic = `things/${thingID}/sensors/#`;
     newThingComm.initConnection(() => {
@@ -104,7 +113,7 @@ class Gateway {
    */
   addNewExternalComponent ( extId, mqttConfig, subTopic ) {
     const newExtComm = new Communication(extId, mqttConfig, (id, topic, message, packet) => {
-      this.handleActuatedData(id, topic, message, packet);
+      this.handleDownstreamData(id, topic, message, packet);
     });
     newExtComm.initConnection(() => {
       newExtComm.subscribe(subTopic);
@@ -114,10 +123,10 @@ class Gateway {
 
   /**
    * Update the router of the gateway
-   * @param {Object} routers The configuration of the router in the gateway
+   * @param {Object} upstreams The configuration of the router in the gateway
    */
-  updateRouter( routers) {
-    this.routers = routers;
+  updateUpstreams( upstreams) {
+    this.upstreams = upstreams;
   }
 
   /**
@@ -127,7 +136,7 @@ class Gateway {
     console.log(`\n---------\nGateway: ${this.id}`);
     console.log('Things: \n', this.thingComms);
     console.log('External Components: \n', this.extComms);
-    console.log('Routers: \n',this.routers );
+    console.log('upstreams: \n',this.upstreams );
     console.log('\n---------\n');
   }
 }

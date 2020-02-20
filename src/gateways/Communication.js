@@ -27,7 +27,7 @@ class Communication {
     this.mqttConfig = mqttConfig;
     this.mqttClient = null;
     this.messageHandler = messageHandler;
-    this.subscribedURLs = [];
+    this.subTopic = null;
   }
   /**
    * Establish the connection of this communication to a mqtt broker
@@ -59,13 +59,14 @@ class Communication {
    */
   close() {
     if (this.mqttClient) {
-      for (let index = 0; index < this.subscribedURLs.length; index++) {
-        this.mqttClient.unsubscribe(this.subscribedURLs[index]);
+      if (this.subTopic) {
+        this.mqttClient.unsubscribe(this.subTopic);
       }
+
       setTimeout(() => {
         this.mqttClient.close();
         console.log(`[Comm ${this.id}] has been closed!`);
-      }, 3000);
+      }, 1000);
     }
   }
 
@@ -76,7 +77,7 @@ class Communication {
   subscribe(topic) {
     if (this.mqttClient) {
       this.mqttClient.subscribe(topic);
-      this.subscribedURLs.push(topic);
+      this.subTopic = topic;
       console.log(`[Comm ${this.id}] has subscribed the topic ${topic}!`);
     } else {
       console.log(`[Comm ${this.id}] has not been initilized yet!`);

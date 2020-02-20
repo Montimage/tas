@@ -2,15 +2,7 @@
   "id":"gw-01",
   "things": [
     {
-      "id":"thing-01",
-      "mqttConfig": {
-        "HOST":"localhost",
-        "PORT": "1883",
-        "options": null
-      }
-    },
-    {
-      "id":"thing-02",
+      "id":"t01",
       "mqttConfig": {
         "HOST":"localhost",
         "PORT": "1883",
@@ -31,11 +23,7 @@
   ],
   "upstreams": [
     {
-      "in":"thing-01",
-      "out":["ext-01"]
-    },
-    {
-      "in":"thing-02",
+      "in":"t01",
       "out":["ext-01"]
     }
   ]
