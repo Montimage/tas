@@ -60,9 +60,9 @@ class Thing {
           return actuator.showStatus();
         }
       }
-      console.error(`[ERROR] Cannot find the actuator ${array[4]}`);
+      console.error(`[${this.id}] ERROR: cannot find the actuator ${array[4]}`);
     } else {
-      console.log('[DEBUG] Ignore message: ', topic, message);
+      console.log(`[${this.id}] Ignore message: `, topic, message);
     }
   }
 
@@ -82,21 +82,21 @@ class Thing {
       }
 
       mqttClient.on('connect', () => {
-        console.log(`[THING] THING ${this.id} has connected to MQTT broker ${mqttBrokerURL}`);
+        console.log(`[${this.id}] connected to MQTT broker ${mqttBrokerURL}`);
         this.mqttClient = mqttClient;
         this.setStatus(ONLINE);
         // Subscribe to get the downstream data for actuators
         this.mqttClient.subscribe(`${this.actuatedTopic}#`);
-        console.log(`[Thing ${this.id}] listening actuated data on channel: ${this.actuatedTopic}#`);
+        console.log(`[${this.id}] listening actuated data on channel: ${this.actuatedTopic}#`);
         callback();
       });
 
       mqttClient.on('error', (err) => {
-        console.error('[ERROR] Cannot connect to MQTT broker', err);
+        console.error(`[${this.id}] ERROR: cannot connect to MQTT broker`, err);
       });
 
       mqttClient.on('offline', () => {
-        console.log(`[THING] THING ${this.id} has gone offline!`);
+        console.log(`[${this.id}] gone offline!`);
         this.setStatus(OFFLINE);
       });
 
@@ -115,7 +115,7 @@ class Thing {
    */
   addSensor (id, dataSource) {
     if (this.sensors[id]) {
-      console.error(`[ERROR] Sensor ID ${id} has already existed!`);
+      console.error(`[${this.id}] Sensor ID ${id} has already existed!`);
       return false;
     }
     const topic = `things/${this.id}/sensors/${id}`;
@@ -126,6 +126,7 @@ class Thing {
     if (this.status === SIMULATING && this.mqttClient) {
       this.sensors[this.sensors.length - 1].start(this.mqttClient);
     }
+    console.log(`[${this.id}] added new sensor ${id}`);
     return true;
   }
 
@@ -136,12 +137,13 @@ class Thing {
    */
   addActuator (id) {
     if (this.actuators[id]) {
-      console.error(`[ERROR] Actuator ID ${id} has already existed!`);
+      console.error(`[${this.id}] Actuator ID ${id} has already existed!`);
       return false;
     }
     const newActuator = new Actuator(id);
     this.actuatorIDs[id] = id;
     this.actuators.push(newActuator);
+    console.log(`[${this.id}] added new actuator ${id}`);
     return true;
   }
 
@@ -155,10 +157,10 @@ class Thing {
         this.setStatus(SIMULATING);
         break;
       case OFFLINE:
-        console.error(`[ERROR] THING ${this.id} must be online before starting simulation: ${this.getStatus()}`);
+        console.error(`[${this.id}] must be online before starting simulation: ${this.getStatus()}`);
         break;
       case SIMULATING:
-        console.warn(`[THING] ${this.id} is simulating!`);
+        console.warn(`[${this.id}] is simulating!`);
         break;
       default:
         break;
@@ -171,14 +173,14 @@ class Thing {
   stop() {
     switch (this.getStatus()) {
       case OFFLINE:
-        console.error(`[ERROR] THING ${this.id} is offline!`);
+        console.error(`[${this.id}] ERROR: offline!`);
         break;
       case ONLINE:
         this.setStatus(OFFLINE);
         this.mqttClient.end();
         break;
       case SIMULATING:
-        console.log(`[Thing ${this.id}] Going to stop the simulation!`);
+        console.log(`[${this.id}] going to stop the simulation!`);
         this.sensors.map((sensor) => sensor.stop());
         this.setStatus(OFFLINE);
         this.mqttClient.end();

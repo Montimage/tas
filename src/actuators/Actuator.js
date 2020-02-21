@@ -25,7 +25,7 @@ class Actuator{
    * Show status of the actuator
    */
   showStatus() {
-    console.log(`[Actuator ${this.id}] ${this.timestamp} ${JSON.stringify(this.actuatedData)}`);
+    console.log(`[${this.id}] ${this.timestamp} ${JSON.stringify(this.actuatedData)}`);
   }
 }
 

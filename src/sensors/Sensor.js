@@ -29,7 +29,9 @@ class Sensor {
    */
   publishData(strData) {
     // console.log("Going to send data", this.topic, strData);
-    this.mqttClient.publish(this.topic, JSON.stringify(strData));
+    const data = JSON.stringify(strData);
+    console.log(`[${this.id}] ${this.topic} `, data);
+    this.mqttClient.publish(this.topic, data);
   }
 
   /**
@@ -62,13 +64,12 @@ class Sensor {
   generateRandomData() {
     const { dataDescription, timeInterval } = this.dataSource;
     console.log(
-      `Generate randomly data ${dataDescription.type} and publish the data in every ${timeInterval} seconds`
+      `[${this.id}] generate randomly data ${dataDescription.type} and publish the data in every ${timeInterval} seconds`
     );
     const dataGenerator = new DataGenerator(dataDescription, timeInterval);
     const timerID = setInterval(() => {
       if (this.status === SIMULATING) {
         dataGenerator.generateData(data => {
-          console.log(`[${this.id}] `, data);
           this.publishData(data);
         });
       } else {
@@ -87,7 +88,7 @@ class Sensor {
       ? this.dataSource.endTime
       : Date.now();
     console.log(
-      `Read data from database ${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DBNAME}`
+      `[${this.id}] read data from database ${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DBNAME}`
     );
     console.log(`StartTime: ${startTime}, endTime: ${endTime}`);
     if (dbConfig.USER && dbConfig.PASSWORD) {
@@ -99,7 +100,7 @@ class Sensor {
       this.dbClient = new ENACTDB(dbConfig.HOST, dbConfig.PORT, dbConfig.DBNAME);
     }
     this.dbClient.connect(() => {
-      console.log("Connected to database");
+      console.log("[${this.id}] connected to database");
       SensorSchema.findSensorDataBetweenTimes(
         { sensorID: this.id },
         startTime,
@@ -107,7 +108,7 @@ class Sensor {
         (err, listData) => {
           if (err) {
             console.error(
-              `[ERROR] Cannot find any data for sensor ${this.id}`,
+              `[${this.id}] ERROR: cannot find any data`,
               err
             );
             this.status = OFFLINE;
@@ -118,7 +119,7 @@ class Sensor {
               this.publishDataWithTimestamp(listData);
             } else {
               console.error(
-                `[ERROR] Cannot find any data for sensor ${this.id}`,
+                `[${this.id}] ERROR: cannot find any data`,
                 err
               );
               this.status = OFFLINE;

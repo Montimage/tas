@@ -1,37 +1,55 @@
-{
-  "id":"t01",
-  "mqttConfig":{
-    "HOST":"localhost",
-    "PORT":"1883",
-    "options": null
-  },
-  "sensors": [
-    {
-      "id": "movement-sensor",
-      "dataSource": {
-        "source":"random",
-        "dataDescription": {
-          "type": "boolean"
-        },
-        "timeInterval": 3
-      }
+[
+  {
+    "id": "t01",
+    "scale": 2,
+    "mqttConfig": {
+      "HOST": "localhost",
+      "PORT": "1883",
+      "options": null
     },
-    {
-      "id": "light-ambient-sensor",
-      "dataSource": {
-        "source":"random",
-        "dataDescription": {
-          "type": "double",
-          "min" : 0.00,
-          "max" : 10.00
-        },
-        "timeInterval": 3
+    "sensors": [
+      {
+        "id": "movement-sensor",
+        "scale": 2,
+        "dataSource": {
+          "source": "random",
+          "dataDescription": {
+            "type": "boolean"
+          },
+          "timeInterval": 3
+        }
       }
-    }
-  ],
-  "actuators": [
-    {
-      "id": "light-switch-actuator"
-    }
-  ]
-}
+    ],
+    "actuators": [
+      {
+        "id": "light-switch-actuator",
+        "scale": 3
+      }
+    ]
+  },
+  {
+    "id": "t02",
+    "scale": 2,
+    "mqttConfig": {
+      "HOST": "localhost",
+      "PORT": "1882",
+      "options": null
+    },
+    "sensors": [
+      {
+        "id": "light-ambient-sensor",
+        "scale": 3,
+        "dataSource": {
+          "source": "random",
+          "dataDescription": {
+            "type": "double",
+            "min": 0,
+            "max": 10
+          },
+          "timeInterval": 3
+        }
+      }
+    ],
+    "actuators": []
+  }
+]
