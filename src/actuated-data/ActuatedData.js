@@ -17,9 +17,9 @@ class ActuatedData extends Sensor {
       ? this.dataSource.endTime
       : Date.now();
     console.log(
-      `Read data from database ${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DBNAME}`
+      `[${this.id}] read data from database ${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DBNAME}`
     );
-    console.log(`StartTime: ${startTime}, endTime: ${endTime}`);
+    console.log(`[${this.id}] StartTime: ${startTime}, endTime: ${endTime}`);
     if (dbConfig.USER && dbConfig.PASSWORD) {
       this.dbClient = new ENACTDB(dbConfig.HOST, dbConfig.PORT, dbConfig.DBNAME, {
         userName: dbConfig.USER,
@@ -29,7 +29,7 @@ class ActuatedData extends Sensor {
       this.dbClient = new ENACTDB(dbConfig.HOST, dbConfig.PORT, dbConfig.DBNAME);
     }
     this.dbClient.connect(() => {
-      console.log("Connected to database");
+      console.log(`[${this.id}] connected to database`);
       ActuatorSchema.findActuatorDataBetweenTimes(
         { actID: this.id },
         startTime,
@@ -37,18 +37,18 @@ class ActuatedData extends Sensor {
         (err, listData) => {
           if (err) {
             console.error(
-              `[ERROR] Cannot find any data for actuator ${this.id}`,
+              `[${this.id}] ERROR: cannot find any data`,
               err
             );
             this.status = OFFLINE;
           } else {
-            console.log("Number of data: ", listData.length);
+            // console.log("Number of data: ", listData.length);
             this.dbClient.close();
             if (listData.length > 0) {
               this.publishDataWithTimestamp(listData);
             } else {
               console.error(
-                `[ERROR] Cannot find any data for actuator ${this.id}`,
+                `[${this.id}] ERROR: cannot find any data`,
                 err
               );
               this.status = OFFLINE;

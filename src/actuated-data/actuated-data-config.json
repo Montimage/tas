@@ -1,6 +1,7 @@
 [
   {
     "id": "act-01",
+    "scale": 2,
     "mqttConfig":{
       "HOST":"localhost",
       "PORT":"1883",
