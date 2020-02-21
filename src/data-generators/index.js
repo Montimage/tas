@@ -111,13 +111,27 @@ readJSONFile(dataConfigFile, (err, dataConfig) => {
     console.log("Connected to database");
     // Generate sensors data
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
-      const {id, timeInterval, startTime, duration, dataDescription} = sensors[sIndex];
-      startGeneratingData(SENSOR_TYPE, id, timeInterval, startTime, duration, dataDescription);
+      const {id, timeInterval, startTime, duration, dataDescription, scale} = sensors[sIndex];
+      const nbSensors = scale ? scale : 1;
+      if (nbSensors === 1) {
+        startGeneratingData(SENSOR_TYPE, id, timeInterval, startTime, duration, dataDescription);
+      } else {
+        for (let index = 0; index < nbSensors; index++) {
+          startGeneratingData(SENSOR_TYPE, `${id}-${index}`, timeInterval, startTime, duration, dataDescription);
+        }
+      }
     }
     // Generate actuators data
-    for (let sIndex = 0; sIndex < actuators.length; sIndex++) {
-      const {id, timeInterval, startTime, duration, dataDescription} = actuators[sIndex];
-      startGeneratingData(ACTUATOR_TYPE, id, timeInterval, startTime, duration, dataDescription);
+    for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
+      const {id, timeInterval, startTime, duration, dataDescription, scale} = actuators[aIndex];
+      const nbActuators = scale ? scale : 1;
+      if (nbActuators === 1) {
+        startGeneratingData(ACTUATOR_TYPE, id, timeInterval, startTime, duration, dataDescription);
+      } else {
+        for (let index = 0; index < nbActuators; index++) {
+          startGeneratingData(ACTUATOR_TYPE, `${id}-${index}`, timeInterval, startTime, duration, dataDescription);
+        }
+      }
     }
 
   });

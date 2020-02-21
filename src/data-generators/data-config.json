@@ -9,6 +9,7 @@
   "sensors": [
     {
       "id": "sen-01",
+      "scale": 2,
       "timeInterval": 5,
       "startTime": null,
       "duration": null,
@@ -18,6 +19,7 @@
     },
     {
       "id": "sen-02",
+      "scale": 3,
       "timeInterval": 3,
       "startTime": null,
       "duration": null,
@@ -30,6 +32,7 @@
   "actuators": [
     {
       "id": "act-01",
+      "scale": 2,
       "timeInterval": 5,
       "startTime": null,
       "duration": null,
@@ -39,6 +42,7 @@
     },
     {
       "id": "act-02",
+      "scale": 2,
       "timeInterval": 10,
       "startTime": null,
       "duration": null,
