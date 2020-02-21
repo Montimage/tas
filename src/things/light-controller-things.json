@@ -1,0 +1,39 @@
+[
+  {
+    "id": "t01",
+    "mqttConfig": {
+      "HOST": "localhost",
+      "PORT": "1883",
+      "options": null
+    },
+    "sensors": [
+      {
+        "id": "movement-sensor",
+        "dataSource": {
+          "source": "random",
+          "dataDescription": {
+            "type": "boolean"
+          },
+          "timeInterval": 3
+        }
+      },
+      {
+        "id": "light-ambient-sensor",
+        "dataSource": {
+          "source": "random",
+          "dataDescription": {
+            "type": "double",
+            "min": 0,
+            "max": 10
+          },
+          "timeInterval": 3
+        }
+      }
+    ],
+    "actuators": [
+      {
+        "id": "light-switch-actuator"
+      }
+    ]
+  }
+]

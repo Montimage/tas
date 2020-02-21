@@ -1,0 +1,34 @@
+[
+  {
+    "id": "gw-01",
+    "things": [
+      {
+        "id": "t01",
+        "mqttConfig": {
+          "HOST": "localhost",
+          "PORT": "1883",
+          "options": null
+        }
+      }
+    ],
+    "externals": [
+      {
+        "id": "ext-01",
+        "mqttConfig": {
+          "HOST": "localhost",
+          "PORT": "1882",
+          "options": null
+        },
+        "subTopic": "actuated-datas/#"
+      }
+    ],
+    "upstreams": [
+      {
+        "in": "t01",
+        "out": [
+          "ext-01"
+        ]
+      }
+    ]
+  }
+]
