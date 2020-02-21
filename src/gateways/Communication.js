@@ -44,7 +44,7 @@ class Communication {
       mqttClient = mqtt.connect(mqttURL);
     }
     mqttClient.on('connect', () => {
-      console.log(`[Comm ${this.id}] has connected to ${mqttURL}`);
+      console.log(`[${this.id}] has connected to ${mqttURL}`);
       this.mqttClient = mqttClient;
       callback(this.mqttClient);
     });
@@ -65,7 +65,7 @@ class Communication {
 
       setTimeout(() => {
         this.mqttClient.close();
-        console.log(`[Comm ${this.id}] has been closed!`);
+        console.log(`[${this.id}] has been closed!`);
       }, 1000);
     }
   }
@@ -78,9 +78,9 @@ class Communication {
     if (this.mqttClient) {
       this.mqttClient.subscribe(topic);
       this.subTopic = topic;
-      console.log(`[Comm ${this.id}] has subscribed the topic ${topic}!`);
+      console.log(`[${this.id}] has subscribed the topic ${topic}!`);
     } else {
-      console.log(`[Comm ${this.id}] has not been initilized yet!`);
+      console.log(`[${this.id}] has not been initilized yet!`);
     }
   }
 
@@ -93,7 +93,7 @@ class Communication {
     if (this.mqttClient) {
       this.mqttClient.publish(topic, message);
     } else {
-      console.log(`[Comm ${this.id}] has not been initilized yet!`);
+      console.log(`[${this.id}] has not been initilized yet!`);
     }
   }
 }

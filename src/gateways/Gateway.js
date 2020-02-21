@@ -14,7 +14,7 @@ class Gateway {
     this.id = id;
     this.thingComms = {};
     this.extComms = {};
-    this.upstreams = null;
+    this.upstreams = [];
   }
 
   /**
@@ -26,10 +26,10 @@ class Gateway {
    * @param {Object} packet The packet
    */
   handleUpstreamData (thingID, topic, message, packet) {
-    if (this.upstreams) {
+    if (this.upstreams.length > 0) {
       const filteredUpstreams = this.upstreams.filter((r) => r.in === thingID);
       if (!filteredUpstreams || filteredUpstreams.length === 0) {
-        console.warn(`[GW ${this.id}] Unhandled message from ${thingID}: ${topic}`);
+        console.warn(`[${this.id}] Unhandled message from ${thingID}: ${topic}`);
       } else {
         for (let index = 0; index < filteredUpstreams.length; index++) {
           const fRouter = filteredUpstreams[index];
@@ -39,13 +39,13 @@ class Gateway {
             if (this.extComms[pubID]) {
               this.extComms[pubID].publish(topic, message);
             } else {
-              console.error(`[GW ${this.id}] Externals Communication does not exist! ${pubID}`);
+              console.error(`[${this.id}] Externals Communication does not exist! ${pubID}`);
             }
           }
         }
       }
     } else {
-      console.warn(`[GW ${this.id}] Missing router!`);
+      console.warn(`[${this.id}] Missing router!`);
     }
   }
 
@@ -60,7 +60,7 @@ class Gateway {
    * @param {Object} packet The packet
    */
   handleDownstreamData (extId, topic, message, packet) {
-    console.log(`[GW ${this.id}] Handle message from ${extId}: ${topic}`);
+    console.log(`[${this.id}] Handle message from ${extId}: ${topic}`);
     const externalComm = this.extComms[extId];
     const downstreamTopic = externalComm.subTopic.replace('#','');
     const subTopic = topic.replace(downstreamTopic,'');
@@ -80,12 +80,12 @@ class Gateway {
         foundPub = true;
         const mergedTopic = `things/${pubID}/actuators/${topic}`;
         // TODO: can add more rules here to specific the Thing to be transfer the message to
-        console.log(`[GW ${this.id}] Going to send message to channel ${mergedTopic}`);
+        console.log(`[${this.id}] Going to send message to channel ${mergedTopic}`);
         this.thingComms[pubID].publish(mergedTopic, message);
       }
     }
     if (!foundPub) {
-      console.log(`[GW ${this.id}] Cannot find any THING to forward the message ${topic}`);
+      console.log(`[${this.id}] Cannot find any THING to forward the message ${topic}`);
     }
   }
 
@@ -122,11 +122,11 @@ class Gateway {
   }
 
   /**
-   * Update the router of the gateway
-   * @param {Object} upstreams The configuration of the router in the gateway
+   * Add new rule to upstream
+   * @param {Object} usr upstream rule {in: 'in-id', 'out':['out-id-1','out-id-2']}
    */
-  updateUpstreams( upstreams) {
-    this.upstreams = upstreams;
+  addUpstreamRule( usr) {
+    this.upstreams.push(usr);
   }
 
   /**

@@ -55,3 +55,9 @@ Publish a message
 ```
 mosquitto_pub --host 192.168.0.11 --port 1882 -t "ext-01-sub-topic" -m "Hello World"
 ```
+
+## NOTES
+- In the configuration of gateways and things, if the thing with id `t01` scales `2` times, then the configuration of the thing `t01` in the gateway should scale `2` times as well, so that they will automatically adapt
+- In the configuration of gateway, the upstreams section, the value of `out` is an array because the upstreams can be multiple different service
+- The gateway cannot be scaled, because the id does not effect to the functionality of the gateway -> other way to say, if two gateways are only difficiated by their ids, their functionalities are exactly the same.
+- The external component in the gateway is not scalable (same explaination with the gateway)
