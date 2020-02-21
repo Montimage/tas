@@ -1,13 +1,14 @@
 # Data define
+JSON object defines the data of sensor
 ## Boolean value
 Some sensors provide a boolean value such as: movevement detection, ...
 Value: `0` or `1`
-```
+```json
 { "type": "boolean" }
 ```
 ## Enum value
 Some sensors provide the value in an pre-defined array such as: level vibration, ...
-```
+```json
 {
 	"type": "enum",
 	"values": [-5, 6, 2, 10, 12, 40]
@@ -16,7 +17,7 @@ Some sensors provide the value in an pre-defined array such as: level vibration,
 
 ## Integer value
 Many sensors provide the value in integer format.
-```
+```json
 {
   "type": "integer", // type of data
   "initValue": "18", // initial value -> can be NULL
@@ -33,7 +34,7 @@ Many sensors provide the value in integer format.
 
 ## Double value
 Many sensors provide the value in double format.
-```
+```json
 {
   "type": "double", // type of data
   "initValue":"3.5", // initial value -> can be NULL
@@ -50,12 +51,11 @@ Many sensors provide the value in double format.
 
 ## Location GPS
 The GPS data
-Value:
-{
-  la: -90 -> 90,
-  lo: -180 -> 80
-}
-```
+
+Latitude range value: `-90 -> 90`
+Longtitude range value: `-180 -> 80`
+
+```json
 {
   "type": "location",
   "initValue": { // first position - can be NULL
