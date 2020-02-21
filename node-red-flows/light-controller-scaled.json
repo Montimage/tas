@@ -1,0 +1,1332 @@
+[
+    {
+        "id": "3de16d1b.365d42",
+        "type": "tab",
+        "label": "Light-controller-Scaled",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "f2708232.82dc9",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "movement-sensor-00",
+        "topic": "things/t01-0/sensors/movement-sensor-0",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 140,
+        "y": 120,
+        "wires": [
+            [
+                "d9e86309.51be5",
+                "64e81d3c.97e864"
+            ]
+        ]
+    },
+    {
+        "id": "ab922270.b996",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-00",
+        "topic": "things/t01-0/sensors/light-ambient-sensor-0",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 140,
+        "y": 340,
+        "wires": [
+            [
+                "61f37b50.ff3944",
+                "3af4f940.1f1b06",
+                "33594a07.c8d156"
+            ]
+        ]
+    },
+    {
+        "id": "58ddc59b.20562c",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-switch-actuator-00",
+        "topic": "actuated-datas/t01-0/light-switch-actuator-0",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 140,
+        "y": 420,
+        "wires": [
+            [
+                "5acec278.792b5c"
+            ]
+        ]
+    },
+    {
+        "id": "40405cda.3b41d4",
+        "type": "function",
+        "z": "3de16d1b.365d42",
+        "name": "handle signals",
+        "func": "const sensor01 = flow.get('sensor01');\nnode.debug(\"sensor01: \", sensor01);\nconst sensor02 = flow.get('sensor02');\nnode.debug(\"sensor02: \", sensor02);\nif (sensor01 == 1 && sensor02 < 6) {\n    msg.payload = 1;\n} else {\n    msg.payload = 0;\n}\nnode.status({fill:\"green\",shape:\"dot\",text:msg.payload});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 740,
+        "y": 180,
+        "wires": [
+            [
+                "13fd481e.c03f08"
+            ]
+        ]
+    },
+    {
+        "id": "d9e86309.51be5",
+        "type": "function",
+        "z": "3de16d1b.365d42",
+        "name": "store sensor-01",
+        "func": "flow.set('sensor01',msg.payload);\nnode.debug(\"sensor01: \", msg.payload);\nnode.status({fill:\"green\",shape:\"dot\",text:msg.payload});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 400,
+        "y": 120,
+        "wires": [
+            [
+                "40405cda.3b41d4"
+            ]
+        ]
+    },
+    {
+        "id": "61f37b50.ff3944",
+        "type": "function",
+        "z": "3de16d1b.365d42",
+        "name": "store sensor-02",
+        "func": "flow.set('sensor02',msg.payload);\nnode.debug(\"sensor02: \", msg.payload);\nnode.status({fill:\"green\",shape:\"dot\",text:msg.payload});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 400,
+        "y": 240,
+        "wires": [
+            [
+                "40405cda.3b41d4"
+            ]
+        ]
+    },
+    {
+        "id": "13fd481e.c03f08",
+        "type": "mqtt out",
+        "z": "3de16d1b.365d42",
+        "name": "light-switch-actuator-0",
+        "topic": "actuated-datas/t01-0/light-switch-actuator-0",
+        "qos": "",
+        "retain": "",
+        "broker": "8d356d97.cb653",
+        "x": 980,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "3af4f940.1f1b06",
+        "type": "ui_gauge",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-00",
+        "group": "f6f1fffe.debb1",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "light-ambient-sensor-00",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 430,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "1900f00e.edf6f",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "movement-sensor-00",
+        "label": "movement-sensor-00",
+        "tooltip": "",
+        "group": "f6f1fffe.debb1",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 760,
+        "y": 60,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "64e81d3c.97e864",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 410,
+        "y": 60,
+        "wires": [
+            [
+                "1900f00e.edf6f"
+            ]
+        ]
+    },
+    {
+        "id": "5acec278.792b5c",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 420,
+        "y": 420,
+        "wires": [
+            [
+                "a2053838.e9ec58"
+            ]
+        ]
+    },
+    {
+        "id": "33594a07.c8d156",
+        "type": "ui_chart",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-00-graph",
+        "group": "f6f1fffe.debb1",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "label": "light-ambient-sensor-00-graph",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "10",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 450,
+        "y": 360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "17a73e1e.8f39c2",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "light-switch-actuator-01",
+        "label": "light-switch-actuator-01",
+        "tooltip": "",
+        "group": "8ccbb6e2.d51468",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 790,
+        "y": 1080,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "35a96c00.701124",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-switch-actuator-01",
+        "topic": "actuated-datas/t01-0/light-switch-actuator-1",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 130,
+        "y": 1080,
+        "wires": [
+            [
+                "49ebe4e.1d5681c"
+            ]
+        ]
+    },
+    {
+        "id": "49ebe4e.1d5681c",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 410,
+        "y": 1080,
+        "wires": [
+            [
+                "17a73e1e.8f39c2"
+            ]
+        ]
+    },
+    {
+        "id": "a65cfc0c.3d879",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-02",
+        "topic": "things/t01-0/sensors/light-ambient-sensor-2",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 140,
+        "y": 960,
+        "wires": [
+            [
+                "c2ec71cc.a34d5",
+                "142eb4e2.27e7db"
+            ]
+        ]
+    },
+    {
+        "id": "c2ec71cc.a34d5",
+        "type": "ui_gauge",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-02",
+        "group": "8ccbb6e2.d51468",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "light-ambient-sensor-02",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 430,
+        "y": 920,
+        "wires": []
+    },
+    {
+        "id": "142eb4e2.27e7db",
+        "type": "ui_chart",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-02-graph",
+        "group": "8ccbb6e2.d51468",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "label": "light-ambient-sensor-02-graph",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "10",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 450,
+        "y": 1000,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5db3e3fb.99c5ac",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-01",
+        "topic": "things/t01-0/sensors/light-ambient-sensor-1",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 140,
+        "y": 820,
+        "wires": [
+            [
+                "33e324a9.256b2c",
+                "2aebd28a.4b5a1e"
+            ]
+        ]
+    },
+    {
+        "id": "33e324a9.256b2c",
+        "type": "ui_gauge",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-01",
+        "group": "8ccbb6e2.d51468",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "light-ambient-sensor-01",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 430,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "2aebd28a.4b5a1e",
+        "type": "ui_chart",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-01-graph",
+        "group": "8ccbb6e2.d51468",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "light-ambient-sensor-01-graph",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "10",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 450,
+        "y": 860,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1128f831.dc7b58",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "movement-sensor-01",
+        "topic": "things/t01-0/sensors/movement-sensor-1",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 140,
+        "y": 720,
+        "wires": [
+            [
+                "ac906ce4.cd4b2"
+            ]
+        ]
+    },
+    {
+        "id": "ac906ce4.cd4b2",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 410,
+        "y": 720,
+        "wires": [
+            [
+                "e94a70a9.fc2aa"
+            ]
+        ]
+    },
+    {
+        "id": "e94a70a9.fc2aa",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "movement-sensor-01",
+        "label": "movement-sensor-01",
+        "tooltip": "",
+        "group": "8ccbb6e2.d51468",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 760,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a2053838.e9ec58",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "light-switch-actuator-00",
+        "label": "light-switch-actuator-00",
+        "tooltip": "",
+        "group": "f6f1fffe.debb1",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 800,
+        "y": 420,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "604cef9f.84cc3",
+        "type": "comment",
+        "z": "3de16d1b.365d42",
+        "name": "Uncontrol Components",
+        "info": "",
+        "x": 140,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "d767efb2.3fe3e",
+        "type": "comment",
+        "z": "3de16d1b.365d42",
+        "name": "Dashboard",
+        "info": "",
+        "x": 100,
+        "y": 20,
+        "wires": []
+    },
+    {
+        "id": "2173ae1d.e408e2",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "light-switch-actuator-10",
+        "label": "light-switch-actuator-10",
+        "tooltip": "",
+        "group": "8ccbb6e2.d51468",
+        "order": 9,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 1930,
+        "y": 1080,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3b7d99b5.393a66",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-switch-actuator-10",
+        "topic": "actuated-datas/t01-1/light-switch-actuator-0",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 1270,
+        "y": 1080,
+        "wires": [
+            [
+                "e334c3f2.92bde"
+            ]
+        ]
+    },
+    {
+        "id": "e334c3f2.92bde",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1550,
+        "y": 1080,
+        "wires": [
+            [
+                "2173ae1d.e408e2"
+            ]
+        ]
+    },
+    {
+        "id": "28755de1.506212",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-12",
+        "topic": "things/t01-1/sensors/light-ambient-sensor-2",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 1260,
+        "y": 960,
+        "wires": [
+            [
+                "a0f1acd7.bfbd2",
+                "2e4b2b4e.70f0f4"
+            ]
+        ]
+    },
+    {
+        "id": "a0f1acd7.bfbd2",
+        "type": "ui_gauge",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-12",
+        "group": "8ccbb6e2.d51468",
+        "order": 11,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "light-ambient-sensor-12",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 1550,
+        "y": 920,
+        "wires": []
+    },
+    {
+        "id": "2e4b2b4e.70f0f4",
+        "type": "ui_chart",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-12-graph",
+        "group": "8ccbb6e2.d51468",
+        "order": 12,
+        "width": 0,
+        "height": 0,
+        "label": "light-ambient-sensor-12-graph",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "10",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 1570,
+        "y": 1000,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "62741fda.3b4a",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-11",
+        "topic": "things/t01-1/sensors/light-ambient-sensor-1",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 1260,
+        "y": 820,
+        "wires": [
+            [
+                "184cb4a9.ceffbb",
+                "f64a6318.efa08"
+            ]
+        ]
+    },
+    {
+        "id": "184cb4a9.ceffbb",
+        "type": "ui_gauge",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-11",
+        "group": "8ccbb6e2.d51468",
+        "order": 13,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "light-ambient-sensor-11",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 1550,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "f64a6318.efa08",
+        "type": "ui_chart",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-11-graph",
+        "group": "8ccbb6e2.d51468",
+        "order": 14,
+        "width": 0,
+        "height": 0,
+        "label": "light-ambient-sensor-11-graph",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "10",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 1570,
+        "y": 860,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e4fc9c16.0f7c9",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "movement-sensor-11",
+        "topic": "things/t01-1/sensors/movement-sensor-1",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 1260,
+        "y": 560,
+        "wires": [
+            [
+                "fa8ab7d0.7df8b8"
+            ]
+        ]
+    },
+    {
+        "id": "fa8ab7d0.7df8b8",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1530,
+        "y": 560,
+        "wires": [
+            [
+                "96e5ff11.90d1a"
+            ]
+        ]
+    },
+    {
+        "id": "96e5ff11.90d1a",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "movement-sensor-11",
+        "label": "movement-sensor-11",
+        "tooltip": "",
+        "group": "8ccbb6e2.d51468",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 1880,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a8eeaf89.5ab4",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "movement-sensor-10",
+        "topic": "things/t01-1/sensors/movement-sensor-0",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 1260,
+        "y": 500,
+        "wires": [
+            [
+                "afeb7d24.1079a"
+            ]
+        ]
+    },
+    {
+        "id": "afeb7d24.1079a",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1530,
+        "y": 500,
+        "wires": [
+            [
+                "c9f35d9e.2325d"
+            ]
+        ]
+    },
+    {
+        "id": "c9f35d9e.2325d",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "movement-sensor-10",
+        "label": "movement-sensor-10",
+        "tooltip": "",
+        "group": "8ccbb6e2.d51468",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 1880,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "71c5e630.4a2568",
+        "type": "ui_gauge",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-10",
+        "group": "8ccbb6e2.d51468",
+        "order": 15,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "light-ambient-sensor-10",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 1550,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "3202cf15.364e7",
+        "type": "ui_chart",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-10-graph",
+        "group": "8ccbb6e2.d51468",
+        "order": 16,
+        "width": 0,
+        "height": 0,
+        "label": "light-ambient-sensor-10-graph",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "10",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 1570,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c569b90d.97f9f8",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-ambient-sensor-10",
+        "topic": "things/t01-1/sensors/light-ambient-sensor-0",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 1260,
+        "y": 700,
+        "wires": [
+            [
+                "71c5e630.4a2568",
+                "3202cf15.364e7"
+            ]
+        ]
+    },
+    {
+        "id": "a82344be.e86ef8",
+        "type": "ui_switch",
+        "z": "3de16d1b.365d42",
+        "name": "light-switch-actuator-11",
+        "label": "light-switch-actuator-11",
+        "tooltip": "",
+        "group": "8ccbb6e2.d51468",
+        "order": 10,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 1930,
+        "y": 1140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "519dd47a.5ca0ac",
+        "type": "change",
+        "z": "3de16d1b.365d42",
+        "name": "boolean converter",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "1",
+                "fromt": "num",
+                "to": "true",
+                "tot": "bool"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "0",
+                "fromt": "num",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1550,
+        "y": 1140,
+        "wires": [
+            [
+                "a82344be.e86ef8"
+            ]
+        ]
+    },
+    {
+        "id": "ef3c3ef.8b6bfc",
+        "type": "mqtt in",
+        "z": "3de16d1b.365d42",
+        "name": "light-switch-actuator-11",
+        "topic": "actuated-datas/t01-1/light-switch-actuator-1",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 1270,
+        "y": 1140,
+        "wires": [
+            [
+                "519dd47a.5ca0ac"
+            ]
+        ]
+    },
+    {
+        "id": "8d356d97.cb653",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "mqtt-broker-localhost",
+        "broker": "192.168.0.11",
+        "port": "1882",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "f6f1fffe.debb1",
+        "type": "ui_group",
+        "z": "",
+        "name": "Dashboard",
+        "tab": "88693197.489de",
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "8ccbb6e2.d51468",
+        "type": "ui_group",
+        "z": "",
+        "name": "Uncontrol Components",
+        "tab": "88693197.489de",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "88693197.489de",
+        "type": "ui_tab",
+        "z": "",
+        "name": "Room-0",
+        "icon": "fa-home",
+        "disabled": false,
+        "hidden": false
+    }
+]
