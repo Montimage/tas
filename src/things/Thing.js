@@ -20,9 +20,7 @@ class Thing {
     this.mqttConfig = mqttConfig;
     this.mqttClient = null;
     this.sensors = [];
-    this.sensorIDs = {};
     this.actuators = [];
-    this.actuatorIDs = {};
     this.actuatedTopic = `things/${id}/actuators/`;
     this.status = OFFLINE; // OFFLINE | ONLINE | SIMULATING | PAUSE | STOP
   }
@@ -120,7 +118,6 @@ class Thing {
     }
     const topic = `things/${this.id}/sensors/${id}`;
     const newSensor = new Sensor(id, topic, dataSource);
-    this.sensorIDs[id] = id;
     this.sensors.push(newSensor);
     // HOT reload sensor
     if (this.status === SIMULATING && this.mqttClient) {
@@ -141,7 +138,6 @@ class Thing {
       return false;
     }
     const newActuator = new Actuator(id);
-    this.actuatorIDs[id] = id;
     this.actuators.push(newActuator);
     console.log(`[${this.id}] added new actuator ${id}`);
     return true;
