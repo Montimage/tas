@@ -1,0 +1,53 @@
+[
+  {
+    "id": "t01",
+    "scale": 2,
+    "stompConfig": {
+      "host": "localhost",
+      "port": "61613"
+    },
+    "sensors": [
+      {
+        "id": "movement-sensor",
+        "scale": 2,
+        "dataSource": {
+          "source": "random",
+          "dataDescription": {
+            "type": "boolean"
+          },
+          "timeInterval": 3
+        }
+      }
+    ],
+    "actuators": [
+      {
+        "id": "light-switch-actuator",
+        "scale": 3
+      }
+    ]
+  },
+  {
+    "id": "t02",
+    "scale": 2,
+    "stompConfig": {
+      "host": "localhost",
+      "port": "61613"
+    },
+    "sensors": [
+      {
+        "id": "light-ambient-sensor",
+        "scale": 3,
+        "dataSource": {
+          "source": "random",
+          "dataDescription": {
+            "type": "double",
+            "min": 0,
+            "max": 10
+          },
+          "timeInterval": 3
+        }
+      }
+    ],
+    "actuators": []
+  }
+]
