@@ -21,8 +21,13 @@ class Thing {
     this.status = OFFLINE; // OFFLINE | ONLINE | SIMULATING | PAUSE | STOP
   }
 
-  publishData(data) {
-    console.log(`[${this.id}] going to publish data: `, data);
+  /**
+   *  Default publish data
+   * @param {Object} data Data to be published
+   * @param {String} publishID The publisher id
+   */
+  publishData(data, publishID) {
+    console.log(`[${this.id}] ${publishID} going to publish data: `, data);
   }
 
   /**
@@ -51,7 +56,9 @@ class Thing {
       console.error(`[${this.id}] Sensor ID ${id} has already existed!`);
       return false;
     }
-    const newSensor = new Sensor(id, dataSource, this.publishData);
+    const newSensor = new Sensor(id, dataSource, (data, publishID) => {
+      this.publishData(data, publishID);
+    });
     this.sensors.push(newSensor);
     // HOT reload sensor
     if (this.status === SIMULATING ) {

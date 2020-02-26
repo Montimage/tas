@@ -1,11 +1,10 @@
-const Thing = require("./Thing");
+const ThingMQTT = require("./ThingMQTT");
 const { readJSONFile } = require("../utils");
 
 const thingConfigFile = process.argv[2];
 
 const createThing = (id, mqttConfig, sensors, actuators) => {
-  console.log(`[${id}] Initializing ...`);
-  const th = new Thing(id);
+  const th = new ThingMQTT(id);
   th.initThing(() => {
     // Add sensors
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
@@ -42,7 +41,7 @@ const createThing = (id, mqttConfig, sensors, actuators) => {
     // setTimeout(() => {
     //   th.stop();
     // }, 20000);
-  });
+  }, mqttConfig);
 };
 
 readJSONFile(thingConfigFile, (err, thingConfigs) => {

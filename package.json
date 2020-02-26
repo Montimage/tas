@@ -15,6 +15,7 @@
   "author": "Montimage",
   "license": "ISC",
   "dependencies": {
+    "geolib": "^3.2.1",
     "mqtt": "^3.0.0"
   }
 }
