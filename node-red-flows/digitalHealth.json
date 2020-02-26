@@ -1,0 +1,542 @@
+[
+    {
+        "id": "1348dd0c.9c1a63",
+        "type": "tab",
+        "label": "Patient-01",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "3fe0922e.db382e",
+        "type": "mqtt in",
+        "z": "1348dd0c.9c1a63",
+        "name": "blood-pressure-sensor",
+        "topic": "things/medicalGW-01-0/sensors/blood-pressure-sensor",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 200,
+        "y": 140,
+        "wires": [
+            [
+                "8447c4d6.9bd368",
+                "66a988aa.0a9038"
+            ]
+        ]
+    },
+    {
+        "id": "cbedeadf.3a4558",
+        "type": "mqtt in",
+        "z": "1348dd0c.9c1a63",
+        "name": "glucose-level-sensor",
+        "topic": "things/medicalGW-01-0/sensors/glucose-level-sensor",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 190,
+        "y": 220,
+        "wires": [
+            [
+                "5ff37dcd.474414"
+            ]
+        ]
+    },
+    {
+        "id": "629f7908.e1b6f8",
+        "type": "mqtt in",
+        "z": "1348dd0c.9c1a63",
+        "name": "motion-detection-sensor",
+        "topic": "things/medicalGW-01-0/sensors/motion-detection-sensor",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 210,
+        "y": 300,
+        "wires": [
+            [
+                "d3c6724.cd1bb9"
+            ]
+        ]
+    },
+    {
+        "id": "1ebb69b5.eda496",
+        "type": "mqtt in",
+        "z": "1348dd0c.9c1a63",
+        "name": "scale-sensor",
+        "topic": "things/medicalGW-01-0/sensors/scale-sensor",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 170,
+        "y": 380,
+        "wires": [
+            [
+                "52c7ff1d.ea624",
+                "6db58ddd.71e314"
+            ]
+        ]
+    },
+    {
+        "id": "8447c4d6.9bd368",
+        "type": "ui_gauge",
+        "z": "1348dd0c.9c1a63",
+        "name": "Blood Pressure Gauge",
+        "group": "ac35df56.49882",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "blood-pressure",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "250",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 520,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "66a988aa.0a9038",
+        "type": "ui_chart",
+        "z": "1348dd0c.9c1a63",
+        "name": "Blood Pressure Chart",
+        "group": "ac35df56.49882",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "blood-pressure",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 520,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d3c6724.cd1bb9",
+        "type": "ui_switch",
+        "z": "1348dd0c.9c1a63",
+        "name": "Motion Detection",
+        "label": "motion-detection",
+        "tooltip": "",
+        "group": "ac35df56.49882",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "str",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "0",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "",
+        "x": 510,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "52c7ff1d.ea624",
+        "type": "ui_text",
+        "z": "1348dd0c.9c1a63",
+        "group": "ac35df56.49882",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "name": "Weight Value",
+        "label": "Weight",
+        "format": "{{msg.payload}}",
+        "layout": "row-left",
+        "x": 490,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "6db58ddd.71e314",
+        "type": "ui_chart",
+        "z": "1348dd0c.9c1a63",
+        "name": "Weight Chart",
+        "group": "ac35df56.49882",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "label": "weight-chart",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 500,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5ff37dcd.474414",
+        "type": "ui_text",
+        "z": "1348dd0c.9c1a63",
+        "group": "ac35df56.49882",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "Glucose Level",
+        "label": "Glucose Level",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 500,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "9dcab2ca.03e14",
+        "type": "mqtt in",
+        "z": "1348dd0c.9c1a63",
+        "name": "blood-pressure-sensor",
+        "topic": "things/medicalGW-01-1/sensors/blood-pressure-sensor",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 180,
+        "y": 720,
+        "wires": [
+            [
+                "29df6fa9.117e7",
+                "eedcbb1d.188378"
+            ]
+        ]
+    },
+    {
+        "id": "b94d8b28.ddc088",
+        "type": "mqtt in",
+        "z": "1348dd0c.9c1a63",
+        "name": "glucose-level-sensor",
+        "topic": "things/medicalGW-01-1/sensors/glucose-level-sensor",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 170,
+        "y": 800,
+        "wires": [
+            [
+                "6b2ed668.8ce0b8"
+            ]
+        ]
+    },
+    {
+        "id": "b442eb21.d73e68",
+        "type": "mqtt in",
+        "z": "1348dd0c.9c1a63",
+        "name": "motion-detection-sensor",
+        "topic": "things/medicalGW-01-1/sensors/motion-detection-sensor",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 190,
+        "y": 880,
+        "wires": [
+            [
+                "6e563d53.3cbe74"
+            ]
+        ]
+    },
+    {
+        "id": "49805489.d4e3fc",
+        "type": "mqtt in",
+        "z": "1348dd0c.9c1a63",
+        "name": "scale-sensor",
+        "topic": "things/medicalGW-01-1/sensors/scale-sensor",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "8d356d97.cb653",
+        "x": 150,
+        "y": 960,
+        "wires": [
+            [
+                "5446bfaa.44acb",
+                "c94426d.fd26cd8"
+            ]
+        ]
+    },
+    {
+        "id": "29df6fa9.117e7",
+        "type": "ui_gauge",
+        "z": "1348dd0c.9c1a63",
+        "name": "Blood Pressure Gauge",
+        "group": "af66e280.05d63",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "blood-pressure",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "250",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 500,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "eedcbb1d.188378",
+        "type": "ui_chart",
+        "z": "1348dd0c.9c1a63",
+        "name": "Blood Pressure Chart",
+        "group": "af66e280.05d63",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "blood-pressure",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 500,
+        "y": 680,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6e563d53.3cbe74",
+        "type": "ui_switch",
+        "z": "1348dd0c.9c1a63",
+        "name": "Motion Detection",
+        "label": "motion-detection",
+        "tooltip": "",
+        "group": "af66e280.05d63",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "str",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "0",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "",
+        "x": 490,
+        "y": 880,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5446bfaa.44acb",
+        "type": "ui_text",
+        "z": "1348dd0c.9c1a63",
+        "group": "af66e280.05d63",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "name": "Weight Value",
+        "label": "Weight",
+        "format": "{{msg.payload}}",
+        "layout": "row-left",
+        "x": 470,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "c94426d.fd26cd8",
+        "type": "ui_chart",
+        "z": "1348dd0c.9c1a63",
+        "name": "Weight Chart",
+        "group": "af66e280.05d63",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "label": "weight-chart",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 480,
+        "y": 1040,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6b2ed668.8ce0b8",
+        "type": "ui_text",
+        "z": "1348dd0c.9c1a63",
+        "group": "af66e280.05d63",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "Glucose Level",
+        "label": "Glucose Level",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 480,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "8d356d97.cb653",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "TelluActiveMQ-Broker",
+        "broker": "192.168.0.11",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "ac35df56.49882",
+        "type": "ui_group",
+        "z": "",
+        "name": "Patient-01",
+        "tab": "4d5fb9dd.f5fcd8",
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "af66e280.05d63",
+        "type": "ui_group",
+        "z": "",
+        "name": "Patient-02",
+        "tab": "4d5fb9dd.f5fcd8",
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "4d5fb9dd.f5fcd8",
+        "type": "ui_tab",
+        "z": "",
+        "name": "TelluDashboard",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
