@@ -27,6 +27,7 @@ class ThingMQTT extends Thing {
    * @param {Object} packet received packet, as defined in mqtt-packet
    */
   handleMQTTMessage (topic, message, packet) {
+    console.log(`[${this.id}] received: ${this.mqttClient.options.href} ${topic}`, message);
     if (topic.startsWith(this.actuatedTopic)) {
       const subTopic = topic.replace(this.actuatedTopic,'');
       const array = subTopic.split('/');
@@ -101,7 +102,7 @@ class ThingMQTT extends Thing {
   publishData(data, publishID) {
     // super.publishData(data,publishID);
     const topic = `things/${this.id}/sensors/${publishID}`;
-    console.log(`[${this.id}] Going to publish data on topic: ${topic}`, data);
+    console.log(`[${this.id}] published: ${this.mqttClient.options.href} ${topic}`, data);
     this.mqttClient.publish(topic, JSON.stringify(data));
   }
 }
