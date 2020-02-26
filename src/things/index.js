@@ -8,7 +8,8 @@ const createThing = (id, mqttConfig, sensors, actuators) => {
   th.initThing(() => {
     // Add sensors
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
-      const { id, dataSource, scale } = sensors[sIndex];
+      const { id, dataSource, scale, disable } = sensors[sIndex];
+      if (disable) continue;
       let nbSensors = scale ? scale : 1;
       if (nbSensors === 1) {
         th.addSensor(id, dataSource);
@@ -22,7 +23,8 @@ const createThing = (id, mqttConfig, sensors, actuators) => {
 
     // Add actuators
     for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
-      const { id, scale } = actuators[aIndex];
+      const { id, scale, disable } = actuators[aIndex];
+      if (disable) continue;
       let nbActuators = scale ? scale : 1;
       if (nbActuators === 1) {
         th.addActuator(id);

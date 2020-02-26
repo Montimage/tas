@@ -9,24 +9,26 @@ Value: `0` or `1`
 ## Enum value
 Some sensors provide the value in an pre-defined array such as: level vibration, ...
 ```json
+// Blood glucose level: https://www.healthhub.sg/a-z/diseases-and-conditions/669/blood-glucose-monitoring
 {
 	"type": "enum",
-	"values": [-5, 6, 2, 10, 12, 40]
+	"values": ["Excellent", "Good", "Acceptable", "Poor"]
 }
 ```
 
 ## Integer value
 Many sensors provide the value in integer format.
 ```json
+// Blood pressure value: http://www.bloodpressureuk.org/microsites/u40/Home/facts/Whatisnormal
 {
   "type": "integer", // type of data
-  "initValue": "18", // initial value -> can be NULL
-  "min": "-273", // minimum value
-  "max": "300", // maximum value
+  "initValue": "100", // initial value -> can be NULL
+  "min": "80", // minimum value
+  "max": "250", // maximum value
   "regular":{ // can be NULL -> the regular value
-    "min": "14", // minimum of regular value
-    "max": "20", // maximum of regular value
-    "step": "2", // maximum different between 2 ajected values.
+    "min": "80", // minimum of regular value
+    "max": "120", // maximum of regular value
+    "step": "1", // maximum different between 2 ajected values.
   },
   "malicious": "abnormal" // abnormal | poisoning | tbd ...
 }
@@ -35,15 +37,16 @@ Many sensors provide the value in integer format.
 ## Double value
 Many sensors provide the value in double format.
 ```json
+// Scale sensor: kg
 {
   "type": "double", // type of data
-  "initValue":"3.5", // initial value -> can be NULL
-  "min": "-10.2", // minimum value
-  "max": "10.5", // maximum value
+  "initValue":"54", // initial value -> can be NULL
+  "min": "0.5", // minimum value
+  "max": "300", // maximum value
   "regular":{ // can be NULL -> the regular value
-    "min": "4.0", // minimum of regular value
-    "max": "5.5", // maximum of regular value
-    "step": "0.5", // maximum different between 2 ajected values.
+    "min": "46", // minimum of regular value
+    "max": "120", // maximum of regular value
+    "step": "0.1", // maximum different between 2 ajected values.
   },
   "malicious": "abnormal" // abnormal | poisoning | tbd ...
 }
