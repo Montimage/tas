@@ -5,8 +5,8 @@ const thingConfigFile = process.argv[2];
 
 const createThing = (id, mqttConfig, sensors, actuators) => {
   console.log(`[${id}] Initializing ...`);
-  const th = new Thing(id, mqttConfig);
-  th.connectToMQTT(() => {
+  const th = new Thing(id);
+  th.initThing(() => {
     // Add sensors
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
       const { id, dataSource, scale } = sensors[sIndex];

@@ -14,24 +14,12 @@ class Sensor {
    * @param {Object} dataSource The data source of the sensor
    * -
    */
-  constructor(id, topic, dataSource) {
+  constructor(id, dataSource, publishDataFct) {
     this.id = id;
-    this.topic = topic;
     this.dataSource = dataSource;
-    this.mqttClient = null;
     this.status = OFFLINE;
     this.dbClient = null;
-  }
-
-  /**
-   * Publish data
-   * @param {String} strData data to be published
-   */
-  publishData(strData) {
-    // console.log("Going to send data", this.topic, strData);
-    const data = JSON.stringify(strData);
-    console.log(`[${this.id}] ${this.topic} `, data);
-    this.mqttClient.publish(this.topic, data);
+    this.publishDataFct = publishDataFct;
   }
 
   /**
@@ -47,7 +35,7 @@ class Sensor {
           if (this.status === SIMULATING) {
             const dataToBePublished = JSON.parse(listData[index].value);
             console.log(`[${this.id}] `, dataToBePublished);
-            this.publishData(dataToBePublished);
+            this.publishDataFct(dataToBePublished);
             if (index === listData.length - 1) {
               console.log(`[${this.id}] Finished!`);
               this.status = OFFLINE;
@@ -70,7 +58,7 @@ class Sensor {
     const timerID = setInterval(() => {
       if (this.status === SIMULATING) {
         dataGenerator.generateData(data => {
-          this.publishData(data);
+          this.publishDataFct(data);
         });
       } else {
         clearInterval(timerID);
@@ -134,10 +122,9 @@ class Sensor {
    * Start simulating a sensor
    * @param {Object} mqttClient The mqtt client to publish data
    */
-  start(mqttClient) {
+  start() {
     if (this.status === OFFLINE) {
       console.log(`[${this.id}] publishes data on channel: ${this.topic}`);
-      this.mqttClient = mqttClient;
       if (this.dataSource.source === "random") {
         this.status = SIMULATING;
         this.generateRandomData();

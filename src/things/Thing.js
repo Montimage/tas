@@ -1,4 +1,3 @@
-const mqtt = require("mqtt");
 const Actuator = require('../actuators');
 const Sensor = require('../sensors');
 const {
@@ -15,14 +14,15 @@ const {
  *  + receive data - listen to multiple channels: `things/thing-id/actuators/#`
  */
 class Thing {
-  constructor(id, mqttConfig) {
+  constructor(id) {
     this.id = id;
-    this.mqttConfig = mqttConfig;
-    this.mqttClient = null;
     this.sensors = [];
     this.actuators = [];
-    this.actuatedTopic = `things/${id}/actuators/`;
     this.status = OFFLINE; // OFFLINE | ONLINE | SIMULATING | PAUSE | STOP
+  }
+
+  publishData(data) {
+    console.log(`[${this.id}] going to publish data: `, data);
   }
 
   /**
@@ -41,71 +41,6 @@ class Thing {
   }
 
   /**
-   * handle actuated data
-   * @param {String} topic topic of the received packet
-   * @param {String} message payload of the received packet
-   * @param {Object} packet received packet, as defined in mqtt-packet
-   */
-  handleMessage (topic, message, packet) {
-    if (topic.startsWith(this.actuatedTopic)) {
-      const subTopic = topic.replace(this.actuatedTopic,'');
-      const array = subTopic.split('/');
-      // find the actuator id in the subtopic
-      for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
-        const actuator = this.actuators[aIndex];
-        if (array.indexOf(actuator.id) > -1) {
-          actuator.updateActuatedData(message);
-          return actuator.showStatus();
-        }
-      }
-      console.error(`[${this.id}] ERROR: cannot find the actuator ${array[4]}`);
-    } else {
-      console.log(`[${this.id}] Ignore message: `, topic, message);
-    }
-  }
-
-  /**
-   * Connect to MQTT broker server
-   */
-  connectToMQTT(callback) {
-    if (this.mqttClient) {
-      return callback();
-    } else {
-      const mqttBrokerURL = `mqtt://${this.mqttConfig.HOST}:${this.mqttConfig.PORT}`;
-      let mqttClient = null;
-      if (this.mqttConfig.options) {
-        mqttClient = mqtt.connect(mqttBrokerURL, this.mqttConfig.options);
-      } else {
-        mqttClient = mqtt.connect(mqttBrokerURL);
-      }
-
-      mqttClient.on('connect', () => {
-        console.log(`[${this.id}] connected to MQTT broker ${mqttBrokerURL}`);
-        this.mqttClient = mqttClient;
-        this.setStatus(ONLINE);
-        // Subscribe to get the downstream data for actuators
-        this.mqttClient.subscribe(`${this.actuatedTopic}#`);
-        console.log(`[${this.id}] listening actuated data on channel: ${this.actuatedTopic}#`);
-        callback();
-      });
-
-      mqttClient.on('error', (err) => {
-        console.error(`[${this.id}] ERROR: cannot connect to MQTT broker`, err);
-      });
-
-      mqttClient.on('offline', () => {
-        console.log(`[${this.id}] gone offline!`);
-        this.setStatus(OFFLINE);
-      });
-
-      mqttClient.on('message', (topic, message, packet) => {
-        // console.log(`[Thing ${this.id}] received message on topic: ${topic}`);
-        this.handleMessage(topic, message.toString(), packet);
-      });
-    }
-  }
-
-  /**
    * Add a new Sensor into the current THING
    * The sensor collect the data (generate randomly or from database) and publish the data to the gateway via mqtt broker
    * @param {String} id The sensor's ID
@@ -116,12 +51,11 @@ class Thing {
       console.error(`[${this.id}] Sensor ID ${id} has already existed!`);
       return false;
     }
-    const topic = `things/${this.id}/sensors/${id}`;
-    const newSensor = new Sensor(id, topic, dataSource);
+    const newSensor = new Sensor(id, dataSource, this.publishData);
     this.sensors.push(newSensor);
     // HOT reload sensor
-    if (this.status === SIMULATING && this.mqttClient) {
-      this.sensors[this.sensors.length - 1].start(this.mqttClient);
+    if (this.status === SIMULATING ) {
+      this.sensors[this.sensors.length - 1].start();
     }
     console.log(`[${this.id}] added new sensor ${id}`);
     return true;
@@ -144,12 +78,22 @@ class Thing {
   }
 
   /**
+   * Initialise the THING
+   * @param {Function} callback The callback function
+   */
+  initThing(callback) {
+    console.log(`[${this.id}] initializing...`);
+    this.status = ONLINE;
+    return callback();
+  }
+
+  /**
    * Start the simulation of this THING
    */
   start() {
     switch (this.getStatus()) {
       case ONLINE:
-        this.sensors.map((sensor) => sensor.start(this.mqttClient));
+        this.sensors.map((sensor) => sensor.start());
         this.setStatus(SIMULATING);
         break;
       case OFFLINE:
@@ -173,13 +117,11 @@ class Thing {
         break;
       case ONLINE:
         this.setStatus(OFFLINE);
-        this.mqttClient.end();
         break;
       case SIMULATING:
         console.log(`[${this.id}] going to stop the simulation!`);
         this.sensors.map((sensor) => sensor.stop());
         this.setStatus(OFFLINE);
-        this.mqttClient.end();
         break;
       default:
         break;
