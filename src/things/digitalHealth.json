@@ -21,9 +21,9 @@
               "min": 80,
               "max": 120,
               "step": 5
-            }
-          },
-          "timeInterval": 3
+            },
+            "timeInterval": 3
+          }
         }
       },
       {
@@ -37,9 +37,9 @@
               "Good",
               "Acceptable",
               "Poor"
-            ]
-          },
-          "timeInterval": 3
+            ],
+            "timeInterval": 3
+          }
         }
       },
       {
@@ -47,9 +47,9 @@
         "dataSource": {
           "source": "random",
           "dataDescription": {
-            "type": "boolean"
-          },
-          "timeInterval": 3
+            "type": "boolean",
+            "timeInterval": 3
+          }
         }
       },
       {
@@ -65,9 +65,9 @@
               "min": 46.0,
               "max": 120.0,
               "step": 1
-            }
-          },
-          "timeInterval": 3
+            },
+            "timeInterval": 3
+          }
         }
       }
     ],

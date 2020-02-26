@@ -55,8 +55,9 @@ const saveData = (type, id, data, generatedTime) => {
  * @param {Number} duration The duration of the generating - in seconds
  * @param {Object} dataDescription The definition of the genereated data
  */
-const startGeneratingData = (type, id, timeInterval, _startTime, duration, dataDescription) => {
-  const dataGenerator = new DataGenerator(dataDescription, timeInterval);
+const startGeneratingData = (type, id, _startTime, duration, dataDescription) => {
+  const { timeInterval } = dataDescription;
+  const dataGenerator = new DataGenerator(dataDescription);
   let timeDelta = 0;
   let startTime = _startTime;
   if (!startTime) {
@@ -111,25 +112,25 @@ readJSONFile(dataConfigFile, (err, dataConfig) => {
     console.log("Connected to database");
     // Generate sensors data
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
-      const {id, timeInterval, startTime, duration, dataDescription, scale} = sensors[sIndex];
+      const {id, startTime, duration, dataDescription, scale} = sensors[sIndex];
       const nbSensors = scale ? scale : 1;
       if (nbSensors === 1) {
-        startGeneratingData(SENSOR_TYPE, id, timeInterval, startTime, duration, dataDescription);
+        startGeneratingData(SENSOR_TYPE, id, startTime, duration, dataDescription);
       } else {
         for (let index = 0; index < nbSensors; index++) {
-          startGeneratingData(SENSOR_TYPE, `${id}-${index}`, timeInterval, startTime, duration, dataDescription);
+          startGeneratingData(SENSOR_TYPE, `${id}-${index}`, startTime, duration, dataDescription);
         }
       }
     }
     // Generate actuators data
     for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
-      const {id, timeInterval, startTime, duration, dataDescription, scale} = actuators[aIndex];
+      const {id, startTime, duration, dataDescription, scale} = actuators[aIndex];
       const nbActuators = scale ? scale : 1;
       if (nbActuators === 1) {
-        startGeneratingData(ACTUATOR_TYPE, id, timeInterval, startTime, duration, dataDescription);
+        startGeneratingData(ACTUATOR_TYPE, id, startTime, duration, dataDescription);
       } else {
         for (let index = 0; index < nbActuators; index++) {
-          startGeneratingData(ACTUATOR_TYPE, `${id}-${index}`, timeInterval, startTime, duration, dataDescription);
+          startGeneratingData(ACTUATOR_TYPE, `${id}-${index}`, startTime, duration, dataDescription);
         }
       }
     }

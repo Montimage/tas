@@ -21,7 +21,8 @@ const {
  * DataGenerator presents a Regular and Malicious Data Generator
  */
 class DataGenerator {
-  constructor(dataDescription, timeInterval = null) {
+  constructor(dataDescription) {
+    const {timeInterval} = dataDescription;
     this.type = dataDescription.type;
     this.dataDesc = dataDescription;
     this.lastValue = null;

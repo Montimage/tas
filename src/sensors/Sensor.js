@@ -50,11 +50,12 @@ class Sensor {
    * Generate randomly sensor' data
    */
   generateRandomData() {
-    const { dataDescription, timeInterval } = this.dataSource;
+    const { dataDescription } = this.dataSource;
+    const { timeInterval } = dataDescription;
     console.log(
       `[${this.id}] generate randomly data ${dataDescription.type} and publish the data in every ${timeInterval} seconds`
     );
-    const dataGenerator = new DataGenerator(dataDescription, timeInterval);
+    const dataGenerator = new DataGenerator(dataDescription);
     const timerID = setInterval(() => {
       if (this.status === SIMULATING) {
         dataGenerator.generateData(data => {

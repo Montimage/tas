@@ -10,12 +10,12 @@
     {
       "id": "sen-02",
       "scale": 2,
-      "timeInterval": 3,
       "startTime": null,
       "duration": 10,
       "dataDescription": {
         "type":"enum",
-        "values": ["Monday","Tuesday","Wednesday","Thursday","Friday"]
+        "values": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+        "timeInterval": 3
       }
     }
   ],
@@ -23,11 +23,11 @@
     {
       "id": "act-01",
       "scale": 2,
-      "timeInterval": 5,
       "startTime": null,
       "duration": 20,
       "dataDescription": {
-        "type":"boolean"
+        "type":"boolean",
+        "timeInterval": 5
       }
     }
   ]

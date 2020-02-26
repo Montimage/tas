@@ -14,9 +14,9 @@
         "dataSource": {
           "source": "random",
           "dataDescription": {
-            "type": "boolean"
-          },
-          "timeInterval": 3
+            "type": "boolean",
+            "timeInterval": 3
+          }
         }
       }
     ],
@@ -44,9 +44,9 @@
           "dataDescription": {
             "type": "double",
             "min": 0,
-            "max": 10
-          },
-          "timeInterval": 3
+            "max": 10,
+            "timeInterval": 3
+          }
         }
       }
     ],

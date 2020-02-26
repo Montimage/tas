@@ -14,9 +14,9 @@
         "dataSource": {
           "source": "random",
           "dataDescription": {
-            "type": "boolean"
-          },
-          "timeInterval": 3
+            "type": "boolean",
+            "timeInterval": 3
+          }
         }
       },
       {
@@ -32,9 +32,9 @@
               "Wednesday",
               "Thursday",
               "Friday"
-            ]
-          },
-          "timeInterval": 3
+            ],
+            "timeInterval": 3
+          }
         }
       },
       {
@@ -85,9 +85,9 @@
               "Wednesday",
               "Thursday",
               "Friday"
-            ]
-          },
-          "timeInterval": 3
+            ],
+            "timeInterval": 3
+          }
         }
       }
     ],

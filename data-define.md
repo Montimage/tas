@@ -4,7 +4,7 @@ JSON object defines the data of sensor
 Some sensors provide a boolean value such as: movevement detection, ...
 Value: `0` or `1`
 ```json
-{ "type": "boolean" }
+{ "type": "boolean", "timeInterval":3 }
 ```
 ## Enum value
 Some sensors provide the value in an pre-defined array such as: level vibration, ...
@@ -30,6 +30,7 @@ Many sensors provide the value in integer format.
     "max": "120", // maximum of regular value
     "step": "1", // maximum different between 2 ajected values.
   },
+  "timeInterval":3,
   "malicious": "abnormal" // abnormal | poisoning | tbd ...
 }
 ```
@@ -48,6 +49,7 @@ Many sensors provide the value in double format.
     "max": "120", // maximum of regular value
     "step": "0.1", // maximum different between 2 ajected values.
   },
+  "timeInterval":3,
   "malicious": "abnormal" // abnormal | poisoning | tbd ...
 }
 ```
@@ -63,7 +65,7 @@ Longtitude range value: `-180 -> 80`
   "type": "location",
   "initValue": { // first position - can be NULL
     "lat": "48.828886",
-    "lng": " 2.353675"
+    "lng": "2.353675"
   },
   "limit": { // limitation of the location - can be NULL
     "lat" : {
@@ -75,6 +77,7 @@ Longtitude range value: `-180 -> 80`
       "max": "20.0",
     }
   },
+  "timeInterval":3,
   "bearingDirection": "180", // The bearing direction (degrees)
   "velo": "5",  // The velocity of the movement (km/h) -> can be NULL
   "malicious": "poisoning" // abnormal | poisoning | tbd ...

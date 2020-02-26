@@ -10,22 +10,22 @@
     {
       "id": "sen-01",
       "scale": 2,
-      "timeInterval": 5,
       "startTime": null,
       "duration": null,
       "dataDescription": {
-        "type":"boolean"
+        "type":"boolean",
+        "timeInterval": 5
       }
     },
     {
       "id": "sen-02",
       "scale": 3,
-      "timeInterval": 3,
       "startTime": null,
       "duration": null,
       "dataDescription": {
         "type":"enum",
-        "values": ["Monday","Tuesday","Wednesday","Thursday","Friday"]
+        "values": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+        "timeInterval": 3
       }
     }
   ],
@@ -33,22 +33,22 @@
     {
       "id": "act-01",
       "scale": 2,
-      "timeInterval": 5,
       "startTime": null,
       "duration": null,
       "dataDescription": {
-        "type":"boolean"
+        "type":"boolean",
+        "timeInterval": 5
       }
     },
     {
       "id": "act-02",
       "scale": 2,
-      "timeInterval": 10,
       "startTime": null,
       "duration": null,
       "dataDescription": {
         "type":"enum",
-        "values": ["Lowest","Low","Medium","High","Highest"]
+        "values": ["Lowest","Low","Medium","High","Highest"],
+        "timeInterval": 10
       }
     }
   ]
