@@ -51,6 +51,12 @@
         }
       }
     ],
-    "actuators": []
+    "actuators": [
+      {
+        "id": "heating-level-actuator",
+        "options":{
+          "stompTopic": "/queue/tellu-activemq-broker/actuators/medicalGW-01/act-01"
+        }
+      }]
   }
 ]

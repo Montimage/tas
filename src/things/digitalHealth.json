@@ -4,13 +4,16 @@
     "scale": 2,
     "protocol":"MQTT",
     "commConfig": {
-      "HOST": "localhost",
-      "PORT": "1883",
+      "host": "localhost",
+      "port": "1883",
       "options": null
     },
     "sensors": [
       {
         "id": "blood-pressure-sensor",
+        "options": {
+          "mqttTopic":"tellu-activemq-broker/sensors/sensor-01"
+        },
         "dataSource": {
           "source": "random",
           "dataDescription": {
@@ -75,6 +78,12 @@
     "actuators": [
       {
         "id": "light-intensity-actuator"
+      },
+      {
+        "id": "heating-level-actuator",
+        "options":{
+          "mqttTopic": "tellu-activemq-broker/actuators/medicalGW-01/act-01"
+        }
       }
     ]
   }

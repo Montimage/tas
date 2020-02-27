@@ -17,6 +17,7 @@ class ThingMQTT extends Thing {
   constructor(id) {
     super(id);
     this.mqttClient = null;
+    this.mqttTopics = {};
     this.actuatedTopic = `things/${id}/actuators/`;
   }
 
@@ -28,20 +29,30 @@ class ThingMQTT extends Thing {
    */
   handleMQTTMessage (topic, message, packet) {
     console.log(`[${this.id}] received: ${this.mqttClient.options.href} ${topic}`, message);
-    if (topic.startsWith(this.actuatedTopic)) {
-      const subTopic = topic.replace(this.actuatedTopic,'');
-      const array = subTopic.split('/');
-      // find the actuator id in the subtopic
-      for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
-        const actuator = this.actuators[aIndex];
-        if (array.indexOf(actuator.id) > -1) {
-          actuator.updateActuatedData(message);
-          return actuator.showStatus();
-        }
+    if (this.mqttTopics[topic]) {
+      // Check for the custom topic first
+      const actuators = this.mqttTopics[topic];
+      for (let index = 0; index < actuators.length; index++) {
+        const actuator = actuators[index];
+        actuator.updateActuatedData(message);
+        actuator.showStatus();
       }
-      console.error(`[${this.id}] ERROR: cannot find the actuator ${array[4]}`);
     } else {
-      console.log(`[${this.id}] Ignore message: `, topic, message);
+      if (topic.startsWith(this.actuatedTopic)) {
+        const subTopic = topic.replace(this.actuatedTopic,'');
+        const array = subTopic.split('/');
+        // find the actuator id in the subtopic
+        for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
+          const actuator = this.actuators[aIndex];
+          if (array.indexOf(actuator.id) > -1) {
+            actuator.updateActuatedData(message);
+            return actuator.showStatus();
+          }
+        }
+        console.error(`[${this.id}] ERROR: cannot find the actuator ${array[4]}`);
+      } else {
+        console.log(`[${this.id}] Ignore message: `, topic, message);
+      }
     }
   }
 
@@ -84,6 +95,26 @@ class ThingMQTT extends Thing {
   }
 
   /**
+   * Process custom downstream topic of the actuator
+   * @param {String} id The actuator id
+   * @param {Object} options The options for actuator
+   */
+  addActuator(id, options) {
+    const newActuator = super.addActuator(id, options);
+    if (options && options.mqttTopic) {
+      if (!this.mqttClient) {
+        console.error(`[${this.id}] mqttClient is not ready yet!`);
+      } else {
+        this.mqttClient.subscribe(options.mqttTopic);
+        if (!this.mqttTopics[options.mqttTopic]) {
+          this.mqttTopics[options.mqttTopic] = [];
+        }
+        this.mqttTopics[options.mqttTopic].push(newActuator);
+      }
+    }
+  }
+
+  /**
    * Stop the simulation of this THING
    * @extends from Parent class
    */
@@ -99,9 +130,15 @@ class ThingMQTT extends Thing {
    * @param {Object} data Data to be published
    * @param {String} publishID The ID of the publisher
    */
-  publishData(data, publishID) {
+  publishData(data, publishID, publishOptions = null) {
     // super.publishData(data,publishID);
-    const topic = `things/${this.id}/sensors/${publishID}`;
+    let topic = null;
+    if (publishOptions && publishOptions.mqttTopic) {
+      topic = publishOptions.mqttTopic;
+      // console.log('custom topic: ', topic);
+    } else {
+      topic = `things/${this.id}/sensors/${publishID}`;
+    }
     console.log(`[${this.id}] published: ${this.mqttClient.options.href} ${topic}`, data);
     this.mqttClient.publish(topic, JSON.stringify(data));
   }

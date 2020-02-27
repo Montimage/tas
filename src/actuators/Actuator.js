@@ -5,10 +5,11 @@ const { SIMULATING, OFFLINE } = require('../constants');
  * - Display the status
  */
 class Actuator{
-  constructor(id) {
+  constructor(id, options) {
     this.id = id;
     this.actuatedData = null;
     this.timestamp = null;
+    this.options = options;
   }
 
   /**
@@ -25,7 +26,7 @@ class Actuator{
    * Show status of the actuator
    */
   showStatus() {
-    console.log(`[${this.id}] ${this.timestamp} ${JSON.stringify(this.actuatedData)}`);
+    console.log(`[${this.id}] ${new Date(this.timestamp)} ${JSON.stringify(this.actuatedData)}`);
   }
 }
 

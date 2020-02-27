@@ -16,6 +16,7 @@ class ThingSTOMP extends Thing {
   constructor(id) {
     super(id);
     this.stompClient = null;
+    this.stompTopics = {};
     this.actuatedTopic = `things/${id}/actuators/`;
   }
 
@@ -26,28 +27,38 @@ class ThingSTOMP extends Thing {
    * @param {Object} packet received packet, as defined in mqtt-packet
    */
   handleSTOMPMessage(message) {
-    this.stompClient.ack(message); // ack message
+    // this.stompClient.ack(message); // ack message
     const topic = message.headers.destination;
     message.readString("UTF-8", (err, body) => {
       if (err) {
         console.error("Failed to read message", err);
       } else {
-        if (topic.startsWith(this.actuatedTopic)) {
-          const subTopic = topic.replace(this.actuatedTopic, "");
-          const array = subTopic.split("/");
-          // find the actuator id in the subtopic
-          for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
-            const actuator = this.actuators[aIndex];
-            if (array.indexOf(actuator.id) > -1) {
-              actuator.updateActuatedData(body);
-              return actuator.showStatus();
-            }
+        if (this.stompTopics[topic]) {
+          // Check for the custom topic first
+          const actuators = this.stompTopics[topic];
+          for (let index = 0; index < actuators.length; index++) {
+            const actuator = actuators[index];
+            actuator.updateActuatedData(body);
+            actuator.showStatus();
           }
-          console.error(
-            `[${this.id}] ERROR: cannot find the actuator ${array[4]}`
-          );
         } else {
-          console.log(`[${this.id}] Ignore message: `, topic, body);
+          if (topic.startsWith(this.actuatedTopic)) {
+            const subTopic = topic.replace(this.actuatedTopic, "");
+            const array = subTopic.split("/");
+            // find the actuator id in the subtopic
+            for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
+              const actuator = this.actuators[aIndex];
+              if (array.indexOf(actuator.id) > -1) {
+                actuator.updateActuatedData(body);
+                return actuator.showStatus();
+              }
+            }
+            console.error(
+              `[${this.id}] ERROR: cannot find the actuator ${array[4]}`
+            );
+          } else {
+            console.log(`[${this.id}] Ignore message: `, topic, body);
+          }
         }
       }
     });
@@ -80,6 +91,33 @@ class ThingSTOMP extends Thing {
         this.setStatus(ONLINE);
       }
     });
+  }
+
+  /**
+   * Process custom downstream topic of the actuator
+   * @param {String} id The actuator id
+   * @param {Object} options The options for actuator
+   */
+  addActuator(id, options) {
+    const newActuator = super.addActuator(id, options);
+    if (options && options.stompTopic) {
+      if (!this.stompClient) {
+        console.error(`[${this.id}] stompClient is not ready yet!`);
+      } else {
+        this.stompClient.subscribe({destination: options.stompTopic},(err2, message) => {
+          if (err2) {
+            console.error("Failed to read message", err2);
+          } else {
+            message.ack();
+            this.handleSTOMPMessage(message);
+          }
+        });
+        if (!this.stompTopics[options.stompTopic]) {
+          this.stompTopics[options.stompTopic] = [];
+        }
+        this.stompTopics[options.stompTopic].push(newActuator);
+      }
+    }
   }
 
   /**

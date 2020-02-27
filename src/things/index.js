@@ -14,30 +14,30 @@ const createThing = (id, protocol, commConfig, sensors, actuators) => {
   th.initThing(() => {
     // Add sensors
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
-      const { id, dataSource, scale, disable } = sensors[sIndex];
+      const { id, dataSource, scale, disable, options } = sensors[sIndex];
       if (disable) continue;
       let nbSensors = scale ? scale : 1;
       if (nbSensors === 1) {
-        th.addSensor(id, dataSource);
+        th.addSensor(id, dataSource, options);
       } else {
         for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
           const sID = `${id}-${sensorIndex}`;
-          th.addSensor(sID, dataSource);
+          th.addSensor(sID, dataSource, options);
         }
       }
     }
 
     // Add actuators
     for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
-      const { id, scale, disable } = actuators[aIndex];
+      const { id, scale, disable, options } = actuators[aIndex];
       if (disable) continue;
       let nbActuators = scale ? scale : 1;
       if (nbActuators === 1) {
-        th.addActuator(id);
+        th.addActuator(id, options);
       } else {
         for (let actuatorIndex = 0; actuatorIndex < nbActuators; actuatorIndex++) {
           const actID = `${id}-${actuatorIndex}`;
-          th.addActuator(actID);
+          th.addActuator(actID, options);
         }
       }
     }

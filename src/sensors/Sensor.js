@@ -14,12 +14,13 @@ class Sensor {
    * @param {Object} dataSource The data source of the sensor
    * -
    */
-  constructor(id, dataSource, publishDataFct) {
+  constructor(id, dataSource, publishDataFct, options = null) {
     this.id = id;
     this.dataSource = dataSource;
     this.status = OFFLINE;
     this.dbClient = null;
     this.publishDataFct = publishDataFct;
+    this.options = options;
   }
 
   /**
@@ -35,7 +36,7 @@ class Sensor {
           if (this.status === SIMULATING) {
             const dataToBePublished = JSON.parse(listData[index].value);
             console.log(`[${this.id}] `, dataToBePublished);
-            this.publishDataFct(dataToBePublished, this.id);
+            this.publishDataFct(dataToBePublished, this.id, this.options);
             if (index === listData.length - 1) {
               console.log(`[${this.id}] Finished!`);
               this.status = OFFLINE;
@@ -59,7 +60,7 @@ class Sensor {
     const timerID = setInterval(() => {
       if (this.status === SIMULATING) {
         dataGenerator.generateData(data => {
-          this.publishDataFct(data, this.id);
+          this.publishDataFct(data, this.id, this.options);
         });
       } else {
         clearInterval(timerID);

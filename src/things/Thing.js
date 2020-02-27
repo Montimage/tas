@@ -26,7 +26,7 @@ class Thing {
    * @param {Object} data Data to be published
    * @param {String} publishID The publisher id
    */
-  publishData(data, publishID) {
+  publishData(data, publishID, publishOptions = null) {
     console.log(`[${this.id}] ${publishID} going to publish data: `, data);
   }
 
@@ -51,14 +51,14 @@ class Thing {
    * @param {String} id The sensor's ID
    * @param {Object} dataSource The description of the data source of the sensors (see the Sensor class for more information)
    */
-  addSensor (id, dataSource) {
+  addSensor (id, dataSource, options = null) {
     if (this.sensors[id]) {
       console.error(`[${this.id}] Sensor ID ${id} has already existed!`);
       return false;
     }
-    const newSensor = new Sensor(id, dataSource, (data, publishID) => {
-      this.publishData(data, publishID);
-    });
+    const newSensor = new Sensor(id, dataSource, (data, publishID, options) => {
+      this.publishData(data, publishID, options);
+    }, options);
     this.sensors.push(newSensor);
     // HOT reload sensor
     if (this.status === SIMULATING ) {
@@ -76,12 +76,12 @@ class Thing {
   addActuator (id) {
     if (this.actuators[id]) {
       console.error(`[${this.id}] Actuator ID ${id} has already existed!`);
-      return false;
+      return null;
     }
     const newActuator = new Actuator(id);
     this.actuators.push(newActuator);
     console.log(`[${this.id}] added new actuator ${id}`);
-    return true;
+    return newActuator;
   }
 
   /**
