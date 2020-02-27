@@ -126,7 +126,7 @@ class Sensor {
    */
   start() {
     if (this.status === OFFLINE) {
-      console.log(`[${this.id}] publishes data on channel: ${this.topic}`);
+      console.log(`[${this.id}] has been started!`);
       if (this.dataSource.source === "random") {
         this.status = SIMULATING;
         this.generateRandomData();

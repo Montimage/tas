@@ -12,6 +12,7 @@
     "sensors": [
       {
         "id": "movement-sensor",
+        "disable": true,
         "name": "Motion Sensor",
         "icon": "fa-motion",
         "dataSource": {
@@ -48,6 +49,11 @@
             "type": "double",
             "min": 0,
             "max": 10,
+            "regular":{
+              "min": 4,
+              "max": 8,
+              "step": 1
+            },
             "timeInterval": 3,
             "behaviour": "abnormal"
           }
