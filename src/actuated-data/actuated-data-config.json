@@ -2,36 +2,36 @@
   {
     "id": "act-01",
     "scale": 2,
-    "mqttConfig":{
-      "HOST":"localhost",
-      "PORT":"1883",
+    "commConfig":{
+      "host":"localhost",
+      "port":"1883",
       "options": null,
       "topic": "things/random/actuators/act-01"
     },
     "dataSource": {
       "source":"random",
       "dataDescription": {
-        "type": "boolean"
-      },
-      "timeInterval": 3
+        "type": "boolean",
+        "timeInterval": 3
+      }
     }
   },
   {
     "id": "act-02",
-    "mqttConfig":{
-      "HOST":"localhost",
-      "PORT":"1882",
+    "commConfig":{
+      "host":"localhost",
+      "port":"1882",
       "options": null,
       "topic": "things/database/actuators/act-02"
     },
     "dataSource": {
       "source":"database",
       "dbConfig": {
-        "HOST": "192.168.0.11",
-        "PORT": "27017",
-        "USER": "mmtbox",
-        "PASSWORD": "mmtbox",
-        "DBNAME": "admin"
+        "host": "192.168.0.11",
+        "port": "27017",
+        "user": "mmtbox",
+        "password": "mmtbox",
+        "dbname": "admin"
       },
       "startTime": 1582212330195,
       "endTime": 1582212366097

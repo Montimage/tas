@@ -17,16 +17,16 @@ class ActuatedData extends Sensor {
       ? this.dataSource.endTime
       : Date.now();
     console.log(
-      `[${this.id}] read data from database ${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DBNAME}`
+      `[${this.id}] read data from database ${dbConfig.host}:${dbConfig.port}/${dbConfig.dbname}`
     );
     console.log(`[${this.id}] StartTime: ${startTime}, endTime: ${endTime}`);
-    if (dbConfig.USER && dbConfig.PASSWORD) {
-      this.dbClient = new ENACTDB(dbConfig.HOST, dbConfig.PORT, dbConfig.DBNAME, {
-        userName: dbConfig.USER,
-        password: dbConfig.PASSWORD
+    if (dbConfig.user && dbConfig.password) {
+      this.dbClient = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname, {
+        userName: dbConfig.user,
+        password: dbConfig.password
       });
     } else {
-      this.dbClient = new ENACTDB(dbConfig.HOST, dbConfig.PORT, dbConfig.DBNAME);
+      this.dbClient = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname);
     }
     this.dbClient.connect(() => {
       console.log(`[${this.id}] connected to database`);
