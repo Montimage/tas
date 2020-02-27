@@ -1,10 +1,16 @@
 const ThingMQTT = require("./ThingMQTT");
+const ThingSTOMP = require('./ThingSTOMP');
 const { readJSONFile } = require("../utils");
 
 const thingConfigFile = process.argv[2];
 
-const createThing = (id, mqttConfig, sensors, actuators) => {
-  const th = new ThingMQTT(id);
+const createThing = (id, protocol, commConfig, sensors, actuators) => {
+  let Thing = ThingMQTT; // MQTT protocol by default
+  if (protocol.toUpperCase() === 'STOMP') {
+    Thing = ThingSTOMP; // Switch to STOMP protocol
+  }
+  // Add more protocol here
+  const th = new Thing(id);
   th.initThing(() => {
     // Add sensors
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
@@ -43,7 +49,7 @@ const createThing = (id, mqttConfig, sensors, actuators) => {
     // setTimeout(() => {
     //   th.stop();
     // }, 20000);
-  }, mqttConfig);
+  }, commConfig);
 };
 
 readJSONFile(thingConfigFile, (err, thingConfigs) => {
@@ -51,14 +57,14 @@ readJSONFile(thingConfigFile, (err, thingConfigs) => {
     console.error(`[ERROR] Cannot read the config of thing:`, thingConfigFile);
   } else {
     for (let index = 0; index < thingConfigs.length; index++) {
-      const { scale, id, mqttConfig, sensors, actuators } = thingConfigs[index];
+      const { scale, id, protocol, commConfig, sensors, actuators } = thingConfigs[index];
       let nbThings = scale ? scale : 1;
       if (nbThings === 1) {
-        createThing(id, mqttConfig, sensors, actuators);
+        createThing(id, protocol, commConfig, sensors, actuators);
       } else {
         for (let tIndex = 0; tIndex < nbThings; tIndex++) {
           const tID = `${id}-${tIndex}`;
-          createThing(tID, mqttConfig, sensors, actuators);
+          createThing(tID, protocol, commConfig, sensors, actuators);
         }
       }
     }

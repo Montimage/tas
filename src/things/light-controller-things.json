@@ -1,7 +1,8 @@
 [
   {
     "id": "t01",
-    "mqttConfig": {
+    "protocol":"MQTT",
+    "commConfig": {
       "HOST": "localhost",
       "PORT": "1883",
       "options": null

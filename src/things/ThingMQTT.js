@@ -50,7 +50,7 @@ class ThingMQTT extends Thing {
    * @param {Function} callback The callback function
    */
   initThing(callback, mqttConfig) {
-      const mqttBrokerURL = `mqtt://${mqttConfig.HOST}:${mqttConfig.PORT}`;
+      const mqttBrokerURL = `mqtt://${mqttConfig.host}:${mqttConfig.port}`;
       let mqttClient = null;
       if (mqttConfig.options) {
         mqttClient = mqtt.connect(mqttBrokerURL, mqttConfig.options);

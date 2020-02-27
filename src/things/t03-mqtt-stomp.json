@@ -2,11 +2,10 @@
   {
     "id": "t01",
     "scale": 2,
-    "protocol":"MQTT",
+    "protocol":"STOMP",
     "commConfig": {
-      "HOST": "localhost",
-      "PORT": "1883",
-      "options": null
+      "host": "localhost",
+      "port": "61613"
     },
     "sensors": [
       {
@@ -19,7 +18,24 @@
             "timeInterval": 3
           }
         }
-      },
+      }
+    ],
+    "actuators": [
+      {
+        "id": "light-switch-actuator",
+        "scale": 3
+      }
+    ]
+  },
+  {
+    "id": "t02",
+    "scale": 2,
+    "protocol":"MQTT",
+    "commConfig": {
+      "host": "localhost",
+      "port": "1883"
+    },
+    "sensors": [
       {
         "id": "light-ambient-sensor",
         "scale": 3,
@@ -30,16 +46,11 @@
             "min": 0,
             "max": 10,
             "timeInterval": 3,
-            "behaviour":"normal"
+            "behaviour":"abnormal"
           }
         }
       }
     ],
-    "actuators": [
-      {
-        "id": "light-switch-actuator",
-        "scale": 2
-      }
-    ]
+    "actuators": []
   }
 ]

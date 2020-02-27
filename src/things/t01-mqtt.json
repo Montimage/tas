@@ -1,17 +1,19 @@
 [
   {
     "id": "t01",
-    "scale": 2,
+    "name": "Room01",
+    "icon": "fa-room",
     "protocol":"MQTT",
     "commConfig": {
-      "HOST": "localhost",
-      "PORT": "1883",
+      "host": "localhost",
+      "port": "1883",
       "options": null
     },
     "sensors": [
       {
         "id": "movement-sensor",
-        "scale": 2,
+        "name": "Motion Sensor",
+        "icon": "fa-motion",
         "dataSource": {
           "source": "random",
           "dataDescription": {
@@ -19,10 +21,27 @@
             "timeInterval": 3
           }
         }
-      },
+      }
+    ],
+    "actuators": [
+      {
+        "id": "light-switch-actuator",
+        "name": "Light Switch",
+        "icon": "fa-light"
+      }
+    ]
+  },
+  {
+    "id": "t02",
+    "protocol":"MQTT",
+    "commConfig": {
+      "host": "localhost",
+      "port": "1882",
+      "options": null
+    },
+    "sensors": [
       {
         "id": "light-ambient-sensor",
-        "scale": 3,
         "dataSource": {
           "source": "random",
           "dataDescription": {
@@ -30,16 +49,11 @@
             "min": 0,
             "max": 10,
             "timeInterval": 3,
-            "behaviour":"normal"
+            "behaviour": "abnormal"
           }
         }
       }
     ],
-    "actuators": [
-      {
-        "id": "light-switch-actuator",
-        "scale": 2
-      }
-    ]
+    "actuators": []
   }
 ]

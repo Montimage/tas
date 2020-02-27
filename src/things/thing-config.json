@@ -2,9 +2,10 @@
   {
     "id": "t01",
     "scale": 2,
-    "mqttConfig": {
-      "HOST": "localhost",
-      "PORT": "1883",
+    "protocol":"MQTT",
+    "commConfig": {
+      "host": "localhost",
+      "port": "1883",
       "options": null
     },
     "sensors": [
@@ -66,9 +67,10 @@
   {
     "id": "t02",
     "scale": 2,
-    "mqttConfig": {
-      "HOST": "localhost",
-      "PORT": "1882",
+    "protocol":"MQTT",
+    "commConfig": {
+      "host": "localhost",
+      "port": "1882",
       "options": null
     },
     "sensors": [

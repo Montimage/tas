@@ -2,7 +2,8 @@
   {
     "id": "t01",
     "scale": 2,
-    "stompConfig": {
+    "protocol":"STOMP",
+    "commConfig": {
       "host": "localhost",
       "port": "61613"
     },
@@ -29,7 +30,8 @@
   {
     "id": "t02",
     "scale": 2,
-    "stompConfig": {
+    "protocol":"STOMP",
+    "commConfig": {
       "host": "localhost",
       "port": "61613"
     },
