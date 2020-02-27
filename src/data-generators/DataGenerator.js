@@ -115,7 +115,7 @@ class DataGenerator {
   * @param {Function} callback The callback function
   */
   generateIntegerValue = (callback) => {
-    if (this.lastValue === null && this.dataDesc.initValue !== null) {
+    if (this.lastValue === null && this.dataDesc.initValue) {
       // Use initialized value
       return callback(this.dataDesc.initValue);
     } else {
@@ -191,7 +191,7 @@ class DataGenerator {
   * @param {Function} callback The callback function
   */
   generateDoubleValue = (callback) => {
-    if (this.lastValue === null && this.dataDesc.initValue !== null) {
+    if (this.lastValue === null && this.dataDesc.initValue) {
       // Use initialized value
       return callback(this.dataDesc.initValue);
     } else {
