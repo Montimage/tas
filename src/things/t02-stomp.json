@@ -43,7 +43,8 @@
             "type": "double",
             "min": 0,
             "max": 10,
-            "timeInterval": 3
+            "timeInterval": 3,
+            "behaviour":"abnormal"
           }
         }
       }

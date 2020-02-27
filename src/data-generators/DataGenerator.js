@@ -99,7 +99,7 @@ class DataGenerator {
         "max": "20", // maximum of regular value
         "step": "2", // maximum different between 2 ajected values.
       },
-      "malicious": "abnormal" // abnormal | poisoning | tbd ...
+      "behaivour": "abnormal" // normal | abnormal | poisoning | tbd ...
     }
 
     -> poisoning data
@@ -107,10 +107,10 @@ class DataGenerator {
     -> abnormal behaviour
       + the next value is in the regular range value but does not respect the maximum different between 2 value
 
-    '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "malicious": "poisoning" }'
-    '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 }, "malicious": "poisoning" }'
-    '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 }, "malicious": "poisoning" }'
-    '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 }, "malicious": "abnormal" }'
+    '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "behaivour": "poisoning" }'
+    '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 }, "behaivour": "poisoning" }'
+    '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 }, "behaivour": "poisoning" }'
+    '{ "type": "integer", "initValue": 18, "min": -273, "max": 300, "regular":{ "min": 14, "max": 20, "step": 2 }, "behaivour": "abnormal" }'
 
   * @param {Function} callback The callback function
   */
@@ -121,13 +121,13 @@ class DataGenerator {
     } else {
       if (!this.dataDesc.regular) {
         // Generate randomly a value
-        if (this.dataDesc.malicious && this.dataDesc.malicious === "poisoning") {
+        if (this.dataDesc.behaviour && this.dataDesc.behaviour === "poisoning") {
           return callback(randomPoisonIntegerValue(this.dataDesc.min, this.dataDesc.max));
         } else {
           return callback(randomIntegerValue(this.dataDesc.min, this.dataDesc.max));
         }
       } else {
-        if (this.dataDesc.malicious && this.dataDesc.malicious === "poisoning") {
+        if (this.dataDesc.behaviour && this.dataDesc.behaviour === "poisoning") {
           // Poisoning attack
           return callback(randomPoisonIntegerValue(this.dataDesc.regular.min,this.dataDesc.regular.max));
         } else {
@@ -140,7 +140,7 @@ class DataGenerator {
             let min = this.lastValue - this.dataDesc.regular.step;
             let max = this.lastValue + this.dataDesc.regular.step;
             // Generate a random value based on the last value
-            if (this.dataDesc.malicious && this.dataDesc.malicious === "abnormal") {
+            if (this.dataDesc.behaviour && this.dataDesc.behaviour === "abnormal") {
               if (min <= this.dataDesc.regular.min) {
                 // The abnormal value must be close to the max value
                 return callback(randomIntegerValue(max + 1, this.dataDesc.regular.max));
@@ -175,7 +175,7 @@ class DataGenerator {
         "max": "5.5", // maximum of regular value
         "step": "0.5", // maximum different between 2 ajected values.
       },
-      "malicious": "abnormal" // abnormal | poisoning | tbd ...
+      "behaviour": "abnormal" // abnormal | poisoning | tbd ...
     }
     -> poisoning data
       + the value is not in the regular range values
@@ -183,10 +183,10 @@ class DataGenerator {
       + the next value is in the regular range value but does not respect the maximum different between 2 value
 
     '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5}'
-    '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "malicious": "poisoning" }'
+    '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "behaviour": "poisoning" }'
     '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "regular":{ "min": 4.0, "max": 5.5, "step": 0.5 } }'
-    '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "regular":{ "min": 4.0, "max": 5.5, "step": 0.5 }, "malicious": "poisoning"}'
-    '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "regular":{ "min": 4.0, "max": 5.5, "step": 0.5 }, "malicious": "abnormal"}'
+    '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "regular":{ "min": 4.0, "max": 5.5, "step": 0.5 }, "behaviour": "poisoning"}'
+    '{ "type": "double", "initValue": 3.5, "min": -10.2, "max": 10.5, "regular":{ "min": 4.0, "max": 5.5, "step": 0.5 }, "behaviour": "abnormal"}'
 
   * @param {Function} callback The callback function
   */
@@ -197,13 +197,13 @@ class DataGenerator {
     } else {
       if (!this.dataDesc.regular) {
         // Generate randomly a value
-        if (this.dataDesc.malicious && this.dataDesc.malicious === "poisoning") {
+        if (this.dataDesc.behaviour && this.dataDesc.behaviour === "poisoning") {
           return callback(randomPoisonDoubleValue(this.dataDesc.min, this.dataDesc.max));
         } else {
           return callback(randomDoubleValue(this.dataDesc.min, this.dataDesc.max));
         }
       } else {
-        if (this.dataDesc.malicious && this.dataDesc.malicious === "poisoning") {
+        if (this.dataDesc.behaviour && this.dataDesc.behaviour === "poisoning") {
           // Poisoning attack
           return callback(randomPoisonDoubleValue(this.dataDesc.regular.min,this.dataDesc.regular.max));
         } else {
@@ -216,7 +216,7 @@ class DataGenerator {
             let min = this.lastValue - this.dataDesc.regular.step;
             let max = this.lastValue + this.dataDesc.regular.step;
             // Generate a random value based on the last value
-            if (this.dataDesc.malicious && this.dataDesc.malicious === "abnormal") {
+            if (this.dataDesc.behaviour && this.dataDesc.behaviour === "abnormal") {
               if (min <= this.dataDesc.regular.min) {
                 // The abnormal value must be close to the max value
                 return callback(randomDoubleValue(max + 0.01, this.dataDesc.regular.max));
@@ -260,7 +260,7 @@ class DataGenerator {
       },
       "bearingDirection": "180", // The bearing direction (degrees)
       "velo": "5",  // The velocity of the movement (km/h) -> can be NULL
-      "malicious": "abnormal" // abnormal | poisoning | tbd ...
+      "behaviour": "abnormal" // abnormal | poisoning | tbd ...
     }
     -> poisoning data
       + the value is not in the limited zone
@@ -272,13 +272,13 @@ class DataGenerator {
     p2: 48.813183, 2.435557
 
     '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }}'
-    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "malicious":"poisoning"}'
+    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "behaviour":"poisoning"}'
     '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "bearingDirection": 90, "velo": 500 }'
-    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "bearingDirection": 90, "velo": 500, "malicious":"poisoning" }'
-    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "bearingDirection": 90, "velo": 500, "malicious":"abnormal" }'
+    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "bearingDirection": 90, "velo": 500, "behaviour":"poisoning" }'
+    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "bearingDirection": 90, "velo": 500, "behaviour":"abnormal" }'
     '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "limit": { "lat" : { "min": 48.813183, "max": 48.888973 }, "lng": { "min": 2.253253, "max": 2.435557 } }, "bearingDirection": 90, "velo": 50 }'
-    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "limit": { "lat" : { "min": 48.813183, "max": 48.888973 }, "lng": { "min": 2.253253, "max": 2.435557 } }, "bearingDirection": 90, "velo": 50 , "malicious":"poisoning" }'
-    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "limit": { "lat" : { "min": 48.813183, "max": 48.888973 }, "lng": { "min": 2.253253, "max": 2.435557 } }, "bearingDirection": 90, "velo": 50 , "malicious":"abnormal" }'
+    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "limit": { "lat" : { "min": 48.813183, "max": 48.888973 }, "lng": { "min": 2.253253, "max": 2.435557 } }, "bearingDirection": 90, "velo": 50 , "behaviour":"poisoning" }'
+    '{ "type": "location", "initValue": { "lat": 48.828886, "lng":  2.353675 }, "limit": { "lat" : { "min": 48.813183, "max": 48.888973 }, "lng": { "min": 2.253253, "max": 2.435557 } }, "bearingDirection": 90, "velo": 50 , "behaviour":"abnormal" }'
 
   * @param {Function} callback the callback function
   */
@@ -297,7 +297,7 @@ class DataGenerator {
         // Generate randomly a value without the limit
         if (!this.dataDesc.velo || this.lastValue === null) {
           // without the limit of velocity or this is the first value
-          if (this.dataDesc.malicious && this.dataDesc.malicious === 'poisoning') {
+          if (this.dataDesc.behaviour && this.dataDesc.behaviour === 'poisoning') {
             // Poisoning attack
             return callback({
               lat: randomPoisonDoubleValue(-90, 90, 1),
@@ -310,13 +310,13 @@ class DataGenerator {
             });
           }
         } else {
-          if (this.dataDesc.malicious && this.dataDesc.malicious === 'poisoning') {
+          if (this.dataDesc.behaviour && this.dataDesc.behaviour === 'poisoning') {
             // Poisoning attack
             return callback({
               lat: randomPoisonDoubleValue(-90, 90, 1),
               lng: randomPoisonDoubleValue(-180, 80, 1)
             });
-          } else if (this.dataDesc.malicious && this.dataDesc.malicious === 'abnormal') {
+          } else if (this.dataDesc.behaviour && this.dataDesc.behaviour === 'abnormal') {
             return callback(nextGPSPosition(this.lastValue.lat, this.lastValue.lng, randomDoubleValue(-bearingDirection, bearingDirection), randomDoubleValue(0, this.dataDesc.distanceInAMove)));
           } else {
             // with the limit of velocity and this is not the first value
@@ -326,7 +326,7 @@ class DataGenerator {
       } else {
         if (!this.dataDesc.velo || this.lastValue === null) {
           // without the limit of velocity or this is the first value
-          if (this.dataDesc.malicious && this.dataDesc.malicious === 'poisoning') {
+          if (this.dataDesc.behaviour && this.dataDesc.behaviour === 'poisoning') {
             // Poisoning attack
             return callback({
               lat: randomPoisonDoubleValue(this.dataDesc.limit.lat.min, this.dataDesc.limit.lat.max),
@@ -344,7 +344,7 @@ class DataGenerator {
           const point2 = {latitude: this.dataDesc.limit.lat.min, longitude: this.dataDesc.limit.lng.max};
           const point3 = {latitude: this.dataDesc.limit.lat.max, longitude: this.dataDesc.limit.lng.max};
           const point4 = {latitude: this.dataDesc.limit.lat.max, longitude: this.dataDesc.limit.lng.min};
-          if (this.dataDesc.malicious && this.dataDesc.malicious === 'abnormal') {
+          if (this.dataDesc.behaviour && this.dataDesc.behaviour === 'abnormal') {
             return callback(nextGPSPosition(this.lastValue.lat, this.lastValue.lng, randomDoubleValue(-bearingDirection, bearingDirection), randomDoubleValue(this.dataDesc.distanceInAMove + 0.01, 10 * this.dataDesc.distanceInAMove)));
           } else {
             // with the limit of velocity and this is not the first value and the next position need to be in a limit

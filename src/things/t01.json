@@ -1,55 +1,62 @@
-[
-  {
-    "id": "t01",
-    "scale": 2,
-    "mqttConfig": {
-      "HOST": "localhost",
-      "PORT": "1883",
-      "options": null
-    },
-    "sensors": [
-      {
-        "id": "movement-sensor",
-        "scale": 2,
-        "dataSource": {
-          "source": "random",
-          "dataDescription": {
-            "type": "boolean",
-            "timeInterval": 3
+{
+  "id": "simu-1234",
+  "name": "Digital Health GW01",
+  "icon": "fa-home",
+  "things": [
+    {
+      "id": "t01",
+      "name":"Room01",
+      "icon":"fa-room",
+      "mqttConfig": {
+        "HOST": "localhost",
+        "PORT": "1883",
+        "options": null
+      },
+      "sensors": [
+        {
+          "id": "movement-sensor",
+          "name": "Motion Sensor",
+          "icon":"fa-motion",
+          "dataSource": {
+            "source": "random",
+            "dataDescription": {
+              "type": "boolean",
+              "timeInterval": 3
+            }
           }
         }
-      }
-    ],
-    "actuators": [
-      {
-        "id": "light-switch-actuator",
-        "scale": 3
-      }
-    ]
-  },
-  {
-    "id": "t02",
-    "scale": 2,
-    "mqttConfig": {
-      "HOST": "localhost",
-      "PORT": "1882",
-      "options": null
+      ],
+      "actuators": [
+        {
+          "id": "light-switch-actuator",
+          "name":"Light Switch",
+          "icon": "fa-light"
+        }
+      ]
     },
-    "sensors": [
-      {
-        "id": "light-ambient-sensor",
-        "scale": 3,
-        "dataSource": {
-          "source": "random",
-          "dataDescription": {
-            "type": "double",
-            "min": 0,
-            "max": 10,
-            "timeInterval": 3
+    {
+      "id": "t02",
+      "mqttConfig": {
+        "HOST": "localhost",
+        "PORT": "1882",
+        "options": null
+      },
+      "sensors": [
+        {
+          "id": "light-ambient-sensor",
+          "dataSource": {
+            "source": "random",
+            "dataDescription": {
+              "type": "double",
+              "min": 0,
+              "max": 10,
+              "timeInterval": 3,
+              "behaviour":"abnormal"
+            }
           }
         }
-      }
-    ],
-    "actuators": []
-  }
-]
+      ],
+      "actuators": []
+    }
+  ]
+}

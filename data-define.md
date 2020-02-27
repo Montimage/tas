@@ -31,7 +31,7 @@ Many sensors provide the value in integer format.
     "step": "1", // maximum different between 2 ajected values.
   },
   "timeInterval":3,
-  "malicious": "abnormal" // abnormal | poisoning | tbd ...
+  "behaviour": "abnormal" // normal | abnormal | poisoning | tbd ...
 }
 ```
 
@@ -50,7 +50,7 @@ Many sensors provide the value in double format.
     "step": "0.1", // maximum different between 2 ajected values.
   },
   "timeInterval":3,
-  "malicious": "abnormal" // abnormal | poisoning | tbd ...
+  "behaviour": "abnormal" // normal | abnormal | poisoning | tbd ...
 }
 ```
 
@@ -80,6 +80,6 @@ Longtitude range value: `-180 -> 80`
   "timeInterval":3,
   "bearingDirection": "180", // The bearing direction (degrees)
   "velo": "5",  // The velocity of the movement (km/h) -> can be NULL
-  "malicious": "poisoning" // abnormal | poisoning | tbd ...
+  "behaviour": "poisoning" // normal | abnormal | poisoning | tbd ...
 }
 ```
