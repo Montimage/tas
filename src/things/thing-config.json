@@ -43,11 +43,11 @@
         "dataSource": {
           "source": "database",
           "dbConfig": {
-            "HOST": "192.168.0.11",
-            "PORT": "27017",
-            "USER": "mmtbox",
-            "PASSWORD": "mmtbox",
-            "DBNAME": "admin"
+            "host": "192.168.0.11",
+            "port": "27017",
+            "user": "mmtbox",
+            "password": "mmtbox",
+            "dbname": "admin"
           },
           "startTime": 1580468013203,
           "endTime": 1580468064242

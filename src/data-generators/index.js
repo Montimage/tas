@@ -27,7 +27,7 @@ const saveData = (type, id, data, generatedTime) => {
       if (err) {
         console.error(`[ERROR] Failed to save generated data of actuator ${id}`);
       } else {
-        console.log(`[Actuator ${id}] ${generatedTime} ${JSON.stringify(data)}`);
+        console.log(`[${id}] ${generatedTime} ${JSON.stringify(data)}`);
       }
     });
   } else if (type == SENSOR_TYPE) {
@@ -40,7 +40,7 @@ const saveData = (type, id, data, generatedTime) => {
       if (err) {
         console.error(`[ERROR] Failed to save generated data of sensor ${id}`);
       } else {
-        console.log(`[Sensor ${id}] ${generatedTime} ${JSON.stringify(data)}`);
+        console.log(`[${id}] ${generatedTime} ${JSON.stringify(data)}`);
       }
     });
   }
@@ -55,7 +55,8 @@ const saveData = (type, id, data, generatedTime) => {
  * @param {Number} duration The duration of the generating - in seconds
  * @param {Object} dataDescription The definition of the genereated data
  */
-const startGeneratingData = (type, id, _startTime, duration, dataDescription) => {
+const startGeneratingData = (type, id, _startTime, duration, dataSource) => {
+  const { dataDescription } = dataSource;
   const { timeInterval } = dataDescription;
   const dataGenerator = new DataGenerator(dataDescription);
   let timeDelta = 0;
@@ -76,7 +77,7 @@ const startGeneratingData = (type, id, _startTime, duration, dataDescription) =>
       const generatedTime = Date.now() - timeDelta;
       saveData(type, id, data, generatedTime);
       if (duration && generatedTime - startTime > duration * 1000) {
-        console.log(`[${type} ${id}] Stopped generating data!`);
+        console.log(`[${id}] Stopped generating data!`);
         clearInterval(generatorID);
       }
     });
@@ -95,13 +96,13 @@ readJSONFile(dataConfigFile, (err, dataConfig) => {
     return;
   }
 
-  if (dbConfig.USER && dbConfig.PASSWORD) {
-    enactDB = new ENACTDB(dbConfig.HOST, dbConfig.PORT, dbConfig.DBNAME, {
-      userName: dbConfig.USER,
-      password: dbConfig.PASSWORD
+  if (dbConfig.user && dbConfig.password) {
+    enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname, {
+      userName: dbConfig.user,
+      password: dbConfig.password
     });
   } else {
-    enactDB = new ENACTDB(dbConfig.HOST, dbConfig.PORT, dbConfig.DBNAME);
+    enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname);
   }
 
   enactDB.connect(error => {
@@ -112,25 +113,25 @@ readJSONFile(dataConfigFile, (err, dataConfig) => {
     console.log("Connected to database");
     // Generate sensors data
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
-      const {id, startTime, duration, dataDescription, scale} = sensors[sIndex];
+      const {id, startTime, duration, dataSource, scale} = sensors[sIndex];
       const nbSensors = scale ? scale : 1;
       if (nbSensors === 1) {
-        startGeneratingData(SENSOR_TYPE, id, startTime, duration, dataDescription);
+        startGeneratingData(SENSOR_TYPE, id, startTime, duration, dataSource);
       } else {
         for (let index = 0; index < nbSensors; index++) {
-          startGeneratingData(SENSOR_TYPE, `${id}-${index}`, startTime, duration, dataDescription);
+          startGeneratingData(SENSOR_TYPE, `${id}-${index}`, startTime, duration, dataSource);
         }
       }
     }
     // Generate actuators data
     for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
-      const {id, startTime, duration, dataDescription, scale} = actuators[aIndex];
+      const {id, startTime, duration, dataSource, scale} = actuators[aIndex];
       const nbActuators = scale ? scale : 1;
       if (nbActuators === 1) {
-        startGeneratingData(ACTUATOR_TYPE, id, startTime, duration, dataDescription);
+        startGeneratingData(ACTUATOR_TYPE, id, startTime, duration, dataSource);
       } else {
         for (let index = 0; index < nbActuators; index++) {
-          startGeneratingData(ACTUATOR_TYPE, `${id}-${index}`, startTime, duration, dataDescription);
+          startGeneratingData(ACTUATOR_TYPE, `${id}-${index}`, startTime, duration, dataSource);
         }
       }
     }
