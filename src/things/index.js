@@ -2,8 +2,25 @@ const ThingMQTT = require("./ThingMQTT");
 const ThingSTOMP = require('./ThingSTOMP');
 const { readJSONFile } = require("../utils");
 
-const thingConfigFile = process.argv[2];
+const allThings = [];
+/**
+ * Stop the simulation
+ */
+const stopSimulation = () => {
+  for (let index = 0; index < allThings.length; index++) {
+    const th = allThings[index];
+    th.stop();
+  }
+}
 
+/**
+ * Create a thing
+ * @param {String} id The id of the thing
+ * @param {String} protocol The protocol of the communication
+ * @param {Object} commConfig The communication configuration
+ * @param {Array} sensors List of sensors
+ * @param {Array} actuators List of actuator
+ */
 const createThing = (id, protocol, commConfig, sensors, actuators) => {
   let Thing = ThingMQTT; // MQTT protocol by default
   if (protocol.toUpperCase() === 'STOMP') {
@@ -42,31 +59,43 @@ const createThing = (id, protocol, commConfig, sensors, actuators) => {
       }
     }
 
-    // Start the simulation
     th.start();
 
-    // Stop the simulation after 20s
-    // setTimeout(() => {
-    //   th.stop();
-    // }, 20000);
+    allThings.push(th);
   }, commConfig);
 };
 
-readJSONFile(thingConfigFile, (err, thingConfigs) => {
-  if (err) {
-    console.error(`[ERROR] Cannot read the config of thing:`, thingConfigFile);
-  } else {
-    for (let index = 0; index < thingConfigs.length; index++) {
-      const { scale, id, protocol, commConfig, sensors, actuators } = thingConfigs[index];
-      let nbThings = scale ? scale : 1;
-      if (nbThings === 1) {
-        createThing(id, protocol, commConfig, sensors, actuators);
-      } else {
-        for (let tIndex = 0; tIndex < nbThings; tIndex++) {
-          const tID = `${id}-${tIndex}`;
-          createThing(tID, protocol, commConfig, sensors, actuators);
-        }
+/**
+ * Start the simulation
+ * @param {Array} thingConfigs The list of things
+ */
+const startSimulation = (thingConfigs) => {
+  for (let index = 0; index < thingConfigs.length; index++) {
+    const { scale, id, protocol, commConfig, sensors, actuators } = thingConfigs[index];
+    let nbThings = scale ? scale : 1;
+    if (nbThings === 1) {
+      createThing(id, protocol, commConfig, sensors, actuators);
+    } else {
+      for (let tIndex = 0; tIndex < nbThings; tIndex++) {
+        const tID = `${id}-${tIndex}`;
+        createThing(tID, protocol, commConfig, sensors, actuators);
       }
     }
   }
-});
+}
+
+if (process.argv[2] === 'test') {
+  readJSONFile(process.argv[3], (err, thingConfigs) => {
+    if (err) {
+      console.error(`[ERROR] Cannot read the config of thing:`, thingConfigFile);
+    } else {
+      startSimulation(thingConfigs);
+    }
+  });
+}
+
+module.exports = {
+  startSimulation,
+  stopSimulation,
+}
+

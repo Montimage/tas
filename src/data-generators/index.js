@@ -5,6 +5,7 @@ const { readJSONFile } = require('../utils');
 const SENSOR_TYPE = 'sensor';
 const ACTUATOR_TYPE = 'actuator';
 
+let stopGenerating = false;
 
 let enactDB = null; // Enact MongoDB Client
 const dataConfigFile = process.argv[2]; // the path to data configuration file
@@ -55,7 +56,7 @@ const saveData = (type, id, data, generatedTime) => {
  * @param {Number} duration The duration of the generating - in seconds
  * @param {Object} dataDescription The definition of the genereated data
  */
-const startGeneratingData = (type, id, _startTime, duration, dataSource) => {
+const startGenerating = (type, id, _startTime, duration, dataSource) => {
   const { dataDescription } = dataSource;
   const { timeInterval } = dataDescription;
   const dataGenerator = new DataGenerator(dataDescription);
@@ -76,19 +77,26 @@ const startGeneratingData = (type, id, _startTime, duration, dataSource) => {
     dataGenerator.generateData(data => {
       const generatedTime = Date.now() - timeDelta;
       saveData(type, id, data, generatedTime);
-      if (duration && generatedTime - startTime > duration * 1000) {
+      if ((duration && generatedTime - startTime > duration * 1000) || stopGenerating ) {
         console.log(`[${id}] Stopped generating data!`);
+        if (enactDB) {
+          enactDB.close();
+        }
         clearInterval(generatorID);
       }
     });
   }, timeInterval * 1000);
 };
 
-readJSONFile(dataConfigFile, (err, dataConfig) => {
-  if (err) {
-    console.error(`[ERROR] Cannot read the data config file:`, dataConfigFile);
-    return;
-  }
+const stopGeneratingData = () => {
+  stopGenerating = true;
+}
+
+/**
+ * Start generating data
+ * @param {Object} dataConfig The configuration of the data generator
+ */
+const startGeneratingData = (dataConfig) => {
 
   const { dbConfig, sensors, actuators } = dataConfig;
   if (!dbConfig) {
@@ -116,10 +124,10 @@ readJSONFile(dataConfigFile, (err, dataConfig) => {
       const {id, startTime, duration, dataSource, scale} = sensors[sIndex];
       const nbSensors = scale ? scale : 1;
       if (nbSensors === 1) {
-        startGeneratingData(SENSOR_TYPE, id, startTime, duration, dataSource);
+        startGenerating(SENSOR_TYPE, id, startTime, duration, dataSource);
       } else {
         for (let index = 0; index < nbSensors; index++) {
-          startGeneratingData(SENSOR_TYPE, `${id}-${index}`, startTime, duration, dataSource);
+          startGenerating(SENSOR_TYPE, `${id}-${index}`, startTime, duration, dataSource);
         }
       }
     }
@@ -128,13 +136,28 @@ readJSONFile(dataConfigFile, (err, dataConfig) => {
       const {id, startTime, duration, dataSource, scale} = actuators[aIndex];
       const nbActuators = scale ? scale : 1;
       if (nbActuators === 1) {
-        startGeneratingData(ACTUATOR_TYPE, id, startTime, duration, dataSource);
+        startGenerating(ACTUATOR_TYPE, id, startTime, duration, dataSource);
       } else {
         for (let index = 0; index < nbActuators; index++) {
-          startGeneratingData(ACTUATOR_TYPE, `${id}-${index}`, startTime, duration, dataSource);
+          startGenerating(ACTUATOR_TYPE, `${id}-${index}`, startTime, duration, dataSource);
         }
       }
     }
 
   });
-});
+}
+
+if (process.argv[2] === 'run') {
+  readJSONFile(process.argv[3], (err, dataConfig) => {
+    if (err) {
+      console.error(`[ERROR] Cannot read the data config file:`, dataConfigFile);
+      return;
+    }
+    startGeneratingData(dataConfig);
+  });
+}
+
+module.exports = {
+  startGeneratingData,
+  stopGeneratingData
+}
