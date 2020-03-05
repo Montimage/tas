@@ -31,6 +31,39 @@ const readJSONFile = (filePath, callback) => {
 }
 
 /**
+ * Write a string data to a file
+ * @param {String} filePath Path to the output file
+ * @param {String} data data to be written
+ * @param {Function} callback The callback function
+ */
+const writeToFile = (filePath, data, callback) => {
+  try {
+    fs.writeFile(filePath, data, (err, result) => {
+      if (err) throw err;
+      return callback(null, result);
+    });
+  } catch (error) {
+
+  }
+}
+
+/**
+ * Read the text file
+ * @param {String} filePath The path to the text file
+ * @param {Function} callback The callback function
+ */
+const readTextFile = (filePath, callback) => {
+  try {
+    fs.readFile(filePath, (err, content) => {
+      if (err) throw err;
+      return callback(null, content.toString());
+    })
+  } catch (error) {
+    return callback(error);
+  }
+}
+
+/**
  * Generate a random boolean value
  */
 const randomBoolean = () => Math.random() < 0.5 ? 0: 1;
@@ -192,4 +225,6 @@ module.exports = {
   getMax,
   readJSONFile,
   readJSONFileSync,
+  readTextFile,
+  writeToFile
 }
