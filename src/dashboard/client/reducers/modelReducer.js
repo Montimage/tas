@@ -1,16 +1,13 @@
-import { createReducer } from 'redux-act';
+import { createReducer } from "redux-act";
 import produce from 'immer';
+import { setModel, resetModel } from "../actions";
 
-import { saveModelError, saveModelOK, saveModel } from '../actions';
+const initState = { name: "NewModel" };
 
-const initState  = {
-  savedModel: null,
-  fetching: false,
-  error: null
-}
-
-export default createReducer({
-  [saveModel] : (state) => ({...state, fetching: true}),
-  [saveModelOK] : produce((draft, model) => {draft.savedModel = model, draft.fetching = false;}),
-  [saveModelError] : (state, error) => ({...state, error, fetching: false})
-}, initState);
+export default createReducer(
+  {
+    [setModel]: produce((draft, model) => draft = model),
+    [resetModel]: (state) => initState
+  },
+  initState
+);

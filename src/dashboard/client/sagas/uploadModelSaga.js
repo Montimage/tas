@@ -7,38 +7,33 @@ import {
 } from 'redux-saga/effects';
 
 import {
-  MODELS
-} from '../constants';
-import {
-  saveModel
+  uploadModel
 } from '../api';
 import {
-  saveModelOK,
-  saveModelError
+  uploadModelOK,
+  setError
 } from '../actions';
 
-const getModel = ({loadModel}) => loadModel.model;
+const getModel = ({model}) => model;
 
 function* handleSaveModel() {
   try {
     let model = yield select(getModel);
-    console.log('model: ', model);
     if (model) {
-      const data = yield call(() => saveModel(model));
-      console.log('response: ', data.data);
-      yield put(saveModelOK(data.data));
+      const data = yield call(() => uploadModel(model));
+      yield put(uploadModelOK(data.data));
     } else {
       throw Error('Undefined model');
     }
     // dispatch data
   } catch (error) {
     // dispatch error
-    yield put(saveModelError(error.toString()));
+    yield put(setError(error.toString()));
   }
 }
 
 function* watchSaveModel() {
-  yield takeEvery(MODELS.SAVE, handleSaveModel);
+  yield takeEvery('UPLOAD_MODEL', handleSaveModel);
 }
 
 export default watchSaveModel;

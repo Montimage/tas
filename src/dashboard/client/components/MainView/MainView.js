@@ -1,78 +1,82 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { Button } from 'antd';
+import React, { Component } from "react";
+import { connect } from "react-redux";
+import { Button } from "antd";
 
-import { loadModel, setModel, saveModel } from '../../actions';
-import JSONView from '../JSONView';
-import GraphView from './GraphView';
-import ListView from './ListView';
+import { requestModel, setModel, uploadModel } from "../../actions";
+import JSONView from "../JSONView";
+import GraphView from "./GraphView";
+import ListView from "./ListView";
 // import 'jsoneditor-react/es/editor.min.css';
-import './styles.css';
+import "./styles.css";
 
 // console.log(ace.acequire('editor'));
 class MainView extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tempModel: props.model
+    };
+    this.onModelChange = this.onModelChange.bind(this);
+  }
 
   componentDidMount() {
     this.props.fetchModel();
   }
 
+  onModelChange(newModel) {
+    this.setState({
+      tempModel: newModel
+    });
+  }
+
   render() {
-    const { error, isLoading,model, view,contentType, logs , updateModel, saveModel} = this.props;
+    const { requesting, view, error, model, logs, saveModel } = this.props;
     return (
       <div className="content">
-        {isLoading ? (
+        {requesting ? (
           <span>Loading ...</span>
-        ) : ( error ? (
+        ) : error ? (
           <span> There are some error {error}</span>
-        ) : (contentType === 'logs' ? (
-          <p>
-            {logs}
-          </p>
-        ):(
+        ) : view.contentType === "logs" ? (
+          <p>{logs}</p>
+        ) : (
           <div>
-            { view === 'json' ? (
-              <JSONView
-                value={model}
-                onChange={updateModel}
-              />
-            ) : ( view ==='graph' ? (
-              <GraphView
-                value={model}
-                onChange={updateModel}
-              />
+            {view.viewType === "json" ? (
+              <JSONView value={model} onChange={this.onModelChange} />
+            ) : view.viewType === "graph" ? (
+              <GraphView value={model} onChange={this.onModelChange} />
             ) : (
-              <ListView
-                value={model}
-                onChange={updateModel}
-              />
-            )
+              <ListView value={model} onChange={this.onModelChange} />
             )}
-            <Button type="default" shape="round" onClick={saveModel} style={{marginTop: '10px'}}>
+            <Button
+              type="default"
+              shape="round"
+              onClick={() => saveModel(this.state.tempModel)}
+              style={{ marginTop: "10px" }}
+            >
               Save
             </Button>
           </div>
-        )))}
+        )}
       </div>
     );
   }
 }
 
-const mapPropsToStates = ({ loadModel, saveModel, logs, contentType, view }) => ({
-  isLoading: loadModel.fetching || saveModel.fetching || logs.fetching,
-  model: loadModel.model,
-  error: loadModel.error ? loadModel.error : (saveModel.error ? saveModel.error : logs.error),
-  logs: logs.logs,
+const mapPropsToStates = ({ requesting, view, error, model, logs }) => ({
+  model,
+  logs,
   view,
-  contentType
+  error,
+  requesting
 });
 
 const mapDispatchToProps = dispatch => ({
-  fetchModel: () => dispatch(loadModel()),
-  updateModel: (model) => dispatch(setModel(model)),
-  saveModel: () => dispatch(saveModel())
+  fetchModel: () => dispatch(requestModel()),
+  saveModel: newModel => {
+    dispatch(setModel(newModel));
+    dispatch(uploadModel());
+  }
 });
 
-export default connect(
-  mapPropsToStates,
-  mapDispatchToProps,
-)(MainView);
+export default connect(mapPropsToStates, mapDispatchToProps)(MainView);

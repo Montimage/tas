@@ -2,13 +2,13 @@ import {
   all
 } from 'redux-saga/effects';
 
-import loadModelSaga from './loadModelSaga';
-import saveModelSaga from './saveModelSaga';
+import requestModelSaga from './requestModelSaga';
+import uploadModelSaga from './uploadModelSaga';
 import deploySaga from './deploySaga';
-import logsSaga from './logsSaga';
+import requestLogsSaga from './requestLogsSaga';
 
 function* rootSaga() {
-  yield all([loadModelSaga(),saveModelSaga(), deploySaga(), logsSaga()]);
+  yield all([requestModelSaga(),uploadModelSaga(), deploySaga(), requestLogsSaga()]);
 }
 
 export default rootSaga;

@@ -2,20 +2,18 @@ import {
   combineReducers
 } from 'redux';
 
-import loadingReducer from './loadingReducer';
 import modelReducer from './modelReducer';
-import deployReducer from './deployReducer';
+import requestingReducer from './requestingReducer';
+import errorReducer from './errorReducer';
 import logsReducer from './logsReducer';
 import viewReducer from './viewReducer';
-import contentTypeReducer from './contentTypeReducer';
 
 const rootReducer = combineReducers({
-  loadModel: loadingReducer,
-  saveModel: modelReducer,
-  deployment: deployReducer,
+  model: modelReducer,
   logs: logsReducer,
   view: viewReducer,
-  contentType: contentTypeReducer
+  error: errorReducer,
+  requesting: requestingReducer,
 });
 
 export default rootReducer;

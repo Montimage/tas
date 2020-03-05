@@ -38,7 +38,6 @@ router.get('/', function(req, res, next) {
       console.error(err);
       res.send({});
     } else {
-      console.log(data);
       res.send(data);
     }
   });

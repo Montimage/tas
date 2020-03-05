@@ -1,9 +1,9 @@
 import { createReducer } from "redux-act";
-import { requestLogsOK } from "../actions";
+import { setError } from "../actions";
 
 export default createReducer(
   {
-    [requestLogsOK]: (state, logs) => logs
+    [setError]: (state, error) => error
   },
   null
 );

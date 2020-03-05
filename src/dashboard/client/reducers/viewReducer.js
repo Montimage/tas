@@ -1,7 +1,11 @@
 import { createReducer } from 'redux-act';
-import produce from 'immer';
-import { setView } from '../actions';
+import { setViewType, setContentType } from '../actions';
 
+const initState = {
+  contentType: 'model',
+  viewType: 'json'
+}
 export default createReducer({
-  [setView] : produce((draft, newView) => draft = newView)
-}, 'json');
+  [setViewType] : (state, vType) => ({...state, viewType: vType}),
+  [setContentType] : (state, cType) => ({...state, contentType: cType}),
+}, initState);

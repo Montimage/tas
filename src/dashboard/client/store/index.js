@@ -9,7 +9,8 @@ const configStore = () => {
   const store = createStore(
     rootReducer,
     compose(
-      applyMiddleware(sagaMiddleware),
+      applyMiddleware(sagaMiddleware)
+      ,
       window.__REDUX_DEVTOOLS_EXTENSION__ &&
         window.__REDUX_DEVTOOLS_EXTENSION__(),
     ),

@@ -1,7 +1,7 @@
 // read and pass the environment variables into reactjs application
 const URL = `http://localhost:31057`;
 
-const fetchModel = async () => {
+const requestModel = async () => {
   const url = `${URL}/api/simulation`;
   const response = await fetch(url);
   const data = await response.json();
@@ -11,7 +11,7 @@ const fetchModel = async () => {
   return data;
 };
 
-const fetchLogs = async () => {
+const requestLogs = async () => {
   const url = `${URL}/api/simulation/logs`;
   const response = await fetch(url);
   const data = await response.text();
@@ -41,7 +41,7 @@ const requestStopDeploy = async () => {
   return data;
 };
 
-const saveModel = async (model) => {
+const uploadModel = async (model) => {
   const url = `${URL}/api/simulation`;
   const response = await fetch(url,{
     method: 'POST',
@@ -58,9 +58,9 @@ const saveModel = async (model) => {
 };
 
 export {
-  fetchModel,
-  saveModel,
+  requestModel,
+  uploadModel,
   requestStartDeploy,
   requestStopDeploy,
-  fetchLogs
+  requestLogs
 };

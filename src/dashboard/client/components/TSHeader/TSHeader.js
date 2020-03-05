@@ -18,12 +18,12 @@ const { Header } = Layout;
 
 import {
   setModel,
-  resetEditor,
+  resetModel,
   sendDeployStart,
   sendDeployStop,
-  sendViewLogs,
   setContentType,
   setError,
+  requestLogs,
 } from "../../actions";
 import "./styles.css";
 
@@ -145,28 +145,26 @@ class TSHeader extends Component {
   }
 }
 
-const mapPropsToStates = ({ deployment, loadModel }) => ({
-  isExecuting: deployment.isExecuting,
-  requesting: deployment.requesting,
-  error: deployment.error,
-  model: loadModel.model
+const mapPropsToStates = ({ requesting, model}) => ({
+  requesting,
+  model
 });
 
 
 const mapDispatchToProps = dispatch => ({
   setError: (err) => dispatch(setError(err)),
-  setNewModel: (model) => {
-    dispatch(setModel(model));
+  setNewModel: (newModel) => {
+    dispatch(setModel(newModel));
     dispatch(setContentType('model'));
   },
   resetEditor: () => {
-    dispatch(resetEditor());
+    dispatch(resetModel());
     dispatch(setContentType('model'));
   },
   startDeploy: () => dispatch(sendDeployStart()),
   stopDeploy: () => dispatch(sendDeployStop()),
   viewLogs: () => {
-    dispatch(sendViewLogs());
+    dispatch(requestLogs());
     dispatch(setContentType('logs'));
   },
   setContentType: (v) => dispatch(setContentType(v))

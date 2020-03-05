@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from 'react-redux';
 
-import { setView } from '../../actions';
+import { setViewType } from '../../actions';
 
 import TSSider from '../TSSider';
 import { UnorderedListOutlined, ForkOutlined, FilterOutlined } from "@ant-design/icons";
@@ -9,24 +9,24 @@ import './style.css';
 
 class RightSider extends Component {
   render() {
-    const { setView } = this.props;
+    const { setViewType } = this.props;
     const menuItems = [
       {
         key: 5,
         text: "JSON View",
-        action: () => setView('json'),
+        action: () => setViewType('json'),
         icon: <FilterOutlined />
       },
       {
         key: 6,
         text: "Graph View",
-        action: () => setView('graph'),
+        action: () => setViewType('graph'),
         icon: <ForkOutlined />
       },
       {
         key: 7,
         text: "List View",
-        action: () => setView('list'),
+        action: () => setViewType('list'),
         icon: <UnorderedListOutlined />
       }
     ];
@@ -35,7 +35,7 @@ class RightSider extends Component {
 }
 
 const mapDispatchToProps = dispatch => ({
-  setView: (mID) => dispatch(setView(mID))
+  setViewType: (mID) => dispatch(setViewType(mID))
 });
 
 export default connect(

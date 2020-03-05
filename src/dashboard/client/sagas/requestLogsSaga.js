@@ -6,20 +6,17 @@ import {
 } from 'redux-saga/effects';
 
 import {
-  MODELS
-} from '../constants';
-import {
-  fetchModel
+  requestLogs
 } from '../api';
 import {
-  setModel,
+  requestLogsOK,
   setError
 } from '../actions';
 
-function* handleModelLoad() {
+function* handleRequestLogs() {
   try {
-    const model = yield call(fetchModel);
-    yield put(setModel(model));
+    const logs = yield call(requestLogs);
+    yield put(requestLogsOK(logs));
     // dispatch data
   } catch (error) {
     // dispatch error
@@ -27,8 +24,8 @@ function* handleModelLoad() {
   }
 }
 
-function* watchModelLoad() {
-  yield takeEvery(MODELS.LOAD, handleModelLoad);
+function* watchRequestLogs() {
+  yield takeEvery('REQUEST_LOGS', handleRequestLogs);
 }
 
-export default watchModelLoad;
+export default watchRequestLogs;

@@ -11,9 +11,8 @@ import {
 } from '../api';
 import {
   deployStartOK,
-  deployStartFailed,
   deployStopOK,
-  deployStopFailed
+  setError
 } from '../actions';
 
 function* handleRequestStartDeploy() {
@@ -23,7 +22,7 @@ function* handleRequestStartDeploy() {
     // dispatch data
   } catch (error) {
     // dispatch error
-    yield put(deployStartFailed(error.toString()));
+    yield put(setError(error.toString()));
   }
 }
 
@@ -34,7 +33,7 @@ function* handleRequestStopDeploy() {
     // dispatch data
   } catch (error) {
     // dispatch error
-    yield put(deployStopFailed(error.toString()));
+    yield put(setError(error.toString()));
   }
 }
 
