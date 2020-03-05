@@ -28,3 +28,6 @@ export const resetModel = createAction('RESET_MODEL');
 
 // LeftSide menu
 export const showModal = createAction('SHOW_MODAL');
+
+// Tool
+export const changeTool = createAction('CHANGE_TOOL');

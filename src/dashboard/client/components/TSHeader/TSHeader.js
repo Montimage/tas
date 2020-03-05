@@ -1,20 +1,22 @@
 import React, {Component} from "react";
 import { connect } from "react-redux";
-import { Layout, Menu, Row, Col } from "antd";
+import { Layout, Menu, Row, Col, Select } from "antd";
 import {
   CaretRightOutlined,
   GatewayOutlined,
   ProfileOutlined,
   DeploymentUnitOutlined,
   StopOutlined,
-  CloudDownloadOutlined,
-  CloudUploadOutlined,
+  ImportOutlined,
   ClearOutlined,
   SyncOutlined,
+  ExportOutlined,
+  RetweetOutlined,
 } from "@ant-design/icons";
 
 const { SubMenu } = Menu;
 const { Header } = Layout;
+const {Option} = Select;
 
 import {
   setModel,
@@ -24,6 +26,8 @@ import {
   setContentType,
   setError,
   requestLogs,
+  changeTool,
+  requestModel
 } from "../../actions";
 import "./styles.css";
 
@@ -62,15 +66,21 @@ class TSHeader extends Component {
       isExecuting,
       viewLogs,
       setContentType,
-      model
+      model,
+      tool,
+      changeTool
     } = this.props;
+    const toolName = tool === 'simulation' ? 'Simulation' : 'Data Generator'
     return (
       <Header>
         <Row>
-          <Col span={6}>
+          <Col span={4}>
             <img src="img/Logo.png" className="logo" style={{maxWidth: '250px', objectFit:'contain'}}/>
           </Col>
-          <Col span={18}>
+          <Col span={6}>
+            <span style={{color: 'white'}}>{toolName}</span>
+          </Col>
+          <Col span={14}>
             <Menu theme="dark" mode="horizontal" style={{ lineHeight: "64px" }}>
               <SubMenu
                 title={
@@ -87,13 +97,13 @@ class TSHeader extends Component {
                   key="model:1"
                   onClick={() => this.inputFileDOM.click()}
                 >
-                  <CloudUploadOutlined /> Import Model
+                  <ImportOutlined /> Import Model
                 </Menu.Item>
                 <Menu.Item
                   key="model:2"
                   onClick={() => this.exportModel(model)}
                 >
-                  <CloudDownloadOutlined />
+                  <ExportOutlined />
                   Export Model
                 </Menu.Item>
                 <Menu.Item key="model:3" onClick={resetEditor}>
@@ -126,6 +136,11 @@ class TSHeader extends Component {
                 <ProfileOutlined />
                 Logs
               </Menu.Item>
+              <Menu.Item key="4" onClick={changeTool}>
+                {" "}
+                <RetweetOutlined />
+                Switch to {tool === 'simulation' ? 'Data Generator' : 'Simulation'}
+              </Menu.Item>
             </Menu>
           </Col>
         </Row>
@@ -145,13 +160,18 @@ class TSHeader extends Component {
   }
 }
 
-const mapPropsToStates = ({ requesting, model}) => ({
+const mapPropsToStates = ({ requesting, model, tool}) => ({
   requesting,
-  model
+  model,
+  tool
 });
 
 
 const mapDispatchToProps = dispatch => ({
+  changeTool: () => {
+    dispatch(changeTool());
+    dispatch(requestModel());
+  },
   setError: (err) => dispatch(setError(err)),
   setNewModel: (newModel) => {
     dispatch(setModel(newModel));

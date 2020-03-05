@@ -2,7 +2,8 @@
 import {
   call,
   put,
-  takeEvery
+  takeEvery,
+  select
 } from 'redux-saga/effects';
 
 import {
@@ -15,9 +16,12 @@ import {
   setError
 } from '../actions';
 
+const getTool = ({tool}) => tool;
+
 function* handleRequestStartDeploy() {
   try {
-    const model = yield call(requestStartDeploy);
+    const tool = yield select(getTool);
+    const model = yield call(()=>requestStartDeploy(tool));
     yield put(deployStartOK());
     // dispatch data
   } catch (error) {
@@ -28,7 +32,8 @@ function* handleRequestStartDeploy() {
 
 function* handleRequestStopDeploy() {
   try {
-    const model = yield call(requestStopDeploy);
+    const tool = yield select(getTool);
+    const model = yield call(()=>requestStopDeploy(tool));
     yield put(deployStopOK(model));
     // dispatch data
   } catch (error) {

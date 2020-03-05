@@ -2,7 +2,8 @@
 import {
   call,
   put,
-  takeEvery
+  takeEvery,
+  select
 } from 'redux-saga/effects';
 
 import {
@@ -13,9 +14,12 @@ import {
   setError
 } from '../actions';
 
+const getTool = ({ tool }) => tool;
+
 function* handleRequestLogs() {
   try {
-    const logs = yield call(requestLogs);
+    const tool = yield select(getTool);
+    const logs = yield call(() => requestLogs(tool));
     yield put(requestLogsOK(logs));
     // dispatch data
   } catch (error) {

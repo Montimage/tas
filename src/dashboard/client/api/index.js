@@ -1,8 +1,8 @@
 // read and pass the environment variables into reactjs application
 const URL = `http://localhost:31057`;
 
-const requestModel = async () => {
-  const url = `${URL}/api/simulation`;
+const requestModel = async (tool) => {
+  const url = `${URL}/api/${tool}`;
   const response = await fetch(url);
   const data = await response.json();
   if (response.status >= 400) {
@@ -11,8 +11,8 @@ const requestModel = async () => {
   return data;
 };
 
-const requestLogs = async () => {
-  const url = `${URL}/api/simulation/logs`;
+const requestLogs = async (tool) => {
+  const url = `${URL}/api/${tool}/logs`;
   const response = await fetch(url);
   const data = await response.text();
   if (response.status >= 400) {
@@ -21,8 +21,8 @@ const requestLogs = async () => {
   return data;
 };
 
-const requestStartDeploy = async () => {
-  const url = `${URL}/api/simulation/run`;
+const requestStartDeploy = async (tool) => {
+  const url = `${URL}/api/${tool}/run`;
   const response = await fetch(url);
   const data = await response.json();
   if (response.status >= 400) {
@@ -31,8 +31,8 @@ const requestStartDeploy = async () => {
   return data;
 };
 
-const requestStopDeploy = async () => {
-  const url = `${URL}/api/simulation/stop`;
+const requestStopDeploy = async (tool) => {
+  const url = `${URL}/api/${tool}/stop`;
   const response = await fetch(url);
   const data = await response.json();
   if (response.status >= 400) {
@@ -41,8 +41,8 @@ const requestStopDeploy = async () => {
   return data;
 };
 
-const uploadModel = async (model) => {
-  const url = `${URL}/api/simulation`;
+const uploadModel = async (tool, model) => {
+  const url = `${URL}/api/${tool}`;
   const response = await fetch(url,{
     method: 'POST',
     headers: {
