@@ -1,0 +1,3 @@
+#root > section > section > aside:nth-child(3) > span {
+  right:0px;
+}
