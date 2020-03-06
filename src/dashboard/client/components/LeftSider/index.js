@@ -14,13 +14,13 @@ class LeftSider extends Component {
       {
         key: 1,
         text: "Sensor",
-        action: () => showModal("NEW_SENSOR_MODAL"),
+        action: () => showModal("SENSOR-FORM"),
         icon: <BugOutlined />
       },
       {
         key: 2,
         text: "Actuator",
-        action: () => showModal("NEW_ACTUATOR_MODAL"),
+        action: () => showModal("ACTUATOR-FORM"),
         icon: <BulbOutlined />
       }
     ];
@@ -29,18 +29,20 @@ class LeftSider extends Component {
       menuItems.push({
         key: 3,
         text: "Thing",
-        action: () => showModal("NEW_THING_MODAL"),
+        action: () => showModal("THING-FORM"),
         icon: <PartitionOutlined />
       });
     } else {
       menuItems.push({
         key: 3,
         text: "Data Storage",
-        action: () => showModal("UPDATE_DB_CONFIG"),
+        action: () => showModal("DATA-STORAGE-FORM"),
         icon: <DatabaseOutlined />
       });
     }
-    return <TSSider rightSide={true} items={menuItems} theme="dark"/>;
+    return (
+      <TSSider rightSide={true} items={menuItems} theme="dark" />
+    );
   }
 }
 

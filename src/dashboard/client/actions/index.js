@@ -1,9 +1,18 @@
 import {createAction } from 'redux-act';
+// Error
+export const setError = createAction('SET_ERROR');
 
-// Load Model
+// Model
 export const requestModel = createAction('REQUEST_MODEL');
 export const setModel = createAction('SET_MODEL');
-export const setError = createAction('SET_ERROR');
+export const addThing = createAction('ADD_THING');
+export const deleteThing = createAction('DELETE_THING');
+export const addSimulationSensor = createAction('ADD_SIMULATION_SENSOR');
+export const addDGSensor = createAction('ADD_DATA_GENERATOR_SENSOR');
+export const addDGActuator = createAction('ADD_DATA_GENERATOR_ACTUATOR');
+export const deleteSimulationSensor = createAction('DELETE_SIMULATION_SENSOR');
+export const deleteDGSensor = createAction('DELETE_DATA_GENERATOR_SENSOR');
+export const deleteDGActuator = createAction('DELETE_DATA_GENERATOR_ACTUATOR');
 
 // Save Model to Server
 export const uploadModel = createAction('UPLOAD_MODEL');
@@ -26,8 +35,12 @@ export const setContentType = createAction('SET_CONTENT_TYPE');
 // Import Model
 export const resetModel = createAction('RESET_MODEL');
 
-// LeftSide menu
-export const showModal = createAction('SHOW_MODAL');
-
 // Tool
 export const changeTool = createAction('CHANGE_TOOL');
+
+// editing forms
+export const showModal = createAction('SHOW_MODAL');
+export const selectThing = createAction('SELECT_THING');
+export const selectSensor = createAction('SELECT_SENSOR');
+export const selectActuator = createAction('SELECT_ACTUATOR');
+export const selectDataStorage = createAction('SELECT_DATA_STORAGE');
