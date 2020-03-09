@@ -17,7 +17,7 @@ export const addDGSensor = createAction('ADD_DATA_GENERATOR_SENSOR');
 export const addDGActuator = createAction('ADD_DATA_GENERATOR_ACTUATOR');
 export const deleteDGSensor = createAction('DELETE_DATA_GENERATOR_SENSOR');
 export const deleteDGActuator = createAction('DELETE_DATA_GENERATOR_ACTUATOR');
-
+export const updateDataStorage = createAction('UPDATE_DATA_STORAGE');
 // Save Model to Server
 export const uploadModel = createAction('UPLOAD_MODEL');
 export const uploadModelOK = createAction('UPLOAD_MODEL_OK');

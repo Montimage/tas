@@ -23,6 +23,12 @@ class MainView extends Component {
     this.props.fetchModel();
   }
 
+  componentWillReceiveProps(newProps) {
+    this.setState({
+      tempModel: newProps.model
+    })
+  }
+
   onModelChange(newModel) {
     this.setState({
       tempModel: newModel

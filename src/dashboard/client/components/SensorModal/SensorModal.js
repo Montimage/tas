@@ -15,6 +15,7 @@ import {
   FormNumberItem,
   FormTimeRangeItem
 } from "../FormItems";
+import DatabaseConfigForm from "../DatabaseConfigForm";
 
 const DEFAULT_TIME_INTERVAL = 3; // 3 seconds
 
@@ -43,6 +44,9 @@ const initDataSourceDatabase = {
   dbConfig: {
     host: "localhost",
     port: 27017,
+    dbName: null,
+    username: null,
+    password: null,
     options: null
   },
   startTime: null,
@@ -225,7 +229,7 @@ class SensorModal extends Component {
     const { data, error, thingID, thingIDs } = this.state;
     const { tool, formID } = this.props;
     let footer = null;
-    if (this.props.selectedSensor) {
+    if (this.props.selectedSensor && formID === 'SENSOR-FORM' || this.props.selectedActuator && formID === 'ACTUATOR-FORM') {
       footer = [
         <Button key="delete" type="danger" onClick={() => this.handleDelete()}>
           Delete
@@ -303,36 +307,10 @@ class SensorModal extends Component {
           <p />
           {data.dataSource.source === "Database" ? (
             <React.Fragment>
-              <FormTextItem
-                label="Host"
-                defaultValue={
-                  data.dataSource.dbConfig
-                    ? data.dataSource.dbConfig.host
-                    : "localhost"
-                }
-                onChange={v => this.onDataChange("dataSource.dbConfig.host", v)}
-              />
-              <FormNumberItem
-                label="Port"
-                min={1023}
-                max={65535}
-                defaultValue={
-                  data.dataSource.dbConfig
-                    ? data.dataSource.dbConfig.port
-                    : 27017
-                }
-                onChange={v => this.onDataChange("dataSource.dbConfig.port", v)}
-              />
-              <FormTextItem
-                label="Options"
-                defaultValue={
-                  data.dataSource.dbConfig
-                    ? data.dataSource.dbConfig.options
-                    : null
-                }
-                onChange={v =>
-                  this.onDataChange("dataSource.dbConfig.options", v)
-                }
+              <DatabaseConfigForm
+                defaultValue={data.dataSource.dbConfig}
+                dataPath="dataSource.dbConfig"
+                onDataChange={(dataPath, value) => this.onDataChange(dataPath, value)}
               />
               <FormTimeRangeItem
                 label="Time"

@@ -13,6 +13,7 @@ import {
   deleteDGActuator,
   addSimulationActuator,
   deleteSimulationActuator,
+  updateDataStorage
 } from "../actions";
 import { addNewElementToArray, removeElementFromArray } from "../utils";
 
@@ -145,7 +146,8 @@ export default createReducer(
     [deleteDGActuator]: produce((draft, actuatorID) => {
       const newActuators = removeElementFromArray(draft.actuators, actuatorID);
       if (newActuators) draft.actuators = [...newActuators];
-    })
+    }),
+    [updateDataStorage]: (state, dataStorage) => ({ ...state, dbConfig: dataStorage})
   },
   initState
 );

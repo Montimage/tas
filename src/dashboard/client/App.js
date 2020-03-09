@@ -15,6 +15,7 @@ import SensorModal from './components/SensorModal';
 import ActuatorModal from "./components/ActuatorModal";
 
 import configStore from "./store";
+import DataStorageModal from "./components/DataStorageModal";
 
 const store = configStore();
 
@@ -35,6 +36,7 @@ class App extends Component {
             <ThingModal />
             <SensorModal />
             <ActuatorModal />
+            <DataStorageModal />
           </Layout>
           <Footer style={{ textAlign: "center"}}>
             ENACT ©2020 Created by Montimage
