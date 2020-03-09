@@ -5,12 +5,16 @@ export const setError = createAction('SET_ERROR');
 // Model
 export const requestModel = createAction('REQUEST_MODEL');
 export const setModel = createAction('SET_MODEL');
+// Model - Simulation
 export const addThing = createAction('ADD_THING');
 export const deleteThing = createAction('DELETE_THING');
 export const addSimulationSensor = createAction('ADD_SIMULATION_SENSOR');
+export const addSimulationActuator = createAction('ADD_SIMULATION_ACTUATOR');
+export const deleteSimulationSensor = createAction('DELETE_SIMULATION_SENSOR');
+export const deleteSimulationActuator = createAction('DELETE_SIMULATION_ACTUATOR');
+// Model - Data - generator
 export const addDGSensor = createAction('ADD_DATA_GENERATOR_SENSOR');
 export const addDGActuator = createAction('ADD_DATA_GENERATOR_ACTUATOR');
-export const deleteSimulationSensor = createAction('DELETE_SIMULATION_SENSOR');
 export const deleteDGSensor = createAction('DELETE_DATA_GENERATOR_SENSOR');
 export const deleteDGActuator = createAction('DELETE_DATA_GENERATOR_ACTUATOR');
 

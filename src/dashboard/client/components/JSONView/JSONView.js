@@ -9,7 +9,6 @@ import './style.css';
 
 const JSONView = ({value, onChange}) => (
   <JsonEditor
-    htmlElementProps = {value}
     value={value}
     onChange={onChange}
     allowedModes={["tree", "code"]}

@@ -12,6 +12,7 @@ import MainView from "./components/MainView";
 // all the edit forms
 import ThingModal from './components/ThingModal';
 import SensorModal from './components/SensorModal';
+import ActuatorModal from "./components/ActuatorModal";
 
 import configStore from "./store";
 
@@ -33,6 +34,7 @@ class App extends Component {
             <RightSider />
             <ThingModal />
             <SensorModal />
+            <ActuatorModal />
           </Layout>
           <Footer style={{ textAlign: "center"}}>
             ENACT ©2020 Created by Montimage
