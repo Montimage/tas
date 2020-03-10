@@ -33,7 +33,7 @@ const TSListView = ({ list, editHandler, deleteHandler, itemAvatar }) => (
             }
             description={`id: ${item.id}${item.name ? `, name: ${item.name}` : ""}${
               item.thingID ? `, thingID: ${item.thingID}` : ""
-            }${item.dataSource ? `, source: ${item.dataSource.source}` : ""}`}
+            }${item.dataSource ? `, source: ${item.dataSource.source}` : ""}, enable: ${item.enable ? true: false}`}
           />
         </Skeleton>
       </List.Item>
