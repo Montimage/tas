@@ -75,7 +75,7 @@ class TSHeader extends Component {
       <Header>
         <Row>
           <Col span={4}>
-            <img src="img/Logo.png" className="logo" style={{maxWidth: '250px', objectFit:'contain'}}/>
+            <a href="/"><img src="img/Logo.png" className="logo" style={{maxWidth: '250px', objectFit:'contain'}}/></a>
           </Col>
           <Col span={6}>
             <span style={{color: 'white'}}>{toolName}</span>

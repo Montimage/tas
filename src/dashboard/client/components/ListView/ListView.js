@@ -1,8 +1,14 @@
-import React from 'react';
-import { PageHeader } from 'antd';
+import React from "react";
+import { PageHeader, List, Avatar, Skeleton, Button } from "antd";
 
-import {PartitionOutlined, BulbOutlined, BugOutlined} from '@ant-design/icons';
-import TSListView from './TSListView';
+import {
+  PartitionOutlined,
+  BulbOutlined,
+  BugOutlined,
+  DatabaseOutlined
+} from "@ant-design/icons";
+import TSListView from "./TSListView";
+import './style.css';
 
 const ListView = ({
   model: { sensors, actuators, dbConfig, things, name },
@@ -13,14 +19,12 @@ const ListView = ({
     selectSensor,
     deleteSensor,
     selectActuator,
-    deleteActuator,
+    deleteActuator
   }
 }) => {
-  let modelType = "Data Generator";
   const allSensors = sensors ? [...sensors] : [];
   const allActuators = actuators ? [...actuators] : [];
   if (things) {
-    modelType = "Simulation";
     for (let index = 0; index < things.length; index++) {
       const { sensors, actuators } = things[index];
       for (let sindex = 0; sindex < sensors.length; sindex++) {
@@ -36,11 +40,7 @@ const ListView = ({
   return (
     <div>
       <h1>
-        <PageHeader
-          className="site-page-header"
-          title={name}
-          subTitle={modelType}
-        />
+        {name}
       </h1>
       {things && (
         <div>
@@ -102,15 +102,37 @@ const ListView = ({
           />
         </div>
       )}
-      {dbConfig &&
+      {dbConfig && (
         <div>
           <PageHeader
             className="site-page-header"
             title="Data Storage"
             subTitle="Configuration"
           />
+          <List.Item
+            actions={[
+              <Button
+                key="list-loadmore-edit"
+                onClick={() => showModal('DATA-STORAGE-FORM')}
+              >
+                Edit
+              </Button>
+            ]}
+          >
+            <Skeleton avatar title={false} loading={false}>
+              <List.Item.Meta
+                avatar={
+                  <Avatar>
+                    <DatabaseOutlined />
+                  </Avatar>
+                }
+                title={"MongoDB"}
+                description={`host: ${dbConfig.host}, port: ${dbConfig.port}, dbname: ${dbConfig.dbname}`}
+              />
+            </Skeleton>
+          </List.Item>
         </div>
-      }
+      )}
     </div>
   );
 };

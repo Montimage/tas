@@ -98,8 +98,7 @@ class MainView extends Component {
               }} />
             )}
             <Button
-              type="default"
-              shape="round"
+              type="primary"
               onClick={() => saveModel(this.state.tempModel)}
               style={{ marginTop: "10px" }}
             >

@@ -10,14 +10,12 @@ const TSListView = ({ list, editHandler, deleteHandler, itemAvatar }) => (
         actions={[
           <Button
             key="list-loadmore-edit"
-            size="small"
             onClick={() => editHandler(item)}
           >
             Edit
           </Button>,
           <Button
             key="list-loadmore-edit"
-            size="small"
             onClick={() => deleteHandler(item)}
             type="danger"
           >
@@ -28,8 +26,14 @@ const TSListView = ({ list, editHandler, deleteHandler, itemAvatar }) => (
         <Skeleton avatar title={false} loading={item.loading}>
           <List.Item.Meta
             avatar={<Avatar>{itemAvatar}</Avatar>}
-            title={<a href="https://ant.design">{item.name ? item.name : item.id}</a>}
-            description="Ant Design, a design language for background applications, is refined by Ant UED Team"
+            title={
+              <a onClick={() => editHandler(item)}>
+                {item.name ? item.name : item.id}
+              </a>
+            }
+            description={`id: ${item.id}${item.name ? `, name: ${item.name}` : ""}${
+              item.thingID ? `, thingID: ${item.thingID}` : ""
+            }${item.dataSource ? `, source: ${item.dataSource.source}` : ""}`}
           />
         </Skeleton>
       </List.Item>

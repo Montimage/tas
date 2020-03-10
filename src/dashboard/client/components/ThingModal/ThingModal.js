@@ -123,7 +123,7 @@ class ThingModal extends Component {
 
     return (
       <TSModal
-        title="Thing"
+        title={"Thing"}
         visible={formID === "THING-FORM" ? true : false}
         onCancel={() => this.handleCancel()}
         footer={footer}
