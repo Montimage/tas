@@ -72,15 +72,15 @@ class ActuatorModal extends Component {
     });
   }
 
-  handleDelete() {
-    const { thingID, data } = this.state;
-    const {
-      deleteSimulationActuator
-    } = this.props;
-    // Add sensor to a simulation model
-    deleteSimulationActuator(data.id, thingID);
-    this.props.showModal(null);
-  }
+  // handleDelete() {
+  //   const { thingID, data } = this.state;
+  //   const {
+  //     deleteSimulationActuator
+  //   } = this.props;
+  //   // Add sensor to a simulation model
+  //   deleteSimulationActuator(data.id, thingID);
+  //   this.props.showModal(null);
+  // }
 
   handleOk() {
     const { thingID, data } = this.state;
@@ -109,9 +109,9 @@ class ActuatorModal extends Component {
 
     if (this.props.selectedActuator) {
       footer = [
-        <Button key="delete" type="danger" onClick={() => this.handleDelete()}>
-          Delete
-        </Button>,
+        // <Button key="delete" type="danger" onClick={() => this.handleDelete()}>
+        //   Delete
+        // </Button>,
         <Button key="duplicate" onClick={() => this.handleDuplicate()}>
           Duplicate
         </Button>,

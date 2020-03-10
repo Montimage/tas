@@ -29,22 +29,22 @@ class ThingModal extends Component {
     };
   }
 
-  handleDelete() {
-    let deleted = false;
-    const { things, data, deleteThing } = this.props;
-    for (let index = 0; index < things.length; index++) {
-      const th = things[index];
-      if (th.id === data.id) {
-        deleteThing(data.id);
-        deleted = true;
-        break;
-      }
-    }
+  // handleDelete() {
+  //   let deleted = false;
+  //   const { things, data, deleteThing } = this.props;
+  //   for (let index = 0; index < things.length; index++) {
+  //     const th = things[index];
+  //     if (th.id === data.id) {
+  //       deleteThing(data.id);
+  //       deleted = true;
+  //       break;
+  //     }
+  //   }
 
-    if (!deleted) {
-      this.setState(`Cannot delete thing ${data.id}: Not found!`);
-    }
-  }
+  //   if (!deleted) {
+  //     this.setState(`Cannot delete thing ${data.id}: Not found!`);
+  //   }
+  // }
 
   handleOk() {
     // Validate data
@@ -75,9 +75,12 @@ class ThingModal extends Component {
 
   handleDuplicate() {
     const newThingID = `thing-${Date.now()}`;
-    this.setState(prevState => ({
-      data: { ...prevState.data, id: newThingID }
-    }));
+    this.setState(prevState => {
+      const newData = { ...prevState.data };
+      updateObjectByPath(newData, 'id', newThingID);
+      updateObjectByPath(newData, 'name', 'New Thing');
+      return { data: newData, error: null };
+    });
   }
 
   onDataChange(dataPath, value) {
@@ -94,9 +97,9 @@ class ThingModal extends Component {
     let footer = null;
     if (this.props.selectedThing) {
       footer = [
-        <Button key="delete" type="danger" onClick={() => this.handleDelete()}>
-          Delete
-        </Button>,
+        // <Button key="delete" type="danger" onClick={() => this.handleDelete()}>
+        //   Delete
+        // </Button>,
         <Button key="duplicate" onClick={() => this.handleDuplicate()}>
           Duplicate
         </Button>,

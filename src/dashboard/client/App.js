@@ -9,13 +9,7 @@ import TSHeader from "./components/TSHeader";
 import LeftSider from "./components/LeftSider";
 import RightSider from "./components/RightSider";
 import MainView from "./components/MainView";
-// all the edit forms
-import ThingModal from './components/ThingModal';
-import SensorModal from './components/SensorModal';
-import ActuatorModal from "./components/ActuatorModal";
-
 import configStore from "./store";
-import DataStorageModal from "./components/DataStorageModal";
 
 const store = configStore();
 
@@ -33,10 +27,6 @@ class App extends Component {
               </Content>
             </Layout>
             <RightSider />
-            <ThingModal />
-            <SensorModal />
-            <ActuatorModal />
-            <DataStorageModal />
           </Layout>
           <Footer style={{ textAlign: "center"}}>
             ENACT ©2020 Created by Montimage

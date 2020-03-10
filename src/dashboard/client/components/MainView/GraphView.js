@@ -1,9 +1,9 @@
 import React from 'react';
 
-const GraphView = ({value, onChange}) => (
+const GraphView = ({model, onChange}) => (
   <p>
     Graph View
-    {value.name}
+    {model.name}
   </p>
 )
 

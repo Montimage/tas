@@ -167,53 +167,53 @@ class SensorModal extends Component {
     });
   }
 
-  handleDelete() {
-    let deleted = false;
-    const { thingID, data } = this.state;
-    const {
-      tool,
-      formID,
-      deleteSimulationSensor,
-      deleteDGSensor,
-      deleteDGActuator
-    } = this.props;
-    if (formID === "SENSOR-FORM") {
-      // Add new sensor
-      if (tool === "simulation") {
-        // Add sensor to a simulation model
-        deleteSimulationSensor(data.id, thingID);
-        this.props.showModal(null);
-      } else if (tool === "data-generator") {
-        // add sensor to a data-generator model
-        deleteDGSensor(data.id);
-        this.props.showModal(null);
-      } else {
-        console.log(`[ERROR] Undefined tool: ${tool}`);
-        this.setState({ error: `[ERROR] Undefined tool: ${tool}` });
-      }
-    } else if (formID === "ACTUATOR-FORM") {
-      // Add new actuator
-      if (tool === "data-generator") {
-        // add actuator to a data-generator model
-        deleteDGActuator(data.id);
-        this.props.showModal(null);
-      } else {
-        console.log(
-          `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
-        );
-        this.setState({
-          error: `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
-        });
-      }
-    } else {
-      console.log(`[ERROR] Invalid form: ${formID}`);
-      this.setState({ error: `[ERROR] Invalid form: ${formID}` });
-    }
+  // handleDelete() {
+  //   let deleted = false;
+  //   const { thingID, data } = this.state;
+  //   const {
+  //     tool,
+  //     formID,
+  //     deleteSimulationSensor,
+  //     deleteDGSensor,
+  //     deleteDGActuator
+  //   } = this.props;
+  //   if (formID === "SENSOR-FORM") {
+  //     // Add new sensor
+  //     if (tool === "simulation") {
+  //       // Add sensor to a simulation model
+  //       deleteSimulationSensor(data.id, thingID);
+  //       this.props.showModal(null);
+  //     } else if (tool === "data-generator") {
+  //       // add sensor to a data-generator model
+  //       deleteDGSensor(data.id);
+  //       this.props.showModal(null);
+  //     } else {
+  //       console.log(`[ERROR] Undefined tool: ${tool}`);
+  //       this.setState({ error: `[ERROR] Undefined tool: ${tool}` });
+  //     }
+  //   } else if (formID === "ACTUATOR-FORM") {
+  //     // Add new actuator
+  //     if (tool === "data-generator") {
+  //       // add actuator to a data-generator model
+  //       deleteDGActuator(data.id);
+  //       this.props.showModal(null);
+  //     } else {
+  //       console.log(
+  //         `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
+  //       );
+  //       this.setState({
+  //         error: `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
+  //       });
+  //     }
+  //   } else {
+  //     console.log(`[ERROR] Invalid form: ${formID}`);
+  //     this.setState({ error: `[ERROR] Invalid form: ${formID}` });
+  //   }
 
-    if (!deleted) {
-      this.setState(`Cannot delete thing ${data.id}: Not found!`);
-    }
-  }
+  //   if (!deleted) {
+  //     this.setState(`Cannot delete thing ${data.id}: Not found!`);
+  //   }
+  // }
 
   handleOk() {
     const { thingID, data } = this.state;
@@ -270,14 +270,12 @@ class SensorModal extends Component {
   }
 
   render() {
-    const { data, error, thingID, thingIDs } = this.state;
-    const { tool, formID } = this.props;
+    const { data, error, thingID, thingIDs,  } = this.state;
+    const { tool, formID, selectedActuator, selectedSensor } = this.props;
+    if (tool === 'simulation' && formID === "ACTUATOR-FORM") return null;
     let footer = null;
-    if (this.props.selectedSensor && formID === 'SENSOR-FORM' || this.props.selectedActuator && formID === 'ACTUATOR-FORM') {
+    if (selectedSensor && formID === 'SENSOR-FORM' || selectedActuator && formID === 'ACTUATOR-FORM') {
       footer = [
-        <Button key="delete" type="danger" onClick={() => this.handleDelete()}>
-          Delete
-        </Button>,
         <Button key="duplicate" onClick={() => this.handleDuplicate()}>
           Duplicate
         </Button>,
@@ -300,7 +298,7 @@ class SensorModal extends Component {
     }
     const isSensor = formID === "SENSOR-FORM" ? true : false;
     let randomDataForm = null;
-    if (data.dataSource.dataDescription && data.dataSource.dataDescription.type) {
+    if (data.dataSource && data.dataSource.dataDescription && data.dataSource.dataDescription.type) {
       switch (data.dataSource.dataDescription.type) {
         case "Boolean":
           randomDataForm = (
@@ -381,7 +379,7 @@ class SensorModal extends Component {
         title={`${isSensor ? "Sensor" : "Actuator"}`}
         visible={
           isSensor ||
-          (tool === "data-generator" && !isSensor && formID === "ACTUATOR-FORM")
+          (tool === "data-generator" && formID === "ACTUATOR-FORM")
         }
         onCancel={() => this.handleCancel()}
         footer={footer}
