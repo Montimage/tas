@@ -25,8 +25,12 @@ export default createReducer(
     [resetModel]: state => initState,
     // Simulation
     [addThing]: produce((draft, thing) => {
-      const newThings = addNewElementToArray(draft.things, thing);
-      draft.things = [...newThings];
+      if (draft.things) {
+        const newThings = addNewElementToArray(draft.things, thing);
+        draft.things = [...newThings];
+      } else {
+        draft.things = [thing];
+      }
     }),
     [deleteThing]: produce((draft, thingID) => {
       const newThings = removeElementFromArray(draft.things, thingID);
@@ -34,14 +38,20 @@ export default createReducer(
     }),
     [addSimulationSensor]: produce((draft, { thingID, sensor }) => {
       let foundThing = false;
-      for (let index = 0; index < draft.things.length; index++) {
-        if (draft.things[index].id === thingID) {
-          foundThing = true;
-          const newSensors = addNewElementToArray(draft.things[index].sensors, sensor);
-          draft.things[index].sensors = [...newSensors];
-          break;
+      if (draft.things) {
+        for (let index = 0; index < draft.things.length; index++) {
+          if (draft.things[index].id === thingID) {
+            foundThing = true;
+            const newSensors = addNewElementToArray(
+              draft.things[index].sensors,
+              sensor
+            );
+            draft.things[index].sensors = [...newSensors];
+            break;
+          }
         }
       }
+
       if (!foundThing) {
         if (!draft.sensors) {
           draft.sensors = [];
@@ -58,14 +68,20 @@ export default createReducer(
     }),
     [addSimulationActuator]: produce((draft, { thingID, actuator }) => {
       let foundThing = false;
-      for (let index = 0; index < draft.things.length; index++) {
-        if (draft.things[index].id === thingID) {
-          foundThing = true;
-          const newActuators = addNewElementToArray(draft.things[index].actuators, actuator);
-          draft.things[index].actuators = [...newActuators];
-          break;
+      if (draft.things) {
+        for (let index = 0; index < draft.things.length; index++) {
+          if (draft.things[index].id === thingID) {
+            foundThing = true;
+            const newActuators = addNewElementToArray(
+              draft.things[index].actuators,
+              actuator
+            );
+            draft.things[index].actuators = [...newActuators];
+            break;
+          }
         }
       }
+
       if (!foundThing) {
         if (!draft.actuators) {
           draft.actuators = [];
@@ -75,12 +91,15 @@ export default createReducer(
         draft.actuators = [...newActuators];
       } else {
         if (draft.actuators) {
-          const newActuators = removeElementFromArray(draft.actuators, actuator.id);
+          const newActuators = removeElementFromArray(
+            draft.actuators,
+            actuator.id
+          );
           if (newActuators) draft.actuators = [...newActuators];
         }
       }
     }),
-    [deleteSimulationSensor]: produce((draft, {sensorID, thingID}) => {
+    [deleteSimulationSensor]: produce((draft, { sensorID, thingID }) => {
       if (!thingID) {
         // Remove a free sensors
         const newSensors = removeElementFromArray(draft.sensors, sensorID);
@@ -93,7 +112,10 @@ export default createReducer(
         for (let index = 0; index < draft.things.length; index++) {
           if (draft.things[index].id === thingID) {
             foundThing = true;
-            const newSensors = removeElementFromArray(draft.things[index].sensors, sensorID);
+            const newSensors = removeElementFromArray(
+              draft.things[index].sensors,
+              sensorID
+            );
             if (newSensors) {
               draft.things[index].sensors = [...newSensors];
             }
@@ -105,10 +127,13 @@ export default createReducer(
         }
       }
     }),
-    [deleteSimulationActuator]: produce((draft, {actuatorID, thingID}) => {
+    [deleteSimulationActuator]: produce((draft, { actuatorID, thingID }) => {
       if (!thingID) {
         // Remove a free actuators
-        const newActuators = removeElementFromArray(draft.actuators, actuatorID);
+        const newActuators = removeElementFromArray(
+          draft.actuators,
+          actuatorID
+        );
         if (newActuators) {
           draft.actuators = [...newActuators];
         }
@@ -118,7 +143,10 @@ export default createReducer(
         for (let index = 0; index < draft.things.length; index++) {
           if (draft.things[index].id === thingID) {
             foundThing = true;
-            const newActuators = removeElementFromArray(draft.things[index].actuators, actuatorID);
+            const newActuators = removeElementFromArray(
+              draft.things[index].actuators,
+              actuatorID
+            );
             if (newActuators) {
               draft.things[index].actuators = [...newActuators];
             }
@@ -132,22 +160,33 @@ export default createReducer(
     }),
     // Data-generator
     [addDGSensor]: produce((draft, sensor) => {
-      const newSensors = addNewElementToArray(draft.sensors, sensor);
-      draft.sensors = [...newSensors];
+      if (draft.sensors) {
+        const newSensors = addNewElementToArray(draft.sensors, sensor);
+        draft.sensors = [...newSensors];
+      } else {
+        draft.sensors = [sensor];
+      }
     }),
     [deleteDGSensor]: produce((draft, sensorID) => {
       const newSensors = removeElementFromArray(draft.sensors, sensorID);
       if (newSensors) draft.sensors = [...newSensors];
     }),
     [addDGActuator]: produce((draft, actuator) => {
-      const newActuators = addNewElementToArray(draft.actuators, actuator);
-      draft.actuators = [...newActuators];
+      if (draft.actuators) {
+        const newActuators = addNewElementToArray(draft.actuators, actuator);
+        draft.actuators = [...newActuators];
+      } else {
+        draft.actuators = [actuator];
+      }
     }),
     [deleteDGActuator]: produce((draft, actuatorID) => {
       const newActuators = removeElementFromArray(draft.actuators, actuatorID);
       if (newActuators) draft.actuators = [...newActuators];
     }),
-    [updateDataStorage]: (state, dataStorage) => ({ ...state, dbConfig: dataStorage})
+    [updateDataStorage]: (state, dataStorage) => ({
+      ...state,
+      dbConfig: dataStorage
+    })
   },
   initState
 );
