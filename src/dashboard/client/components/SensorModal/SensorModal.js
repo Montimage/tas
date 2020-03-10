@@ -16,6 +16,8 @@ import {
   FormTimeRangeItem
 } from "../FormItems";
 import DatabaseConfigForm from "../DatabaseConfigForm";
+import FormNumberWithRange from '../FormNumberWithRange';
+import LocationForm from "../LocationForm";
 
 const DEFAULT_TIME_INTERVAL = 3; // 3 seconds
 
@@ -31,12 +33,52 @@ const initDataDescriptionEnum = {
   initValue: 1
 };
 
+const initDataDescriptionInteger = {
+  type: "Integer",
+  timeInterval: DEFAULT_TIME_INTERVAL,
+  min: 0,
+  max: 10000,
+  initValue: 10,
+  regular: {
+    min: 10,
+    max: 20,
+    step: 1
+  },
+  behaviour: 'Normal'
+};
+
+const initDataDescriptionDouble = {
+  type: "Integer",
+  timeInterval: DEFAULT_TIME_INTERVAL,
+  min: 0,
+  max: 10000,
+  initValue: 10,
+  regular: {
+    min: 10,
+    max: 20,
+    step: 1
+  },
+  behaviour: 'Normal'
+};
+
+const initDataDescriptionLocation = {
+  type: "Location",
+  timeInterval: DEFAULT_TIME_INTERVAL,
+  initValue: {
+    lat: 48.828886,
+    lng: 2.353675
+  },
+  bearingDirection: 90,
+  velo: 50,
+  behaviour: 'Normal'
+};
+
 const dataDescriptions = {
   Boolean: initDataDescriptionBoolean,
   Enum: initDataDescriptionEnum,
-  Integer: initDataDescriptionEnum,
-  Double: initDataDescriptionEnum,
-  Location: initDataDescriptionEnum
+  Integer: initDataDescriptionInteger,
+  Double: initDataDescriptionDouble,
+  Location: initDataDescriptionLocation
 };
 
 const initDataSourceDatabase = {
@@ -255,7 +297,83 @@ class SensorModal extends Component {
       ];
     }
     const isSensor = formID === "SENSOR-FORM" ? true : false;
-
+    let randomDataForm = null;
+    if (data.dataSource.dataDescription && data.dataSource.dataDescription.type) {
+      switch (data.dataSource.dataDescription.type) {
+        case "Boolean":
+          randomDataForm = (
+            <FormNumberItem
+              label="Init Value"
+              min={0}
+              max={1}
+              defaultValue={data.dataSource.dataDescription.initValue}
+              onChange={v =>
+                this.onDataChange("dataSource.dataDescription.initValue", v)
+              }
+            />
+          );
+          break;
+        case "Enum":
+          randomDataForm = (
+            <React.Fragment>
+              <FormTextItem
+                label="Values"
+                defaultValue={JSON.stringify(
+                  data.dataSource.dataDescription.values
+                )}
+                onChange={v => {
+                  const values = v.split(",");
+                  this.onDataChange(
+                    "dataSource.dataDescription.values",
+                    values
+                  );
+                  this.setState(prevState => {
+                    const newData = { ...prevState.data };
+                    updateObjectByPath(
+                      newData,
+                      "dataSource.dataDescription.initValue",
+                      values[0]
+                    );
+                    return { data: newData, error: null };
+                  });
+                }}
+              />
+              {data.dataSource.dataDescription.values && (
+                <FormSelectItem
+                  label="Init Value"
+                  defaultValue={data.dataSource.dataDescription.initValue}
+                  onChange={v =>
+                    this.onDataChange("dataSource.dataDescription.initValue", v)
+                  }
+                  options={data.dataSource.dataDescription.values}
+                />
+              )}
+            </React.Fragment>
+          );
+          break;
+        case "Integer":
+        case "Double":
+          randomDataForm = (
+            <FormNumberWithRange
+              dataDescription={data.dataSource.dataDescription}
+              dataPath="dataSource.dataDescription."
+              onChange={(dataPath, v) => this.onDataChange(dataPath,v)}
+            />
+          );
+          break;
+        case "Location":
+          randomDataForm = (
+            <LocationForm
+              dataDescription={data.dataSource.dataDescription}
+              dataPath="dataSource.dataDescription."
+              onChange={(dataPath, v) => this.onDataChange(dataPath,v)}
+            />
+          );
+          break;
+        default:
+          break;
+      }
+    }
     return (
       <TSModal
         title={`${isSensor ? "Sensor" : "Actuator"}`}
@@ -345,6 +463,7 @@ class SensorModal extends Component {
                 }
                 options={["Boolean", "Enum", "Integer", "Double", "Location"]}
               />
+              {randomDataForm}
             </React.Fragment>
           )}
         </Form>
