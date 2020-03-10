@@ -13,7 +13,8 @@ import {
   FormTextItem,
   FormSelectItem,
   FormNumberItem,
-  FormTimeRangeItem
+  FormTimeRangeItem,
+  FormSwitchItem
 } from "../FormItems";
 import DatabaseConfigForm from "../DatabaseConfigForm";
 import FormNumberWithRange from '../FormNumberWithRange';
@@ -109,7 +110,8 @@ const initSensor = {
   id: `id-${Date.now()}`,
   name: `name-${Date.now()}`,
   dataSource: initDataSourceRandom,
-  options: null
+  options: null,
+  enable: true
 };
 
 class SensorModal extends Component {
@@ -410,6 +412,14 @@ class SensorModal extends Component {
             defaultValue={data.name}
             onChange={v => this.onDataChange("name", v)}
           />
+          <FormNumberItem
+            label="Scale"
+            min={1}
+            max={1000000}
+            placeholder="Number of instances"
+            defaultValue={data.scale}
+            onChange={v => this.onDataChange("scale", v)}
+          />
           <FormTextItem
             label="Topic"
             defaultValue={data.options ? data.options.topic : null}
@@ -466,6 +476,13 @@ class SensorModal extends Component {
               {randomDataForm}
             </React.Fragment>
           )}
+          <FormSwitchItem
+            label="Enable"
+            onChange={(v) => this.onDataChange(`enable`, v)}
+            checked={data.enable ? true : false}
+            checkedChildren={"On"}
+            unCheckedChildren={"Off"}
+          />
         </Form>
         {error && <Alert message={error} type="error" />}
       </TSModal>

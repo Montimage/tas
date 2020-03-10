@@ -1,7 +1,7 @@
 import React from 'react';
 import { Form, Input } from "antd";
 
-const FormTextItem = ({label, defaultValue, onChange}) =>(
+const FormTextItem = ({label, defaultValue, onChange, placeholder}) =>(
   <Form.Item label={label}>
     {defaultValue ? (
       <Input
@@ -11,6 +11,7 @@ const FormTextItem = ({label, defaultValue, onChange}) =>(
     ):(
       <Input
         onChange={v => onChange(v.target.value)}
+        placeholder={placeholder}
       />
     )}
   </Form.Item>

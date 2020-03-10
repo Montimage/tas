@@ -4,7 +4,7 @@ import TSModal from "../TSModal";
 import { addThing, deleteThing, showModal } from "../../actions";
 import { Form, Button, Alert } from "antd";
 
-import { FormTextItem, FormSelectItem, FormNumberItem } from "../FormItems";
+import { FormTextItem, FormSelectItem, FormNumberItem, FormSwitchItem } from "../FormItems";
 import { updateObjectByPath } from "../../utils";
 
 class ThingModal extends Component {
@@ -20,7 +20,8 @@ class ThingModal extends Component {
         options: null
       },
       sensors: [],
-      actuators: []
+      actuators: [],
+      enable: true
     };
     this.state = {
       data: props.selectedThing ? props.selectedThing : initThing,
@@ -142,6 +143,14 @@ class ThingModal extends Component {
             defaultValue={data.name}
             onChange={v => this.onDataChange("name", v)}
           />
+          <FormNumberItem
+            label="Scale"
+            min={1}
+            max={1000000}
+            placeholder="Number of instances"
+            defaultValue={data.scale}
+            onChange={v => this.onDataChange("scale", v)}
+          />
           <FormSelectItem
             label="Protocol"
             defaultValue={data.protocol}
@@ -166,6 +175,13 @@ class ThingModal extends Component {
             label="Options"
             defaultValue={data.commConfig.options}
             onChange={v => this.onDataChange("commConfig.options", v)}
+          />
+          <FormSwitchItem
+            label="Enable"
+            onChange={(v) => this.onDataChange(`enable`, v)}
+            checked={data.enable ? true : false}
+            checkedChildren={"On"}
+            unCheckedChildren={"Off"}
           />
         </Form>
         {error && <Alert message={error} type="error" />}
