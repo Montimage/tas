@@ -90,7 +90,7 @@ class Sensor {
       this.dbClient = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname);
     }
     this.dbClient.connect(() => {
-      console.log("[${this.id}] connected to database");
+      console.log(`[${this.id}] connected to database`);
       SensorSchema.findSensorDataBetweenTimes(
         { sensorID: this.id },
         startTime,
@@ -103,7 +103,7 @@ class Sensor {
             );
             this.status = OFFLINE;
           } else {
-            console.log("Number of data: ", listData.length);
+            console.log(`[${this.id}] Number of data: ${listData.length}`);
             this.dbClient.close();
             if (listData.length > 0) {
               this.publishDataWithTimestamp(listData);

@@ -27,6 +27,7 @@ import GraphView from "./GraphView";
 import ListView from "../ListView";
 // import 'jsoneditor-react/es/editor.min.css';
 import "./styles.css";
+import LogView from "../LogView/LogView";
 
 // console.log(ace.acequire('editor'));
 class MainView extends Component {
@@ -79,7 +80,7 @@ class MainView extends Component {
         ) : error ? (
           <span> There are some error {error}</span>
         ) : view.contentType === "logs" ? (
-          <p>{logs}</p>
+          logs ? <LogView logs={logs}/> : (<p>Empty!</p>)
         ) : (
           <div>
             {view.viewType === "json" ? (

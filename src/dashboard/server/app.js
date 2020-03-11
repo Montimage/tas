@@ -22,7 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // start server
 
 var server = app.listen(app.get('port'), env.REST_API_SERVER_HOST, function () {
-   console.log('info',`Test and Simulation API Server started on: http://${env.REST_API_SERVER_HOST}:${env.REST_API_SERVER_PORT}`);
+   console.log(`[REST_API_SERVER] Test and Simulation API Server started on: http://${env.REST_API_SERVER_HOST}:${env.REST_API_SERVER_PORT}`);
 });
 
 // Add headers

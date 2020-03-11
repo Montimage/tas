@@ -16,6 +16,8 @@
   "license": "ISC",
   "dependencies": {
     "geolib": "^3.2.1",
-    "mqtt": "^3.0.0"
+    "mqtt": "^3.0.0",
+    "stompit": "^0.26.0",
+    "winston": "^3.2.1"
   }
 }

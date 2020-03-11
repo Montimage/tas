@@ -107,7 +107,7 @@ class Thing {
         console.error(`[${this.id}] must be online before starting simulation: ${this.getStatus()}`);
         break;
       case SIMULATING:
-        console.warn(`[${this.id}] is simulating!`);
+        console.log(`[${this.id}] is simulating!`);
         break;
       default:
         break;

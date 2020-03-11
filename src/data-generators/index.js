@@ -26,7 +26,7 @@ const saveData = (type, id, data, generatedTime) => {
     });
     newActuator.save((err, _data) => {
       if (err) {
-        console.error(`[ERROR] Failed to save generated data of actuator ${id}`);
+        console.error(`[Data-Generator] Failed to save generated data of actuator ${id}`);
       } else {
         console.log(`[${id}] ${generatedTime} ${JSON.stringify(data)}`);
       }
@@ -39,7 +39,7 @@ const saveData = (type, id, data, generatedTime) => {
     });
     newSensor.save((err, _data) => {
       if (err) {
-        console.error(`[ERROR] Failed to save generated data of sensor ${id}`);
+        console.error(`[Data-Generator] Failed to save generated data of sensor ${id}`);
       } else {
         console.log(`[${id}] ${generatedTime} ${JSON.stringify(data)}`);
       }
@@ -68,10 +68,10 @@ const startGenerating = (type, id, _startTime, duration, dataSource) => {
     timeDelta = Date.now() - startTime;
   }
   console.log(
-    `Generate randomly data ${dataDescription.type} and publish the data in every ${timeInterval} seconds`
+    `[Data-Generator] Generate randomly data ${dataDescription.type} and publish the data in every ${timeInterval} seconds`
   );
   console.log(
-    `Start Time ${startTime} and duration time ${duration} seconds`
+    `[Data-Generator] Start Time ${startTime} and duration time ${duration} seconds`
   );
   let generatorID = setInterval(() => {
     dataGenerator.generateData(data => {
@@ -97,10 +97,13 @@ const stopGeneratingData = () => {
  * @param {Object} dataConfig The configuration of the data generator
  */
 const startGeneratingData = (dataConfig) => {
+  // Logger
+  const getLogger = require('../logger');
+  const logger = getLogger('Data-Generator', 'data-generator.log');
 
   const { dbConfig, sensors, actuators } = dataConfig;
   if (!dbConfig) {
-    console.error(`[ERROR] Missing database configuration:`, dataConfig);
+    console.error(`[Data-Generator] ERROR: Missing database configuration:`, dataConfig);
     return;
   }
 
@@ -115,10 +118,10 @@ const startGeneratingData = (dataConfig) => {
 
   enactDB.connect(error => {
     if (error) {
-      console.log("[ERROR] Failed to connect to database", error, dbConfig);
+      console.log("[Data-Generator] ERROR: Failed to connect to database", error, dbConfig);
       exit(1);
     }
-    console.log("Connected to database");
+    console.log("[Data-Generator] Connected to database");
     // Generate sensors data
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
       const {id, startTime, duration, dataSource, scale} = sensors[sIndex];
@@ -150,7 +153,7 @@ const startGeneratingData = (dataConfig) => {
 if (process.argv[2] === 'run') {
   readJSONFile(process.argv[3], (err, dataConfig) => {
     if (err) {
-      console.error(`[ERROR] Cannot read the data config file:`, dataConfigFile);
+      console.error(`[Data-Generator] ERROR Cannot read the data config file:`, dataConfigFile);
       return;
     }
     startGeneratingData(dataConfig);

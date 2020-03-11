@@ -70,6 +70,10 @@ const createThing = (id, protocol, commConfig, sensors, actuators) => {
  * @param {Array} thingConfigs The list of things
  */
 const startSimulation = (thingConfigs) => {
+  // Logger
+  const getLogger = require('../logger');
+  const logger = getLogger('Simulation', 'simulation.log');
+
   for (let index = 0; index < thingConfigs.length; index++) {
     const { scale, id, protocol, commConfig, sensors, actuators } = thingConfigs[index];
     let nbThings = scale ? scale : 1;
@@ -87,7 +91,8 @@ const startSimulation = (thingConfigs) => {
 if (process.argv[2] === 'test') {
   readJSONFile(process.argv[3], (err, thingConfigs) => {
     if (err) {
-      console.error(`[ERROR] Cannot read the config of thing:`, thingConfigFile);
+      console.error(`[Simulation] [ERROR] Cannot read the config of thing:`, thingConfigFile);
+      // console.error();
     } else {
       startSimulation(thingConfigs);
     }
