@@ -1,6 +1,6 @@
-import React, {Component} from "react";
+import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Layout, Menu, Row, Col, Select } from "antd";
+import { Layout, Menu, Row, Col, Select, Typography } from "antd";
 import {
   CaretRightOutlined,
   GatewayOutlined,
@@ -10,12 +10,12 @@ import {
   ImportOutlined,
   ClearOutlined,
   SyncOutlined,
-  ExportOutlined,
-  RetweetOutlined,
+  ExportOutlined
 } from "@ant-design/icons";
 
 const { SubMenu } = Menu;
 const { Header } = Layout;
+const { Text } = Typography;
 
 import {
   setModel,
@@ -31,15 +31,14 @@ import {
 import "./styles.css";
 
 class TSHeader extends Component {
-
-  onUpload (files) {
+  onUpload(files) {
     const fileReader = new FileReader();
     fileReader.onloadend = () => {
       try {
         const newModel = JSON.parse(fileReader.result);
         this.props.setNewModel(newModel);
       } catch (error) {
-        this.props.setNotification({type: 'error', message: error});
+        this.props.setNotification({ type: "error", message: error });
       }
     };
     fileReader.readAsText(files[0]);
@@ -48,16 +47,16 @@ class TSHeader extends Component {
   exportModel(model) {
     if (model) {
       const fileData = JSON.stringify(model);
-      const blob = new Blob([fileData], {type: 'text/json'});
+      const blob = new Blob([fileData], { type: "text/json" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `${model.name.replace(/ /g,'')}.json`;
+      const link = document.createElement("a");
+      link.download = `${model.name.replace(/ /g, "")}.json`;
       link.href = url;
       link.click();
     }
   }
 
-  render () {
+  render() {
     const {
       resetEditor,
       startDeploy,
@@ -69,17 +68,23 @@ class TSHeader extends Component {
       tool,
       changeTool
     } = this.props;
-    const toolName = tool === 'simulation' ? 'Simulation' : 'Data Generator'
+    const logo =
+      tool === "simulation"
+        ? "img/logo-simulation.png"
+        : "img/logo-data-generator.png";
     return (
       <Header>
         <Row>
           <Col span={4}>
-            <a href="/"><img src="img/Logo.png" className="logo" style={{maxWidth: '250px', objectFit:'contain'}}/></a>
+            <a href="/">
+              <img
+                src={logo}
+                className="logo"
+                style={{ maxWidth: "250px", objectFit: "contain" }}
+              />
+            </a>
           </Col>
-          <Col span={6}>
-            <span style={{color: 'white'}}>{toolName}</span>
-          </Col>
-          <Col span={14}>
+          <Col span={14} push={6}>
             <Menu theme="dark" mode="horizontal" style={{ lineHeight: "64px" }}>
               <SubMenu
                 title={
@@ -115,9 +120,7 @@ class TSHeader extends Component {
                   <span className="submenu-title-wrapper">
                     <DeploymentUnitOutlined />
                     {"Deploy "}
-                    {isRunning ? (
-                      <SyncOutlined spin/>
-                    ) : null}
+                    {isRunning ? <SyncOutlined spin /> : null}
                   </span>
                 }
               >
@@ -137,8 +140,10 @@ class TSHeader extends Component {
               </Menu.Item>
               <Menu.Item key="4" onClick={changeTool}>
                 {" "}
-                <RetweetOutlined />
-                Switch to {tool === 'simulation' ? 'Data Generator' : 'Simulation'}
+                <ExportOutlined />
+                <Text style={{color: '#ffff00fc'}}>
+                  {tool === "simulation" ? "Data Generator" : "Simulation"}
+                </Text>
               </Menu.Item>
             </Menu>
           </Col>
@@ -159,35 +164,35 @@ class TSHeader extends Component {
   }
 }
 
-const mapPropsToStates = ({ requesting, model, tool, isRunning}) => ({
+const mapPropsToStates = ({ requesting, model, tool, isRunning }) => ({
   requesting,
   model,
   tool,
   isRunning
 });
 
-
 const mapDispatchToProps = dispatch => ({
   changeTool: () => {
     dispatch(changeTool());
     dispatch(requestModel());
   },
-  setNotification: ({type, message}) => dispatch(setNotification({type, message})),
-  setNewModel: (newModel) => {
+  setNotification: ({ type, message }) =>
+    dispatch(setNotification({ type, message })),
+  setNewModel: newModel => {
     dispatch(setModel(newModel));
-    dispatch(setContentType('model'));
+    dispatch(setContentType("model"));
   },
   resetEditor: () => {
     dispatch(resetModel());
-    dispatch(setContentType('model'));
+    dispatch(setContentType("model"));
   },
   startDeploy: () => dispatch(sendDeployStart()),
   stopDeploy: () => dispatch(sendDeployStop()),
   viewLogs: () => {
     dispatch(requestLogs());
-    dispatch(setContentType('logs'));
+    dispatch(setContentType("logs"));
   },
-  setContentType: (v) => dispatch(setContentType(v))
+  setContentType: v => dispatch(setContentType(v))
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(TSHeader);
