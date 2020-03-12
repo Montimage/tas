@@ -1,6 +1,7 @@
 import {createAction } from 'redux-act';
-// Error
-export const setError = createAction('SET_ERROR');
+// Notification
+export const setNotification = createAction('SET_NOTIFICATION');
+export const resetNotification = createAction('RESET_NOTIFICATION');
 
 // Model
 export const requestModel = createAction('REQUEST_MODEL');
@@ -48,3 +49,4 @@ export const selectThing = createAction('SELECT_THING');
 export const selectSensor = createAction('SELECT_SENSOR');
 export const selectActuator = createAction('SELECT_ACTUATOR');
 export const selectDataStorage = createAction('SELECT_DATA_STORAGE');
+

@@ -13,7 +13,7 @@ import {
 import {
   deployStartOK,
   deployStopOK,
-  setError
+  setNotification
 } from '../actions';
 
 const getTool = ({tool}) => tool;
@@ -26,7 +26,7 @@ function* handleRequestStartDeploy() {
     // dispatch data
   } catch (error) {
     // dispatch error
-    yield put(setError(error.toString()));
+    yield put(setNotification({type: 'error', message: error}));
   }
 }
 
@@ -38,7 +38,7 @@ function* handleRequestStopDeploy() {
     // dispatch data
   } catch (error) {
     // dispatch error
-    yield put(setError(error.toString()));
+    yield put(setNotification({type: 'error', message: error}));
   }
 }
 

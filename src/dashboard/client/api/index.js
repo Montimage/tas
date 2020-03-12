@@ -14,11 +14,11 @@ const requestModel = async (tool) => {
 const requestLogs = async (tool) => {
   const url = `${URL}/api/${tool}/logs`;
   const response = await fetch(url);
-  const data = await response.text();
-  if (response.status >= 400) {
-    throw new Error(data);
+  const data = await response.json();
+  if (data.error) {
+    throw data.error;
   }
-  return data;
+  return data.content;
 };
 
 const requestStartDeploy = async (tool) => {

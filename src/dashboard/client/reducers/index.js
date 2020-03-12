@@ -4,7 +4,7 @@ import {
 
 import modelReducer from './modelReducer';
 import requestingReducer from './requestingReducer';
-import errorReducer from './errorReducer';
+import notificationReducer from './notificationReducer';
 import logsReducer from './logsReducer';
 import viewReducer from './viewReducer';
 import toolReducer from './toolReducer';
@@ -14,7 +14,7 @@ const rootReducer = combineReducers({
   model: modelReducer,
   logs: logsReducer,
   view: viewReducer,
-  error: errorReducer,
+  notify: notificationReducer,
   requesting: requestingReducer,
   tool: toolReducer,
   editingForm: editingFormReducer

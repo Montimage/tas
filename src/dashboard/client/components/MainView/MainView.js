@@ -1,12 +1,11 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Button } from "antd";
+import { Button, notification } from "antd";
 // all the edit forms
-import ThingModal from '../ThingModal';
-import SensorModal from '../SensorModal';
+import ThingModal from "../ThingModal";
+import SensorModal from "../SensorModal";
 import ActuatorModal from "../ActuatorModal";
 import DataStorageModal from "../DataStorageModal";
-
 
 import {
   requestModel,
@@ -20,7 +19,8 @@ import {
   deleteDGSensor,
   selectActuator,
   deleteSimulationActuator,
-  deleteDGActuator
+  deleteDGActuator,
+  resetNotification
 } from "../../actions";
 import JSONView from "../JSONView";
 import GraphView from "./GraphView";
@@ -34,7 +34,8 @@ class MainView extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      tempModel: props.model
+      tempModel: props.model,
+      view: props.view
     };
     this.onModelChange = this.onModelChange.bind(this);
   }
@@ -45,8 +46,9 @@ class MainView extends Component {
 
   componentWillReceiveProps(newProps) {
     this.setState({
-      tempModel: newProps.model
-    })
+      tempModel: newProps.model,
+      view: newProps.view
+    });
   }
 
   onModelChange(newModel) {
@@ -56,12 +58,11 @@ class MainView extends Component {
   }
 
   render() {
+    const { view } = this.state;
     const {
       requesting,
-      view,
-      error,
+      notify,
       model,
-      logs,
       saveModel,
       showModal,
       selectThing,
@@ -71,16 +72,22 @@ class MainView extends Component {
       selectActuator,
       deleteActuator,
       tool,
-      formID
+      formID,
+      resetNotification
     } = this.props;
     return (
       <div className="content">
+        {notify &&
+          notification[notify.type]({
+            message: notify.type.toUpperCase(),
+            description: typeof notify.message === 'object' ? JSON.stringify(notify.message) : notify.message,
+            onClose: () => resetNotification()
+          })
+        }
         {requesting ? (
           <span>Loading ...</span>
-        ) : error ? (
-          <span> There are some error {error}</span>
         ) : view.contentType === "logs" ? (
-          logs ? <LogView logs={logs}/> : (<p>Empty!</p>)
+          <LogView />
         ) : (
           <div>
             {view.viewType === "json" ? (
@@ -88,15 +95,18 @@ class MainView extends Component {
             ) : view.viewType === "graph" ? (
               <GraphView model={model} onChange={this.onModelChange} />
             ) : (
-              <ListView model={model} actions={{
-                showModal,
-                selectThing,
-                deleteThing,
-                selectSensor,
-                deleteSensor,
-                selectActuator,
-                deleteActuator
-              }} />
+              <ListView
+                model={model}
+                actions={{
+                  showModal,
+                  selectThing,
+                  deleteThing,
+                  selectSensor,
+                  deleteSensor,
+                  selectActuator,
+                  deleteActuator
+                }}
+              />
             )}
             <Button
               type="primary"
@@ -107,20 +117,32 @@ class MainView extends Component {
             </Button>
           </div>
         )}
-        {tool === 'simulation' && formID==='THING-FORM' && <ThingModal />}
-        {tool === 'simulation' && formID==='ACTUATOR-FORM' && <ActuatorModal />}
-        {tool === 'data-generator' && formID==='DATA-STORAGE-FORM' && <DataStorageModal />}
+        {tool === "simulation" && formID === "THING-FORM" && <ThingModal />}
+        {tool === "simulation" && formID === "ACTUATOR-FORM" && (
+          <ActuatorModal />
+        )}
+        {tool === "data-generator" && formID === "DATA-STORAGE-FORM" && (
+          <DataStorageModal />
+        )}
         <SensorModal />
       </div>
     );
   }
 }
 
-const mapPropsToStates = ({ requesting, view, error, model, logs, tool, editingForm }) => ({
+const mapPropsToStates = ({
+  requesting,
+  view,
+  notify,
+  model,
+  logs,
+  tool,
+  editingForm
+}) => ({
   model,
   logs,
   view,
-  error,
+  notify,
   requesting,
   tool,
   formID: editingForm.formID
@@ -132,25 +154,26 @@ const mapDispatchToProps = dispatch => ({
     dispatch(setModel(newModel));
     dispatch(uploadModel());
   },
-  showModal: (formID) => dispatch(showModal(formID)),
-  selectThing: (thing) => dispatch(selectThing(thing)),
-  deleteThing: (thingID) => dispatch(deleteThing(thingID)),
-  selectSensor: (sensor) => dispatch(selectSensor(sensor)),
+  showModal: formID => dispatch(showModal(formID)),
+  selectThing: thing => dispatch(selectThing(thing)),
+  deleteThing: thingID => dispatch(deleteThing(thingID)),
+  selectSensor: sensor => dispatch(selectSensor(sensor)),
   deleteSensor: (sensorID, thingID) => {
     if (thingID) {
-      dispatch(deleteSimulationSensor({sensorID, thingID}));
+      dispatch(deleteSimulationSensor({ sensorID, thingID }));
     } else {
       dispatch(deleteDGSensor(sensorID));
     }
   },
-  selectActuator: (actuator) => dispatch(selectActuator(actuator)),
+  selectActuator: actuator => dispatch(selectActuator(actuator)),
   deleteActuator: (actuatorID, thingID) => {
     if (thingID) {
-      dispatch(deleteSimulationActuator({actuatorID, thingID}));
+      dispatch(deleteSimulationActuator({ actuatorID, thingID }));
     } else {
       dispatch(deleteDGActuator(actuatorID));
     }
   },
+  resetNotification: () => dispatch(resetNotification())
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(MainView);

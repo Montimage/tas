@@ -21,7 +21,7 @@ const readJSONFileSync = (filePath) => {
 const readJSONFile = (filePath, callback) => {
   try {
     fs.readFile(filePath, (err, data) => {
-      if (err) throw err;
+      if (err) return callback(err);
       const jsonData = JSON.parse(data);
       return callback(null, jsonData);
     })
@@ -39,7 +39,7 @@ const readJSONFile = (filePath, callback) => {
 const writeToFile = (filePath, data, callback) => {
   try {
     fs.writeFile(filePath, data, (err, result) => {
-      if (err) throw err;
+      if (err) return callback(err);
       return callback(null, result);
     });
   } catch (error) {
@@ -55,7 +55,7 @@ const writeToFile = (filePath, data, callback) => {
 const readTextFile = (filePath, callback) => {
   try {
     fs.readFile(filePath, (err, content) => {
-      if (err) throw err;
+      if (err) return callback(err);
       return callback(null, content.toString());
     })
   } catch (error) {

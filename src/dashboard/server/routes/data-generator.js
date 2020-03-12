@@ -9,9 +9,10 @@ const logFilePath = `${__dirname}/../../data-generator.log`;
 router.get('/logs', function(req, res, next) {
   readTextFile(logFilePath, (err, content) => {
     if (err) {
+      console.error('[REST_API_SERVER] ERROR: ', err);
       res.send({error: 'Cannot read the log file'});
     } else {
-      res.send(content);
+      res.send({error: null, content});
     }
   })
 });
@@ -19,6 +20,7 @@ router.get('/logs', function(req, res, next) {
 router.get('/run', function(req, res, next) {
   readJSONFile(configFilePath, (err, generatorConfig) => {
     if (err) {
+      console.error('[REST_API_SERVER] ERROR: ', err);
       res.send({error: 'Cannot read the configuration file'});
     } else {
       startGeneratingData(generatorConfig);
@@ -35,7 +37,7 @@ router.get('/stop', function(req, res, next) {
 router.get('/', function(req, res, next) {
   readJSONFile(configFilePath, (err, data) => {
     if (err) {
-      console.error('[REST_API_SERVER]',err);
+      console.error('[REST_API_SERVER] ERROR: ', err);
       res.send({});
     } else {
       res.send(data);
@@ -47,7 +49,7 @@ router.post('/', (req, res, next) => {
   const newConfig = req.body.data;
   writeToFile(configFilePath, JSON.stringify(newConfig), (err, data) => {
     if (err) {
-      console.error('[REST_API_SERVER]',err);
+      console.error('[REST_API_SERVER] ERROR: ', err);
       res.send({error: 'Cannot save the new configuration'});
     } else {
       res.send({error: null, data: newConfig});

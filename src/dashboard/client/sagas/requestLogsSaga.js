@@ -11,7 +11,7 @@ import {
 } from '../api';
 import {
   requestLogsOK,
-  setError
+  setNotification
 } from '../actions';
 
 const getTool = ({ tool }) => tool;
@@ -24,7 +24,7 @@ function* handleRequestLogs() {
     // dispatch data
   } catch (error) {
     // dispatch error
-    yield put(setError(error.toString()));
+    yield put(setNotification({type: 'error', message: error}));
   }
 }
 

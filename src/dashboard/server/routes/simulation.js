@@ -9,9 +9,9 @@ const logFilePath = `${__dirname}/../../simulation.log`;
 router.get('/logs', function(req, res, next) {
   readTextFile(logFilePath, (err, content) => {
     if (err) {
-      res.send('Cannot read the log file');
+      res.send({error: 'Cannot read the log file'});
     } else {
-      res.send(content);
+      res.send({error: null, content});
     }
   })
 });

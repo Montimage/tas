@@ -16,7 +16,6 @@ import {
 
 const { SubMenu } = Menu;
 const { Header } = Layout;
-const {Option} = Select;
 
 import {
   setModel,
@@ -24,8 +23,7 @@ import {
   sendDeployStart,
   sendDeployStop,
   setContentType,
-  setError,
-  requestLogs,
+  setNotification,
   changeTool,
   requestModel
 } from "../../actions";
@@ -40,7 +38,7 @@ class TSHeader extends Component {
         const newModel = JSON.parse(fileReader.result);
         this.props.setNewModel(newModel);
       } catch (error) {
-        this.props.setError(error);
+        this.props.setNotification({type: 'error', message: error});
       }
     };
     fileReader.readAsText(files[0]);
@@ -172,7 +170,7 @@ const mapDispatchToProps = dispatch => ({
     dispatch(changeTool());
     dispatch(requestModel());
   },
-  setError: (err) => dispatch(setError(err)),
+  setNotification: ({type, message}) => dispatch(setNotification({type, message})),
   setNewModel: (newModel) => {
     dispatch(setModel(newModel));
     dispatch(setContentType('model'));
@@ -183,10 +181,7 @@ const mapDispatchToProps = dispatch => ({
   },
   startDeploy: () => dispatch(sendDeployStart()),
   stopDeploy: () => dispatch(sendDeployStop()),
-  viewLogs: () => {
-    dispatch(requestLogs());
-    dispatch(setContentType('logs'));
-  },
+  viewLogs: () => dispatch(setContentType('logs')),
   setContentType: (v) => dispatch(setContentType(v))
 });
 
