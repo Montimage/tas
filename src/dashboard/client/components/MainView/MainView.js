@@ -25,9 +25,9 @@ import {
 import JSONView from "../JSONView";
 import GraphView from "./GraphView";
 import ListView from "../ListView";
+import LogView from "../LogView";
 // import 'jsoneditor-react/es/editor.min.css';
 import "./styles.css";
-import LogView from "../LogView/LogView";
 
 // console.log(ace.acequire('editor'));
 class MainView extends Component {

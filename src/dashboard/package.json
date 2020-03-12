@@ -50,7 +50,7 @@
         "react-dom": "^16.5.2",
         "react-hot-loader": "^4.3.11",
         "react-redux": "^7.2.0",
-        "react-router-dom": "^5.0.0",
+        "react-router-dom": "^5.1.0",
         "redux": "^4.0.5",
         "redux-act": "^1.7.7",
         "redux-saga": "^1.1.3",
