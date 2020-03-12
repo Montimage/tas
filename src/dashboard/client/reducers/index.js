@@ -9,6 +9,7 @@ import logsReducer from './logsReducer';
 import viewReducer from './viewReducer';
 import toolReducer from './toolReducer';
 import editingFormReducer from './editingFormReducer';
+import deployStatusReducer from './deployStatusReducer';
 
 const rootReducer = combineReducers({
   model: modelReducer,
@@ -17,7 +18,8 @@ const rootReducer = combineReducers({
   notify: notificationReducer,
   requesting: requestingReducer,
   tool: toolReducer,
-  editingForm: editingFormReducer
+  editingForm: editingFormReducer,
+  isRunning: deployStatusReducer,
 });
 
 export default rootReducer;

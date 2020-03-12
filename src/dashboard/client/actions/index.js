@@ -28,6 +28,8 @@ export const sendDeployStart = createAction('SEND_DEPLOY_START');
 export const deployStartOK = createAction('DEPLOY_START_OK');
 export const sendDeployStop = createAction('SEND_DEPLOY_STOP');
 export const deployStopOK = createAction('DEPLOY_STOP_OK');
+export const requestDeployStatus = createAction('REQUEST_DEPLOY_STATUS');
+export const setDeployStatus = createAction('SET_DEPLOY_STATUS');
 
 // Control the logs
 export const requestLogs = createAction('REQUEST_LOGS');

@@ -9,7 +9,9 @@ import {
   setModel,
   deployStopOK,
   deployStartOK,
-  setNotification
+  setNotification,
+  requestLogs,
+  requestLogsOK
 } from "../actions";
 
 const initState = false;
@@ -24,7 +26,9 @@ export default createReducer(
     [setModel]: state => false,
     [uploadModelOK]: state => false,
     [deployStopOK]: state => false,
-    [deployStartOK]: state => false
+    [deployStartOK]: state => false,
+    [requestLogs]: state => true,
+    [requestLogsOK]: state => false
   },
   initState
 );

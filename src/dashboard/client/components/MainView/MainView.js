@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Button, notification } from "antd";
+import { Button, notification, Spin, Alert } from "antd";
 // all the edit forms
 import ThingModal from "../ThingModal";
 import SensorModal from "../SensorModal";
@@ -20,7 +20,8 @@ import {
   selectActuator,
   deleteSimulationActuator,
   deleteDGActuator,
-  resetNotification
+  resetNotification,
+  requestDeployStatus
 } from "../../actions";
 import JSONView from "../JSONView";
 import GraphView from "./GraphView";
@@ -42,6 +43,7 @@ class MainView extends Component {
 
   componentDidMount() {
     this.props.fetchModel();
+    this.props.fetchDeployStatus();
   }
 
   componentWillReceiveProps(newProps) {
@@ -72,11 +74,24 @@ class MainView extends Component {
       selectActuator,
       deleteActuator,
       tool,
+      logs,
       formID,
-      resetNotification
+      resetNotification,
+      isRunning
     } = this.props;
+    let deployStatus = null;
+    if (isRunning) {
+      if (tool === 'simulation') {
+        deployStatus = 'Simulation is running...';
+      } else {
+        deployStatus = 'Data Generator is running...';
+      }
+    }
     return (
       <div className="content">
+        {deployStatus &&
+          <Alert message={deployStatus} type="info" style={{marginBottom: '10px'}} showIcon/>
+        }
         {notify &&
           notification[notify.type]({
             message: notify.type.toUpperCase(),
@@ -85,9 +100,9 @@ class MainView extends Component {
           })
         }
         {requesting ? (
-          <span>Loading ...</span>
+          <Spin tip="Loading..." />
         ) : view.contentType === "logs" ? (
-          <LogView />
+          <LogView logs={logs}/>
         ) : (
           <div>
             {view.viewType === "json" ? (
@@ -135,21 +150,24 @@ const mapPropsToStates = ({
   view,
   notify,
   model,
-  logs,
   tool,
-  editingForm
+  editingForm,
+  isRunning,
+  logs,
 }) => ({
   model,
-  logs,
   view,
   notify,
   requesting,
   tool,
+  logs,
+  isRunning,
   formID: editingForm.formID
 });
 
 const mapDispatchToProps = dispatch => ({
   fetchModel: () => dispatch(requestModel()),
+  fetchDeployStatus: () => dispatch(requestDeployStatus()),
   saveModel: newModel => {
     dispatch(setModel(newModel));
     dispatch(uploadModel());

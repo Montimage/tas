@@ -17,22 +17,34 @@ router.get('/logs', function(req, res, next) {
   })
 });
 
+let isStarted = false;
+
 router.get('/run', function(req, res, next) {
   readJSONFile(configFilePath, (err, generatorConfig) => {
     if (err) {
       console.error('[REST_API_SERVER] ERROR: ', err);
       res.send({error: 'Cannot read the configuration file'});
     } else {
-      startGeneratingData(generatorConfig);
+      if (!isStarted) {
+        startGeneratingData(generatorConfig);
+        isStarted = true;
+      }
       res.send({error: null, data: generatorConfig});
     }
   })
 });
 
 router.get('/stop', function(req, res, next) {
-  stopGeneratingData();
+  if (isStarted) {
+    stopGeneratingData();
+    isStarted = false;
+  }
   res.send({error: null});
 });
+
+router.get('/status', (req, res, next) => {
+  res.send(isStarted);
+})
 
 router.get('/', function(req, res, next) {
   readJSONFile(configFilePath, (err, data) => {

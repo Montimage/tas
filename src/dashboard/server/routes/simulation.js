@@ -16,12 +16,17 @@ router.get('/logs', function(req, res, next) {
   })
 });
 
+let isStarted = false;
+
 router.get('/run', function(req, res, next) {
   readJSONFile(configFilePath, (err, thingConfigs) => {
     if (err) {
       res.send({error: 'Cannot read the configuration file'});
     } else {
-      startSimulation(thingConfigs.things);
+      if (!isStarted) {
+        startSimulation(thingConfigs.things);
+        isStarted = true;
+      }
       res.send({error: null, data: thingConfigs});
     }
   })
@@ -29,8 +34,13 @@ router.get('/run', function(req, res, next) {
 
 router.get('/stop', function(req, res, next) {
   stopSimulation();
+  isStarted = false;
   res.send({error: null});
 });
+
+router.get('/status', (req, res, next) => {
+  res.send(isStarted);
+})
 
 router.get('/', function(req, res, next) {
   readJSONFile(configFilePath, (err, data) => {

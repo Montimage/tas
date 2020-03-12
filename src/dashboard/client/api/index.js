@@ -41,6 +41,13 @@ const requestStopDeploy = async (tool) => {
   return data;
 };
 
+const requestDeployStatus = async (tool) => {
+  const url = `${URL}/api/${tool}/status`;
+  const response = await fetch(url);
+  const status = await response.text();
+  return status === 'true';
+};
+
 const uploadModel = async (tool, model) => {
   const url = `${URL}/api/${tool}`;
   const response = await fetch(url,{
@@ -62,5 +69,6 @@ export {
   uploadModel,
   requestStartDeploy,
   requestStopDeploy,
+  requestDeployStatus,
   requestLogs
 };

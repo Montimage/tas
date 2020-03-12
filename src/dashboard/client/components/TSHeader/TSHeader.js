@@ -25,7 +25,8 @@ import {
   setContentType,
   setNotification,
   changeTool,
-  requestModel
+  requestModel,
+  requestLogs
 } from "../../actions";
 import "./styles.css";
 
@@ -61,7 +62,7 @@ class TSHeader extends Component {
       resetEditor,
       startDeploy,
       stopDeploy,
-      isExecuting,
+      isRunning,
       viewLogs,
       setContentType,
       model,
@@ -114,8 +115,8 @@ class TSHeader extends Component {
                   <span className="submenu-title-wrapper">
                     <DeploymentUnitOutlined />
                     {"Deploy "}
-                    {isExecuting ? (
-                      <SyncOutlined spin twoToneColor="#52c41a" />
+                    {isRunning ? (
+                      <SyncOutlined spin/>
                     ) : null}
                   </span>
                 }
@@ -158,10 +159,11 @@ class TSHeader extends Component {
   }
 }
 
-const mapPropsToStates = ({ requesting, model, tool}) => ({
+const mapPropsToStates = ({ requesting, model, tool, isRunning}) => ({
   requesting,
   model,
-  tool
+  tool,
+  isRunning
 });
 
 
@@ -181,7 +183,10 @@ const mapDispatchToProps = dispatch => ({
   },
   startDeploy: () => dispatch(sendDeployStart()),
   stopDeploy: () => dispatch(sendDeployStop()),
-  viewLogs: () => dispatch(setContentType('logs')),
+  viewLogs: () => {
+    dispatch(requestLogs());
+    dispatch(setContentType('logs'));
+  },
   setContentType: (v) => dispatch(setContentType(v))
 });
 
