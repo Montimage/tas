@@ -97,9 +97,6 @@ const stopGeneratingData = () => {
  * @param {Object} dataConfig The configuration of the data generator
  */
 const startGeneratingData = (dataConfig) => {
-  // Logger
-  const getLogger = require('../logger');
-  const logger = getLogger('Data-Generator', 'data-generator.log');
 
   const { dbConfig, sensors, actuators } = dataConfig;
   if (!dbConfig) {

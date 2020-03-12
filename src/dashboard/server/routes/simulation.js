@@ -4,7 +4,7 @@ var router = express.Router();
 const { readJSONFile, readTextFile, writeToFile } = require('../../../utils');
 const { startSimulation, stopSimulation } = require('../../../things');
 const configFilePath = `${__dirname}/../data/simulation.json`;
-const logFilePath = `${__dirname}/../../simulation.log`;
+const logFilePath = `${__dirname}/../logs/simulation.log`;
 
 router.get('/logs', function(req, res, next) {
   readTextFile(logFilePath, (err, content) => {
@@ -24,6 +24,9 @@ router.get('/run', function(req, res, next) {
       res.send({error: 'Cannot read the configuration file'});
     } else {
       if (!isStarted) {
+        // Logger
+        const getLogger = require('../logger');
+        const logger = getLogger('Simulation', `${logFilePath}`);
         startSimulation(thingConfigs.things);
         isStarted = true;
       }

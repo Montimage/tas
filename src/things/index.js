@@ -70,9 +70,6 @@ const createThing = (id, protocol, commConfig, sensors, actuators) => {
  * @param {Array} thingConfigs The list of things
  */
 const startSimulation = (thingConfigs) => {
-  // Logger
-  const getLogger = require('../logger');
-  const logger = getLogger('Simulation', 'simulation.log');
 
   for (let index = 0; index < thingConfigs.length; index++) {
     const { scale, id, protocol, commConfig, sensors, actuators } = thingConfigs[index];
