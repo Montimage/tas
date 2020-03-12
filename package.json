@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "geolib": "^3.2.1",
+    "mongoose": "^5.9.4",
     "mqtt": "^3.0.0",
     "stompit": "^0.26.0",
     "winston": "^3.2.1"
