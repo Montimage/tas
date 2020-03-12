@@ -5,10 +5,10 @@ const requestModel = async (tool) => {
   const url = `${URL}/api/${tool}`;
   const response = await fetch(url);
   const data = await response.json();
-  if (response.status >= 400) {
-    throw new Error(data.errors);
+  if (data.error) {
+    throw data.error;
   }
-  return data;
+  return data.model;
 };
 
 const requestLogs = async (tool) => {

@@ -11,12 +11,18 @@ npm install
 
 ## Usage
 
+### Start application
+
+```
+npm start
+```
+
 ### Data Generator
 Generate data (sensors and actuators) and store the data into a database
 Update the configuration `data-01.json` file
 ```
 cd src/data-generators/
-node index.js data-01.json
+node index.js test data-01.json
 ```
 
 ### Simulate Gateway(s)
@@ -31,7 +37,7 @@ Simulate thing(s) with the input configuration file: `thing-config.json`
 A THING can contain list of sensor(s) and actuator(s)
 ```
 cd src/things/
-node index.js thing-config.json
+node index.js test thing-config.json
 ```
 
 ## Use Cases

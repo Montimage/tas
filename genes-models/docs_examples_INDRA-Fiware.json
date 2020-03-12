@@ -1,0 +1,1158 @@
+{
+    "dm": {
+        "name": "demo",
+        "components": [{
+            "_type": "/infra/docker_host",
+            "name": "indra_cloud",
+            "properties": [],
+            "id": "4ff63a65-fceb-4315-9353-8e8a5c8498fd",
+            "provided_execution_port": [{
+                "name": "offerLinux"
+            }],
+            "ip": "web.ext.innovarail.indra.es",
+            "port": ["2377"],
+            "credentials": {
+                "username": "ubuntu",
+                "password": "ubuntu",
+                "sshkey": ""
+            }
+        }, {
+            "_type": "/internal",
+            "name": "Orion",
+            "properties": [],
+            "id": "bf1c8d43-b19e-49c7-969d-26b34e73e2e9",
+            "provided_execution_port": [],
+            "docker_resource": {
+                "name": "f3e3feba-056e-46a7-9225-5b9edf5f1820",
+                "image": "fiware/orion:2.2.0",
+                "command": "-logLevel DEBUG -noCache -dbhost mongo",
+                "links": ["mongodb:mongodb"],
+                "port_bindings": {
+                    "1026": "1026"
+                },
+                "devices": {
+                    "PathOnHost": "",
+                    "PathInContainer": "",
+                    "CgroupPermissions": "rwm"
+                }
+            },
+            "ssh_resource": {
+                "name": "b44756b6-362e-4193-b21f-ffbc413636a1",
+                "startCommand": "",
+                "downloadCommand": "",
+                "installCommand": "",
+                "configureCommand": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "ubuntu",
+                    "sshkey": ""
+                }
+            },
+            "ansible_resource": {
+                "name": "14f3772b-5734-44d9-98ff-d1498dc57175",
+                "playbook_path": "",
+                "playbook_host": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "ubuntu",
+                    "sshkey": ""
+                }
+            },
+            "required_execution_port": {
+                "name": "37ff0712-6a59-4d24-a6f6-c6db946161e2",
+                "needDeployer": false
+            },
+            "provided_communication_port": [{
+                "name": "518f3bd0-0fe4-41a2-8a76-ee7e93cca251",
+                "port_number": "80"
+            }],
+            "required_communication_port": [{
+                "name": "bd3f34af-f691-4a46-b9cd-14bab0f9a8e0",
+                "port_number": "80",
+                "isMandatory": false
+            }, {
+                "name": "requiresMongo",
+                "port_number": "80",
+                "isMandatory": true
+            }]
+        }, {
+            "_type": "/internal",
+            "name": "mongodb",
+            "properties": [],
+            "id": "5d3352e0-39f1-46ef-a93a-bc2bb54fb5a0",
+            "provided_execution_port": [],
+            "docker_resource": {
+                "name": "988fed11-7e53-476f-b07b-58fb50796e9d",
+                "image": "mongo:3.6",
+                "command": "",
+                "devices": {
+                    "PathOnHost": "",
+                    "PathInContainer": "",
+                    "CgroupPermissions": "rwm"
+                }
+            },
+            "ssh_resource": {
+                "name": "d0c1ba2d-88b4-421e-8238-9cbf2335e8ff",
+                "startCommand": "",
+                "downloadCommand": "",
+                "installCommand": "",
+                "configureCommand": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "ubuntu",
+                    "sshkey": ""
+                }
+            },
+            "ansible_resource": {
+                "name": "ce1966cd-023f-4cca-ac2a-147750755466",
+                "playbook_path": "",
+                "playbook_host": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "ubuntu",
+                    "sshkey": ""
+                }
+            },
+            "required_execution_port": {
+                "name": "d5b9768c-c20f-4d02-9f70-4de8bcb82de6",
+                "needDeployer": false
+            },
+            "provided_communication_port": [{
+                "name": "97c5a6de-93a4-4d75-ae2e-91c9b04a5e56",
+                "port_number": "80"
+            }],
+            "required_communication_port": [{
+                "name": "8a1c5a07-078e-45d9-81b9-51612143f495",
+                "port_number": "80",
+                "isMandatory": false
+            }]
+        }, {
+            "_type": "/infra/docker_host",
+            "name": "GTW",
+            "properties": [],
+            "id": "eff2df33-0913-4017-9763-3a9cc620e29e",
+            "provided_execution_port": [{
+                "name": "offerDocker"
+            }],
+            "ip": "web.ext.innovarail.indra.es",
+            "port": ["2376"],
+            "credentials": {
+                "username": "ubuntu",
+                "password": "ubuntu",
+                "sshkey": ""
+            }
+        }, {
+            "_type": "/internal",
+            "name": "crate",
+            "properties": [],
+            "version": "0.0.1",
+            "id": "74ee4125-387d-4371-b41f-eb6d2b55fe9e",
+            "provided_execution_port": [{
+                "name": "5878fe15-64da-49bb-b4fd-593fc7508539",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                }
+            }],
+            "docker_resource": {
+                "name": "60808c7b-6479-4a90-bcf8-eb6394610b31",
+                "image": "crate:3.1.2",
+                "command": "-Clicense.enterprise=false -Cauth.host_based.enabled=false -Ccluster.name=democluster -Chttp.cors.enabled=true -Chttp.cors.allow-origin='*'",
+                "links": [],
+                "port_bindings": {
+                    "4200": "4200",
+                    "4300": "4300"
+                },
+                "devices": {
+                    "PathOnHost": "",
+                    "PathInContainer": "",
+                    "CgroupPermissions": "rwm"
+                }
+            },
+            "ssh_resource": {
+                "name": "76ee8e8a-9ec3-47f5-bea0-474084550a0b",
+                "startCommand": "",
+                "downloadCommand": "",
+                "installCommand": "",
+                "configureCommand": "",
+                "stopCommand": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "ansible_resource": {
+                "name": "23382e51-bd0c-46ff-9efc-4901ee0215a6",
+                "playbook_path": "",
+                "playbook_host": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "required_execution_port": {
+                "name": "37d4857a-2dcc-483f-b0c6-83f6c2d3b590",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "needDeployer": false
+            },
+            "provided_communication_port": [{
+                "name": "streamAPI",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80"
+            }],
+            "required_communication_port": [{
+                "name": "receiveFromOrion",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80",
+                "isMandatory": false
+            }]
+        }, {
+            "_type": "/internal",
+            "name": "quantumLeap",
+            "properties": [],
+            "version": "0.0.1",
+            "id": "a3fd3630-161c-48c3-b25e-9134742c5a63",
+            "provided_execution_port": [{
+                "name": "07f9f4c5-5e64-4bad-b6c9-13bc6abab13e",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                }
+            }],
+            "docker_resource": {
+                "name": "d6c3fd9b-0424-4e83-b569-e19343c6360f",
+                "image": "smartsdk/quantumleap:latest",
+                "command": "",
+                "links": [],
+                "port_bindings": {
+                    "8668": "8668"
+                },
+                "environment": ["CRATE_HOST=crate", "USE_GEOCODING=True", "REDIS_HOST=redis", "REDIS_PORT=6379"],
+                "devices": {
+                    "PathOnHost": "",
+                    "PathInContainer": "",
+                    "CgroupPermissions": "rwm"
+                }
+            },
+            "ssh_resource": {
+                "name": "33c24e22-a0e2-4880-86f4-7165c3d6867b",
+                "startCommand": "",
+                "downloadCommand": "",
+                "installCommand": "",
+                "configureCommand": "",
+                "stopCommand": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "ansible_resource": {
+                "name": "ca3bdb13-680f-4d55-8aec-3be2378173df",
+                "playbook_path": "",
+                "playbook_host": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "required_execution_port": {
+                "name": "8a3ea20c-b4ad-4900-944f-998bee3fefa6",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "needDeployer": false
+            },
+            "provided_communication_port": [{
+                "name": "a5611d5a-d845-435a-ba92-b2a02f6e96f6",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80"
+            }],
+            "required_communication_port": [{
+                "name": "bf330f4e-6540-44dd-af91-2b91f92ed2fb",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80",
+                "isMandatory": false
+            }]
+        }, {
+            "_type": "/internal",
+            "name": "grafana",
+            "properties": [],
+            "version": "0.0.1",
+            "id": "09031d53-870f-4df1-8990-94a35618ac93",
+            "provided_execution_port": [{
+                "name": "720a9078-3c19-4453-b0ec-7aab3e8021c8",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                }
+            }],
+            "docker_resource": {
+                "name": "ecdd2129-7cd5-4d02-bcc7-8122330fac91",
+                "image": "grafana/grafana:latest",
+                "command": "",
+                "links": [],
+                "environment": ["GF_INSTALL_PLUGINS=https://github.com/raintank/crate-datasource/archive/master.zip;crate-datasource,grafana-clock-panel,grafana-worldmap-panel"],
+                "port_bindings": {
+                    "3000": "3000"
+                },
+                "devices": {
+                    "PathOnHost": "",
+                    "PathInContainer": "",
+                    "CgroupPermissions": "rwm"
+                }
+            },
+            "ssh_resource": {
+                "name": "5927dd40-f64a-4b8e-a015-2a6f193a9a2e",
+                "startCommand": "",
+                "downloadCommand": "",
+                "installCommand": "",
+                "configureCommand": "",
+                "stopCommand": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "ansible_resource": {
+                "name": "bdfd2869-ae04-405e-a6e6-655987c3d868",
+                "playbook_path": "",
+                "playbook_host": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "required_execution_port": {
+                "name": "e110c53e-755a-4fd4-9c66-011e6ae70583",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "needDeployer": false
+            },
+            "provided_communication_port": [{
+                "name": "81b10308-eafc-47c0-95db-07fd98f8f51d",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80"
+            }],
+            "required_communication_port": [{
+                "name": "e0e43bbd-029f-44a2-b52f-601668975b56",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80",
+                "isMandatory": false
+            }]
+        }, {
+            "_type": "/internal",
+            "name": "redis",
+            "properties": [],
+            "version": "0.0.1",
+            "id": "aab06ae8-f891-4673-93ca-fca029021063",
+            "provided_execution_port": [{
+                "name": "a48d9eaf-48ac-4d70-b2c5-869aad0db781",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                }
+            }],
+            "docker_resource": {
+                "name": "0142b408-edad-4933-94c7-84d3291e613b",
+                "image": "redis:latest",
+                "command": "",
+                "links": [],
+                "port_bindings": {
+                    "6379": "6379"
+                },
+                "devices": {
+                    "PathOnHost": "",
+                    "PathInContainer": "",
+                    "CgroupPermissions": "rwm"
+                }
+            },
+            "ssh_resource": {
+                "name": "0654fdc4-236d-4496-b14f-0729b2080d0b",
+                "startCommand": "",
+                "downloadCommand": "",
+                "installCommand": "",
+                "configureCommand": "",
+                "stopCommand": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "ansible_resource": {
+                "name": "b7375511-e70e-4e19-85a3-6a2aa2edc881",
+                "playbook_path": "",
+                "playbook_host": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "required_execution_port": {
+                "name": "5c5c6584-0b69-47e4-819d-533a3c270ac4",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "needDeployer": false
+            },
+            "provided_communication_port": [{
+                "name": "e824ee12-10f8-4a08-88c1-763255cedaab",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80"
+            }],
+            "required_communication_port": [{
+                "name": "6d94e32f-b15b-45ac-98dd-5445a27ba6d9",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80",
+                "isMandatory": false
+            }]
+        }, {
+            "_type": "/internal",
+            "name": "GTW_app",
+            "properties": [],
+            "version": "0.0.1",
+            "id": "4890eb51-ac34-4365-b8c1-b95b756f3905",
+            "provided_execution_port": [{
+                "name": "460680ae-c162-4d38-9484-7ac5b3437706",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                }
+            }],
+            "docker_resource": {
+                "name": "e4b898b0-a076-4c43-9b4c-e519e274a45b",
+                "image": "indra:SINTEF_CMW_v0.1",
+                "command": "",
+                "links": [],
+                "port_bindings": {
+                    "1880": "1880"
+                },
+                "devices": {
+                    "PathOnHost": "",
+                    "PathInContainer": "",
+                    "CgroupPermissions": "rwm"
+                }
+            },
+            "ssh_resource": {
+                "name": "95351974-db8c-4d25-ae07-8fbef00f2f77",
+                "startCommand": "",
+                "downloadCommand": "",
+                "installCommand": "",
+                "configureCommand": "",
+                "stopCommand": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "ansible_resource": {
+                "name": "b3aac835-30c9-4889-9b31-7e5ee741e723",
+                "playbook_path": "",
+                "playbook_host": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "required_execution_port": {
+                "name": "ba97b419-eae1-4e63-a200-f883d6991cb9",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "needDeployer": false
+            },
+            "provided_communication_port": [{
+                "name": "34b52bc1-1b3a-42b8-875a-59cfdbc88fda",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80"
+            }],
+            "required_communication_port": [{
+                "name": "5595d8e2-68f8-4728-aae0-33962cc61d4f",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80",
+                "isMandatory": false
+            }]
+        }, {
+            "_type": "/infra/docker_host",
+            "name": "GTW_2",
+            "properties": [],
+            "version": "0.0.1",
+            "id": "4496967b-8f46-45e3-bef0-9109e24925c2",
+            "provided_execution_port": [{
+                "name": "c2112572-af65-40ca-b41e-5e4cae2d34b5",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                }
+            }],
+            "ip": "web.ext.innovarail.indra.es",
+            "port": ["2378"],
+            "credentials": {
+                "username": "ubuntu",
+                "password": "",
+                "sshkey": "",
+                "agent": ""
+            },
+            "monitoring_agent": "none"
+        }, {
+            "_type": "/internal",
+            "name": "GTW_app2",
+            "properties": [],
+            "version": "0.0.1",
+            "id": "de34266a-05ad-4382-aff4-d44072eaa989",
+            "provided_execution_port": [{
+                "name": "a837efc7-3b66-4dad-8f11-fcbe4a4c3623",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                }
+            }],
+            "docker_resource": {
+                "name": "18883ab0-be71-4548-8de3-569865ed1f83",
+                "image": "indra:SINTEF_CMW_v0.1",
+                "command": "",
+                "links": [],
+                "port_bindings": {
+                    "1880": "1880"
+                },
+                "devices": {
+                    "PathOnHost": "",
+                    "PathInContainer": "",
+                    "CgroupPermissions": "rwm"
+                }
+            },
+            "ssh_resource": {
+                "name": "1639b21f-cb31-47b9-a163-5ec3c058d33b",
+                "startCommand": "",
+                "downloadCommand": "",
+                "installCommand": "",
+                "configureCommand": "",
+                "stopCommand": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "ansible_resource": {
+                "name": "9e1bafa4-18c9-4aeb-a3c8-98ba3d50d2d8",
+                "playbook_path": "",
+                "playbook_host": "",
+                "credentials": {
+                    "username": "ubuntu",
+                    "password": "",
+                    "sshkey": "",
+                    "agent": ""
+                }
+            },
+            "required_execution_port": {
+                "name": "21c42464-600a-49b3-a5e5-b8051ae0e6a1",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "needDeployer": false
+            },
+            "provided_communication_port": [{
+                "name": "8213c9ee-1c47-4d19-8d31-35036bc7574d",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80"
+            }],
+            "required_communication_port": [{
+                "name": "78aee081-d255-489f-a34d-51455f879439",
+                "capabilities": {
+                    "_type": "/capability/security_capability",
+                    "name": "a_capability",
+                    "control_id": "",
+                    "description": ""
+                },
+                "port_number": "80",
+                "isMandatory": false
+            }]
+        }],
+        "links": [{
+            "name": "ad",
+            "properties": [],
+            "src": "/mongodb/97c5a6de-93a4-4d75-ae2e-91c9b04a5e56",
+            "target": "/Orion/requiresMongo",
+            "isControl": false,
+            "isDeployer": false
+        }, {
+            "name": "orionToQL",
+            "properties": [],
+            "src": "/Orion/518f3bd0-0fe4-41a2-8a76-ee7e93cca251",
+            "target": "/quantumLeap/bf330f4e-6540-44dd-af91-2b91f92ed2fb",
+            "isControl": false,
+            "isDeployer": false
+        }, {
+            "name": "QLToCrate",
+            "properties": [],
+            "src": "/quantumLeap/a5611d5a-d845-435a-ba92-b2a02f6e96f6",
+            "target": "/crate/receiveFromOrion",
+            "isControl": false,
+            "isDeployer": false
+        }, {
+            "name": "crateToGrafan",
+            "properties": [],
+            "src": "/crate/streamAPI",
+            "target": "/grafana/e0e43bbd-029f-44a2-b52f-601668975b56",
+            "isControl": false,
+            "isDeployer": false
+        }, {
+            "name": "redis2QL",
+            "properties": [],
+            "src": "/redis/e824ee12-10f8-4a08-88c1-763255cedaab",
+            "target": "/quantumLeap/bf330f4e-6540-44dd-af91-2b91f92ed2fb",
+            "isControl": false,
+            "isDeployer": false
+        }, {
+            "name": "gtw_apptoorion",
+            "properties": [],
+            "src": "/GTW_app/34b52bc1-1b3a-42b8-875a-59cfdbc88fda",
+            "target": "/Orion/bd3f34af-f691-4a46-b9cd-14bab0f9a8e0",
+            "isControl": false,
+            "isDeployer": false
+        }, {
+            "name": "gtwapp2_orion",
+            "properties": [],
+            "src": "/GTW_app2/8213c9ee-1c47-4d19-8d31-35036bc7574d",
+            "target": "/Orion/bd3f34af-f691-4a46-b9cd-14bab0f9a8e0",
+            "isControl": false,
+            "isDeployer": false
+        }],
+        "containments": [{
+            "name": "a",
+            "properties": [],
+            "src": "/indra_cloud/offerLinux",
+            "target": "/Orion/37ff0712-6a59-4d24-a6f6-c6db946161e2"
+        }, {
+            "name": "c",
+            "properties": [],
+            "src": "/indra_cloud/offerLinux",
+            "target": "/mongodb/d5b9768c-c20f-4d02-9f70-4de8bcb82de6"
+        }, {
+            "name": "inMy",
+            "properties": [],
+            "src": "/indra_cloud/offerLinux",
+            "target": "/crate/37d4857a-2dcc-483f-b0c6-83f6c2d3b590"
+        }, {
+            "name": "qLinMy",
+            "properties": [],
+            "src": "/indra_cloud/offerLinux",
+            "target": "/quantumLeap/8a3ea20c-b4ad-4900-944f-998bee3fefa6"
+        }, {
+            "name": "grafaOnMy",
+            "properties": [],
+            "src": "/indra_cloud/offerLinux",
+            "target": "/grafana/e110c53e-755a-4fd4-9c66-011e6ae70583"
+        }, {
+            "name": "redisOnMy",
+            "properties": [],
+            "src": "/indra_cloud/offerLinux",
+            "target": "/redis/5c5c6584-0b69-47e4-819d-533a3c270ac4"
+        }, {
+            "name": "GTW_APP_onGTW",
+            "properties": [],
+            "src": "/GTW/offerDocker",
+            "target": "/GTW_app/ba97b419-eae1-4e63-a200-f883d6991cb9"
+        }, {
+            "name": "gtw2_gtwapp2",
+            "properties": [],
+            "src": "/GTW_2/c2112572-af65-40ca-b41e-5e4cae2d34b5",
+            "target": "/GTW_app2/21c42464-600a-49b3-a5e5-b8051ae0e6a1"
+        }],
+        "type_registry": []
+    },
+    "graph": {
+        "elements": {
+            "nodes": [{
+                "data": {
+                    "id": "indra_cloud"
+                },
+                "position": {
+                    "x": 357.37884876745494,
+                    "y": 184.54947122138708
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": "container"
+            }, {
+                "data": {
+                    "id": "Orion",
+                    "parent": "indra_cloud"
+                },
+                "position": {
+                    "x": 394.4561072950134,
+                    "y": 135.97763719152502
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": "orion"
+            }, {
+                "data": {
+                    "id": "GTW"
+                },
+                "position": {
+                    "x": 499.5554157578093,
+                    "y": 135.2891734199868
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": "container"
+            }, {
+                "data": {
+                    "id": "mongodb",
+                    "parent": "indra_cloud"
+                },
+                "position": {
+                    "x": 317.7185380671959,
+                    "y": 135.97763719152502
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "crate",
+                    "parent": "indra_cloud"
+                },
+                "position": {
+                    "x": 397.039159467714,
+                    "y": 233.1213052512491
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "quantumLeap",
+                    "parent": "indra_cloud"
+                },
+                "position": {
+                    "x": 395.7845159433363,
+                    "y": 184.71724242636404
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "grafana",
+                    "parent": "indra_cloud"
+                },
+                "position": {
+                    "x": 319.339726038342,
+                    "y": 233.04380015921285
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "redis",
+                    "parent": "indra_cloud"
+                },
+                "position": {
+                    "x": 319.799276595554,
+                    "y": 186.04939104277818
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "GTW_app",
+                    "parent": "GTW"
+                },
+                "position": {
+                    "x": 499.5554157578093,
+                    "y": 135.2891734199868
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "GTW_2"
+                },
+                "position": {
+                    "x": 500.8410613190017,
+                    "y": 204.2854852039744
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": "container"
+            }, {
+                "data": {
+                    "id": "GTW_app2",
+                    "parent": "GTW_2"
+                },
+                "position": {
+                    "x": 500.84106131900165,
+                    "y": 204.2854852039744
+                },
+                "group": "nodes",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }],
+            "edges": [{
+                "data": {
+                    "id": "crateToGrafan",
+                    "source": "crate",
+                    "target": "grafana"
+                },
+                "position": {},
+                "group": "edges",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "ad",
+                    "source": "mongodb",
+                    "target": "Orion"
+                },
+                "position": {},
+                "group": "edges",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "redis2QL",
+                    "source": "redis",
+                    "target": "quantumLeap"
+                },
+                "position": {},
+                "group": "edges",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "orionToQL",
+                    "source": "Orion",
+                    "target": "quantumLeap"
+                },
+                "position": {},
+                "group": "edges",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "QLToCrate",
+                    "source": "quantumLeap",
+                    "target": "crate"
+                },
+                "position": {},
+                "group": "edges",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "gtw_apptoorion",
+                    "source": "GTW_app",
+                    "target": "Orion"
+                },
+                "position": {},
+                "group": "edges",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }, {
+                "data": {
+                    "id": "gtwapp2_orion",
+                    "source": "GTW_app2",
+                    "target": "Orion"
+                },
+                "position": {},
+                "group": "edges",
+                "removed": false,
+                "selected": false,
+                "selectable": true,
+                "locked": false,
+                "grabbable": true,
+                "classes": ""
+            }]
+        },
+        "style": [{
+            "selector": "node",
+            "style": {
+                "label": "data(id)",
+                "background-fit": "contain",
+                "background-image-opacity": "0.3",
+                "text-valign": "center",
+                "text-halign": "center",
+                "font-size": "4px",
+                "font-weight": "bold"
+            }
+        }, {
+            "selector": "node.container",
+            "style": {
+                "padding": "10px",
+                "text-valign": "top",
+                "text-halign": "center",
+                "background-color": "#DDD",
+                "font-size": "8px",
+                "font-weight": "normal",
+                "shape": "rectangle",
+                "background-image": "./img/docker-official.svg"
+            }
+        }, {
+            "selector": "edge",
+            "style": {
+                "curve-style": "bezier",
+                "target-arrow-shape": "triangle"
+            }
+        }, {
+            "selector": "edge.control",
+            "style": {
+                "curve-style": "bezier",
+                "target-arrow-shape": "circle"
+            }
+        }, {
+            "selector": ":selected",
+            "style": {
+                "background-color": "black",
+                "line-color": "black",
+                "target-arrow-color": "black",
+                "source-arrow-color": "black"
+            }
+        }, {
+            "selector": "node.questionable",
+            "style": {
+                "border-color": "#A33",
+                "background-color": "#B55",
+                "shape": "roundrectangle"
+            }
+        }, {
+            "selector": "node.node_red",
+            "style": {
+                "background-image": "./img/node-red-256.png"
+            }
+        }, {
+            "selector": "node.ansible",
+            "style": {
+                "background-image": "./img/ansible.png"
+            }
+        }, {
+            "selector": "node.orion",
+            "style": {
+                "background-color": "#ADD8E6",
+                "background-image": "./img/fiware_logo.png"
+            }
+        }, {
+            "selector": "node.device",
+            "style": {
+                "padding": "10px",
+                "text-valign": "top",
+                "text-halign": "center",
+                "background-color": "#DDD",
+                "font-size": "8px",
+                "font-weight": "normal",
+                "shape": "rectangle",
+                "background-image": "./img/device.png"
+            }
+        }, {
+            "selector": "node.vm",
+            "style": {
+                "padding": "10px",
+                "text-valign": "top",
+                "text-halign": "center",
+                "background-color": "#DDD",
+                "font-size": "8px",
+                "font-weight": "normal",
+                "shape": "rectangle",
+                "background-image": "./img/server_cloud.png"
+            }
+        }],
+        "zoomingEnabled": true,
+        "userZoomingEnabled": true,
+        "zoom": 2.3334580622810095,
+        "minZoom": 0.4,
+        "maxZoom": 6,
+        "panningEnabled": true,
+        "userPanningEnabled": true,
+        "pan": {
+            "x": -458.2011331324657,
+            "y": -201.05387538657914
+        },
+        "boxSelectionEnabled": false,
+        "renderer": {
+            "name": "canvas"
+        }
+    }
+}

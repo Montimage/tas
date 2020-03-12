@@ -19,12 +19,6 @@ app.use(bodyParser.urlencoded({limit: '50mb',  extended: true }))
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// start server
-
-var server = app.listen(app.get('port'), env.REST_API_SERVER_HOST, function () {
-   console.log(`[REST_API_SERVER] Test and Simulation API Server started on: http://${env.REST_API_SERVER_HOST}:${env.REST_API_SERVER_PORT}`);
-});
-
 // Add headers
 app.use((req, res, next) => {
   // Website you wish to allow to connect
@@ -49,3 +43,9 @@ app.use((req, res, next) => {
 
 app.use('/api/data-generator', dataGeneratorRouter);
 app.use('/api/simulation', simulationRouter);
+
+// start server
+
+var server = app.listen(app.get('port'), env.REST_API_SERVER_HOST, function () {
+  console.log(`[REST_API_SERVER] Test and Simulation API Server started on: http://${env.REST_API_SERVER_HOST}:${env.REST_API_SERVER_PORT}`);
+});

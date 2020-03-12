@@ -45,10 +45,10 @@ router.get('/status', (req, res, next) => {
 router.get('/', function(req, res, next) {
   readJSONFile(configFilePath, (err, data) => {
     if (err) {
-      console.error(err);
-      res.send({});
+      console.error('[REST_API_SERVER]',err);
+      res.send({error: err});
     } else {
-      res.send(data);
+      res.send({error: null, model: data});
     }
   });
 });

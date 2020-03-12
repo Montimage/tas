@@ -12,7 +12,7 @@ const envKeys = Object.keys(env).reduce((prev, next) => {
 }, {});
 
 module.exports = {
-  entry: ['babel-regenerator-runtime',__dirname + "/client/index.js"],
+  entry: ['babel-regenerator-runtime',__dirname + "/src/dashboard/client/index.js"],
   mode: "development",
   module: {
     rules: [{
@@ -34,12 +34,12 @@ module.exports = {
     extensions: ["*", ".js", ".jsx"]
   },
   output: {
-    path: path.resolve(__dirname, "dist/"),
+    path: path.resolve(__dirname, "/src/dashboard/dist/"),
     publicPath: "/dist/",
     filename: "bundle.js"
   },
   devServer: {
-    contentBase: path.join(__dirname, "public/"),
+    contentBase: path.join(__dirname, "/src/dashboard/public/"),
     port: env.DASHBOARD_PORT,
     host: `${env.DASHBOARD_HOST}`,
     publicPath: `http://${env.DASHBOARD_HOST}:${env.DASHBOARD_PORT}/dist/`,
