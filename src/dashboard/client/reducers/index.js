@@ -19,7 +19,7 @@ const rootReducer = combineReducers({
   requesting: requestingReducer,
   tool: toolReducer,
   editingForm: editingFormReducer,
-  isRunning: deployStatusReducer,
+  deployStatus: deployStatusReducer,
 });
 
 export default rootReducer;

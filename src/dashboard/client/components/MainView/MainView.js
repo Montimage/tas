@@ -45,7 +45,7 @@ class MainView extends Component {
       logs: props.logs,
       logFile: props.logFile,
       logFiles: props.logFiles,
-      isRunning: props.isRunning
+      deployStatus: props.deployStatus
     };
     this.onModelChange = this.onModelChange.bind(this);
   }
@@ -58,7 +58,7 @@ class MainView extends Component {
     this.setState({
       tempModel: newProps.model,
       view: newProps.view,
-      isRunning: newProps.isRunning,
+      deployStatus: newProps.deployStatus,
       logs: newProps.logs,
       logFile: newProps.logFile,
       logFiles: newProps.logFiles
@@ -72,7 +72,7 @@ class MainView extends Component {
   }
 
   render() {
-    const { view, isRunning, logs, logFiles, logFile } = this.state;
+    const { view, deployStatus, logs, logFiles, logFile } = this.state;
     const {
       requesting,
       notify,
@@ -91,19 +91,15 @@ class MainView extends Component {
       selectLogFile,
       resetLogFile
     } = this.props;
-    let deployStatus = null;
-    if (isRunning) {
-      if (tool === "simulation") {
-        deployStatus = "Simulation is running...";
-      } else {
-        deployStatus = "Data Generator is running...";
-      }
+    let statusMessage = null;
+    if (deployStatus) {
+      statusMessage = `${tool === 'simulation' ? 'Simulation':'Data Generator'} is running. Model name ${deployStatus.model}. Started time: ${(new Date(deployStatus.startedTime))}`;
     }
     return (
       <div className="content">
-        {deployStatus && (
+        {statusMessage && (
           <Alert
-            message={deployStatus}
+            message={statusMessage}
             type="info"
             style={{ marginBottom: "10px" }}
             showIcon
@@ -182,7 +178,7 @@ const mapPropsToStates = ({
   model,
   tool,
   editingForm,
-  isRunning,
+  deployStatus,
   logs
 }) => ({
   model,
@@ -193,7 +189,7 @@ const mapPropsToStates = ({
   logs: logs.logs,
   logFiles: logs.logFiles,
   logFile: logs.file,
-  isRunning,
+  deployStatus,
   formID: editingForm.formID
 });
 

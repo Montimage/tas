@@ -39,7 +39,7 @@ const requestStartDeploy = async (tool) => {
   if (data.error) {
     throw data.error;
   }
-  return data.model;
+  return data.deployStatus;
 };
 
 const requestStopDeploy = async (tool) => {
@@ -49,14 +49,17 @@ const requestStopDeploy = async (tool) => {
   if (data.error) {
     throw data.error;
   }
-  return data.model;
+  return data.deployStatus;
 };
 
 const requestDeployStatus = async (tool) => {
   const url = `${URL}/api/${tool}/status`;
   const response = await fetch(url);
-  const status = await response.text();
-  return status === 'true';
+  const status = await response.json();
+  if (status.error) {
+    throw status.error;
+  }
+  return status.deployStatus;
 };
 
 const uploadModel = async (tool, model) => {

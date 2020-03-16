@@ -1,110 +1,149 @@
 /* Working with Data Generator */
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-const { readJSONFile, readTextFile, writeToFile, readDir } = require('../../../utils');
-const { startGeneratingData, stopGeneratingData } = require('../../../data-generators');
-const getLogger = require('../logger');
+const {
+  readJSONFile,
+  readTextFile,
+  writeToFile,
+  readDir
+} = require("../../../utils");
+const {
+  startGeneratingData,
+  stopGeneratingData
+} = require("../../../data-generators");
+const getLogger = require("../logger");
 
 const configFilePath = `${__dirname}/../data/data-generator.json`;
 const logFilePath = `${__dirname}/../logs/data-generators/`;
 
-
-router.get('/logs', (req, res, next)=>{
+router.get("/logs", (req, res, next) => {
   readDir(logFilePath, (err, files) => {
     if (err) {
-      res.send({error: 'Cannot read the logs directory'});
+      res.send({ error: "Cannot read the logs directory" });
     } else {
-      res.send({error: null, files});
-    }
-  })
-});
-
-router.get('/logs/:fileName', function(req, res, next) {
-  const {fileName} = req.params;
-  const logFile = `${logFilePath}${fileName}`;
-  readTextFile(logFile, (err, content) => {
-    if (err) {
-      res.send({error: 'Cannot read the log file'});
-    } else {
-      res.send({error: null, content});
+      res.send({ error: null, files });
     }
   });
 });
 
-let isStarted = false;
-
-router.get('/run', function(req, res, next) {
-  readJSONFile(configFilePath, (err, generatorConfig) => {
+router.get("/logs/:fileName", function(req, res, next) {
+  const { fileName } = req.params;
+  const logFile = `${logFilePath}${fileName}`;
+  readTextFile(logFile, (err, content) => {
     if (err) {
-      console.error('[REST_API_SERVER] ERROR: ', err);
-      res.send({error: 'Cannot read the configuration file'});
+      res.send({ error: "Cannot read the log file" });
     } else {
-      if (!isStarted) {
-        // Logger
-        getLogger('Data-Generator', `${logFilePath}data-generator_${Date.now()}.log`);
-        startGeneratingData(generatorConfig);
-        isStarted = true;
-      }
-      res.send({error: null, model: generatorConfig});
+      res.send({ error: null, content });
     }
-  })
+  });
 });
 
-router.post('/execute', function(req, res, next) {
+let deployStatus = false;
+
+router.get("/run", function(req, res, next) {
+  if (deployStatus) {
+    return res.send({
+      error:
+        "A data-generator is running. Only one data-generator can be running"
+    });
+  }
+  readJSONFile(configFilePath, (err, generatorConfig) => {
+    if (err) {
+      console.error("[REST_API_SERVER] ERROR: ", err);
+      res.send({ error: "Cannot read the configuration file" });
+    } else {
+      // Check if there is a configuration
+      if (generatorConfig) {
+        // Logger
+        const { name, dbConfig } = generatorConfig;
+        if (!name || !dbConfig) {
+          res.send({ error: "Invalid model", model: generatorConfig });
+        } else {
+          const startedTime = Date.now();
+          const logFile = `${name}_${startedTime}.log`;
+          getLogger("Data-Generator", `${logFilePath}${logFile}`);
+          startGeneratingData(generatorConfig);
+          deployStatus = {
+            startedTime,
+            logFile,
+            model: name
+          };
+          res.send({ error: null, model: generatorConfig, deployStatus });
+        }
+      } else {
+        res.send({ error: "Model is null" });
+      }
+    }
+  });
+});
+
+router.post("/execute", function(req, res, next) {
   const generatorConfig = req.body.model;
   // Check if the simulation is running
-  if (isStarted) {
-    res.send({error: 'A simulation is running. Only one simulation can be running'});
+  if (deployStatus) {
+    res.send({
+      error:
+        "A data-generator is running. Only one data-generator can be running"
+    });
   } else {
     // Check if there is a configuration
     if (generatorConfig) {
       // Logger
-      const {name, dbConfig } = generatorConfig;
+      const { name, dbConfig } = generatorConfig;
       if (!name || !dbConfig) {
-        res.send({error: 'Invalid model', model: generatorConfig});
+        res.send({ error: "Invalid model", model: generatorConfig });
       } else {
-        getLogger('Data-Generator', `${logFilePath}${name}_${Date.now()}.log`);
+        const startedTime = Date.now();
+        const logFile = `${name}_${startedTime}.log`;
+        getLogger("Data-Generator", `${logFilePath}${logFile}`);
         startGeneratingData(generatorConfig);
-        isStarted = true;
-        res.send({error: null, model: generatorConfig});
+        deployStatus = {
+          startedTime,
+          logFile,
+          model: name
+        };
+        res.send({ error: null, model: generatorConfig, deployStatus });
       }
+    } else {
+      res.send({ error: "Model is null" });
     }
   }
 });
 
-router.get('/stop', function(req, res, next) {
-  if (isStarted) {
+router.get("/stop", function(req, res, next) {
+  let copiedStatus = deployStatus;
+  if (deployStatus) {
     stopGeneratingData();
-    isStarted = false;
+    deployStatus = null;
   }
-  res.send({error: null});
+  res.send({ error: null, deployStatus: copiedStatus });
 });
 
-router.get('/status', (req, res, next) => {
-  res.send(isStarted);
-})
+router.get("/status", (req, res, next) => {
+  res.send({ error: null, deployStatus});
+});
 
-router.get('/', function(req, res, next) {
+router.get("/", function(req, res, next) {
   readJSONFile(configFilePath, (err, data) => {
     if (err) {
-      console.error('[REST_API_SERVER]',err);
-      res.send({error: err});
+      console.error("[REST_API_SERVER]", err);
+      res.send({ error: err });
     } else {
-      res.send({error: null, model: data});
+      res.send({ error: null, model: data });
     }
   });
 });
 
-router.post('/', (req, res, next) => {
+router.post("/", (req, res, next) => {
   const newConfig = req.body.model;
   writeToFile(configFilePath, JSON.stringify(newConfig), (err, data) => {
     if (err) {
-      console.error('[REST_API_SERVER] ERROR: ', err);
-      res.send({error: 'Cannot save the new configuration'});
+      console.error("[REST_API_SERVER] ERROR: ", err);
+      res.send({ error: "Cannot save the new configuration" });
     } else {
-      res.send({error: null, model: newConfig});
+      res.send({ error: null, model: newConfig });
     }
   });
-})
+});
 
 module.exports = router;
