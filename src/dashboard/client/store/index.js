@@ -11,18 +11,11 @@ const configStore = () => {
     compose(
       applyMiddleware(sagaMiddleware)
       ,
-      window.__REDUX_DEVTOOLS_EXTENSION__ &&
-        window.__REDUX_DEVTOOLS_EXTENSION__(),
+      window.__REDUX_DEVTOOLS_EXTENSION__ ?
+        window.__REDUX_DEVTOOLS_EXTENSION__() : f => f,
     ),
   );
   sagaMiddleware.run(rootSaga);
-  // store.dispatch({ type: 'DANG' });
-  // store.dispatch({ type: 'Logout' });
-  // store.dispatch({ type: 'Login' });
-  // store.dispatch({ type: 'Login' });
-  // store.dispatch({ type: 'Login' });
-  // store.dispatch({ type: 'Logout' });
-  // store.dispatch({ type: 'Logout' });
   return store;
 };
 

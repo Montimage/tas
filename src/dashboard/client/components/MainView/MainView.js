@@ -21,12 +21,17 @@ import {
   deleteSimulationActuator,
   deleteDGActuator,
   resetNotification,
-  requestDeployStatus
+  requestDeployStatus,
+  selectLogFile,
+  requestLogs,
+  requestLogsOK
 } from "../../actions";
 import JSONView from "../JSONView";
 import GraphView from "./GraphView";
 import ListView from "../ListView";
 import LogView from "../LogView";
+import LogFileView from "../LogFileView";
+
 // import 'jsoneditor-react/es/editor.min.css';
 import "./styles.css";
 
@@ -36,20 +41,27 @@ class MainView extends Component {
     super(props);
     this.state = {
       tempModel: props.model,
-      view: props.view
+      view: props.view,
+      logs: props.logs,
+      logFile: props.logFile,
+      logFiles: props.logFiles,
+      isRunning: props.isRunning
     };
     this.onModelChange = this.onModelChange.bind(this);
   }
 
   componentDidMount() {
-    this.props.fetchModel();
-    this.props.fetchDeployStatus();
+    this.props.initData();
   }
 
   componentWillReceiveProps(newProps) {
     this.setState({
       tempModel: newProps.model,
-      view: newProps.view
+      view: newProps.view,
+      isRunning: newProps.isRunning,
+      logs: newProps.logs,
+      logFile: newProps.logFile,
+      logFiles: newProps.logFiles
     });
   }
 
@@ -60,7 +72,7 @@ class MainView extends Component {
   }
 
   render() {
-    const { view } = this.state;
+    const { view, isRunning, logs, logFiles, logFile } = this.state;
     const {
       requesting,
       notify,
@@ -74,35 +86,53 @@ class MainView extends Component {
       selectActuator,
       deleteActuator,
       tool,
-      logs,
       formID,
       resetNotification,
-      isRunning
+      selectLogFile,
+      resetLogFile
     } = this.props;
     let deployStatus = null;
     if (isRunning) {
-      if (tool === 'simulation') {
-        deployStatus = 'Simulation is running...';
+      if (tool === "simulation") {
+        deployStatus = "Simulation is running...";
       } else {
-        deployStatus = 'Data Generator is running...';
+        deployStatus = "Data Generator is running...";
       }
     }
     return (
       <div className="content">
-        {deployStatus &&
-          <Alert message={deployStatus} type="info" style={{marginBottom: '10px'}} showIcon/>
-        }
+        {deployStatus && (
+          <Alert
+            message={deployStatus}
+            type="info"
+            style={{ marginBottom: "10px" }}
+            showIcon
+          />
+        )}
         {notify &&
           notification[notify.type]({
             message: notify.type.toUpperCase(),
-            description: typeof notify.message === 'object' ? JSON.stringify(notify.message) : notify.message,
+            description:
+              typeof notify.message === "object"
+                ? JSON.stringify(notify.message)
+                : notify.message,
             onClose: () => resetNotification()
-          })
-        }
+          })}
         {requesting ? (
           <Spin tip="Loading..." />
         ) : view.contentType === "logs" ? (
-          <LogView logs={logs}/>
+          logs ? (
+            <LogView
+              logs={logs}
+              logFile={logFile}
+              resetLogFile={() => resetLogFile()}
+            />
+          ) : (
+            <LogFileView
+              logFiles={logFiles}
+              selectLogFile={file => selectLogFile(file)}
+            />
+          )
         ) : (
           <div>
             {view.viewType === "json" ? (
@@ -153,21 +183,25 @@ const mapPropsToStates = ({
   tool,
   editingForm,
   isRunning,
-  logs,
+  logs
 }) => ({
   model,
   view,
   notify,
   requesting,
   tool,
-  logs,
+  logs: logs.logs,
+  logFiles: logs.logFiles,
+  logFile: logs.file,
   isRunning,
   formID: editingForm.formID
 });
 
 const mapDispatchToProps = dispatch => ({
-  fetchModel: () => dispatch(requestModel()),
-  fetchDeployStatus: () => dispatch(requestDeployStatus()),
+  initData: () => {
+    dispatch(requestModel());
+    dispatch(requestDeployStatus());
+  },
   saveModel: newModel => {
     dispatch(setModel(newModel));
     dispatch(uploadModel());
@@ -191,7 +225,15 @@ const mapDispatchToProps = dispatch => ({
       dispatch(deleteDGActuator(actuatorID));
     }
   },
-  resetNotification: () => dispatch(resetNotification())
+  resetNotification: () => dispatch(resetNotification()),
+  selectLogFile: file => {
+    dispatch(selectLogFile(file));
+    dispatch(requestLogs());
+  },
+  resetLogFile: () => {
+    dispatch(selectLogFile(null));
+    dispatch(requestLogsOK(null));
+  }
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(MainView);

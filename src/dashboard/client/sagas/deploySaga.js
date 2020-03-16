@@ -52,8 +52,8 @@ function* handleRequestDeployStatus() {
   try {
     const tool = yield select(getTool);
     const status = yield call(()=>requestDeployStatus(tool));
-    yield put(setDeployStatus(status));
     // dispatch data
+    yield put(setDeployStatus(status));
   } catch (error) {
     // dispatch error
     yield put(setNotification({type: 'error', message: error}));

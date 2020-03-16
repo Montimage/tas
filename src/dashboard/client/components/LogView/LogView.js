@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Row, Col, Typography } from "antd";
+import { Row, Col, Typography, PageHeader } from "antd";
 const { Text } = Typography;
 
 // 2020-03-11T15:54:46.536Z [Simulation] info: [medicalGW-01-0] published: mqtt://localhost:1883 things/medicalGW-01-0/sensors/blood-pressure-sensor
@@ -17,8 +17,13 @@ const LogLine = ({ type, time, device, message }) => (
   </Row>
 );
 
-const LogView = ({ logs }) => (
+const LogView = ({ logs, logFile, resetLogFile }) => (
   <React.Fragment>
+    <PageHeader
+      className="site-page-header"
+      onBack={() => resetLogFile()}
+      title={logFile}
+    />
     <LogLine
       key={-1}
       type={"warning"}

@@ -1,9 +1,15 @@
 import { createReducer } from "redux-act";
-import { requestLogsOK } from "../actions";
+import { requestLogsOK, requestLogFilesOK, selectLogFile } from "../actions";
 
 export default createReducer(
   {
-    [requestLogsOK]: (state, logs) => logs
+    [requestLogsOK]: (state, logs) => ({...state, logs}),
+    [requestLogFilesOK]: (state, logFiles) => ({...state, logFiles}),
+    [selectLogFile]: (state, file) => ({...state, file})
   },
-  null
+  {
+    file: null,
+    logs: null,
+    logFiles: []
+  }
 );

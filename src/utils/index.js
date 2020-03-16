@@ -1,5 +1,9 @@
 const fs = require('fs');
 
+const readDir = (dirPath, callback) => {
+  fs.readdir(dirPath, callback);
+};
+
 /**
  * Read JSON file and return an JSON object
  * @param {String} filePath Path to file
@@ -226,5 +230,6 @@ module.exports = {
   readJSONFile,
   readJSONFileSync,
   readTextFile,
-  writeToFile
+  writeToFile,
+  readDir
 }

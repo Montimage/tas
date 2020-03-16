@@ -26,7 +26,11 @@ import {
   setNotification,
   changeTool,
   requestModel,
-  requestLogs
+  requestLogFiles,
+  requestDeployStatus,
+  selectLogFile,
+  requestLogsOK,
+  requestLogFilesOK
 } from "../../actions";
 import "./styles.css";
 
@@ -175,6 +179,11 @@ const mapDispatchToProps = dispatch => ({
   changeTool: () => {
     dispatch(changeTool());
     dispatch(requestModel());
+    dispatch(setContentType('model'));
+    dispatch(requestDeployStatus());
+    dispatch(requestLogsOK(null));
+    dispatch(requestLogFilesOK([]));
+    dispatch(selectLogFile(null));
   },
   setNotification: ({ type, message }) =>
     dispatch(setNotification({ type, message })),
@@ -189,8 +198,9 @@ const mapDispatchToProps = dispatch => ({
   startDeploy: () => dispatch(sendDeployStart()),
   stopDeploy: () => dispatch(sendDeployStop()),
   viewLogs: () => {
-    dispatch(requestLogs());
+    dispatch(requestLogFiles());
     dispatch(setContentType("logs"));
+    dispatch(selectLogFile(null));
   },
   setContentType: v => dispatch(setContentType(v))
 });
