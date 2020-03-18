@@ -7,15 +7,20 @@ Test and Simulation enabler
 ```
 cd test_and_simulation/
 npm install
+npm run build
 ```
 
 ## Usage
 
 ### Start application
+Create `.env` file: `cp env.example .env`
+Update the `host` and `port` then start the application.
 
 ```
-npm start
+npm run start
 ```
+
+Access to the Test and Simulation Enabler dashboard at: `http://[YOUR_IP_ADDRESS]:31057`
 
 ### Data Generator
 Generate data (sensors and actuators) and store the data into a database
