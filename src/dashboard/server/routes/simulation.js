@@ -147,7 +147,7 @@ router.get("/status", (req, res, next) => {
 router.get("/", function(req, res, next) {
   readJSONFile(configFilePath, (err, data) => {
     if (err) {
-      console.error("[REST_API_SERVER]", err);
+      console.error("[SERVER]", err);
       res.send({ error: err });
     } else {
       res.send({ error: null, model: data });
@@ -160,7 +160,7 @@ router.post("/", (req, res, next) => {
   if (newConfig) {
     writeToFile(configFilePath, JSON.stringify(newConfig), (err, data) => {
       if (err) {
-        console.error("[REST_API_SERVER]", err);
+        console.error("[SERVER]", err);
         res.send({ error: "Cannot save the new configuration" });
       } else {
         res.send({ error: null, model: newConfig });

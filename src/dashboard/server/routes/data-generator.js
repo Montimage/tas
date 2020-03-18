@@ -49,7 +49,7 @@ router.get("/run", function(req, res, next) {
   }
   readJSONFile(configFilePath, (err, generatorConfig) => {
     if (err) {
-      console.error("[REST_API_SERVER] ERROR: ", err);
+      console.error("[SERVER] ERROR: ", err);
       res.send({ error: "Cannot read the configuration file" });
     } else {
       // Check if there is a configuration
@@ -126,7 +126,7 @@ router.get("/status", (req, res, next) => {
 router.get("/", function(req, res, next) {
   readJSONFile(configFilePath, (err, data) => {
     if (err) {
-      console.error("[REST_API_SERVER]", err);
+      console.error("[SERVER]", err);
       res.send({ error: err });
     } else {
       res.send({ error: null, model: data });
@@ -138,7 +138,7 @@ router.post("/", (req, res, next) => {
   const newConfig = req.body.model;
   writeToFile(configFilePath, JSON.stringify(newConfig), (err, data) => {
     if (err) {
-      console.error("[REST_API_SERVER] ERROR: ", err);
+      console.error("[SERVER] ERROR: ", err);
       res.send({ error: "Cannot save the new configuration" });
     } else {
       res.send({ error: null, model: newConfig });

@@ -13,7 +13,7 @@ const envKeys = Object.keys(env).reduce((prev, next) => {
 
 module.exports = {
   entry: ['babel-regenerator-runtime',__dirname + "/src/dashboard/client/index.js"],
-  mode: "development",
+  mode: "production",
   module: {
     rules: [{
         test: /\.(js|jsx)$/,
@@ -37,13 +37,6 @@ module.exports = {
     path: path.resolve(`${__dirname}/src/dashboard/public/js/`),
     publicPath: "/js/",
     filename: "bundle.js"
-  },
-  devServer: {
-    contentBase: path.join(__dirname, "/src/dashboard/public/"),
-    port: env.DEV_DASHBOARD_PORT,
-    host: `${env.DEV_DASHBOARD_HOST}`,
-    publicPath: `http://${env.DEV_DASHBOARD_HOST}:${env.DEV_DASHBOARD_PORT}/js/`,
-    hotOnly: true
   },
   plugins: [new webpack.HotModuleReplacementPlugin(), new webpack.DefinePlugin(envKeys)]
 };
