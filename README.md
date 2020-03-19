@@ -51,14 +51,15 @@ docker build -t enact/tas .
 Create container
 
 ```
-docker run --name tas -d -p 31057:31057 enact/tas
+docker run --name tas -d -p 9112:31057 enact/tas
 ```
--> Go to : http://your_ip:31057
+-> Go to : http://your_ip:9112
 
 Customize the environment by creating your own .env file
 ```
-docker run --name tas -d -p 31057:31057 -v [absolute-path-to-env-file]:/enact/.env enact/tas
+docker run --name tas -d -p 8080:8080 -v [absolute-path-to-env-file]:/enact/.env enact/tas
 ```
+-> Go to : http://your_ip:8080
 
 Ref: https://nodejs.org/de/docs/guides/nodejs-docker-webapp/
 
