@@ -3,3 +3,4 @@ node_modules/
 *.backup
 *.pdf
 *.log
+*.DS_Store
