@@ -24,7 +24,8 @@ import {
   requestDeployStatus,
   selectLogFile,
   requestLogs,
-  requestLogsOK
+  requestLogsOK,
+  requestDeleteLogFile
 } from "../../actions";
 import JSONView from "../JSONView";
 import GraphView from "./GraphView";
@@ -89,7 +90,8 @@ class MainView extends Component {
       formID,
       resetNotification,
       selectLogFile,
-      resetLogFile
+      resetLogFile,
+      deleteLogFile
     } = this.props;
     let statusMessage = null;
     if (deployStatus) {
@@ -127,6 +129,7 @@ class MainView extends Component {
             <LogFileView
               logFiles={logFiles}
               selectLogFile={file => selectLogFile(file)}
+              deleteHandler={file => deleteLogFile(file)}
             />
           )
         ) : (
@@ -229,6 +232,9 @@ const mapDispatchToProps = dispatch => ({
   resetLogFile: () => {
     dispatch(selectLogFile(null));
     dispatch(requestLogsOK(null));
+  },
+  deleteLogFile: (file) => {
+    dispatch(requestDeleteLogFile(file));
   }
 });
 

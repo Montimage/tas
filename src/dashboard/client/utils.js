@@ -57,4 +57,10 @@ const removeElementFromArray = (array, elmId) => {
   return array;
 }
 
-export { updateObjectByPath, addNewElementToArray, removeElementFromArray };
+const getCreatedTimeFromFileName = (fileName) => {
+  const array = fileName.split('_');
+  let timeString = array[array.length - 1].replace('.log','');
+  return new Date(Number(timeString));
+}
+
+export { updateObjectByPath, addNewElementToArray, removeElementFromArray, getCreatedTimeFromFileName };

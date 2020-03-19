@@ -41,8 +41,8 @@ module.exports = {
   devServer: {
     contentBase: path.join(__dirname, "/src/dashboard/public/"),
     port: env.DEV_DASHBOARD_PORT,
-    host: `${env.DEV_DASHBOARD_HOST}`,
-    publicPath: `http://${env.DEV_DASHBOARD_HOST}:${env.DEV_DASHBOARD_PORT}/js/`,
+    host: `${env.SERVER_HOST}`,
+    publicPath: `http://${env.SERVER_HOST}:${env.DEV_DASHBOARD_PORT}/js/`,
     hotOnly: true
   },
   plugins: [new webpack.HotModuleReplacementPlugin(), new webpack.DefinePlugin(envKeys)]

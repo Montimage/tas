@@ -37,6 +37,8 @@ export const requestLogFiles = createAction('REQUEST_LOGFILES');
 export const requestLogsOK = createAction('REQUEST_LOGS_OK');
 export const requestLogFilesOK = createAction('REQUEST_LOGFILES_OK');
 export const selectLogFile = createAction('SELECT_LOG_FILE');
+export const requestDeleteLogFile = createAction('REQUEST_DELETE_LOG_FILE');
+
 // Control the view
 export const setViewType = createAction('SET_VIEW_TYPE');
 export const setContentType = createAction('SET_CONTENT_TYPE');

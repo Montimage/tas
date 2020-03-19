@@ -5,7 +5,8 @@ const {
   readJSONFile,
   readTextFile,
   writeToFile,
-  readDir
+  readDir,
+  deleteFile
 } = require("../../../utils");
 const { startSimulation, stopSimulation } = require("../../../things");
 const getLogger = require("../logger");
@@ -16,6 +17,7 @@ const logFilePath = `${__dirname}/../logs/simulations/`;
 router.get("/logs", (req, res, next) => {
   readDir(logFilePath, (err, files) => {
     if (err) {
+      console.error("[SERVER]", err);
       res.send({ error: "Cannot read the logs directory" });
     } else {
       res.send({ error: null, files });
@@ -28,9 +30,23 @@ router.get("/logs/:fileName", function(req, res, next) {
   const logFile = `${logFilePath}${fileName}`;
   readTextFile(logFile, (err, content) => {
     if (err) {
+      console.error("[SERVER]", err);
       res.send({ error: "Cannot read the log file" });
     } else {
       res.send({ error: null, content });
+    }
+  });
+});
+
+router.post("/logs/:fileName", function(req, res, next) {
+  const { fileName } = req.params;
+  const logFile = `${logFilePath}${fileName}`;
+  deleteFile(logFile, err => {
+    if (err) {
+      console.error("[SERVER]", err);
+      res.send({ error: "Cannot delete the log file" });
+    } else {
+      res.send({ error: null, result: true });
     }
   });
 });
@@ -68,6 +84,7 @@ router.get("/run", function(req, res, next) {
 
   readJSONFile(configFilePath, (err, thingConfigs) => {
     if (err) {
+      console.error("[SERVER]", err);
       res.send({ error: "Cannot read the configuration file" });
     } else {
       // Check if there is a configuration
@@ -124,6 +141,7 @@ router.post("/execute", function(req, res, next) {
         res.send({ error: null, model: thingConfigs, deployStatus });
       }
     } else {
+      console.error("[SERVER]", err);
       res.send({
         error: "Cannot simulate a null model"
       });

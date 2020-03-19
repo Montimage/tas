@@ -52,6 +52,19 @@ const writeToFile = (filePath, data, callback) => {
 }
 
 /**
+ * Delete a file
+ * @param {String} filePath The path to the text file
+ * @param {Function} callback The callback function
+ */
+const deleteFile = (filePath, callback) => {
+  try {
+    fs.unlink(filePath,callback);
+  } catch (error) {
+    return callback(error);
+  }
+}
+
+/**
  * Read the text file
  * @param {String} filePath The path to the text file
  * @param {Function} callback The callback function
@@ -231,5 +244,6 @@ module.exports = {
   readJSONFileSync,
   readTextFile,
   writeToFile,
-  readDir
+  readDir,
+  deleteFile
 }

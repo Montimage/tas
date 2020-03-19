@@ -5,7 +5,8 @@ const {
   readJSONFile,
   readTextFile,
   writeToFile,
-  readDir
+  readDir,
+  deleteFile
 } = require("../../../utils");
 const {
   startGeneratingData,
@@ -19,6 +20,7 @@ const logFilePath = `${__dirname}/../logs/data-generators/`;
 router.get("/logs", (req, res, next) => {
   readDir(logFilePath, (err, files) => {
     if (err) {
+      console.error("[SERVER]", err);
       res.send({ error: "Cannot read the logs directory" });
     } else {
       res.send({ error: null, files });
@@ -31,9 +33,23 @@ router.get("/logs/:fileName", function(req, res, next) {
   const logFile = `${logFilePath}${fileName}`;
   readTextFile(logFile, (err, content) => {
     if (err) {
+      console.error("[SERVER]", err);
       res.send({ error: "Cannot read the log file" });
     } else {
       res.send({ error: null, content });
+    }
+  });
+});
+
+router.post("/logs/:fileName", function(req, res, next) {
+  const { fileName } = req.params;
+  const logFile = `${logFilePath}${fileName}`;
+  deleteFile(logFile, err => {
+    if (err) {
+      console.error("[SERVER]", err);
+      res.send({ error: "Cannot delete the log file" });
+    } else {
+      res.send({ error: null, result: true });
     }
   });
 });
@@ -120,7 +136,7 @@ router.get("/stop", function(req, res, next) {
 });
 
 router.get("/status", (req, res, next) => {
-  res.send({ error: null, deployStatus});
+  res.send({ error: null, deployStatus });
 });
 
 router.get("/", function(req, res, next) {
