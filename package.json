@@ -6,6 +6,8 @@
   "scripts": {
     "build": "webpack --config webpack.prod.js --progress --colors",
     "start": "NODE_ENV=production node src/dashboard/server/app.js",
+    "forever-start": "NODE_ENV=production forever start src/dashboard/server/app.js",
+    "forever-stop": "NODE_ENV=production forever stop src/dashboard/server/app.js",
     "dev": "concurrently \"nodemon ./src/dashboard/server/app.js\" \"webpack-dev-server \"",
     "server": "nodemon src/dashboard/server/app.js",
     "client": "webpack-dev-server"
