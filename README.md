@@ -39,6 +39,28 @@ Stop Test and Simulation
 npm run forever-stop
 ```
 
+## DEVELOPMENT
+
+### Create docker image
+
+Create docker image
+
+```
+docker build -t enact/tas .
+```
+Create container
+
+```
+docker run --name tas -d -p 31057:31057 enact/tas
+```
+-> Go to : http://your_ip:31057
+
+Customize the environment by creating your own .env file
+```
+docker run --name tas -d -p 31057:31057 -v [absolute-path-to-env-file]:/enact/.env enact/tas
+```
+
+Ref: https://nodejs.org/de/docs/guides/nodejs-docker-webapp/
 
 ### Data Generator
 Generate data (sensors and actuators) and store the data into a database

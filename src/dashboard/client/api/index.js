@@ -1,8 +1,8 @@
 // read and pass the environment variables into reactjs application
-const URL = `http://localhost:31057`;
+// const URL = `http://localhost:31057`;
 
 const requestModel = async (tool) => {
-  const url = `${URL}/api/${tool}`;
+  const url = `/api/${tool}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
@@ -12,7 +12,7 @@ const requestModel = async (tool) => {
 };
 
 const requestLogs = async (tool, logFile) => {
-  const url = `${URL}/api/${tool}/logs/${logFile}`;
+  const url = `/api/${tool}/logs/${logFile}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
@@ -22,7 +22,7 @@ const requestLogs = async (tool, logFile) => {
 };
 
 const requestDeleteLogFile = async (tool, logFile) => {
-  const url = `${URL}/api/${tool}/logs/${logFile}`;
+  const url = `/api/${tool}/logs/${logFile}`;
   const response = await fetch(url, {
     method: 'POST'
   });
@@ -35,7 +35,7 @@ const requestDeleteLogFile = async (tool, logFile) => {
 
 
 const requestLogFiles = async (tool) => {
-  const url = `${URL}/api/${tool}/logs`;
+  const url = `/api/${tool}/logs`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
@@ -45,7 +45,7 @@ const requestLogFiles = async (tool) => {
 };
 
 const requestStartDeploy = async (tool) => {
-  const url = `${URL}/api/${tool}/run`;
+  const url = `/api/${tool}/run`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
@@ -55,7 +55,7 @@ const requestStartDeploy = async (tool) => {
 };
 
 const requestStopDeploy = async (tool) => {
-  const url = `${URL}/api/${tool}/stop`;
+  const url = `/api/${tool}/stop`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
@@ -65,7 +65,7 @@ const requestStopDeploy = async (tool) => {
 };
 
 const requestDeployStatus = async (tool) => {
-  const url = `${URL}/api/${tool}/status`;
+  const url = `/api/${tool}/status`;
   const response = await fetch(url);
   const status = await response.json();
   if (status.error) {
@@ -75,7 +75,7 @@ const requestDeployStatus = async (tool) => {
 };
 
 const uploadModel = async (tool, model) => {
-  const url = `${URL}/api/${tool}`;
+  const url = `/api/${tool}`;
   const response = await fetch(url,{
     method: 'POST',
     headers: {
