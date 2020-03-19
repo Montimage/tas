@@ -1,8 +1,7 @@
 {
   "name": "test_and_simulation",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "ENACT Test and Simulation Enabler",
-  "main": "index.js",
   "scripts": {
     "build": "webpack --config webpack.prod.js --progress --colors",
     "start": "NODE_ENV=production node src/dashboard/server/app.js",

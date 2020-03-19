@@ -12,13 +12,15 @@ npm install
 ## Usage
 
 ### Start application
-Create `.env` file: `cp env.example .env`
-Update the `host` and `port` then start the application.
-
 ```
 npm run start
 ```
-Access to the Test and Simulation Enabler dashboard at: `http://[YOUR_IP_ADDRESS]:[PORT] (http://your_ip:31057`
+Access to the Test and Simulation Enabler dashboard at: `http://your_ip:31057`
+
+_Customize dashboard address_
+
+Create `.env` file: `cp env.example .env`
+Update the `host` and `port` then start the application.
 
 ### Start application with `forever`
 Install `forever`
