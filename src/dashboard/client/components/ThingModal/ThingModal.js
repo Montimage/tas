@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import TSModal from "../TSModal";
-import { addThing, deleteThing, showModal } from "../../actions";
+import { addThing, deleteThing, showModal, selectThing } from "../../actions";
 import { Form, Button, Alert } from "antd";
 
 import { FormTextItem, FormSelectItem, FormNumberItem, FormSwitchItem } from "../FormItems";
@@ -13,7 +13,7 @@ class ThingModal extends Component {
     const initThing = {
       id: `thing-id-${Date.now()}`,
       name: `thing-name-${Date.now()}`,
-      protocol: "mqtt",
+      protocol: "MQTT",
       commConfig: {
         host: "localhost",
         port: 1883,
@@ -48,7 +48,7 @@ class ThingModal extends Component {
 
   handleOk() {
     // Validate data
-    const { addThing, showModal } = this.props;
+    const { addThing, showModal, selectThing } = this.props;
     const { data } = this.state;
     const newThing = { ...data };
     let errorMsg = null;
@@ -66,21 +66,27 @@ class ThingModal extends Component {
     } else {
       addThing(data);
       showModal(null);
+      selectThing(null);
     }
   }
 
   handleCancel() {
     this.props.showModal(null);
+    this.props.selectThing(null);
   }
 
   handleDuplicate() {
+    const {addThing, showModal, selectThing } = this.props;
     const newThingID = `thing-${Date.now()}`;
-    this.setState(prevState => {
-      const newData = { ...prevState.data };
-      updateObjectByPath(newData, 'id', newThingID);
-      updateObjectByPath(newData, 'name', 'New Thing');
-      return { data: newData, error: null };
-    });
+    const newData = { ...this.state.data };
+    updateObjectByPath(newData, 'id', newThingID);
+    updateObjectByPath(newData, 'name', 'New Thing');
+    addThing(newData);
+    selectThing(newData);
+    setTimeout(() => {
+      showModal('THING-FORM');
+    },500);
+    showModal(null);
   }
 
   onDataChange(dataPath, value) {
@@ -202,7 +208,8 @@ const mapPropsToStates = ({ editingForm, model }) => ({
 const mapDispatchToProps = dispatch => ({
   showModal: modalID => dispatch(showModal(modalID)),
   deleteThing: thingID => dispatch(deleteThing(thingID)),
-  addThing: thingData => dispatch(addThing(thingData))
+  addThing: thingData => dispatch(addThing(thingData)),
+  selectThing: thing => dispatch(selectThing(thing))
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(ThingModal);

@@ -95,7 +95,11 @@ class MainView extends Component {
     } = this.props;
     let statusMessage = null;
     if (deployStatus) {
-      statusMessage = `${tool === 'simulation' ? 'Simulation':'Data Generator'} is running. Model name ${deployStatus.model}. Started time: ${(new Date(deployStatus.startedTime))}`;
+      statusMessage = `${
+        tool === "simulation" ? "Simulation" : "Data Generator"
+      } is running. Model name ${deployStatus.model}. Started time: ${new Date(
+        deployStatus.startedTime
+      )}`;
     }
     return (
       <div className="content">
@@ -168,7 +172,9 @@ class MainView extends Component {
         {tool === "data-generator" && formID === "DATA-STORAGE-FORM" && (
           <DataStorageModal />
         )}
-        <SensorModal />
+        {(formID === "SENSOR-FORM" || (formID === "ACTUATOR-FORM" && tool==="data-generator")) && (
+          <SensorModal />
+        )}
       </div>
     );
   }
@@ -233,7 +239,7 @@ const mapDispatchToProps = dispatch => ({
     dispatch(selectLogFile(null));
     dispatch(requestLogsOK(null));
   },
-  deleteLogFile: (file) => {
+  deleteLogFile: file => {
     dispatch(requestDeleteLogFile(file));
   }
 });
