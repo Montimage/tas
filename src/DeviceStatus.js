@@ -3,11 +3,13 @@ const OFFLINE = 'OFFLINE';
 const SIMULATING = 'SIMULATING';
 const PAUSE = 'PAUSE';
 const STOP = 'STOP';
+const INITIALIZED = 'INITIALIZED';
 
 module.exports = {
   ONLINE,
   OFFLINE,
   SIMULATING,
   PAUSE,
-  STOP
+  STOP,
+  INITIALIZED
 }

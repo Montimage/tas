@@ -1,5 +1,6 @@
 const ThingMQTT = require("./ThingMQTT");
 const ThingSTOMP = require('./ThingSTOMP');
+const DataGenerator = require('./DataGenerator');
 const { readJSONFile } = require("../utils");
 
 const allThings = [];
@@ -25,21 +26,24 @@ const createThing = (id, protocol, commConfig, sensors, actuators) => {
   let Thing = ThingMQTT; // MQTT protocol by default
   if (protocol.toUpperCase() === 'STOMP') {
     Thing = ThingSTOMP; // Switch to STOMP protocol
+  } else if (protocol.toLocaleUpperCase() === 'DATABASE') {
+    Thing = DataGenerator;
   }
   // Add more protocol here
   const th = new Thing(id);
   th.initThing(() => {
     // Add sensors
     for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
-      const { id, dataSource, scale, disable, options } = sensors[sIndex];
+      const sensorData = sensors[sIndex];
+      const { id, scale, disable } = sensorData;
       if (disable) continue;
       let nbSensors = scale ? scale : 1;
       if (nbSensors === 1) {
-        th.addSensor(id, dataSource, options);
+        th.addSensor(id, sensorData);
       } else {
         for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
           const sID = `${id}-${sensorIndex}`;
-          th.addSensor(sID, dataSource, options);
+          th.addSensor(sID, sensorData);
         }
       }
     }
@@ -88,7 +92,7 @@ const startSimulation = (thingConfigs) => {
 if (process.argv[2] === 'test') {
   readJSONFile(process.argv[3], (err, thingConfigs) => {
     if (err) {
-      console.error(`[Simulation] [ERROR] Cannot read the config of thing:`, thingConfigFile);
+      console.error(`[Simulation] [ERROR] Cannot read the config of thing:`, process.argv[3]);
       // console.error();
     } else {
       startSimulation(thingConfigs);

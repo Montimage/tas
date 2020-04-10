@@ -3,7 +3,7 @@ const Thing = require('./Thing');
 const {
   ONLINE,
   SIMULATING,
-} = require('../constants');
+} = require('../DeviceStatus');
 /**
  * The Thing class presents a THING component:
  * - List of sensors

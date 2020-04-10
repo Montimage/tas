@@ -1,4 +1,4 @@
-const { OFFLINE } = require('../constants');
+const { OFFLINE } = require('../DeviceStatus');
 const { ENACTDB, ActuatorSchema } = require("../enact-mongoose");
 
 const Sensor = require('../sensors');

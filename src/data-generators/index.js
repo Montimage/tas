@@ -130,7 +130,7 @@ const startGeneratingData = (dataConfig) => {
           startGenerating(SENSOR_TYPE, `${id}-${index}`, startTime, duration, dataSource);
         }
       }
-    }
+    } 
     // Generate actuators data
     for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
       const {id, startTime, duration, dataSource, scale} = actuators[aIndex];
