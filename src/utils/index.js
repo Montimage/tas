@@ -1,5 +1,9 @@
 const fs = require('fs');
 
+const readDir = (dirPath, callback) => {
+  fs.readdir(dirPath, callback);
+};
+
 /**
  * Read JSON file and return an JSON object
  * @param {String} filePath Path to file
@@ -44,6 +48,19 @@ const writeToFile = (filePath, data, callback) => {
     });
   } catch (error) {
 
+  }
+}
+
+/**
+ * Delete a file
+ * @param {String} filePath The path to the text file
+ * @param {Function} callback The callback function
+ */
+const deleteFile = (filePath, callback) => {
+  try {
+    fs.unlink(filePath,callback);
+  } catch (error) {
+    return callback(error);
   }
 }
 
@@ -226,5 +243,7 @@ module.exports = {
   readJSONFile,
   readJSONFileSync,
   readTextFile,
-  writeToFile
+  writeToFile,
+  readDir,
+  deleteFile
 }

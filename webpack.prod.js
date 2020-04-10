@@ -34,16 +34,9 @@ module.exports = {
     extensions: ["*", ".js", ".jsx"]
   },
   output: {
-    path: path.resolve(__dirname, "/src/dashboard/dist/"),
-    publicPath: "/dist/",
+    path: path.resolve(`${__dirname}/src/dashboard/public/js/`),
+    publicPath: "/js/",
     filename: "bundle.js"
-  },
-  devServer: {
-    contentBase: path.join(__dirname, "/src/dashboard/public/"),
-    port: env.DASHBOARD_PORT,
-    host: `${env.DASHBOARD_HOST}`,
-    publicPath: `http://${env.DASHBOARD_HOST}:${env.DASHBOARD_PORT}/dist/`,
-    hotOnly: true
   },
   plugins: [new webpack.HotModuleReplacementPlugin(), new webpack.DefinePlugin(envKeys)]
 };

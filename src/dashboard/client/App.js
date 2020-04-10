@@ -6,7 +6,8 @@ import TSHeader from "./components/TSHeader";
 import LeftSider from "./components/LeftSider";
 import RightSider from "./components/RightSider";
 import MainView from "./components/MainView";
-const { Content, Footer } = Layout;
+import TSFooter from "./components/TSFooter";
+const { Content } = Layout;
 
 class App extends Component {
   render() {
@@ -23,9 +24,7 @@ class App extends Component {
             </Layout>
             <RightSider />
           </Layout>
-          <Footer style={{ textAlign: "center"}}>
-            ENACT ©2020 Created by Montimage
-          </Footer>
+          <TSFooter />
         </Layout>
       </ErrorBoundary>
     );

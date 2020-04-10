@@ -11,13 +11,17 @@ var dataGeneratorRouter = require('./routes/data-generator');
 var simulationRouter = require('./routes/simulation');
 
 var app = express();
+var compression = require('compression');
+var helmet = require('helmet');
 
-app.set("port", env.REST_API_SERVER_PORT);
+app.use(compression()); //Compress all routes
+app.use(helmet());
+app.set("port", env.SERVER_PORT);
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb',  extended: true }))
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Add headers
 app.use((req, res, next) => {
@@ -46,6 +50,6 @@ app.use('/api/simulation', simulationRouter);
 
 // start server
 
-var server = app.listen(app.get('port'), env.REST_API_SERVER_HOST, function () {
-  console.log(`[REST_API_SERVER] Test and Simulation API Server started on: http://${env.REST_API_SERVER_HOST}:${env.REST_API_SERVER_PORT}`);
+var server = app.listen(app.get('port'), env.SERVER_HOST, function () {
+  console.log(`[SERVER] Test and Simulation Server started on: http://${env.SERVER_HOST}:${env.SERVER_PORT}`);
 });

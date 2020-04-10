@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { connect } from "react-redux";
+import { connect, batch } from "react-redux";
 import { Layout, Menu, Row, Col, Select, Typography } from "antd";
 import {
   CaretRightOutlined,
@@ -26,7 +26,11 @@ import {
   setNotification,
   changeTool,
   requestModel,
-  requestLogs
+  requestLogFiles,
+  requestDeployStatus,
+  selectLogFile,
+  requestLogsOK,
+  requestLogFilesOK
 } from "../../actions";
 import "./styles.css";
 
@@ -61,7 +65,7 @@ class TSHeader extends Component {
       resetEditor,
       startDeploy,
       stopDeploy,
-      isRunning,
+      deployStatus,
       viewLogs,
       setContentType,
       model,
@@ -120,7 +124,7 @@ class TSHeader extends Component {
                   <span className="submenu-title-wrapper">
                     <DeploymentUnitOutlined />
                     {"Deploy "}
-                    {isRunning ? <SyncOutlined spin /> : null}
+                    {deployStatus ? <SyncOutlined spin /> : null}
                   </span>
                 }
               >
@@ -164,17 +168,21 @@ class TSHeader extends Component {
   }
 }
 
-const mapPropsToStates = ({ requesting, model, tool, isRunning }) => ({
+const mapPropsToStates = ({ requesting, model, tool, deployStatus }) => ({
   requesting,
   model,
   tool,
-  isRunning
+  deployStatus
 });
 
 const mapDispatchToProps = dispatch => ({
   changeTool: () => {
-    dispatch(changeTool());
-    dispatch(requestModel());
+    batch(() => {
+      dispatch(setContentType('model'));
+      dispatch(changeTool());
+      dispatch(requestModel());
+      dispatch(requestDeployStatus());
+    })
   },
   setNotification: ({ type, message }) =>
     dispatch(setNotification({ type, message })),
@@ -189,7 +197,8 @@ const mapDispatchToProps = dispatch => ({
   startDeploy: () => dispatch(sendDeployStart()),
   stopDeploy: () => dispatch(sendDeployStop()),
   viewLogs: () => {
-    dispatch(requestLogs());
+    dispatch(requestLogFiles());
+    dispatch(selectLogFile(null));
     dispatch(setContentType("logs"));
   },
   setContentType: v => dispatch(setContentType(v))
