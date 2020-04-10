@@ -4,7 +4,7 @@
   "description": "ENACT Test and Simulation Enabler",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --progress --colors",
+    "build": "webpack --config webpack.prod.js --progress --colors",
     "server":"nodemon src/dashboard/server/app.js",
     "start": "concurrently \"nodemon ./src/dashboard/server/app.js\" \"webpack-dev-server \"",
     "client": "webpack-dev-server"
