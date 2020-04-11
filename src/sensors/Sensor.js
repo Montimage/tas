@@ -1,8 +1,8 @@
 const { SIMULATING, OFFLINE } = require("../DeviceStatus");
 const ds = require("../DataSourceType");
 const abnormalBehaviours = require("../AbnormalBehaviours");
-const DataSource = require("../data-generators/data-sources/DataSource");
-const { ENACTDB, SensorSchema } = require("../enact-mongoose");
+const DataSource = require("./data-sources/DataSource");
+const { ENACTDB, SensorSchema, ActuatorSchema } = require("../enact-mongoose");
 /**
  * The Sensor class presents a sensor
  * - Collect the data: randomly or from database
@@ -28,10 +28,12 @@ class Sensor {
       sensorBehaviours,
       energy,
       metaData,
-      publishOptions,
+      options,
+      dbConfig,
     } = data;
     this.id = id;
     this.isFromDatabase = isFromDatabase;
+    this.dbConfig = dbConfig;
     this.name = name;
     this.status = OFFLINE;
     this.timePeriod = timePeriod;
@@ -41,7 +43,7 @@ class Sensor {
     this.timeBeforeFailed = timeBeforeFailed ? timeBeforeFailed : 0;
     this.dbClient = dbClient;
     this.sensorBehaviours = sensorBehaviours ? sensorBehaviours : [];
-    this.publishOptions = publishOptions;
+    this.options = options;
     // Validate the input data
     if (isFromDatabase && !dbClient) {
       console.error(
@@ -105,9 +107,13 @@ class Sensor {
       if (this.status === SIMULATING) {
         setTimeout(() => {
           if (this.status === SIMULATING) {
-            const dataToBePublished = JSON.parse(listData[index].value);
-            console.log(`[${this.id}] `, dataToBePublished);
-            this.publishDataFct(dataToBePublished, this.id, this.options);
+            // const dataToBePublished = JSON.parse(listData[index].value);
+            // console.log(`[${this.id}] `, dataToBePublished);
+            const { timestamp, value } = listData[index];
+            this.publishDataFct(
+              { id: this.id, name: this.name, timestamp, value },
+              this.id
+            );
             if (index === listData.length - 1) {
               console.log(`[${this.id}] Finished!`);
               this.status = OFFLINE;
@@ -216,7 +222,7 @@ class Sensor {
       this.publishDataFct(
         { timestamp, id: this.id, name: this.name, value: this.value },
         this.id,
-        this.publishOptions
+        this.options
       );
     }, this.timePeriod * 1000);
   }
@@ -226,53 +232,78 @@ class Sensor {
    *
    */
   readDataFromDatabase() {
-    const { startTime, dbConfig } = this.dataSource;
-    const endTime = this.dataSource.endTime
-      ? this.dataSource.endTime
-      : Date.now();
+    const {
+      host,
+      port,
+      user,
+      password,
+      dbname,
+      devID,
+      startTime,
+    } = this.dbConfig;
+
+    const endTime = this.dbConfig.endTime ? this.dbConfig.endTime : Date.now();
     console.log(
-      `[${this.id}] read data from database ${dbConfig.host}:${dbConfig.port}/${dbConfig.dbname}`
+      `[${this.id}] read data from database ${host}:${port}/${dbname}`
     );
     console.log(`StartTime: ${startTime}, endTime: ${endTime}`);
-    if (dbConfig.USER && dbConfig.PASSWORD) {
-      this.dbClient = new ENACTDB(
-        dbConfig.host,
-        dbConfig.port,
-        dbConfig.dbname,
-        {
-          userName: dbConfig.USER,
-          password: dbConfig.PASSWORD,
-        }
-      );
+    if (user && password) {
+      this.dbClient = new ENACTDB(host, port, dbname, {
+        userName: user,
+        password: password,
+      });
     } else {
-      this.dbClient = new ENACTDB(
-        dbConfig.host,
-        dbConfig.port,
-        dbConfig.dbname
-      );
+      this.dbClient = new ENACTDB(host, port, dbname);
     }
     this.dbClient.connect(() => {
       console.log(`[${this.id}] connected to database`);
-      SensorSchema.findSensorDataBetweenTimes(
-        { sensorID: this.id },
-        startTime,
-        endTime,
-        (err, listData) => {
-          if (err) {
-            console.error(`[${this.id}] ERROR: cannot find any data`, err);
-            this.status = OFFLINE;
-          } else {
-            console.log(`[${this.id}] Number of data: ${listData.length}`);
-            this.dbClient.close();
-            if (listData.length > 0) {
-              this.publishDataWithTimestamp(listData);
-            } else {
+      const { devType } = this.options;
+      if (devType === "SENSOR") {
+        SensorSchema.findSensorDataBetweenTimes(
+          { id: devID },
+          startTime,
+          endTime,
+          (err, listData) => {
+            if (err) {
               console.error(`[${this.id}] ERROR: cannot find any data`, err);
               this.status = OFFLINE;
+            } else {
+              console.log(`[${this.id}] Number of data: ${listData.length}`);
+              this.dbClient.close();
+              if (listData.length > 0) {
+                this.publishDataWithTimestamp(listData);
+              } else {
+                console.error(`[${this.id}] ERROR: cannot find any data`, err);
+                this.status = OFFLINE;
+              }
             }
           }
-        }
-      );
+        );
+      } else if (devType === "ACTUATOR") {
+        ActuatorSchema.findActuatorDataBetweenTimes(
+          { id: devID },
+          startTime,
+          endTime,
+          (err, listData) => {
+            if (err) {
+              console.error(`[${this.id}] ERROR: cannot find any data`, err);
+              this.status = OFFLINE;
+            } else {
+              console.log(`[${this.id}] Number of data: ${listData.length}`);
+              this.dbClient.close();
+              if (listData.length > 0) {
+                this.publishDataWithTimestamp(listData);
+              } else {
+                console.error(`[${this.id}] ERROR: cannot find any data`, err);
+                this.status = OFFLINE;
+              }
+            }
+          }
+        );
+      } else {
+        console.error(`[${this.id}] ERROR: Unsupported device ${devType}`);
+        this.status = OFFLINE;
+      }
     });
   }
 

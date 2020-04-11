@@ -1,11 +1,12 @@
-const ThingMongoDB = require("../things/ThingMongoDB");
+const ThingMQTT = require("../things/ThingMQTT");
+const ThingSTOMP = require("../things/ThingSTOMP");
 const { readJSONFile } = require("../utils");
 
 const allThings = [];
 /**
  * Stop the simulation
  */
-const stopGenerator = () => {
+const stopSimulation = () => {
   for (let index = 0; index < allThings.length; index++) {
     const th = allThings[index];
     th.stop();
@@ -20,9 +21,13 @@ const stopGenerator = () => {
  * @param {Array} sensors List of sensors
  * @param {Array} actuators List of actuator
  */
-const createDataGenerator = (id, commConfig, sensors, actuators) => {
+const createThing = (id, protocol, commConfig, sensors, actuators) => {
+  let Thing = ThingMQTT; // MQTT protocol by default
+  if (protocol.toUpperCase() === "STOMP") {
+    Thing = ThingSTOMP; // Switch to STOMP protocol
+  }
   // Add more protocol here
-  const th = new ThingMongoDB(id);
+  const th = new Thing(id);
   th.initThing(() => {
     // Add sensors
     if (sensors) {
@@ -45,28 +50,22 @@ const createDataGenerator = (id, commConfig, sensors, actuators) => {
         }
       }
     }
-
     // Add actuators
     if (actuators) {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
-        const actuatorData = actuators[aIndex];
-        if (!actuatorData.options) {
-          actuatorData["options"] = {};
-        }
-        actuatorData.options["devType"] = "ACTUATOR";
-        const { id, scale, disable } = actuatorData;
+        const { id, scale, disable, options } = actuators[aIndex];
         if (disable) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
-          th.addSensor(id, actuatorData);
+          th.addActuator(id, options);
         } else {
           for (
             let actuatorIndex = 0;
             actuatorIndex < nbActuators;
             actuatorIndex++
           ) {
-            const sID = `${id}-${actuatorIndex}`;
-            th.addSensor(sID, actuatorData);
+            const actID = `${id}-${actuatorIndex}`;
+            th.addActuator(actID, options);
           }
         }
       }
@@ -80,36 +79,46 @@ const createDataGenerator = (id, commConfig, sensors, actuators) => {
 
 /**
  * Start the simulation
- * @param {Array} generatorConfigs The list of things
+ * @param {Array} thingConfigs The list of things
  */
-const startGenerator = (generatorConfigs) => {
-  for (let index = 0; index < generatorConfigs.length; index++) {
-    const { id, protocol, commConfig, sensors, actuators } = generatorConfigs[
-      index
-    ];
-    if (protocol.toUpperCase() !== "DATABASE") {
-      console.error(`[Data-Generator] ERROR: Unsupported protocol ${protocol}`);
-      continue;
+const startSimulation = (thingConfigs) => {
+  for (let index = 0; index < thingConfigs.length; index++) {
+    const {
+      scale,
+      id,
+      protocol,
+      commConfig,
+      sensors,
+      actuators,
+    } = thingConfigs[index];
+    let nbThings = scale ? scale : 1;
+    const proto = protocol.toUpperCase();
+    if (nbThings === 1) {
+      createThing(id, proto, commConfig, sensors, actuators);
+    } else {
+      for (let tIndex = 0; tIndex < nbThings; tIndex++) {
+        const tID = `${id}-${tIndex}`;
+        createThing(tID, proto, commConfig, sensors, actuators);
+      }
     }
-    createDataGenerator(id, commConfig, sensors, actuators);
   }
 };
 
 if (process.argv[2] === "test") {
-  readJSONFile(process.argv[3], (err, generatorConfigs) => {
+  readJSONFile(process.argv[3], (err, thingConfigs) => {
     if (err) {
       console.error(
-        `[Data-Generator] ERROR: Cannot read the config of thing:`,
+        `[Simulation] [ERROR] Cannot read the config of thing:`,
         process.argv[3]
       );
       // console.error();
     } else {
-      startGenerator(generatorConfigs);
+      startSimulation(thingConfigs);
     }
   });
 }
 
 module.exports = {
-  startGenerator,
-  stopGenerator,
+  startSimulation,
+  stopSimulation,
 };

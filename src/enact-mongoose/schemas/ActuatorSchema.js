@@ -1,6 +1,6 @@
 /**
  * {
-    "actID": "actuator-01",
+    "id": "actuator-01",
     "timestamp": 1555510437786,
     "value": 1232,
   }
@@ -12,7 +12,7 @@ const Schema = mongoose.Schema;
 
 const actuatorSchema = new Schema(
   {
-    actID: {
+    id: {
       type: String,
       required: true
     },
@@ -21,7 +21,7 @@ const actuatorSchema = new Schema(
       required: true
     },
     value: {
-      type: String,
+      type: Object,
       required: true
     }
   }

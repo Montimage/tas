@@ -26,7 +26,7 @@ class Thing {
    * @param {Object} data Data to be published
    * @param {String} publishID The publisher id
    */
-  publishData(data, publishID, publishOptions = null) {
+  publishData(data, publishID, options = null) {
     console.log(`[${this.id}] ${publishID} going to publish data: `, data);
   }
 
@@ -53,15 +53,15 @@ class Thing {
    * @param {Boolean} isFromDatabase true - read from database | false - otherwise
    * @param {Number} timePeriod The time period to publish a data
    * @param {Object} options Options: { maxNumberOfMessage, timeBeforeFailed, dbClient, sensorBehaviours, energy, sources, metaData }
-   * @param {Object} publishOptions The publish options
+   * @param {Object} options The publish options
    */
   addSensor (id, sensorData) {
     if (this.sensors[id]) {
       console.error(`[${this.id}] Sensor ID ${id} has already existed!`);
       return false;
     }
-    const newSensor = new Sensor(id, sensorData, (data, publishID, publishOptions) => {
-      this.publishData(data, publishID, publishOptions);
+    const newSensor = new Sensor(id, sensorData, (data, publishID, options) => {
+      this.publishData(data, publishID, options);
     });
     this.sensors.push(newSensor);
     // HOT reload sensor

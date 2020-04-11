@@ -292,7 +292,7 @@ const getNextDownFloat = (min, step, lastValue) => {
  */
 const getRandomEnum = (values) => {
   if (!values || values.length === 0) return null;
-  return values[getRandomInteger(0, values.length)];
+  return values[getRandomInteger(0, values.length-1)];
 };
 
 /**

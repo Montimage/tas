@@ -1,0 +1,33 @@
+[
+    {
+        "id": "thing-01",
+        "name": "Thing 01",
+        "protocol": "MQTT",
+        "scale": 1,
+        "commConfig": {
+            "host": "192.168.1.16",
+            "port": "1883",
+            "options": null
+        },
+        "sensors": [
+            {
+                "id": "super-sensor-new-id",
+                "disable": false,
+                "scale": 1,
+                "name": "Super Sensor New Name",
+                "isFromDatabase": true,
+                "dbConfig": {
+                    "host": "192.168.1.16",
+                    "port": "27017",
+                    "user": "mmtbox",
+                    "password": "mmtbox",
+                    "dbname": "admin",
+                    "devID": "super-sensor",
+                    "startTime": 0,
+                    "endTime": 0
+                },
+                "options": {}
+            }
+        ]
+    }
+]

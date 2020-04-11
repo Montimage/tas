@@ -130,11 +130,11 @@ class ThingMQTT extends Thing {
    * @param {Object} data Data to be published
    * @param {String} publishID The ID of the publisher
    */
-  publishData(data, publishID, publishOptions = null) {
+  publishData(data, publishID, options = null) {
     // super.publishData(data,publishID);
     let topic = null;
-    if (publishOptions && publishOptions.mqttTopic) {
-      topic = publishOptions.mqttTopic;
+    if (options && options.mqttTopic) {
+      topic = options.mqttTopic;
       // console.log('custom topic: ', topic);
     } else {
       topic = `things/${this.id}/sensors/${publishID}`;

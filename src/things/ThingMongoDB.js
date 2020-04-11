@@ -65,20 +65,21 @@ class DataGenerator extends Thing {
     }
 
     if (dbConfig.user && dbConfig.password) {
-      enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname, {
+      this.enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname, {
         userName: dbConfig.user,
         password: dbConfig.password
       });
     } else {
-      enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname);
+      this.enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname);
     }
 
-    enactDB.connect(error => {
+    this.enactDB.connect(error => {
       if (error) {
         console.log("[Data-Generator] ERROR: Failed to connect to database", error, dbConfig);
         exit(1);
       }
       console.log("[Data-Generator] Connected to database");
+      this.setStatus(ONLINE);
       return callback();
     });
   }
@@ -99,35 +100,37 @@ class DataGenerator extends Thing {
    * @param {Object} data Data to be published
    * @param {String} publishID The ID of the publisher
    */
-  publishData(data, publishID, publishOptions = null) {
-    if (publishOptions.devType === 'SENSOR') {
+  publishData(data, publishID, options = null) {
+    if (options.devType === 'SENSOR') {
       const newSensor = new SensorSchema({
         timestamp: data.timestamp,
-        sensorID: publishID,
+        id: publishID,
         value: data.value
       });
       newSensor.save((err, _data) => {
         if (err) {
           console.error(`[${this.id}] Failed to save generated data of sensor ${publishID}`);
+          console.error(err);
         } else {
           console.log(`[${this.id}] ${data.timestamp} ${JSON.stringify(data)}`);
         }
       });
-    } else if (publishOptions.devType === 'ACTUATOR') {
+    } else if (options.devType === 'ACTUATOR') {
       const newActuator = new ActuatorSchema({
         timestamp: data.timestamp,
-        actID: data.id,
+        id: data.id,
         value: data.value
       });
       newActuator.save((err, _data) => {
         if (err) {
           console.error(`[${this.id}] Failed to save generated data of actuator ${publishID}`);
+          console.error(err);
         } else {
           console.log(`[${this.id}] ${data.timestamp} ${JSON.stringify(data)}`);
         }
       });
     } else {
-      console.error(`[${this.id}] ERROR: Invalid data type ${publishOptions.devType}`);
+      console.error(`[${this.id}] ERROR: Invalid data type ${options.devType}`);
     }
   }
 }

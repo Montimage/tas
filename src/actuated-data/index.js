@@ -1,52 +1,99 @@
-const mqtt = require('mqtt');
-const ActuatedData = require('./ActuatedData');
-const { readJSONFile } = require('../utils');
+const ThingMQTT = require("../things/ThingMQTT");
+const ThingSTOMP = require("../things/ThingSTOMP");
+const { readJSONFile } = require("../utils");
 
-const actuatedDataConfigFile = process.argv[2];
-
+const allThings = [];
 /**
- * Create an Actuated Data
- * @param {String} id The id of the actuated data
- * @param {Object} commConfig The configuration of mqtt broker
- * @param {Object} dataSource The data source of actuated data
+ * Stop the simulation
  */
-const createActuatedData = (id, commConfig, dataSource) => {
-  const { topic, host, port, options } = commConfig;
-  const mqttBroker = `mqtt://${host}:${port}`;
-  const mqttClient = mqtt.connect(mqttBroker, options);
-
-  const publishFct = (data) => {
-    // super.publishData(data,publishID);
-    console.log(`[${id}] published: ${mqttClient.options.href} ${topic}`, data);
-    mqttClient.publish(topic, JSON.stringify(data));
+const stopSimulation = () => {
+  for (let index = 0; index < allThings.length; index++) {
+    const th = allThings[index];
+    th.stop();
   }
-
-  mqttClient.on("connect", () => {
-    console.log(`[${id}] connected to ${mqttBroker}`);
-    const actuatedData = new ActuatedData(id, dataSource, publishFct);
-    actuatedData.start();
-  });
-
-  mqttClient.on("error", err => {
-    console.error(`[${id}] failed to simulate: `, err);
-  });
 };
 
-readJSONFile(actuatedDataConfigFile, (err, actuatedDatas) => {
-  if (err) {
-    console.error(`[ERROR] Cannot read the configuration of Actuated Data:`, actuatedDataConfigFile);
-  } else {
-    console.log('Number of actuators: ', actuatedDatas.length);
-    for (let index = 0; index < actuatedDatas.length; index++) {
-      const {id, commConfig, dataSource, scale } = actuatedDatas[index];
-      const nbActuators = scale ? scale : 1;
-      if (nbActuators === 1) {
-        createActuatedData(id, commConfig, dataSource);
-      } else {
-        for (let aIndex = 0; aIndex < nbActuators; aIndex++) {
-          createActuatedData(`${id}-${aIndex}`, {...commConfig, topic: `${commConfig.topic}-${aIndex}`}, dataSource);
+/**
+ * Create a thing
+ * @param {String} id The id of the thing
+ * @param {String} protocol The protocol of the communication
+ * @param {Object} commConfig The communication configuration
+ * @param {Array} sensors List of sensors
+ * @param {Array} actuators List of actuator
+ */
+const createThing = (id, protocol, commConfig, actuators) => {
+  let Thing = ThingMQTT; // MQTT protocol by default
+  if (protocol.toUpperCase() === "STOMP") {
+    Thing = ThingSTOMP; // Switch to STOMP protocol
+  }
+  // Add more protocol here
+  const th = new Thing(id);
+  th.initThing(() => {
+    // Add actuators
+    if (actuators) {
+      for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
+        const actuatorData = actuators[aIndex];
+        if (!actuatorData.options) {
+          actuatorData["options"] = {};
+        }
+        actuatorData.options["devType"] = "ACTUATOR";
+        const { id, scale, disable } = actuatorData;
+        if (disable) continue;
+        let nbActuators = scale ? scale : 1;
+        if (nbActuators === 1) {
+          th.addSensor(id, actuatorData);
+        } else {
+          for (
+            let actuatorIndex = 0;
+            actuatorIndex < nbActuators;
+            actuatorIndex++
+          ) {
+            const sID = `${id}-${actuatorIndex}`;
+            th.addSensor(sID, actuatorData);
+          }
         }
       }
     }
+    th.start();
+    allThings.push(th);
+  }, commConfig);
+};
+
+/**
+ * Start the simulation
+ * @param {Array} thingConfigs The list of things
+ */
+const startSimulation = (thingConfigs) => {
+  for (let index = 0; index < thingConfigs.length; index++) {
+    const { scale, id, protocol, commConfig, actuators } = thingConfigs[index];
+    let nbThings = scale ? scale : 1;
+    const proto = protocol.toUpperCase();
+    if (nbThings === 1) {
+      createThing(id, proto, commConfig, actuators);
+    } else {
+      for (let tIndex = 0; tIndex < nbThings; tIndex++) {
+        const tID = `${id}-${tIndex}`;
+        createThing(tID, proto, commConfig, actuators);
+      }
+    }
   }
-})
+};
+
+if (process.argv[2] === "test") {
+  readJSONFile(process.argv[3], (err, thingConfigs) => {
+    if (err) {
+      console.error(
+        `[Simulation] [ERROR] Cannot read the config of thing:`,
+        process.argv[3]
+      );
+      // console.error();
+    } else {
+      startSimulation(thingConfigs);
+    }
+  });
+}
+
+module.exports = {
+  startSimulation,
+  stopSimulation,
+};
