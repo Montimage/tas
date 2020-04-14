@@ -1,120 +1,178 @@
 {
-  "name":"Default-datagenerator",
-  "dbConfig": {
-    "host": "192.168.0.11",
-    "port": "27017",
-    "user": "mmtbox",
-    "password": "mmtbox",
-    "dbname": "admin"
-  },
-  "sensors": [
+  "name": "Default-datagenerator",
+  "generators": [
     {
-      "id": "blood-pressure-sensor",
-      "options": {
-        "mqttTopic": "tellu-activemq-broker/sensors/sensor-01"
+      "id": "data-generator-01",
+      "name": "Data-Generator",
+      "protocol": "DATABASE",
+      "scale": 1,
+      "commConfig": {
+        "host": "192.168.1.12",
+        "port": "27017",
+        "user": null,
+        "password": null,
+        "dbname": "tasdb",
+        "options": null
       },
-      "dataSource": {
-        "source": "random",
-        "dataDescription": {
-          "type": "integer",
-          "initValue": 100,
-          "min": 80,
-          "max": 250,
-          "regular": {
-            "min": 80,
-            "max": 120,
-            "step": 5
-          },
-          "timeInterval": 3
-        }
-      },
-      "startTime": null,
-      "duration": 10
-    },
-    {
-      "id": "glucose-level-sensor",
-      "dataSource": {
-        "source": "random",
-        "dataDescription": {
-          "type": "enum",
-          "values": [
-            "Excellent",
-            "Good",
-            "Acceptable",
-            "Poor"
+      "sensors": [
+        {
+          "id": "super-sensor",
+          "disable": false,
+          "scale": 1,
+          "name": "Super Sensor",
+          "timePeriod": 5,
+          "isFromDatabase": false,
+          "dosAttackSpeedUpRate": 5,
+          "timeBeforeFailed": 20,
+          "dbClient": null,
+          "sensorBehaviours": [
+            "AB_LOW_ENERGY",
+            "AB_OUT_OF_ENERGY"
           ],
-          "timeInterval": 3
-        }
-      },
-      "startTime": null,
-      "duration": 10
-    },
-    {
-      "id": "motion-detection-sensor",
-      "dataSource": {
-        "source": "random",
-        "dataDescription": {
-          "type": "boolean",
-          "timeInterval": 3
-        }
-      },
-      "startTime": null,
-      "duration": 10
-    },
-    {
-      "id": "scale-sensor",
-      "dataSource": {
-        "source": "random",
-        "dataDescription": {
-          "type": "double",
-          "initValue": 54,
-          "min": 0.5,
-          "max": 300,
-          "regular": {
-            "min": 46,
-            "max": 120,
-            "step": 1
+          "energy": {
+            "type": "DATA_SOURCE_ENERGY",
+            "key": "battery",
+            "id": "batter-01",
+            "initValue": 1500,
+            "unit": "mA",
+            "behaviours": [],
+            "low": 1000,
+            "slowDownWeight": 2,
+            "consumInOnePeriod": 200
           },
-          "timeInterval": 3
+          "metaData": {
+            "project": "ENACT"
+          },
+          "options": {},
+          "sources": [
+            {
+              "type": "DATA_SOURCE_BOOLEAN",
+              "key": "motion_detector",
+              "id": "motion-detector-01",
+              "initValue": false,
+              "unit": null,
+              "behaviours": []
+            },
+            {
+              "type": "DATA_SOURCE_ENUM",
+              "key": "heating_level",
+              "id": "heating_level-01",
+              "initValue": "Normal",
+              "unit": null,
+              "behaviours": [],
+              "values": [
+                "Low",
+                "Normal",
+                "High"
+              ]
+            },
+            {
+              "type": "DATA_SOURCE_FLOAT",
+              "key": "temperature",
+              "id": "temp-01",
+              "initValue": 20,
+              "unit": "C",
+              "behaviours": [],
+              "valueConstraints": {
+                "min": -273,
+                "max": 100,
+                "regularMin": 0,
+                "regularMax": 35,
+                "step": 0.5
+              }
+            },
+            {
+              "type": "DATA_SOURCE_INTEGER",
+              "key": "blood_glucose_level",
+              "id": "blood-glucose-01",
+              "initValue": 5,
+              "unit": null,
+              "behaviours": [],
+              "valueConstraints": {
+                "min": 0,
+                "max": 10,
+                "regularMin": 2,
+                "regularMax": 8,
+                "step": 2
+              }
+            }
+          ]
         }
-      },
-      "startTime": null,
-      "duration": 10
-    }
-  ],
-  "actuators": [
-    {
-      "id": "light-intensity-actuator",
-      "dataSource": {
-        "source": "random",
-        "dataDescription": {
-          "type": "double",
-          "min": 1,
-          "max": 9.9,
-          "timeInterval": 5
-        }
-      },
-      "startTime": null,
-      "duration": 20
-    },
-    {
-      "id": "heating-level-actuator",
-      "dataSource": {
-        "source": "random",
-        "dataDescription": {
-          "type": "enum",
-          "values": [
-            1,
-            2,
-            3,
-            4,
-            5
+      ],
+      "actuators": [
+        {
+          "id": "super-actuator",
+          "disable": false,
+          "scale": 1,
+          "name": "Super Actuator",
+          "timePeriod": 5,
+          "isFromDatabase": false,
+          "dosAttackSpeedUpRate": 5,
+          "timeBeforeFailed": 20,
+          "dbClient": null,
+          "sensorBehaviours": [
+            "AB_LOW_ENERGY",
+            "AB_OUT_OF_ENERGY"
           ],
-          "timeInterval": 5
+          "metaData": {
+            "project": "ENACT"
+          },
+          "options": {},
+          "sources": [
+            {
+              "type": "DATA_SOURCE_BOOLEAN",
+              "key": "light-switch",
+              "id": "light-switch-01",
+              "initValue": false,
+              "unit": null,
+              "behaviours": []
+            },
+            {
+              "type": "DATA_SOURCE_ENUM",
+              "key": "security-level",
+              "id": "security-level-01",
+              "initValue": "Normal",
+              "unit": null,
+              "behaviours": [],
+              "values": [
+                "Low",
+                "Normal",
+                "High"
+              ]
+            },
+            {
+              "type": "DATA_SOURCE_FLOAT",
+              "key": "air-condition",
+              "id": "ac-01",
+              "initValue": 20,
+              "unit": "C",
+              "behaviours": [],
+              "valueConstraints": {
+                "min": 15,
+                "max": 30,
+                "regularMin": 20,
+                "regularMax": 25,
+                "step": 0.5
+              }
+            },
+            {
+              "type": "DATA_SOURCE_INTEGER",
+              "key": "audio-volume",
+              "id": "audio-volume-01",
+              "initValue": 5,
+              "unit": null,
+              "behaviours": [],
+              "valueConstraints": {
+                "min": 0,
+                "max": 100,
+                "regularMin": 40,
+                "regularMax": 80,
+                "step": 1
+              }
+            }
+          ]
         }
-      },
-      "startTime": null,
-      "duration": 20
+      ]
     }
   ]
 }

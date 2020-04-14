@@ -1,1 +1,107 @@
-{"name":"DigitalHealthModel","things":[{"id":"medicalGW-01","scale":2,"protocol":"MQTT","commConfig":{"host":"localhost","port":"1883","options":null},"sensors":[{"id":"blood-pressure-sensor","dataSource":{"source":"random","dataDescription":{"type":"Integer","initValue":100,"min":80,"max":250,"regular":{"min":80,"max":120,"step":5},"behaviour":"abnormal","timeInterval":3}}},{"id":"glucose-level-sensor","dataSource":{"source":"random","dataDescription":{"type":"Enum","values":["Excellent","Good","Acceptable","Poor"],"timeInterval":3}}},{"id":"motion-detection-sensor","dataSource":{"source":"random","dataDescription":{"type":"Boolean","timeInterval":3}}},{"id":"scale-sensor","dataSource":{"source":"random","dataDescription":{"type":"Double","initValue":54,"min":0.5,"max":300,"regular":{"min":46,"max":120,"step":1},"timeInterval":3}}}],"actuators":[{"id":"light-intensity-actuator"},{"id":"heating-level-actuator"}]}]}
+{
+  "name": "DigitalHealthModel",
+  "things": [
+    {
+      "id": "medicalGW-01",
+      "scale": 1,
+      "protocol": "MQTT",
+      "commConfig": {
+        "host": "192.168.1.12",
+        "port": "1883",
+        "options": null
+      },
+      "sensors": [
+        {
+          "id": "super-sensor",
+          "disable": false,
+          "scale": 1,
+          "name": "Super Sensor",
+          "timePeriod": 5,
+          "isFromDatabase": false,
+          "dosAttackSpeedUpRate": 5,
+          "timeBeforeFailed": 20,
+          "sensorBehaviours": [
+            "AB_LOW_ENERGY",
+            "AB_OUT_OF_ENERGY"
+          ],
+          "metaData": {
+            "project": "ENACT"
+          },
+          "options": {
+          },
+          "energy": {
+            "type": "DATA_SOURCE_ENERGY",
+            "key": "battery",
+            "id": "batter-01",
+            "initValue": 1500,
+            "unit": "mA",
+            "behaviours": [],
+            "low": 1000,
+            "slowDownWeight": 2,
+            "consumInOnePeriod": 200
+          },
+          "sources": [
+            {
+              "type": "DATA_SOURCE_BOOLEAN",
+              "key": "motion_detector",
+              "id": "motion-detector-01",
+              "initValue": false,
+              "unit": null,
+              "behaviours": []
+            },
+            {
+              "type": "DATA_SOURCE_ENUM",
+              "key": "heating_level",
+              "id": "heating_level-01",
+              "initValue": "Normal",
+              "unit": null,
+              "behaviours": [],
+              "values": ["Low","Normal","High"]
+            },
+            {
+              "type": "DATA_SOURCE_FLOAT",
+              "key": "temperature",
+              "id": "temp-01",
+              "initValue": 20,
+              "unit": "C",
+              "behaviours": [],
+              "valueConstraints": {
+                "min": -273,
+                "max": 100,
+                "regularMin": 0,
+                "regularMax": 35,
+                "step": 0.5
+              }
+            },
+            {
+              "type": "DATA_SOURCE_INTEGER",
+              "key": "blood_glucose_level",
+              "id": "blood-glucose-01",
+              "initValue": 5,
+              "unit": null,
+              "behaviours": [],
+              "valueConstraints": {
+                "min": 0,
+                "max": 10,
+                "regularMin": 2,
+                "regularMax": 8,
+                "step": 2
+              }
+            }
+          ]
+        }
+      ],
+      "actuators": [
+        {
+          "id": "light-intensity-actuator",
+          "options":{
+            "mqttTopic": "custom-actuator-topic"
+          }
+        },
+        {
+          "id": "heating-level-actuator"
+        }
+      ]
+    }
+  ]
+}

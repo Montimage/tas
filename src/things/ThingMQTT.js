@@ -89,7 +89,7 @@ class ThingMQTT extends Thing {
       });
 
       mqttClient.on('message', (topic, message, packet) => {
-        // console.log(`[Thing ${this.id}] received message on topic: ${topic}`);
+        // console.log(`[${this.id}] received message on topic: ${topic}`);
         this.handleMQTTMessage(topic, message.toString(), packet);
       });
   }

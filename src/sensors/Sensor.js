@@ -217,7 +217,7 @@ class Sensor {
         this.value[source.key] = source.getValue();
       }
       const timestamp = Date.now();
-      console.log("Timer: ", new Date(timestamp).toLocaleTimeString());
+      // console.log("Timer: ", new Date(timestamp).toLocaleTimeString());
       // SEND DATA
       this.publishDataFct(
         { timestamp, id: this.id, name: this.name, value: this.value },

@@ -5,11 +5,11 @@
     "protocol": "DATABASE",
     "scale": 1,
     "commConfig": {
-      "host": "192.168.1.16",
+      "host": "192.168.1.12",
       "port": "27017",
-      "user": "mmtbox",
-      "password": "mmtbox",
-      "dbname": "admin",
+      "user": null,
+      "password": null,
+      "dbname": "tasdb",
       "options": null
     },
     "sensors": [

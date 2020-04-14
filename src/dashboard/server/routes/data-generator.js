@@ -9,8 +9,8 @@ const {
   deleteFile
 } = require("../../../utils");
 const {
-  startGeneratingData,
-  stopGeneratingData
+  startGenerator,
+  stopGenerator
 } = require("../../../data-generators");
 const getLogger = require("../logger");
 
@@ -71,14 +71,14 @@ router.get("/run", function(req, res, next) {
       // Check if there is a configuration
       if (generatorConfig) {
         // Logger
-        const { name, dbConfig } = generatorConfig;
-        if (!name || !dbConfig) {
+        const { name, generators } = generatorConfig;
+        if (!name || !generators) {
           res.send({ error: "Invalid model", model: generatorConfig });
         } else {
           const startedTime = Date.now();
           const logFile = `${name}_${startedTime}.log`;
           getLogger("Data-Generator", `${logFilePath}${logFile}`);
-          startGeneratingData(generatorConfig);
+          startGenerator(generators);
           deployStatus = {
             startedTime,
             logFile,
@@ -105,14 +105,14 @@ router.post("/execute", function(req, res, next) {
     // Check if there is a configuration
     if (generatorConfig) {
       // Logger
-      const { name, dbConfig } = generatorConfig;
-      if (!name || !dbConfig) {
+      const { name, generators } = generatorConfig;
+      if (!name || !generators) {
         res.send({ error: "Invalid model", model: generatorConfig });
       } else {
         const startedTime = Date.now();
         const logFile = `${name}_${startedTime}.log`;
         getLogger("Data-Generator", `${logFilePath}${logFile}`);
-        startGeneratingData(generatorConfig);
+        startGeneratingData(generators);
         deployStatus = {
           startedTime,
           logFile,
@@ -129,7 +129,7 @@ router.post("/execute", function(req, res, next) {
 router.get("/stop", function(req, res, next) {
   let copiedStatus = deployStatus;
   if (deployStatus) {
-    stopGeneratingData();
+    stopGenerator();
     deployStatus = null;
   }
   res.send({ error: null, deployStatus: copiedStatus });

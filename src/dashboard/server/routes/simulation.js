@@ -8,7 +8,7 @@ const {
   readDir,
   deleteFile
 } = require("../../../utils");
-const { startSimulation, stopSimulation } = require("../../../things");
+const { startSimulation, stopSimulation } = require("../../../simulation");
 const getLogger = require("../logger");
 
 const configFilePath = `${__dirname}/../data/simulation.json`;
