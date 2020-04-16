@@ -6,39 +6,37 @@ const {
   readTextFile,
   writeToFile,
   readDir,
-  deleteFile
+  deleteFile,
 } = require("../../../utils");
 const { startSimulator, stopSimulator } = require("../../../simulation");
-const { startDataGenerator, stopDataGenerator }  = require("../../../data-generators");
+const {
+  startDataGenerator,
+  stopDataGenerator,
+} = require("../../../data-generators");
 const getLogger = require("../logger");
 
 const modelsPath = `${__dirname}/../models/`;
 const logsPath = `${__dirname}/../logs/`;
+const defaultModel = "model.json";
 
 ///////////////
-// MODEL FILES
+// MODEL
 ///////////////
-// Read the list of models
-router.get("/models", (req, res, next) => {
-  readDir(modelsPath, (err, files) => {
-    if (err) {
-      console.error("[SERVER]", err);
-      res.send({ error: "Cannot read the models directory" });
-    } else {
-      res.send({ error: null, files });
-    }
-  });
-});
-
 // Read a specific model by its name:
 // Model name: [TYPE]_name.json -> [TYPE]_ added automatically
-router.get("/models/:fileName", function(req, res, next) {
-  const { fileName } = req.params;
-  const modelFile = `${modelsPath}${fileName}`;
+router.get("/model", function (req, res, next) {
+  const modelFile = `${modelsPath}${defaultModel}`;
   readJSONFile(modelFile, (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
-      res.send({ error: err });
+      res.send({
+        error: "No default model",
+        model: {
+          name: "New Model",
+          type: "SIMULATOR",
+          things: [],
+        },
+      });
     } else {
       res.send({ error: null, model: data });
     }
@@ -46,7 +44,7 @@ router.get("/models/:fileName", function(req, res, next) {
 });
 
 // Save a model
-router.post("/models", function(req, res, next) {
+router.post("/model", function (req, res, next) {
   const { model } = req.body;
   if (!model) {
     console.error("[SERVER]", "Cannot find model in body");
@@ -59,32 +57,18 @@ router.post("/models", function(req, res, next) {
     return res.send({ error: `Invalid model ${JSON.stringify(model)}` });
   }
 
-  if (type !== 'SIMULATOR' && type !== 'DATA_GENERATOR') {
+  if (type !== "SIMULATOR" && type !== "DATA_GENERATOR") {
     console.error("[SERVER]", `Invalid model type ${type}`);
     return res.send({ error: `Invalid model type ${type}` });
   }
 
-  const modelFile = `${modelsPath}${model.type}_${model.name}.json`;
-    writeToFile(modelFile, JSON.stringify(model), (err, data) => {
-      if (err) {
-        console.error("[SERVER]", err);
-        res.send({ error: "Cannot save the new configuration" });
-      } else {
-        res.send({ error: null, model: model });
-      }
-    });
-});
-
-// Delete a model
-router.post("/models/:fileName", function(req, res, next) {
-  const { fileName } = req.params;
-  const modelFile = `${modelsPath}${fileName}`;
-  deleteFile(modelFile, err => {
+  const modelFile = `${modelsPath}${defaultModel}`;
+  writeToFile(modelFile, JSON.stringify(model), (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
-      res.send({ error: "Cannot delete the model file" });
+      res.send({ error: "Cannot save the new configuration" });
     } else {
-      res.send({ error: null, result: true });
+      res.send({ error: null, model });
     }
   });
 });
@@ -105,7 +89,7 @@ router.get("/logs", (req, res, next) => {
 });
 
 // Read a specific log file
-router.get("/logs/:fileName", function(req, res, next) {
+router.get("/logs/:fileName", function (req, res, next) {
   const { fileName } = req.params;
   const logFile = `${logsPath}${fileName}`;
   readTextFile(logFile, (err, content) => {
@@ -119,10 +103,10 @@ router.get("/logs/:fileName", function(req, res, next) {
 });
 
 // Delete a specific log file
-router.post("/logs/:fileName", function(req, res, next) {
+router.post("/logs/:fileName", function (req, res, next) {
   const { fileName } = req.params;
   const logFile = `${logsPath}${fileName}`;
-  deleteFile(logFile, err => {
+  deleteFile(logFile, (err) => {
     if (err) {
       console.error("[SERVER]", err);
       res.send({ error: "Cannot delete the log file" });
@@ -162,12 +146,12 @@ null
  */
 let deployStatus = null;
 // Deploy a model
-router.post("/deploy", function(req, res, next) {
+router.post("/deploy", function (req, res, next) {
   const thingConfigs = req.body.model;
   // Check if the simulation is running
   if (deployStatus) {
     res.send({
-      error: "A simulation is running. Only one simulation can be running"
+      error: "A simulation is running. Only one simulation can be running",
     });
   } else {
     // Check if there is a configuration
@@ -175,7 +159,7 @@ router.post("/deploy", function(req, res, next) {
     if (!thingConfigs) {
       console.error("[SERVER]", "Cannot simulate a null model");
       return res.send({
-        error: "Cannot simulate a null model"
+        error: "Cannot simulate a null model",
       });
     }
     const { name, type, things } = thingConfigs;
@@ -183,8 +167,11 @@ router.post("/deploy", function(req, res, next) {
       return res.send({ error: "Invalid model", model: thingConfigs });
     }
     if (type !== "SIMULATOR" && type !== "DATA_GENERATOR") {
-      console.error("[SERVER]",`Unsupported model type ${type}`);
-      return res.send({ error: `Unsupported model type ${type}`, model: thingConfigs });
+      console.error("[SERVER]", `Unsupported model type ${type}`);
+      return res.send({
+        error: `Unsupported model type ${type}`,
+        model: thingConfigs,
+      });
     }
     const startedTime = Date.now();
     const logFile = `${name}_${Date.now()}.log`;
@@ -195,7 +182,7 @@ router.post("/deploy", function(req, res, next) {
         model: thingConfigs.name,
         startedTime,
         type,
-        logFile
+        logFile,
       };
     } else {
       getLogger(type, `${logsPath}${logFile}`);
@@ -204,14 +191,14 @@ router.post("/deploy", function(req, res, next) {
         model: thingConfigs.name,
         startedTime,
         type,
-        logFile
+        logFile,
       };
     }
     res.send({ error: null, model: thingConfigs, deployStatus });
   }
 });
 
-router.get("/stop", function(req, res, next) {
+router.get("/stop", function (req, res, next) {
   const copiedStatus = deployStatus;
   if (deployStatus) {
     if (deployStatus.type === "SIMULATOR") {
@@ -226,6 +213,80 @@ router.get("/stop", function(req, res, next) {
 
 router.get("/status", (req, res, next) => {
   res.send({ error: null, deployStatus });
+});
+
+///////////////
+// MULTI MODEL FILES
+///////////////
+// Read the list of models
+router.get("/models", (req, res, next) => {
+  readDir(modelsPath, (err, files) => {
+    if (err) {
+      console.error("[SERVER]", err);
+      res.send({ error: "Cannot read the models directory" });
+    } else {
+      res.send({ error: null, files });
+    }
+  });
+});
+
+// Read a specific model by its name:
+// Model name: [TYPE]_name.json -> [TYPE]_ added automatically
+router.get("/models/:fileName", function (req, res, next) {
+  const { fileName } = req.params;
+  const modelFile = `${modelsPath}${fileName}`;
+  readJSONFile(modelFile, (err, data) => {
+    if (err) {
+      console.error("[SERVER]", err);
+      res.send({ error: err });
+    } else {
+      res.send({ error: null, model: data });
+    }
+  });
+});
+
+// Save a model
+router.post("/models", function (req, res, next) {
+  const { model } = req.body;
+  if (!model) {
+    console.error("[SERVER]", "Cannot find model in body");
+    return res.send({ error: "Cannot find model in body" });
+  }
+
+  const { type, name, things } = model;
+  if (!name || !things || !type) {
+    console.error("[SERVER]", `Invalid model ${JSON.stringify(model)}`);
+    return res.send({ error: `Invalid model ${JSON.stringify(model)}` });
+  }
+
+  if (type !== "SIMULATOR" && type !== "DATA_GENERATOR") {
+    console.error("[SERVER]", `Invalid model type ${type}`);
+    return res.send({ error: `Invalid model type ${type}` });
+  }
+
+  const modelFile = `${modelsPath}${model.type}_${model.name}.json`;
+  writeToFile(modelFile, JSON.stringify(model), (err, data) => {
+    if (err) {
+      console.error("[SERVER]", err);
+      res.send({ error: "Cannot save the new configuration" });
+    } else {
+      res.send({ error: null, model: model });
+    }
+  });
+});
+
+// Delete a model
+router.post("/models/:fileName", function (req, res, next) {
+  const { fileName } = req.params;
+  const modelFile = `${modelsPath}${fileName}`;
+  deleteFile(modelFile, (err) => {
+    if (err) {
+      console.error("[SERVER]", err);
+      res.send({ error: "Cannot delete the model file" });
+    } else {
+      res.send({ error: null, result: true });
+    }
+  });
 });
 
 module.exports = router;
