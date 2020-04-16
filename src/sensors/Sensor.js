@@ -197,7 +197,7 @@ class Sensor {
                 `[${this.id}] Low energy. Going to change the frequency!`
               );
               this.timePeriod =
-                this.timePeriod * this.energy.dataGenerator.slowDownWeight;
+                this.timePeriod * this.energy.dataGenerator.slowDownRate;
               this.sensorBehaviours.splice(low_energy_index, 1);
               clearInterval(timerID);
               return this.generateRandomData();

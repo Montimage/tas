@@ -100,11 +100,11 @@ class ThingSTOMP extends Thing {
    */
   addActuator(id, options) {
     const newActuator = super.addActuator(id, options);
-    if (options && options.stompTopic) {
+    if (options && options.topic) {
       if (!this.stompClient) {
         console.error(`[${this.id}] stompClient is not ready yet!`);
       } else {
-        this.stompClient.subscribe({destination: options.stompTopic},(err2, message) => {
+        this.stompClient.subscribe({destination: options.topic},(err2, message) => {
           if (err2) {
             console.error("Failed to read message", err2);
           } else {
@@ -112,10 +112,10 @@ class ThingSTOMP extends Thing {
             this.handleSTOMPMessage(message);
           }
         });
-        if (!this.stompTopics[options.stompTopic]) {
-          this.stompTopics[options.stompTopic] = [];
+        if (!this.stompTopics[options.topic]) {
+          this.stompTopics[options.topic] = [];
         }
-        this.stompTopics[options.stompTopic].push(newActuator);
+        this.stompTopics[options.topic].push(newActuator);
       }
     }
   }
@@ -139,7 +139,13 @@ class ThingSTOMP extends Thing {
   publishData(data, publishID) {
     if (!data) return;
     // super.publishData(data,publishID);
-    const topic = `things/${this.id}/sensors/${publishID}`;
+    let topic = null;
+    if (options && options.topic) {
+      topic = options.topic;
+      // console.log('custom topic: ', topic);
+    } else {
+      topic = `things/${this.id}/sensors/${publishID}`;
+    }
     console.log(`[${this.id}] Going to publish data on topic: ${topic}`, data);
     const frame = this.stompClient.send({destination: topic});
     frame.write(JSON.stringify(data));

@@ -6,7 +6,7 @@ const allThings = [];
 /**
  * Stop the simulation
  */
-const stopSimulation = () => {
+const stopSimulator = () => {
   for (let index = 0; index < allThings.length; index++) {
     const th = allThings[index];
     th.stop();
@@ -81,7 +81,7 @@ const createThing = (id, protocol, commConfig, sensors, actuators) => {
  * Start the simulation
  * @param {Array} thingConfigs The list of things
  */
-const startSimulation = (thingConfigs) => {
+const startSimulator = (thingConfigs) => {
   for (let index = 0; index < thingConfigs.length; index++) {
     const {
       scale,
@@ -113,12 +113,12 @@ if (process.argv[2] === "test") {
       );
       // console.error();
     } else {
-      startSimulation(thingConfigs);
+      startSimulator(thingConfigs);
     }
   });
 }
 
 module.exports = {
-  startSimulation,
-  stopSimulation,
+  startSimulator,
+  stopSimulator,
 };

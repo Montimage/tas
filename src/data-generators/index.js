@@ -5,7 +5,7 @@ const allThings = [];
 /**
  * Stop the simulation
  */
-const stopGenerator = () => {
+const stopDataGenerator = () => {
   for (let index = 0; index < allThings.length; index++) {
     const th = allThings[index];
     th.stop();
@@ -82,7 +82,7 @@ const createDataGenerator = (id, commConfig, sensors, actuators) => {
  * Start the simulation
  * @param {Array} generatorConfigs The list of things
  */
-const startGenerator = (generatorConfigs) => {
+const startDataGenerator = (generatorConfigs) => {
   for (let index = 0; index < generatorConfigs.length; index++) {
     const { id, protocol, commConfig, sensors, actuators } = generatorConfigs[
       index
@@ -104,12 +104,12 @@ if (process.argv[2] === "test") {
       );
       // console.error();
     } else {
-      startGenerator(generatorConfigs);
+      startDataGenerator(generatorConfigs);
     }
   });
 }
 
 module.exports = {
-  startGenerator,
-  stopGenerator,
+  startDataGenerator,
+  stopDataGenerator,
 };

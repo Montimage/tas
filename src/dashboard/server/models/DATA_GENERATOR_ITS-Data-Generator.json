@@ -1,6 +1,7 @@
 {
-  "name": "Default-datagenerator",
-  "generators": [
+  "name": "ITS-Data-Generator",
+  "type": "DATA_GENERATOR",
+  "things": [
     {
       "id": "data-generator-01",
       "name": "Data-Generator",
@@ -37,7 +38,7 @@
             "unit": "mA",
             "behaviours": [],
             "low": 1000,
-            "slowDownWeight": 2,
+            "slowDownRate": 2,
             "consumInOnePeriod": 200
           },
           "metaData": {

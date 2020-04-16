@@ -13,7 +13,7 @@ class EnergySource extends DataGeneratorAbstract {
     super(data);
     this.low = data.low;
     this.consumInOnePeriod = data.consumInOnePeriod;
-    this.slowDownWeight = data.slowDownWeight;
+    this.slowDownRate = data.slowDownRate;
   }
 
   readData() {

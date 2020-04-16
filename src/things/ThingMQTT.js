@@ -101,15 +101,15 @@ class ThingMQTT extends Thing {
    */
   addActuator(id, options) {
     const newActuator = super.addActuator(id, options);
-    if (options && options.mqttTopic) {
+    if (options && options.topic) {
       if (!this.mqttClient) {
         console.error(`[${this.id}] mqttClient is not ready yet!`);
       } else {
-        this.mqttClient.subscribe(options.mqttTopic);
-        if (!this.mqttTopics[options.mqttTopic]) {
-          this.mqttTopics[options.mqttTopic] = [];
+        this.mqttClient.subscribe(options.topic);
+        if (!this.mqttTopics[options.topic]) {
+          this.mqttTopics[options.topic] = [];
         }
-        this.mqttTopics[options.mqttTopic].push(newActuator);
+        this.mqttTopics[options.topic].push(newActuator);
       }
     }
   }
@@ -133,8 +133,8 @@ class ThingMQTT extends Thing {
   publishData(data, publishID, options = null) {
     // super.publishData(data,publishID);
     let topic = null;
-    if (options && options.mqttTopic) {
-      topic = options.mqttTopic;
+    if (options && options.topic) {
+      topic = options.topic;
       // console.log('custom topic: ', topic);
     } else {
       topic = `things/${this.id}/sensors/${publishID}`;
