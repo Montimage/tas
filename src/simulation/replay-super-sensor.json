@@ -4,8 +4,8 @@
         "name": "Thing 01",
         "protocol": "MQTT",
         "scale": 1,
-        "commConfig": {
-            "host": "192.168.1.16",
+        "connConfig": {
+            "host": "192.168.1.12",
             "port": "1883",
             "options": null
         },
@@ -16,17 +16,23 @@
                 "scale": 1,
                 "name": "Super Sensor New Name",
                 "isFromDatabase": true,
-                "dbConfig": {
-                    "host": "192.168.1.16",
-                    "port": "27017",
-                    "user": "mmtbox",
-                    "password": "mmtbox",
-                    "dbname": "admin",
+                "userData":{
+                    "projectName": "ENACT"
+                },
+                "options": {},
+                "dataSource": {
+                    "connConfig": {
+                        "host": "192.168.1.12",
+                        "port": "27017",
+                        "user": "",
+                        "password": "",
+                        "dbname": "tasdb",
+                        "options": {}
+                    },
                     "devID": "super-sensor",
                     "startTime": 0,
                     "endTime": 0
-                },
-                "options": {}
+                }
             }
         ]
     }

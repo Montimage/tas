@@ -5,16 +5,70 @@
  * @param {Value} value the new value to be updated
  */
 const updateObjectByPath = (obj, path, value) => {
-  var stack = path.split(".");
+  let stack = path.split(".");
   while (stack.length > 1) {
-    const key = stack.shift();
-    if (!obj[key]) {
-      obj[key] = {};
+    // Not at the end of the path
+    let key = stack.shift();
+    if (key.indexOf('[') > 0) {
+      // Contains array index
+      const array = key.split('[');
+      key = array[0];
+      let index = array[1].replace(']','');
+      if (!obj[key]) {
+        // Create a new array if it does not exist
+        obj[key] = [];
+      }
+      if (obj[key].length === 0) {
+        // Empty array
+        index = 0;
+      } else if (obj[key].length <= index || index < 0) {
+        // index out of range
+        index = obj[key].length;
+      }
+      if (!obj[key][index]) {
+        obj[key].push({});
+        // throw Error(`ERROR: Invalid data path: ${path} in object ${JSON.stringify(obj)}`);
+      }
+      obj = obj[key][index];
+    } else {
+      if (!obj[key]) {
+        // Create a new path if it does not exist
+        obj[key] = {};
+      }
+      obj = obj[key];
     }
-    obj = obj[key];
   }
-  obj[stack.shift()] = value;
+  let lastKey = stack.shift();
+  // At the end of the path
+  if (lastKey.indexOf('[') > 0) {
+    // Contains array index
+    const array = lastKey.split('[');
+    lastKey = array[0];
+    let index = array[1].replace(']','');
+    if (!obj[lastKey]) {
+      // Create a new array if it does not exist
+      obj[lastKey] = [];
+    }
+    if (obj[lastKey].length === 0) {
+      // Empty array
+      index = 0;
+    } else if (obj[lastKey].length <= index || index < 0) {
+      // index out of range
+      index = obj[lastKey].length;
+    }
+    if (!obj[lastKey][index]) {
+      obj[lastKey].push(value);
+      // throw Error(`ERROR: Invalid data path: ${path} in object ${JSON.stringify(obj)}`);
+    } else {
+      obj[lastKey][index] = value;
+    }
+  } else {
+    // Not contains array index
+    obj[lastKey] = value;
+  }
 };
+
+const deepCloneObject = (obj) => (JSON.parse(JSON.stringify(obj)));
 
 /**
  * Add new element into array
@@ -63,4 +117,4 @@ const getCreatedTimeFromFileName = (fileName) => {
   return new Date(Number(timeString));
 }
 
-export { updateObjectByPath, addNewElementToArray, removeElementFromArray, getCreatedTimeFromFileName };
+export { updateObjectByPath, addNewElementToArray, removeElementFromArray, getCreatedTimeFromFileName, deepCloneObject };

@@ -4,18 +4,17 @@ import TSModal from "../TSModal";
 import { updateDataStorage, showModal } from "../../actions";
 import { Form, Button, Alert } from "antd";
 import { updateObjectByPath } from "../../utils";
-import DatabaseConfigForm from "../DatabaseConfigForm";
+import ConnectionConfig from "../ConnectionConfig";
 
 const initData = {
   host: "localhost",
   port: 27017,
   user: null,
   password: null,
-  dbname: null,
   options: null
 };
 
-class DataStorageModal extends Component {
+class ConnectionConfigModal extends Component {
   constructor(props) {
     super(props);
 
@@ -79,12 +78,13 @@ class DataStorageModal extends Component {
             span: 14
           }}
         >
-          <DatabaseConfigForm
+          <ConnectionConfig
             defaultValue={data}
             dataPath={""}
             onDataChange={(dataPath, value) =>
               this.onDataChange(dataPath, value)
             }
+            type="MONGODB"
           />
         </Form>
         {error && <Alert message={error} type="error" />}
@@ -104,4 +104,4 @@ const mapDispatchToProps = dispatch => ({
   updateDataStorage: data => dispatch(updateDataStorage(data))
 });
 
-export default connect(mapPropsToStates, mapDispatchToProps)(DataStorageModal);
+export default connect(mapPropsToStates, mapDispatchToProps)(ConnectionConfigModal);

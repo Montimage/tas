@@ -15,3 +15,7 @@ body {
 #root{
     height: 100%;
 }
+
+.ant-modal{
+    min-width: 80%;
+}

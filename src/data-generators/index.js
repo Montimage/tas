@@ -16,11 +16,11 @@ const stopDataGenerator = () => {
  * Create a thing
  * @param {String} id The id of the thing
  * @param {String} protocol The protocol of the communication
- * @param {Object} commConfig The communication configuration
+ * @param {Object} connConfig The communication configuration
  * @param {Array} sensors List of sensors
  * @param {Array} actuators List of actuator
  */
-const createDataGenerator = (id, commConfig, sensors, actuators) => {
+const createDataGenerator = (id, connConfig, sensors, actuators) => {
   // Add more protocol here
   const th = new ThingMongoDB(id);
   th.initThing(() => {
@@ -75,7 +75,7 @@ const createDataGenerator = (id, commConfig, sensors, actuators) => {
     th.start();
 
     allThings.push(th);
-  }, commConfig);
+  }, connConfig);
 };
 
 /**
@@ -84,14 +84,14 @@ const createDataGenerator = (id, commConfig, sensors, actuators) => {
  */
 const startDataGenerator = (generatorConfigs) => {
   for (let index = 0; index < generatorConfigs.length; index++) {
-    const { id, protocol, commConfig, sensors, actuators } = generatorConfigs[
+    const { id, protocol, connConfig, sensors, actuators } = generatorConfigs[
       index
     ];
     if (protocol.toUpperCase() !== "DATABASE") {
       console.error(`[Data-Generator] ERROR: Unsupported protocol ${protocol}`);
       continue;
     }
-    createDataGenerator(id, commConfig, sensors, actuators);
+    createDataGenerator(id, connConfig, sensors, actuators);
   }
 };
 

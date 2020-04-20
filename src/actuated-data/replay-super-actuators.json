@@ -4,7 +4,7 @@
     "name": "Data-Generator",
     "protocol": "MQTT",
     "scale": 1,
-    "commConfig": {
+    "connConfig": {
       "host": "192.168.1.16",
       "port": "1883",
       "options": null

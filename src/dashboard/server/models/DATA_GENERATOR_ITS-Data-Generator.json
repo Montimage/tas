@@ -7,7 +7,7 @@
       "name": "Data-Generator",
       "protocol": "DATABASE",
       "scale": 1,
-      "commConfig": {
+      "connConfig": {
         "host": "192.168.1.12",
         "port": "27017",
         "user": null,

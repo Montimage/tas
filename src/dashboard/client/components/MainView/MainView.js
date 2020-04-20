@@ -5,7 +5,7 @@ import { Button, notification, Spin, Alert } from "antd";
 import ThingModal from "../ThingModal";
 import SensorModal from "../SensorModal";
 import ActuatorModal from "../ActuatorModal";
-import DataStorageModal from "../DataStorageModal";
+// import DataStorageModal from "../DataStorageModal";
 
 import {
   requestModel,
@@ -165,13 +165,13 @@ class MainView extends Component {
             </Button>
           </div>
         )}
-        {tool === "simulation" && formID === "THING-FORM" && <ThingModal />}
+        {formID === "THING-FORM" && <ThingModal />}
         {tool === "simulation" && formID === "ACTUATOR-FORM" && (
           <ActuatorModal />
         )}
-        {tool === "data-generator" && formID === "DATA-STORAGE-FORM" && (
+        {/* {tool === "data-generator" && formID === "DATA-STORAGE-FORM" && (
           <DataStorageModal />
-        )}
+        )} */}
         {(formID === "SENSOR-FORM" || (formID === "ACTUATOR-FORM" && tool==="data-generator")) && (
           <SensorModal />
         )}

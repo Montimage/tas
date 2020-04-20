@@ -17,11 +17,11 @@ const stopSimulator = () => {
  * Create a thing
  * @param {String} id The id of the thing
  * @param {String} protocol The protocol of the communication
- * @param {Object} commConfig The communication configuration
+ * @param {Object} connConfig The communication configuration
  * @param {Array} sensors List of sensors
  * @param {Array} actuators List of actuator
  */
-const createThing = (id, protocol, commConfig, sensors, actuators) => {
+const createThing = (id, protocol, connConfig, sensors, actuators) => {
   let Thing = ThingMQTT; // MQTT protocol by default
   if (protocol.toUpperCase() === "STOMP") {
     Thing = ThingSTOMP; // Switch to STOMP protocol
@@ -74,7 +74,7 @@ const createThing = (id, protocol, commConfig, sensors, actuators) => {
     th.start();
 
     allThings.push(th);
-  }, commConfig);
+  }, connConfig);
 };
 
 /**
@@ -87,18 +87,18 @@ const startSimulator = (thingConfigs) => {
       scale,
       id,
       protocol,
-      commConfig,
+      connConfig,
       sensors,
       actuators,
     } = thingConfigs[index];
     let nbThings = scale ? scale : 1;
     const proto = protocol.toUpperCase();
     if (nbThings === 1) {
-      createThing(id, proto, commConfig, sensors, actuators);
+      createThing(id, proto, connConfig, sensors, actuators);
     } else {
       for (let tIndex = 0; tIndex < nbThings; tIndex++) {
         const tID = `${id}-${tIndex}`;
-        createThing(tID, proto, commConfig, sensors, actuators);
+        createThing(tID, proto, connConfig, sensors, actuators);
       }
     }
   }

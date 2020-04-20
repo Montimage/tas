@@ -6,7 +6,7 @@
       "id": "medicalGW-01",
       "scale": 1,
       "protocol": "MQTT",
-      "commConfig": {
+      "connConfig": {
         "host": "192.168.1.12",
         "port": "1883",
         "options": null

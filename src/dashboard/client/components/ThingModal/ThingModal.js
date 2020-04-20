@@ -4,8 +4,14 @@ import TSModal from "../TSModal";
 import { addThing, deleteThing, showModal, selectThing } from "../../actions";
 import { Form, Button, Alert } from "antd";
 
-import { FormTextItem, FormSelectItem, FormNumberItem, FormSwitchItem } from "../FormItems";
-import { updateObjectByPath } from "../../utils";
+import {
+  FormTextItem,
+  FormSelectItem,
+  FormNumberItem,
+  FormSwitchItem,
+} from "../FormItems";
+import ConnectionConfig from '../ConnectionConfig';
+import { updateObjectByPath, deepCloneObject } from "../../utils";
 
 class ThingModal extends Component {
   constructor(props) {
@@ -14,18 +20,18 @@ class ThingModal extends Component {
       id: `thing-id-${Date.now()}`,
       name: `thing-name-${Date.now()}`,
       protocol: "MQTT",
-      commConfig: {
+      connConfig: {
         host: "localhost",
         port: 1883,
-        options: null
+        options: null,
       },
       sensors: [],
       actuators: [],
-      enable: true
+      enable: true,
     };
     this.state = {
-      data: props.selectedThing ? props.selectedThing : initThing,
-      error: null
+      data: props.selectedThing ? deepCloneObject(props.selectedThing) : initThing,
+      error: null,
     };
   }
 
@@ -52,10 +58,10 @@ class ThingModal extends Component {
     const { data } = this.state;
     const newThing = { ...data };
     let errorMsg = null;
-    if (newThing.commConfig.options) {
+    if (newThing.connConfig.options) {
       try {
-        const optionsValue = JSON.parse(newThing.commConfig.options);
-        updateObjectByPath(newThing, "commConfig.options", optionsValue);
+        const optionsValue = JSON.parse(newThing.connConfig.options);
+        updateObjectByPath(newThing, "connConfig.options", optionsValue);
       } catch (error) {
         errorMsg =
           "Invalid option! The communication options must be in JSON format";
@@ -76,30 +82,33 @@ class ThingModal extends Component {
   }
 
   handleDuplicate() {
-    const {addThing, showModal, selectThing } = this.props;
+    const { addThing, showModal, selectThing } = this.props;
     const newThingID = `thing-${Date.now()}`;
     const newData = { ...this.state.data };
-    updateObjectByPath(newData, 'id', newThingID);
-    updateObjectByPath(newData, 'name', 'New Thing');
+    updateObjectByPath(newData, "id", newThingID);
+    updateObjectByPath(newData, "name", "New Thing");
     addThing(newData);
     selectThing(newData);
     setTimeout(() => {
-      showModal('THING-FORM');
-    },500);
+      showModal("THING-FORM");
+    }, 500);
     showModal(null);
   }
 
   onDataChange(dataPath, value) {
-    this.setState(prevState => {
+    this.setState((prevState) => {
       const newData = { ...prevState.data };
+      console.log(dataPath, value);
       updateObjectByPath(newData, dataPath, value);
       return { data: newData, error: null };
     });
   }
 
   render() {
+    // this.onDataChange("connConfig.host","localhost");
+    // this.onDataChange("name","NEW_NAME");
     const { data, error } = this.state;
-    const { formID } = this.props;
+    const { formID, tool } = this.props;
     let footer = null;
     if (this.props.selectedThing) {
       footer = [
@@ -114,7 +123,7 @@ class ThingModal extends Component {
         </Button>,
         <Button key="ok" type="primary" onClick={() => this.handleOk()}>
           OK
-        </Button>
+        </Button>,
       ];
     } else {
       footer = [
@@ -123,7 +132,7 @@ class ThingModal extends Component {
         </Button>,
         <Button key="ok" type="primary" onClick={() => this.handleOk()}>
           OK
-        </Button>
+        </Button>,
       ];
     }
 
@@ -136,21 +145,21 @@ class ThingModal extends Component {
       >
         <Form
           labelCol={{
-            span: 4
+            span: 4,
           }}
           wrapperCol={{
-            span: 14
+            span: 14,
           }}
         >
           <FormTextItem
             label="Id"
             defaultValue={data.id}
-            onChange={v => this.onDataChange("id", v)}
+            onChange={(v) => this.onDataChange("id", v)}
           />
           <FormTextItem
             label="Name"
             defaultValue={data.name}
-            onChange={v => this.onDataChange("name", v)}
+            onChange={(v) => this.onDataChange("name", v)}
           />
           <FormNumberItem
             label="Scale"
@@ -158,33 +167,37 @@ class ThingModal extends Component {
             max={1000000}
             placeholder="Number of instances"
             defaultValue={data.scale}
-            onChange={v => this.onDataChange("scale", v)}
-          />
-          <FormSelectItem
-            label="Protocol"
-            defaultValue={data.protocol}
-            onChange={v => this.onDataChange("protocol", v)}
-            options={["MQTT", "STOMP"]}
+            onChange={(v) => this.onDataChange("scale", v)}
           />
           <span>Communication detail</span>
           <p />
-          <FormTextItem
-            label="Host"
-            defaultValue={data.commConfig.host}
-            onChange={v => this.onDataChange("commConfig.host", v)}
-          />
-          <FormNumberItem
-            label="Port"
-            min={1023}
-            max={65535}
-            defaultValue={data.commConfig.port}
-            onChange={v => this.onDataChange("commConfig.port", v)}
-          />
-          <FormTextItem
-            label="Options"
-            defaultValue={data.commConfig.options}
-            onChange={v => this.onDataChange("commConfig.options", v)}
-          />
+          {tool === "simulation" ? (
+            <React.Fragment>
+              <FormSelectItem
+                label="Protocol"
+                defaultValue={data.protocol}
+                onChange={(v) => this.onDataChange("protocol", v)}
+                options={["MQTT", "STOMP"]}
+              />
+              <ConnectionConfig
+                defaultValue={data.connConfig}
+                dataPath={"connConfig"}
+                onDataChange={(dataPath, value) =>
+                  this.onDataChange(dataPath, value)
+                }
+                type={data.protocol}
+              />
+            </React.Fragment>
+          ) : (
+            <ConnectionConfig
+              defaultValue={data.connConfig}
+              dataPath={"connConfig"}
+              onDataChange={(dataPath, value) =>
+                this.onDataChange(dataPath, value)
+              }
+              type="MONGODB"
+            />
+          )}
           <FormSwitchItem
             label="Enable"
             onChange={(v) => this.onDataChange(`enable`, v)}
@@ -199,17 +212,18 @@ class ThingModal extends Component {
   }
 }
 
-const mapPropsToStates = ({ editingForm, model }) => ({
+const mapPropsToStates = ({ editingForm, model, tool }) => ({
   formID: editingForm.formID,
   selectedThing: editingForm.selectedThing,
-  things: model.things
+  things: model.things,
+  tool,
 });
 
-const mapDispatchToProps = dispatch => ({
-  showModal: modalID => dispatch(showModal(modalID)),
-  deleteThing: thingID => dispatch(deleteThing(thingID)),
-  addThing: thingData => dispatch(addThing(thingData)),
-  selectThing: thing => dispatch(selectThing(thing))
+const mapDispatchToProps = (dispatch) => ({
+  showModal: (modalID) => dispatch(showModal(modalID)),
+  deleteThing: (thingID) => dispatch(deleteThing(thingID)),
+  addThing: (thingData) => dispatch(addThing(thingData)),
+  selectThing: (thing) => dispatch(selectThing(thing)),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(ThingModal);
