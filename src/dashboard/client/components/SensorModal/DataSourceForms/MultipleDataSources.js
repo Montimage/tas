@@ -5,7 +5,6 @@ import IntegerFloatForm from "./IntegerFloatForm";
 
 const MultipleDataSources = ({ dataPath, sources, onChange }) => (
   <Fragment>
-    <br />
     {sources.map((source, index) => {
       switch (source.type) {
         case "DATA_SOURCE_BOOLEAN":

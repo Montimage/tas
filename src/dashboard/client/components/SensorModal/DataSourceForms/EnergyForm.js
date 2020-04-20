@@ -1,6 +1,6 @@
 import React from "react";
 import DataSourceForm from "./DataSourceForm";
-import { FormNumberItem } from "../../FormItems";
+import { FormNumberItem, FormRegularNumberItem } from "../../FormItems";
 
 const EnergyForm = ({ dataPath, defaultValue, onChange }) => (
   <React.Fragment>
@@ -16,26 +16,26 @@ const EnergyForm = ({ dataPath, defaultValue, onChange }) => (
         defaultValue={defaultValue.initValue}
         onChange={(v) => onChange(`${dataPath}.initValue`, v)}
       />
-      <FormNumberItem
-        label="Low"
-        min={1}
-        max={65535}
-        defaultValue={defaultValue.low}
-        onChange={(v) => onChange(`${dataPath}.low`, v)}
-      />
-      <FormNumberItem
-        label="Slow Down Rate"
-        min={1}
-        max={65535}
-        defaultValue={defaultValue.slowDownRate}
-        onChange={(v) => onChange(`${dataPath}.slowDownRate`, v)}
-      />
-      <FormNumberItem
-        label="Consum"
-        min={1}
-        max={65535}
-        defaultValue={defaultValue.consumInOnePeriod}
-        onChange={(v) => onChange(`${dataPath}.consumInOnePeriod`, v)}
+      <FormRegularNumberItem
+        label="Energy"
+        items={[
+          {
+            title: "Consum",
+            dataPath: `${dataPath}.consumInOnePeriod`,
+            defaultValue: defaultValue.consumInOnePeriod,
+          },
+          {
+            title: "Low",
+            dataPath: `${dataPath}.low`,
+            defaultValue: defaultValue.low,
+          },
+          {
+            title: "Slow Down Rate",
+            dataPath: `${dataPath}.slowDownRate`,
+            defaultValue: defaultValue.slowDownRate,
+          },
+        ]}
+        onChange={(dPath, v) => onChange(dPath, v)}
       />
     </DataSourceForm>
   </React.Fragment>

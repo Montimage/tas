@@ -1,6 +1,7 @@
 import React from "react";
 import { FormTextItem, FormCheckBoxItems } from "../../FormItems";
 import './DataSourceForm.css';
+import { PageHeader, Divider } from "antd";
 
 const defaultBehaviours = [
   "AB_FIX_VALUE",
@@ -10,6 +11,9 @@ const defaultBehaviours = [
 
 const DataSourceForm = ({ dataPath, defaultValue, onChange, behaviours, children }) => (
   <div className="DataSourceForm">
+    <Divider>
+      {`key: ${defaultValue.key}`}
+    </Divider>
     <FormTextItem
       label="Id"
       defaultValue={defaultValue.id}

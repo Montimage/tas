@@ -70,11 +70,11 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
       />
     )}
     <FormSwitchItem
-      label="Enable Energy Measure"
+      label="Energy Measurement"
       onChange={(v) => onDataChange(`${dataPath}.withEnergy`, v)}
       checked={dataSource.withEnergy ? true : false}
-      checkedChildren={"On"}
-      unCheckedChildren={"Off"}
+      checkedChildren={"Enable"}
+      unCheckedChildren={"Disable"}
     />
     {dataSource.withEnergy && (
       <EnergyForm

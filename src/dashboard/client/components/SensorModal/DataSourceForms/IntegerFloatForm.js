@@ -1,6 +1,58 @@
 import React from "react";
 import DataSourceForm from "./DataSourceForm";
-import { FormNumberItem } from "../../FormItems";
+import {
+  FormNumberItem,
+  FormRegularNumberItem,
+  FormSwitchItem,
+} from "../../FormItems";
+const defaultValueConstraints = {
+  min: 0,
+  max: 100,
+  regularMin: 0,
+  regularMax: 100,
+  step: 2,
+};
+const ValueConstraintForm = ({ defaultValue, dataPath, onChange }) => (
+  <React.Fragment>
+    <FormRegularNumberItem
+      label="Range"
+      items={[
+        {
+          title: "Min",
+          dataPath: `${dataPath}.min`,
+          defaultValue: defaultValue.min,
+        },
+        {
+          title: "Max",
+          dataPath: `${dataPath}.max`,
+          defaultValue: defaultValue.max,
+        },
+      ]}
+      onChange={(dPath, v) => onChange(dPath, v)}
+    />
+    <FormRegularNumberItem
+      label="Regular Range"
+      items={[
+        {
+          title: "Regular Min",
+          dataPath: `${dataPath}.regularMin`,
+          defaultValue: defaultValue.regularMin,
+        },
+        {
+          title: "Regular Max",
+          dataPath: `${dataPath}.regularMax`,
+          defaultValue: defaultValue.regularMax,
+        },
+        {
+          title: "Step",
+          dataPath: `${dataPath}.step`,
+          defaultValue: defaultValue.step,
+        },
+      ]}
+      onChange={(dPath, v) => onChange(dPath, v)}
+    />
+  </React.Fragment>
+);
 
 const IntegerFloatForm = ({ dataPath, defaultValue, onChange }) => (
   <React.Fragment>
@@ -14,67 +66,34 @@ const IntegerFloatForm = ({ dataPath, defaultValue, onChange }) => (
         "AB_VALUE_CHANGE_OUT_OF_REGULAR_STEP",
       ]}
     >
-      {defaultValue.valueConstraints ? (
-        <React.Fragment>
-          <FormNumberItem
-            label="Min"
-            defaultValue={defaultValue.valueConstraints.min}
-            onChange={(v) => onChange(`${dataPath}.valueConstraints.min`, v)}
+      <FormNumberItem
+        label="Init Value"
+        defaultValue={defaultValue.initValue}
+        onChange={(v) => onChange(`${dataPath}.initValue`, v)}
+      />
+      <FormSwitchItem
+        label="Value Constraints"
+        onChange={(v) => onChange(`${dataPath}.withValueConstraints`, v)}
+        checked={defaultValue.withValueConstraints ? true : false}
+        checkedChildren={"Enable"}
+        unCheckedChildren={"Disable"}
+      />
+      {defaultValue.withValueConstraints ? (
+        defaultValue.valueConstraints ? (
+          <ValueConstraintForm
+            defaultValue={defaultValue.valueConstraints}
+            dataPath={`${dataPath}.valueConstraints`}
+            onChange={(dPath, v) => onChange(dPath, v)}
           />
-          <FormNumberItem
-            label="Max"
-            defaultValue={defaultValue.valueConstraints.max}
-            onChange={(v) => onChange(`${dataPath}.valueConstraints.min`, v)}
+        ) : (
+          <ValueConstraintForm
+            defaultValue={defaultValueConstraints}
+            dataPath={`${dataPath}.valueConstraints`}
+            onChange={(dPath, v) => onChange(dPath, v)}
           />
-          <FormNumberItem
-            label="Init Value"
-            min={defaultValue.valueConstraints.min}
-            max={defaultValue.valueConstraints.max}
-            defaultValue={
-              defaultValue.initValue
-                ? defaultValue.initValue
-                : Math.round(
-                    (defaultValue.valueConstraints.min +
-                      defaultValue.valueConstraints.max) /
-                      2
-                  )
-            }
-            onChange={(v) =>
-              onChange(`${dataPath}.initValue`, v)
-            }
-          />
-          <FormNumberItem
-            label="Regular Min"
-            min={defaultValue.valueConstraints.min}
-            max={defaultValue.valueConstraints.max}
-            defaultValue={defaultValue.valueConstraints.regularMin}
-            onChange={(v) =>
-              onChange(`${dataPath}.valueConstraints.regularMin`, v)
-            }
-          />
-          <FormNumberItem
-            label="Regular Max"
-            min={defaultValue.valueConstraints.min}
-            max={defaultValue.valueConstraints.max}
-            defaultValue={defaultValue.valueConstraints.regularMax}
-            onChange={(v) =>
-              onChange(`${dataPath}.valueConstraints.regularMax`, v)
-            }
-          />
-          <FormNumberItem
-            label="Step"
-            min={defaultValue.valueConstraints.min}
-            max={defaultValue.valueConstraints.max}
-            defaultValue={defaultValue.valueConstraints.step}
-            onChange={(v) => onChange(`${dataPath}.valueConstraints.step`, v)}
-          />
-        </React.Fragment>
+        )
       ) : (
-        <FormNumberItem
-          label="Init Value"
-          defaultValue={defaultValue.initValue}
-          onChange={(v) => onChange(`${dataPath}.initValue`, v)}
-        />
+        <React.Fragment></React.Fragment>
       )}
     </DataSourceForm>
   </React.Fragment>

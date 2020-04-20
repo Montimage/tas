@@ -10,7 +10,7 @@ const BooleanForm = ({ dataPath, defaultValue, onChange }) => (
       onChange={(dPath, v) => onChange(dPath, v)}
     >
       <FormSwitchItem
-        label="Enable"
+        label="Init Value"
         onChange={(v) => onChange(`${dataPath}.initValue`, v)}
         checked={defaultValue.initValue ? true : false}
         checkedChildren={"True"}
