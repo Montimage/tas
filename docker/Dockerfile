@@ -26,6 +26,7 @@ WORKDIR /enact/
 
 # Get the source code
 RUN git clone https://gitlab.com/enact/test_and_simulation.git .
+RUN git pull
 RUN git status
 # Install dependencies
 RUN npm install --only=production
