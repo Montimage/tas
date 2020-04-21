@@ -7,7 +7,7 @@ import {
   selectActuator
 } from "../../actions";
 import { Form, Button, Alert } from "antd";
-import { updateObjectByPath } from "../../utils";
+import { updateObjectByPath, deepCloneObject } from "../../utils";
 import {
   FormTextItem,
   FormSelectItem,
@@ -15,12 +15,12 @@ import {
   FormSwitchItem
 } from "../FormItems";
 
-const initActuator = {
+const initActuator = () => ({
   id: `act-id-${Date.now()}`,
   name: `act-name-${Date.now()}`,
   options: null,
   enable: true,
-};
+});
 
 class ActuatorModal extends Component {
   constructor(props) {
@@ -36,7 +36,7 @@ class ActuatorModal extends Component {
     }
 
     this.state = {
-      data: selectedActuator ? selectedActuator : initActuator,
+      data: selectedActuator ? deepCloneObject(selectedActuator) : initActuator(),
       thingID: thingIDs[0],
       thingIDs,
       error: null
@@ -54,7 +54,7 @@ class ActuatorModal extends Component {
     }
 
     this.setState({
-      data: selectedActuator ? selectedActuator : initSensor,
+      data: selectedActuator ? deepCloneObject(selectedActuator) : initActuator(),
       thingID: thingIDs[0],
       thingIDs,
       error: null

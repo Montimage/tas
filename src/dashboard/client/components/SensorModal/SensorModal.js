@@ -11,78 +11,12 @@ import {
 } from "../../actions";
 import { Form, Button, Alert } from "antd";
 import { updateObjectByPath, deepCloneObject } from "../../utils";
-import {
-  FormTextItem,
-  FormSelectItem,
-  FormSwitchItem,
-} from "../FormItems";
+import { FormTextItem, FormSelectItem, FormSwitchItem } from "../FormItems";
 // import DatabaseConfigForm from "../DatabaseConfigForm";
-import DataReplayerForm from './DataReplayerForm';
-import DataGeneratorForm from './DataGeneratorForm';
+import DataReplayerForm from "./DataReplayerForm";
+import DataGeneratorForm from "./DataGeneratorForm";
 
-const DEFAULT_TIME_INTERVAL = 3; // 3 seconds
-
-const initDataDescriptionBoolean = {
-  type: "Boolean",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  initValue: 1,
-};
-
-const initDataDescriptionEnum = {
-  type: "Enum",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  initValue: 1,
-};
-
-const initDataDescriptionInteger = {
-  type: "Integer",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  min: 0,
-  max: 10000,
-  initValue: 10,
-  regular: {
-    min: 10,
-    max: 20,
-    step: 1,
-  },
-  behaviour: "Normal",
-};
-
-const initDataDescriptionDouble = {
-  type: "Integer",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  min: 0,
-  max: 10000,
-  initValue: 10,
-  regular: {
-    min: 10,
-    max: 20,
-    step: 1,
-  },
-  behaviour: "Normal",
-};
-
-const initDataDescriptionLocation = {
-  type: "Location",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  initValue: {
-    lat: 48.828886,
-    lng: 2.353675,
-  },
-  bearingDirection: 90,
-  velo: 50,
-  behaviour: "Normal",
-};
-
-const dataDescriptions = {
-  Boolean: initDataDescriptionBoolean,
-  Enum: initDataDescriptionEnum,
-  Integer: initDataDescriptionInteger,
-  Double: initDataDescriptionDouble,
-  Location: initDataDescriptionLocation,
-};
-
-const replayDataSource = {
+const replayDataSource = () => ({
   connConfig: {
     host: "localhost",
     port: 27017,
@@ -94,27 +28,27 @@ const replayDataSource = {
   dbname: null,
   startTime: Date.now(),
   endTime: Date.now(),
-};
+});
 
-const generateDataSource = {
+const generateDataSource = () => ({
   timePeriod: 5,
   scale: 1,
   dosAttackSpeedupRateL: 5,
   timeBeforeFailed: 20,
   sensorBehaviours: [],
   energy: null,
-  sources: []
-};
+  sources: [],
+});
 
-const initSensor = {
+const initSensor = () => ({
   id: `id-${Date.now()}`,
   name: `name-${Date.now()}`,
   enable: true,
   isFromDatabase: false,
   options: null,
   userData: null,
-  dataSource: generateDataSource,
-};
+  dataSource: generateDataSource(),
+});
 
 class SensorModal extends Component {
   constructor(props) {
@@ -134,9 +68,10 @@ class SensorModal extends Component {
         : formID === "ACTUATOR-FORM"
         ? selectedActuator
         : null;
-    let replayDS = replayDataSource;
-    let generateDS = generateDataSource;
-    let data = initSensor;
+    let replayDS = deepCloneObject(replayDataSource());
+    let generateDS = deepCloneObject(generateDataSource());
+    let data = initSensor();
+    console.log(data);
     if (selectedData) {
       data = deepCloneObject(selectedData);
       if (data.isFromDatabase) {
@@ -171,9 +106,9 @@ class SensorModal extends Component {
         : formID === "ACTUATOR-FORM"
         ? selectedActuator
         : null;
-    let replayDS = replayDataSource;
-    let generateDS = generateDataSource;
-    let data = initSensor;
+    let replayDS = deepCloneObject(replayDataSource());
+    let generateDS = deepCloneObject(generateDataSource());
+    let data = initSensor();
     if (selectedData) {
       data = deepCloneObject(selectedData);
       if (data.isFromDatabase) {
@@ -200,16 +135,16 @@ class SensorModal extends Component {
     if (isReplay) {
       this.setState((prevState) => {
         const newData = { ...prevState.data };
-        updateObjectByPath(newData, 'dataSource', prevState.replayDS);
-        updateObjectByPath(newData, 'isFromDatabase', true);
+        updateObjectByPath(newData, "dataSource", prevState.replayDS);
+        updateObjectByPath(newData, "isFromDatabase", true);
         return { data: newData, error: null, generateDS: prevState.generateDS };
       });
     } else {
       this.setState((prevState) => {
         const newData = { ...prevState.data };
-        updateObjectByPath(newData, 'dataSource', prevState.generateDS);
-        updateObjectByPath(newData, 'isFromDatabase', false);
-        return { data: newData, error: null, replayDS: prevState.replayDS};
+        updateObjectByPath(newData, "dataSource", prevState.generateDS);
+        updateObjectByPath(newData, "isFromDatabase", false);
+        return { data: newData, error: null, replayDS: prevState.replayDS };
       });
     }
   }
@@ -483,22 +418,26 @@ class SensorModal extends Component {
           <FormSelectItem
             label="Data Source"
             defaultValue={data.isFromDatabase ? "Replay" : "Generate"}
-            onChange={(v) =>
-              {this.onChangeDataSource(v === "Replay" ? true : false)}
-            }
+            onChange={(v) => {
+              this.onChangeDataSource(v === "Replay" ? true : false);
+            }}
             options={["Replay", "Generate"]}
           />
           {data.isFromDatabase ? (
             <DataReplayerForm
               dataPath={"dataSource"}
-              dataSource = {data.dataSource}
-              onDataChange={(dataPath, value) => this.onDataChange(dataPath, value)}
+              dataSource={data.dataSource}
+              onDataChange={(dataPath, value) =>
+                this.onDataChange(dataPath, value)
+              }
             />
           ) : (
             <DataGeneratorForm
               dataPath={"dataSource"}
-              dataSource = {data.dataSource}
-              onDataChange={(dataPath, value) => this.onDataChange(dataPath, value)}
+              dataSource={data.dataSource}
+              onDataChange={(dataPath, value) =>
+                this.onDataChange(dataPath, value)
+              }
             />
           )}
         </Form>

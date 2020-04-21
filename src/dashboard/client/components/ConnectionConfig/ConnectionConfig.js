@@ -6,7 +6,7 @@ import MongoDBOptions from "./MongoDBOptions";
 import CollapseForm from "../CollapseForm";
 
 const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
-  <CollapseForm title="Connection Configuration" bordered={false}>
+  <CollapseForm title="Connection Configuration" bordered={false} active={true}>
     <FormTextItem
       label="Host"
       defaultValue={defaultValue.host}

@@ -10,7 +10,7 @@ import MultipleDataSources from "./DataSourceForms/MultipleDataSources";
 import { Button, Divider, Dropdown, Menu } from "antd";
 import { UpOutlined } from "@ant-design/icons";
 
-const initEnergy = {
+const initEnergy = () => ({
   type: "DATA_SOURCE_ENERGY",
   key: "battery",
   id: "battery-01",
@@ -20,18 +20,18 @@ const initEnergy = {
   low: 1000,
   slowDownRate: 2,
   consumInOnePeriod: 200,
-};
+});
 
-const initBoolean = {
+const initBoolean = () => ({
   type: "DATA_SOURCE_BOOLEAN",
   key: "your-boolean-data-key",
   id: "boolean-measure-id",
   initValue: true,
   unit: "",
   behaviours: [],
-};
+});
 
-const initEnum = {
+const initEnum = () => ({
   type: "DATA_SOURCE_ENUM",
   key: "your-enum-data-key",
   id: "enum-measure-id",
@@ -39,9 +39,9 @@ const initEnum = {
   unit: "",
   behaviours: [],
   values: ["value1", "value2"],
-};
+});
 
-const initInteger = {
+const initInteger = () => ({
   type: "DATA_SOURCE_INTEGER",
   key: "your-integer-data-key",
   id: "integer-measure-id",
@@ -55,9 +55,9 @@ const initInteger = {
     regularMax: 80,
     step: 1,
   },
-};
+});
 
-const initFloat = {
+const initFloat = () => ({
   type: "DATA_SOURCE_FLOAT",
   key: "your-float-data-key",
   id: "float-measure-id",
@@ -71,7 +71,7 @@ const initFloat = {
     regularMax: 80,
     step: 1,
   },
-};
+});
 
 const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
   <React.Fragment>
@@ -135,7 +135,7 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
     {dataSource.withEnergy && (
       <EnergyForm
         dataPath={`${dataPath}.energy`}
-        defaultValue={dataSource.energy ? dataSource.energy : initEnergy}
+        defaultValue={dataSource.energy ? dataSource.energy : initEnergy()}
         onChange={(dPath, v) => onDataChange(dPath, v)}
       />
     )}
@@ -152,7 +152,7 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
             onClick={() => {
               const index = dataSource.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
-              onDataChange(dPath, initBoolean);
+              onDataChange(dPath, initBoolean());
             }}
           >
             Boolean Data Type
@@ -162,7 +162,7 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
             onClick={() => {
               const index = dataSource.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
-              onDataChange(dPath, initEnum);
+              onDataChange(dPath, initEnum());
             }}
           >
             Enum Data Type
@@ -172,7 +172,7 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
             onClick={() => {
               const index = dataSource.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
-              onDataChange(dPath, initInteger);
+              onDataChange(dPath, initInteger());
             }}
           >
             Integer Data Type
@@ -182,7 +182,7 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
             onClick={() => {
               const index = dataSource.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
-              onDataChange(dPath, initFloat);
+              onDataChange(dPath, initFloat());
             }}
           >
             Float Data Type
@@ -191,7 +191,7 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
       }
       placement="topLeft"
     >
-      <Button type="primary" style={{margin: '20px'}}>
+      <Button type="primary" style={{ margin: "20px" }}>
         Add New Measure <UpOutlined />
       </Button>
     </Dropdown>

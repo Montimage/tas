@@ -3,8 +3,8 @@ import { Collapse } from "antd";
 
 const { Panel } = Collapse;
 
-const CollapseForm = ({ title, children, bordered = true }) => (
-  <Collapse accordion style={{margin: '10px'}} defaultActiveKey={['1']} bordered={bordered}>
+const CollapseForm = ({ title, children, bordered = true, active }) => (
+  <Collapse accordion style={{margin: '10px'}} defaultActiveKey={active ? ['1'] : null} bordered={bordered}>
     <Panel header={title} key="1">
       {children}
     </Panel>
