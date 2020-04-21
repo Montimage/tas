@@ -1,0 +1,33 @@
+[
+  {
+    "id": "data-generator",
+    "name": "Data-Generator",
+    "protocol": "MQTT",
+    "scale": 1,
+    "connConfig": {
+      "host": "192.168.1.16",
+      "port": "1883",
+      "options": null
+    },
+    "actuators": [
+      {
+        "id": "super-actuator-new-id",
+        "disable": false,
+        "scale": 1,
+        "name": "Super Actuator New Name",
+        "isFromDatabase": true,
+        "dbConfig": {
+            "host": "192.168.1.16",
+            "port": "27017",
+            "user": "mmtbox",
+            "password": "mmtbox",
+            "dbname": "admin",
+            "devID": "super-actuator",
+            "startTime": 0,
+            "endTime": 0
+        },
+        "options": {}
+    }
+    ]
+  }
+]

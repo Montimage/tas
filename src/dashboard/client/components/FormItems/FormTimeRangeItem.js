@@ -1,10 +1,20 @@
 import React from "react";
 import { Form, DatePicker } from "antd";
+import moment from 'moment';
+
 const { RangePicker } = DatePicker;
 
-const FormTimeRangeItem = ({ label, onChange }) => (
-  <Form.Item label={label}>
+const FormTimeRangeItem = ({ label, onChange, defaultValue }) => {
+  let startTime = moment();
+  let endTime = moment();
+  if (defaultValue && defaultValue.length === 2) {
+    startTime = moment(defaultValue[0]);
+    endTime = moment(defaultValue[1]);
+  }
+  return (
+    <Form.Item label={label}>
     <RangePicker
+      defaultValue={[startTime, endTime]}
       showTime={{ format: "HH:mm" }}
       format="YYYY-MM-DD HH:mm"
       onChange={(value, dateString) =>
@@ -15,6 +25,7 @@ const FormTimeRangeItem = ({ label, onChange }) => (
       }
     />
   </Form.Item>
-);
+  )
+};
 
 export default FormTimeRangeItem;

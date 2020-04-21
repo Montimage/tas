@@ -2,6 +2,16 @@
 
 Test and Simulation enabler
 
+## Use docker image
+
+Refer: `https://hub.docker.com/r/montimage/iot_test_and_simulation`
+
+```
+docker run --name tas -d -p 8080:31057 montimage/iot_test_and_simulation
+```
+
+Then access to the tool at the address: `http://[your_ip_address]:8080`
+
 ## Setup
 
 ```
@@ -39,6 +49,29 @@ Stop Test and Simulation
 npm run forever-stop
 ```
 
+## DEVELOPMENT
+
+### Create docker image
+
+Create docker image
+
+```
+docker build -t enact/tas .
+```
+Create container
+
+```
+docker run --name tas -d -p 9112:31057 enact/tas
+```
+-> Go to : http://your_ip:9112
+
+Customize the environment by creating your own .env file
+```
+docker run --name tas -d -p 8080:8080 -v [absolute-path-to-env-file]:/enact/.env enact/tas
+```
+-> Go to : http://your_ip:8080
+
+Ref: https://nodejs.org/de/docs/guides/nodejs-docker-webapp/
 
 ### Data Generator
 Generate data (sensors and actuators) and store the data into a database

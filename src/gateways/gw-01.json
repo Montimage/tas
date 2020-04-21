@@ -6,8 +6,8 @@
         "id": "t01",
         "scale": 2,
         "mqttConfig": {
-          "HOST": "localhost",
-          "PORT": "1883",
+          "host": "localhost",
+          "port": "1883",
           "options": null
         }
       }
@@ -16,8 +16,8 @@
       {
         "id": "ext-01",
         "mqttConfig": {
-          "HOST": "localhost",
-          "PORT": "1882",
+          "host": "localhost",
+          "port": "1882",
           "options": null
         },
         "subTopic": "actuated-datas/#"
@@ -39,8 +39,8 @@
         "id": "t02",
         "scale": 2,
         "mqttConfig": {
-          "HOST": "localhost",
-          "PORT": "1883",
+          "host": "localhost",
+          "port": "1883",
           "options": null
         }
       }
@@ -49,8 +49,8 @@
       {
         "id": "ext-02",
         "mqttConfig": {
-          "HOST": "localhost",
-          "PORT": "1882",
+          "host": "localhost",
+          "port": "1882",
           "options": null
         },
         "subTopic": "actuated-datas/#"

@@ -3,10 +3,11 @@ import { connect } from "react-redux";
 import TSModal from "../TSModal";
 import {
   addSimulationActuator,
-  showModal
+  showModal,
+  selectActuator
 } from "../../actions";
 import { Form, Button, Alert } from "antd";
-import { updateObjectByPath } from "../../utils";
+import { updateObjectByPath, deepCloneObject } from "../../utils";
 import {
   FormTextItem,
   FormSelectItem,
@@ -14,12 +15,12 @@ import {
   FormSwitchItem
 } from "../FormItems";
 
-const initSensor = {
+const initActuator = () => ({
   id: `act-id-${Date.now()}`,
   name: `act-name-${Date.now()}`,
   options: null,
   enable: true,
-};
+});
 
 class ActuatorModal extends Component {
   constructor(props) {
@@ -35,7 +36,7 @@ class ActuatorModal extends Component {
     }
 
     this.state = {
-      data: selectedActuator ? selectedActuator : initSensor,
+      data: selectedActuator ? deepCloneObject(selectedActuator) : initActuator(),
       thingID: thingIDs[0],
       thingIDs,
       error: null
@@ -53,7 +54,7 @@ class ActuatorModal extends Component {
     }
 
     this.setState({
-      data: selectedActuator ? selectedActuator : initSensor,
+      data: selectedActuator ? deepCloneObject(selectedActuator) : initActuator(),
       thingID: thingIDs[0],
       thingIDs,
       error: null
@@ -85,21 +86,34 @@ class ActuatorModal extends Component {
   handleOk() {
     const { thingID, data } = this.state;
     const {
-      addSimulationActuator
+      addSimulationActuator,
+      showModal
     } = this.props;
     addSimulationActuator(thingID, data);
-    this.props.showModal(null);
+    showModal(null);
+    this.props.selectActuator(null);
   }
 
   handleCancel() {
     this.props.showModal(null);
+    this.props.selectActuator(null);
   }
 
   handleDuplicate() {
+    const { thingID } = this.state;
+    const {
+      addSimulationActuator,
+      showModal,
+      selectActuator,
+    } = this.props;
     const newActuatorID = `act-${Date.now()}`;
-    this.setState(prevState => ({
-      data: { ...prevState.data, id: newActuatorID }
-    }));
+    const newData = { ...this.state.data, id: newActuatorID, name: 'New Actuator' };
+    addSimulationActuator(thingID, newData);
+    showModal(null);
+    setTimeout(() => {
+      selectActuator(newData);
+      showModal('ACTUATOR-FORM');
+    },300);
   }
 
   render() {
@@ -200,10 +214,11 @@ const mapPropsToStates = ({ editingForm, model, tool }) => ({
 
 const mapDispatchToProps = dispatch => ({
   showModal: modalID => dispatch(showModal(modalID)),
+  selectActuator: act => dispatch(selectActuator(act)),
   addSimulationActuator: (thingID, data) =>
     dispatch(addSimulationActuator({ thingID, actuator: data })),
-  deleteSimulationActuator: (id, thingID) =>
-    dispatch(deleteSimulationActuator({ thingID, actuatorID: id })),
+  // deleteSimulationActuator: (id, thingID) =>
+  //   dispatch(deleteSimulationActuator({ thingID, actuatorID: id })),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(ActuatorModal);

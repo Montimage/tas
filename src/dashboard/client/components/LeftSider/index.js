@@ -1,16 +1,26 @@
 import React, { Component } from "react";
-import { connect } from 'react-redux';
+import { connect } from "react-redux";
 
-import { showModal } from '../../actions';
-import { PartitionOutlined, BulbOutlined, BugOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { showModal } from "../../actions";
+import {
+  PartitionOutlined,
+  BulbOutlined,
+  BugOutlined,
+} from "@ant-design/icons";
 
-import TSSider from '../TSSider';
+import TSSider from "../TSSider";
 
 class LeftSider extends Component {
   render() {
-    const { showModal, tool } = this.props;
+    const { showModal } = this.props;
 
     const menuItems = [
+      {
+        key: 3,
+        text: "Thing",
+        action: () => showModal("THING-FORM"),
+        icon: <PartitionOutlined />
+      },
       {
         key: 1,
         text: "Sensor",
@@ -23,39 +33,21 @@ class LeftSider extends Component {
         action: () => showModal("ACTUATOR-FORM"),
         icon: <BulbOutlined />
       }
+      // ,
+      // {
+      //   key: 4,
+      //   text: "Connection",
+      //   action: () => showModal("CONNECTION-FORM"),
+      //   icon: <BulbOutlined />
+      // }
     ];
 
-    if (tool === 'simulation') {
-      menuItems.push({
-        key: 3,
-        text: "Thing",
-        action: () => showModal("THING-FORM"),
-        icon: <PartitionOutlined />
-      });
-    } else {
-      menuItems.push({
-        key: 3,
-        text: "Data Storage",
-        action: () => showModal("DATA-STORAGE-FORM"),
-        icon: <DatabaseOutlined />
-      });
-    }
-    return (
-      <TSSider rightSide={true} items={menuItems} theme="dark" />
-    );
+    return <TSSider rightSide={true} items={menuItems} theme="dark" />;
   }
 }
 
-const mapPropsToStates = ({ tool}) => ({
-  tool
-});
-
 const mapDispatchToProps = dispatch => ({
-  showModal: (mID) => dispatch(showModal(mID))
+  showModal: mID => dispatch(showModal(mID))
 });
 
-export default connect(
-  mapPropsToStates,
-  mapDispatchToProps,
-)(LeftSider);
-
+export default connect(null, mapDispatchToProps)(LeftSider);

@@ -36,7 +36,7 @@ class Communication {
     if (this.mqttClient) {
       return callback(this.mqttClient);
     }
-    const mqttURL = `mqtt://${this.mqttConfig.HOST}:${this.mqttConfig.PORT}`
+    const mqttURL = `mqtt://${this.mqttConfig.host}:${this.mqttConfig.port}`
     let mqttClient = null;
     if (this.mqttConfig.options) {
       mqttClient = mqtt.connect(mqttURL, this.mqttConfig.options);

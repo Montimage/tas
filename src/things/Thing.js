@@ -4,7 +4,7 @@ const {
   ONLINE,
   OFFLINE,
   SIMULATING,
-} = require('../constants');
+} = require('../DeviceStatus');
 /**
  * The Thing class presents a THING component:
  * - List of sensors
@@ -26,7 +26,7 @@ class Thing {
    * @param {Object} data Data to be published
    * @param {String} publishID The publisher id
    */
-  publishData(data, publishID, publishOptions = null) {
+  publishData(data, publishID, options = null) {
     console.log(`[${this.id}] ${publishID} going to publish data: `, data);
   }
 
@@ -48,17 +48,21 @@ class Thing {
   /**
    * Add a new Sensor into the current THING
    * The sensor collect the data (generate randomly or from database) and publish the data to the gateway via mqtt broker
-   * @param {String} id The sensor's ID
-   * @param {Object} dataSource The description of the data source of the sensors (see the Sensor class for more information)
+   * @param {String} id ID of the sensor
+   * @param {String} name Name of the sensor
+   * @param {Boolean} isFromDatabase true - read from database | false - otherwise
+   * @param {Number} timePeriod The time period to publish a data
+   * @param {Object} options Options: { maxNumberOfMessage, timeBeforeFailed, dbClient, sensorBehaviours, energy, sources, metaData }
+   * @param {Object} options The publish options
    */
-  addSensor (id, dataSource, options = null) {
+  addSensor (id, sensorData) {
     if (this.sensors[id]) {
       console.error(`[${this.id}] Sensor ID ${id} has already existed!`);
       return false;
     }
-    const newSensor = new Sensor(id, dataSource, (data, publishID, options) => {
+    const newSensor = new Sensor(id, sensorData, (data, publishID, options) => {
       this.publishData(data, publishID, options);
-    }, options);
+    });
     this.sensors.push(newSensor);
     // HOT reload sensor
     if (this.status === SIMULATING ) {

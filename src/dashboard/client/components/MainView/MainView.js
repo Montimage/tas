@@ -5,7 +5,7 @@ import { Button, notification, Spin, Alert } from "antd";
 import ThingModal from "../ThingModal";
 import SensorModal from "../SensorModal";
 import ActuatorModal from "../ActuatorModal";
-import DataStorageModal from "../DataStorageModal";
+// import DataStorageModal from "../DataStorageModal";
 
 import {
   requestModel,
@@ -95,7 +95,11 @@ class MainView extends Component {
     } = this.props;
     let statusMessage = null;
     if (deployStatus) {
-      statusMessage = `${tool === 'simulation' ? 'Simulation':'Data Generator'} is running. Model name ${deployStatus.model}. Started time: ${(new Date(deployStatus.startedTime))}`;
+      statusMessage = `${
+        tool === "simulation" ? "Simulation" : "Data Generator"
+      } is running. Model name ${deployStatus.model}. Started time: ${new Date(
+        deployStatus.startedTime
+      )}`;
     }
     return (
       <div className="content">
@@ -161,14 +165,16 @@ class MainView extends Component {
             </Button>
           </div>
         )}
-        {tool === "simulation" && formID === "THING-FORM" && <ThingModal />}
+        {formID === "THING-FORM" && <ThingModal />}
         {tool === "simulation" && formID === "ACTUATOR-FORM" && (
           <ActuatorModal />
         )}
-        {tool === "data-generator" && formID === "DATA-STORAGE-FORM" && (
+        {/* {tool === "data-generator" && formID === "DATA-STORAGE-FORM" && (
           <DataStorageModal />
+        )} */}
+        {(formID === "SENSOR-FORM" || (formID === "ACTUATOR-FORM" && tool==="data-generator")) && (
+          <SensorModal />
         )}
-        <SensorModal />
       </div>
     );
   }
@@ -233,7 +239,7 @@ const mapDispatchToProps = dispatch => ({
     dispatch(selectLogFile(null));
     dispatch(requestLogsOK(null));
   },
-  deleteLogFile: (file) => {
+  deleteLogFile: file => {
     dispatch(requestDeleteLogFile(file));
   }
 });

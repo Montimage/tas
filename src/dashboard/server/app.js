@@ -7,8 +7,7 @@ const dotenv = require('dotenv');
 // read and pass the environment variables into reactjs application
 const env = dotenv.config().parsed;
 
-var dataGeneratorRouter = require('./routes/data-generator');
-var simulationRouter = require('./routes/simulation');
+var apiRouter = require('./routes');
 
 var app = express();
 var compression = require('compression');
@@ -45,8 +44,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/data-generator', dataGeneratorRouter);
-app.use('/api/simulation', simulationRouter);
+app.use('/api/simulation', apiRouter(true));
+app.use('/api/data-generator', apiRouter(false));
 
 // start server
 

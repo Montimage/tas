@@ -5,114 +5,50 @@ import {
   addSimulationSensor,
   addDGSensor,
   addDGActuator,
-  showModal
+  showModal,
+  selectActuator,
+  selectSensor,
 } from "../../actions";
 import { Form, Button, Alert } from "antd";
-import { updateObjectByPath } from "../../utils";
-import {
-  FormTextItem,
-  FormSelectItem,
-  FormNumberItem,
-  FormTimeRangeItem,
-  FormSwitchItem
-} from "../FormItems";
-import DatabaseConfigForm from "../DatabaseConfigForm";
-import FormNumberWithRange from '../FormNumberWithRange';
-import LocationForm from "../LocationForm";
+import { updateObjectByPath, deepCloneObject } from "../../utils";
+import { FormTextItem, FormSelectItem, FormSwitchItem } from "../FormItems";
+// import DatabaseConfigForm from "../DatabaseConfigForm";
+import DataReplayerForm from "./DataReplayerForm";
+import DataGeneratorForm from "./DataGeneratorForm";
 
-const DEFAULT_TIME_INTERVAL = 3; // 3 seconds
-
-const initDataDescriptionBoolean = {
-  type: "Boolean",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  initValue: 1
-};
-
-const initDataDescriptionEnum = {
-  type: "Enum",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  initValue: 1
-};
-
-const initDataDescriptionInteger = {
-  type: "Integer",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  min: 0,
-  max: 10000,
-  initValue: 10,
-  regular: {
-    min: 10,
-    max: 20,
-    step: 1
-  },
-  behaviour: 'Normal'
-};
-
-const initDataDescriptionDouble = {
-  type: "Integer",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  min: 0,
-  max: 10000,
-  initValue: 10,
-  regular: {
-    min: 10,
-    max: 20,
-    step: 1
-  },
-  behaviour: 'Normal'
-};
-
-const initDataDescriptionLocation = {
-  type: "Location",
-  timeInterval: DEFAULT_TIME_INTERVAL,
-  initValue: {
-    lat: 48.828886,
-    lng: 2.353675
-  },
-  bearingDirection: 90,
-  velo: 50,
-  behaviour: 'Normal'
-};
-
-const dataDescriptions = {
-  Boolean: initDataDescriptionBoolean,
-  Enum: initDataDescriptionEnum,
-  Integer: initDataDescriptionInteger,
-  Double: initDataDescriptionDouble,
-  Location: initDataDescriptionLocation
-};
-
-const initDataSourceDatabase = {
-  source: "Database",
-  dbConfig: {
+const replayDataSource = () => ({
+  connConfig: {
     host: "localhost",
     port: 27017,
-    dbName: null,
     username: null,
     password: null,
-    options: null
+    options: null,
   },
-  startTime: null,
-  endTime: null
-};
+  devID: null,
+  dbname: null,
+  startTime: Date.now(),
+  endTime: Date.now(),
+});
 
-const initDataSourceRandom = {
-  source: "Random",
-  dataDescription: initDataDescriptionBoolean
-};
+const generateDataSource = () => ({
+  timePeriod: 5,
+  scale: 1,
+  dosAttackSpeedupRateL: 5,
+  timeBeforeFailed: 20,
+  sensorBehaviours: [],
+  energy: null,
+  sources: [],
+});
 
-const dataSources = {
-  Database: initDataSourceDatabase,
-  Random: initDataSourceRandom
-};
-
-const initSensor = {
+const initSensor = () => ({
   id: `id-${Date.now()}`,
   name: `name-${Date.now()}`,
-  dataSource: initDataSourceRandom,
+  enable: true,
+  isFromDatabase: false,
   options: null,
-  enable: true
-};
+  userData: null,
+  dataSource: generateDataSource(),
+});
 
 class SensorModal extends Component {
   constructor(props) {
@@ -126,17 +62,37 @@ class SensorModal extends Component {
         thingIDs.push(things[index].id);
       }
     }
-    let selectedData = formID === 'SENSOR-FORM' ? selectedSensor : (formID === 'ACTUATOR-FORM' ? selectedActuator : null);
+    let selectedData =
+      formID === "SENSOR-FORM"
+        ? selectedSensor
+        : formID === "ACTUATOR-FORM"
+        ? selectedActuator
+        : null;
+    let replayDS = deepCloneObject(replayDataSource());
+    let generateDS = deepCloneObject(generateDataSource());
+    let data = initSensor();
+    console.log(data);
+    if (selectedData) {
+      data = deepCloneObject(selectedData);
+      if (data.isFromDatabase) {
+        replayDS = data.dataSource;
+      } else {
+        generateDS = data.dataSource;
+      }
+    }
     this.state = {
-      data: selectedData ? selectedData : initSensor,
+      data,
       thingID: thingIDs[0],
       thingIDs,
-      error: null
+      replayDS,
+      generateDS,
+      error: null,
     };
   }
 
   componentWillReceiveProps(newProps) {
     const { tool, model, selectedSensor, selectedActuator, formID } = newProps;
+
     const thingIDs = [];
     if (tool === "simulation" && model.things) {
       const { things } = model;
@@ -144,14 +100,30 @@ class SensorModal extends Component {
         thingIDs.push(things[index].id);
       }
     }
-
-    let selectedData = formID === 'SENSOR-FORM' ? selectedSensor : (formID === 'ACTUATOR-FORM' ? selectedActuator : null);
-
+    let selectedData =
+      formID === "SENSOR-FORM"
+        ? selectedSensor
+        : formID === "ACTUATOR-FORM"
+        ? selectedActuator
+        : null;
+    let replayDS = deepCloneObject(replayDataSource());
+    let generateDS = deepCloneObject(generateDataSource());
+    let data = initSensor();
+    if (selectedData) {
+      data = deepCloneObject(selectedData);
+      if (data.isFromDatabase) {
+        replayDS = data.dataSource;
+      } else {
+        generateDS = data.dataSource;
+      }
+    }
     this.setState({
-      data: selectedData ? selectedData : initSensor,
+      data,
       thingID: thingIDs[0],
       thingIDs,
-      error: null
+      replayDS,
+      generateDS,
+      error: null,
     });
   }
 
@@ -159,9 +131,27 @@ class SensorModal extends Component {
     this.setState({ thingID: tID });
   }
 
+  onChangeDataSource(isReplay) {
+    if (isReplay) {
+      this.setState((prevState) => {
+        const newData = { ...prevState.data };
+        updateObjectByPath(newData, "dataSource", prevState.replayDS);
+        updateObjectByPath(newData, "isFromDatabase", true);
+        return { data: newData, error: null, generateDS: prevState.generateDS };
+      });
+    } else {
+      this.setState((prevState) => {
+        const newData = { ...prevState.data };
+        updateObjectByPath(newData, "dataSource", prevState.generateDS);
+        updateObjectByPath(newData, "isFromDatabase", false);
+        return { data: newData, error: null, replayDS: prevState.replayDS };
+      });
+    }
+  }
   onDataChange(dataPath, value) {
-    this.setState(prevState => {
+    this.setState((prevState) => {
       const newData = { ...prevState.data };
+      console.log(dataPath, value);
       updateObjectByPath(newData, dataPath, value);
       return { data: newData, error: null };
     });
@@ -222,18 +212,21 @@ class SensorModal extends Component {
       formID,
       addSimulationSensor,
       addDGSensor,
-      addDGActuator
+      addDGActuator,
+      showModal,
     } = this.props;
     if (formID === "SENSOR-FORM") {
       // Add new sensor
       if (tool === "simulation") {
         // Add sensor to a simulation model
         addSimulationSensor(thingID, data);
-        this.props.showModal(null);
+        showModal(null);
+        this.props.selectSensor(null);
       } else if (tool === "data-generator") {
         // add sensor to a data-generator model
         addDGSensor(data);
-        this.props.showModal(null);
+        showModal(null);
+        this.props.selectSensor(null);
       } else {
         console.log(`[ERROR] Undefined tool: ${tool}`);
         this.setState({ error: `[ERROR] Undefined tool: ${tool}` });
@@ -243,13 +236,14 @@ class SensorModal extends Component {
       if (tool === "data-generator") {
         // add actuator to a data-generator model
         addDGActuator(data);
-        this.props.showModal(null);
+        showModal(null);
+        this.props.selectActuator(null);
       } else {
         console.log(
           `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
         );
         this.setState({
-          error: `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
+          error: `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`,
         });
       }
     } else {
@@ -260,21 +254,90 @@ class SensorModal extends Component {
 
   handleCancel() {
     this.props.showModal(null);
+    this.props.selectSensor(null);
+    this.props.selectActuator(null);
   }
 
   handleDuplicate() {
-    const newThingID = `thing-${Date.now()}`;
-    this.setState(prevState => ({
-      data: { ...prevState.data, id: newThingID }
-    }));
+    const { thingID } = this.state;
+    const {
+      tool,
+      formID,
+      addSimulationSensor,
+      addDGSensor,
+      addDGActuator,
+      showModal,
+      selectSensor,
+      selectActuator,
+    } = this.props;
+
+    if (formID === "SENSOR-FORM") {
+      const newThingID = `sensor-${Date.now()}`;
+      const newData = {
+        ...this.state.data,
+        id: newThingID,
+        name: "New Sensor",
+      };
+      // Add new sensor
+      if (tool === "simulation") {
+        // Add sensor to a simulation model
+        addSimulationSensor(thingID, newData);
+        selectSensor(newData);
+        setTimeout(() => {
+          showModal("SENSOR-FORM");
+        }, 1000);
+        showModal(null);
+      } else if (tool === "data-generator") {
+        // add sensor to a data-generator model
+        addDGSensor(newData);
+        setTimeout(() => {
+          selectSensor(newData);
+          showModal("SENSOR-FORM");
+        }, 1000);
+        showModal(null);
+      } else {
+        console.log(`[ERROR] Undefined tool: ${tool}`);
+        this.setState({ error: `[ERROR] Undefined tool: ${tool}` });
+      }
+    } else if (formID === "ACTUATOR-FORM") {
+      // Add new actuator
+      const newThingID = `act-${Date.now()}`;
+      const newData = {
+        ...this.state.data,
+        id: newThingID,
+        name: "New Actuator",
+      };
+      if (tool === "data-generator") {
+        // add actuator to a data-generator model
+        addDGActuator(newData);
+        setTimeout(() => {
+          showModal("ACTUATOR-FORM");
+        }, 1000);
+        selectActuator(newData);
+        showModal(null);
+      } else {
+        console.log(
+          `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
+        );
+        this.setState({
+          error: `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`,
+        });
+      }
+    } else {
+      console.log(`[ERROR] Invalid form: ${formID}`);
+      this.setState({ error: `[ERROR] Invalid form: ${formID}` });
+    }
   }
 
   render() {
-    const { data, error, thingID, thingIDs,  } = this.state;
+    const { data, error, thingID, thingIDs } = this.state;
     const { tool, formID, selectedActuator, selectedSensor } = this.props;
-    if (tool === 'simulation' && formID === "ACTUATOR-FORM") return null;
+    if (tool === "simulation" && formID === "ACTUATOR-FORM") return null;
     let footer = null;
-    if (selectedSensor && formID === 'SENSOR-FORM' || selectedActuator && formID === 'ACTUATOR-FORM') {
+    if (
+      (selectedSensor && formID === "SENSOR-FORM") ||
+      (selectedActuator && formID === "ACTUATOR-FORM")
+    ) {
       footer = [
         <Button key="duplicate" onClick={() => this.handleDuplicate()}>
           Duplicate
@@ -284,7 +347,7 @@ class SensorModal extends Component {
         </Button>,
         <Button key="ok" type="primary" onClick={() => this.handleOk()}>
           OK
-        </Button>
+        </Button>,
       ];
     } else {
       footer = [
@@ -293,187 +356,58 @@ class SensorModal extends Component {
         </Button>,
         <Button key="ok" type="primary" onClick={() => this.handleOk()}>
           OK
-        </Button>
+        </Button>,
       ];
     }
     const isSensor = formID === "SENSOR-FORM" ? true : false;
-    let randomDataForm = null;
-    if (data.dataSource && data.dataSource.dataDescription && data.dataSource.dataDescription.type) {
-      switch (data.dataSource.dataDescription.type) {
-        case "Boolean":
-          randomDataForm = (
-            <FormNumberItem
-              label="Init Value"
-              min={0}
-              max={1}
-              defaultValue={data.dataSource.dataDescription.initValue}
-              onChange={v =>
-                this.onDataChange("dataSource.dataDescription.initValue", v)
-              }
-            />
-          );
-          break;
-        case "Enum":
-          randomDataForm = (
-            <React.Fragment>
-              <FormTextItem
-                label="Values"
-                defaultValue={JSON.stringify(
-                  data.dataSource.dataDescription.values
-                )}
-                onChange={v => {
-                  const values = v.split(",");
-                  this.onDataChange(
-                    "dataSource.dataDescription.values",
-                    values
-                  );
-                  this.setState(prevState => {
-                    const newData = { ...prevState.data };
-                    updateObjectByPath(
-                      newData,
-                      "dataSource.dataDescription.initValue",
-                      values[0]
-                    );
-                    return { data: newData, error: null };
-                  });
-                }}
-              />
-              {data.dataSource.dataDescription.values && (
-                <FormSelectItem
-                  label="Init Value"
-                  defaultValue={data.dataSource.dataDescription.initValue}
-                  onChange={v =>
-                    this.onDataChange("dataSource.dataDescription.initValue", v)
-                  }
-                  options={data.dataSource.dataDescription.values}
-                />
-              )}
-            </React.Fragment>
-          );
-          break;
-        case "Integer":
-        case "Double":
-          randomDataForm = (
-            <FormNumberWithRange
-              dataDescription={data.dataSource.dataDescription}
-              dataPath="dataSource.dataDescription."
-              onChange={(dataPath, v) => this.onDataChange(dataPath,v)}
-            />
-          );
-          break;
-        case "Location":
-          randomDataForm = (
-            <LocationForm
-              dataDescription={data.dataSource.dataDescription}
-              dataPath="dataSource.dataDescription."
-              onChange={(dataPath, v) => this.onDataChange(dataPath,v)}
-            />
-          );
-          break;
-        default:
-          break;
-      }
-    }
+
     return (
       <TSModal
         title={`${isSensor ? "Sensor" : "Actuator"}`}
         visible={
-          isSensor ||
-          (tool === "data-generator" && formID === "ACTUATOR-FORM")
+          isSensor || (tool === "data-generator" && formID === "ACTUATOR-FORM")
         }
         onCancel={() => this.handleCancel()}
         footer={footer}
       >
         <Form
           labelCol={{
-            span: 4
+            span: 4,
           }}
           wrapperCol={{
-            span: 14
+            span: 14,
           }}
         >
           {tool === "simulation" && (
             <FormSelectItem
               label="Thing"
               defaultValue={thingID}
-              onChange={v => this.onThingChange(v)}
+              onChange={(v) => this.onThingChange(v)}
               options={thingIDs}
             />
           )}
           <FormTextItem
             label="Id"
             defaultValue={data.id}
-            onChange={v => this.onDataChange("id", v)}
+            onChange={(v) => this.onDataChange("id", v)}
           />
           <FormTextItem
             label="Name"
             defaultValue={data.name}
-            onChange={v => this.onDataChange("name", v)}
-          />
-          <FormNumberItem
-            label="Scale"
-            min={1}
-            max={1000000}
-            placeholder="Number of instances"
-            defaultValue={data.scale}
-            onChange={v => this.onDataChange("scale", v)}
+            onChange={(v) => this.onDataChange("name", v)}
           />
           <FormTextItem
-            label="Topic"
+            label="Options"
             defaultValue={data.options ? data.options.topic : null}
-            onChange={v => this.onDataChange("options", { topic: v })}
+            onChange={(v) => this.onDataChange("options", { topic: v })}
+            placeholder="Options in JSON format"
           />
-          <FormSelectItem
-            label="Source"
-            defaultValue={data.dataSource.source}
-            onChange={v => this.onDataChange("dataSource", dataSources[v])}
-            options={["Random", "Database"]}
+          <FormTextItem
+            label="User Data"
+            defaultValue={JSON.stringify(data.userData)}
+            onChange={(v) => this.onDataChange("userData", v)}
+            placeholder="User data in JSON format"
           />
-          <span>Data Source Detail</span>
-          <p />
-          {data.dataSource.source === "Database" ? (
-            <React.Fragment>
-              <DatabaseConfigForm
-                defaultValue={data.dataSource.dbConfig}
-                dataPath="dataSource.dbConfig"
-                onDataChange={(dataPath, value) => this.onDataChange(dataPath, value)}
-              />
-              <FormTimeRangeItem
-                label="Time"
-                onChange={v => {
-                  this.onDataChange("dataSource.startTime", v[0]);
-                  this.onDataChange("dataSource.endTime", v[1]);
-                }}
-              />
-            </React.Fragment>
-          ) : (
-            <React.Fragment>
-              <FormNumberItem
-                label="Time Period"
-                min={1}
-                max={65535}
-                defaultValue={data.dataSource.dataDescription.timeInterval}
-                onChange={v =>
-                  this.onDataChange(
-                    "dataSource.dataDescription.timeInterval",
-                    v
-                  )
-                }
-              />
-              <FormSelectItem
-                label="Type"
-                defaultValue={data.dataSource.dataDescription.type}
-                onChange={v =>
-                  this.onDataChange(
-                    "dataSource.dataDescription",
-                    dataDescriptions[v]
-                  )
-                }
-                options={["Boolean", "Enum", "Integer", "Double", "Location"]}
-              />
-              {randomDataForm}
-            </React.Fragment>
-          )}
           <FormSwitchItem
             label="Enable"
             onChange={(v) => this.onDataChange(`enable`, v)}
@@ -481,6 +415,31 @@ class SensorModal extends Component {
             checkedChildren={"On"}
             unCheckedChildren={"Off"}
           />
+          <FormSelectItem
+            label="Data Source"
+            defaultValue={data.isFromDatabase ? "Replay" : "Generate"}
+            onChange={(v) => {
+              this.onChangeDataSource(v === "Replay" ? true : false);
+            }}
+            options={["Replay", "Generate"]}
+          />
+          {data.isFromDatabase ? (
+            <DataReplayerForm
+              dataPath={"dataSource"}
+              dataSource={data.dataSource}
+              onDataChange={(dataPath, value) =>
+                this.onDataChange(dataPath, value)
+              }
+            />
+          ) : (
+            <DataGeneratorForm
+              dataPath={"dataSource"}
+              dataSource={data.dataSource}
+              onDataChange={(dataPath, value) =>
+                this.onDataChange(dataPath, value)
+              }
+            />
+          )}
         </Form>
         {error && <Alert message={error} type="error" />}
       </TSModal>
@@ -493,19 +452,21 @@ const mapPropsToStates = ({ editingForm, model, tool }) => ({
   selectedSensor: editingForm.selectedSensor,
   selectedActuator: editingForm.selectedActuator,
   model,
-  tool
+  tool,
 });
 
-const mapDispatchToProps = dispatch => ({
-  showModal: modalID => dispatch(showModal(modalID)),
+const mapDispatchToProps = (dispatch) => ({
+  showModal: (modalID) => dispatch(showModal(modalID)),
   addSimulationSensor: (thingID, data) =>
     dispatch(addSimulationSensor({ thingID, sensor: data })),
-  addDGSensor: data => dispatch(addDGSensor(data)),
-  addDGActuator: data => dispatch(addDGActuator(data)),
-  deleteSimulationSensor: (id, thingID) =>
-    dispatch(deleteSimulationSensor({ thingID, sensorID: id })),
-  deleteDGSensor: id => dispatch(deleteDGSensor(id)),
-  deleteDGActuator: id => dispatch(deleteDGActuator(id))
+  addDGSensor: (data) => dispatch(addDGSensor(data)),
+  addDGActuator: (data) => dispatch(addDGActuator(data)),
+  // deleteSimulationSensor: (id, thingID) =>
+  //   dispatch(deleteSimulationSensor({ thingID, sensorID: id })),
+  // deleteDGSensor: id => dispatch(deleteDGSensor(id)),
+  // deleteDGActuator: id => dispatch(deleteDGActuator(id)),
+  selectActuator: (act) => dispatch(selectActuator(act)),
+  selectSensor: (sensor) => dispatch(selectSensor(sensor)),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(SensorModal);

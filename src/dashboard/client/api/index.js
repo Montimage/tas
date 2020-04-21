@@ -1,9 +1,26 @@
 // read and pass the environment variables into reactjs application
-const URL = `http://localhost:31057`;
+// const URL = `http://localhost:31057`;
+const URL = "";
 
 const requestModel = async (tool) => {
-  const url = `${URL}/api/${tool}`;
+  const url = `${URL}/api/${tool}/model`;
   const response = await fetch(url);
+  const data = await response.json();
+  if (data.error) {
+    throw data.error;
+  }
+  return data.model;
+};
+
+const uploadModel = async (tool, model) => {
+  const url = `${URL}/api/${tool}/model`;
+  const response = await fetch(url,{
+    method: 'POST',
+    headers: {
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify({model})
+  });
   const data = await response.json();
   if (data.error) {
     throw data.error;
@@ -44,9 +61,15 @@ const requestLogFiles = async (tool) => {
   return data.files;
 };
 
-const requestStartDeploy = async (tool) => {
-  const url = `${URL}/api/${tool}/run`;
-  const response = await fetch(url);
+const requestStartDeploy = async (tool, model) => {
+  const url = `${URL}/api/${tool}/deploy`;
+  const response = await fetch(url,{
+    method: 'POST',
+    headers: {
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify({model})
+  });
   const data = await response.json();
   if (data.error) {
     throw data.error;
@@ -72,22 +95,6 @@ const requestDeployStatus = async (tool) => {
     throw status.error;
   }
   return status.deployStatus;
-};
-
-const uploadModel = async (tool, model) => {
-  const url = `${URL}/api/${tool}`;
-  const response = await fetch(url,{
-    method: 'POST',
-    headers: {
-      'Content-Type':'application/json'
-    },
-    body: JSON.stringify({model})
-  });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
-  return data.model;
 };
 
 export {

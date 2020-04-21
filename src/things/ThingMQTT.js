@@ -4,7 +4,7 @@ const {
   ONLINE,
   OFFLINE,
   SIMULATING,
-} = require('../constants');
+} = require('../DeviceStatus');
 /**
  * The Thing class presents a THING component:
  * - List of sensors
@@ -89,7 +89,7 @@ class ThingMQTT extends Thing {
       });
 
       mqttClient.on('message', (topic, message, packet) => {
-        // console.log(`[Thing ${this.id}] received message on topic: ${topic}`);
+        // console.log(`[${this.id}] received message on topic: ${topic}`);
         this.handleMQTTMessage(topic, message.toString(), packet);
       });
   }
@@ -101,15 +101,15 @@ class ThingMQTT extends Thing {
    */
   addActuator(id, options) {
     const newActuator = super.addActuator(id, options);
-    if (options && options.mqttTopic) {
+    if (options && options.topic) {
       if (!this.mqttClient) {
         console.error(`[${this.id}] mqttClient is not ready yet!`);
       } else {
-        this.mqttClient.subscribe(options.mqttTopic);
-        if (!this.mqttTopics[options.mqttTopic]) {
-          this.mqttTopics[options.mqttTopic] = [];
+        this.mqttClient.subscribe(options.topic);
+        if (!this.mqttTopics[options.topic]) {
+          this.mqttTopics[options.topic] = [];
         }
-        this.mqttTopics[options.mqttTopic].push(newActuator);
+        this.mqttTopics[options.topic].push(newActuator);
       }
     }
   }
@@ -130,11 +130,11 @@ class ThingMQTT extends Thing {
    * @param {Object} data Data to be published
    * @param {String} publishID The ID of the publisher
    */
-  publishData(data, publishID, publishOptions = null) {
+  publishData(data, publishID, options = null) {
     // super.publishData(data,publishID);
     let topic = null;
-    if (publishOptions && publishOptions.mqttTopic) {
-      topic = publishOptions.mqttTopic;
+    if (options && options.topic) {
+      topic = options.topic;
       // console.log('custom topic: ', topic);
     } else {
       topic = `things/${this.id}/sensors/${publishID}`;

@@ -12,7 +12,7 @@ const Schema = mongoose.Schema;
 
 const sensorSchema = new Schema(
   {
-    sensorID: {
+    id: {
       type: String,
       required: true
     },
@@ -21,7 +21,7 @@ const sensorSchema = new Schema(
       required: true
     },
     value: {
-      type: String,
+      type: Object,
       required: true
     }
   }

@@ -1,4 +1,4 @@
-const { SIMULATING, OFFLINE } = require('../constants');
+const { SIMULATING, OFFLINE } = require('../DeviceStatus');
 /**
  * The Actuator class presents an actuator
  * - Receive the actuated data from gateway
