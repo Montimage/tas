@@ -14,12 +14,9 @@ import { updateObjectByPath, deepCloneObject } from "../../utils";
 import {
   FormTextItem,
   FormSelectItem,
-  FormNumberItem,
   FormSwitchItem,
 } from "../FormItems";
 // import DatabaseConfigForm from "../DatabaseConfigForm";
-import FormNumberWithRange from "../FormNumberWithRange";
-import LocationForm from "../LocationForm";
 import DataReplayerForm from './DataReplayerForm';
 import DataGeneratorForm from './DataGeneratorForm';
 
@@ -95,8 +92,8 @@ const replayDataSource = {
   },
   devID: null,
   dbname: null,
-  startTime: null,
-  endTime: null,
+  startTime: Date.now(),
+  endTime: Date.now(),
 };
 
 const generateDataSource = {
@@ -137,10 +134,23 @@ class SensorModal extends Component {
         : formID === "ACTUATOR-FORM"
         ? selectedActuator
         : null;
+    let replayDS = replayDataSource;
+    let generateDS = generateDataSource;
+    let data = initSensor;
+    if (selectedData) {
+      data = deepCloneObject(selectedData);
+      if (data.isFromDatabase) {
+        replayDS = data.dataSource;
+      } else {
+        generateDS = data.dataSource;
+      }
+    }
     this.state = {
-      data: selectedData ? deepCloneObject(selectedData) : initSensor,
+      data,
       thingID: thingIDs[0],
       thingIDs,
+      replayDS,
+      generateDS,
       error: null,
     };
   }
@@ -155,21 +165,29 @@ class SensorModal extends Component {
         thingIDs.push(things[index].id);
       }
     }
-    let selectedData = null;
-    if (formID === null)
-      selectedData = selectedSensor ? selectedSensor : selectedActuator;
-    if (!selectedData) {
-      selectedData =
-        formID === "SENSOR-FORM"
-          ? selectedSensor
-          : formID === "ACTUATOR-FORM"
-          ? selectedActuator
-          : null;
+    let selectedData =
+      formID === "SENSOR-FORM"
+        ? selectedSensor
+        : formID === "ACTUATOR-FORM"
+        ? selectedActuator
+        : null;
+    let replayDS = replayDataSource;
+    let generateDS = generateDataSource;
+    let data = initSensor;
+    if (selectedData) {
+      data = deepCloneObject(selectedData);
+      if (data.isFromDatabase) {
+        replayDS = data.dataSource;
+      } else {
+        generateDS = data.dataSource;
+      }
     }
     this.setState({
-      data: selectedData ? selectedData : initSensor,
+      data,
       thingID: thingIDs[0],
       thingIDs,
+      replayDS,
+      generateDS,
       error: null,
     });
   }
@@ -178,11 +196,28 @@ class SensorModal extends Component {
     this.setState({ thingID: tID });
   }
 
-  onDataChange(dataPath, value, index = null) {
+  onChangeDataSource(isReplay) {
+    if (isReplay) {
+      this.setState((prevState) => {
+        const newData = { ...prevState.data };
+        updateObjectByPath(newData, 'dataSource', prevState.replayDS);
+        updateObjectByPath(newData, 'isFromDatabase', true);
+        return { data: newData, error: null, generateDS: prevState.generateDS };
+      });
+    } else {
+      this.setState((prevState) => {
+        const newData = { ...prevState.data };
+        updateObjectByPath(newData, 'dataSource', prevState.generateDS);
+        updateObjectByPath(newData, 'isFromDatabase', false);
+        return { data: newData, error: null, replayDS: prevState.replayDS};
+      });
+    }
+  }
+  onDataChange(dataPath, value) {
     this.setState((prevState) => {
       const newData = { ...prevState.data };
       console.log(dataPath, value);
-      updateObjectByPath(newData, dataPath, value, index);
+      updateObjectByPath(newData, dataPath, value);
       return { data: newData, error: null };
     });
   }
@@ -390,87 +425,7 @@ class SensorModal extends Component {
       ];
     }
     const isSensor = formID === "SENSOR-FORM" ? true : false;
-    let randomDataForm = null;
-    if (
-      data.dataSource &&
-      data.dataSource.dataDescription &&
-      data.dataSource.dataDescription.type
-    ) {
-      switch (data.dataSource.dataDescription.type) {
-        case "Boolean":
-          randomDataForm = (
-            <FormNumberItem
-              label="Init Value"
-              min={0}
-              max={1}
-              defaultValue={data.dataSource.dataDescription.initValue}
-              onChange={(v) =>
-                this.onDataChange("dataSource.dataDescription.initValue", v)
-              }
-            />
-          );
-          break;
-        case "Enum":
-          randomDataForm = (
-            <React.Fragment>
-              <FormTextItem
-                label="Values"
-                defaultValue={JSON.stringify(
-                  data.dataSource.dataDescription.values
-                )}
-                onChange={(v) => {
-                  const values = v.split(",");
-                  this.onDataChange(
-                    "dataSource.dataDescription.values",
-                    values
-                  );
-                  this.setState((prevState) => {
-                    const newData = { ...prevState.data };
-                    updateObjectByPath(
-                      newData,
-                      "dataSource.dataDescription.initValue",
-                      values[0]
-                    );
-                    return { data: newData, error: null };
-                  });
-                }}
-              />
-              {data.dataSource.dataDescription.values && (
-                <FormSelectItem
-                  label="Init Value"
-                  defaultValue={data.dataSource.dataDescription.initValue}
-                  onChange={(v) =>
-                    this.onDataChange("dataSource.dataDescription.initValue", v)
-                  }
-                  options={data.dataSource.dataDescription.values}
-                />
-              )}
-            </React.Fragment>
-          );
-          break;
-        case "Integer":
-        case "Double":
-          randomDataForm = (
-            <FormNumberWithRange
-              dataDescription={data.dataSource.dataDescription}
-              dataPath="dataSource.dataDescription."
-              onChange={(dataPath, v) => this.onDataChange(dataPath, v)}
-            />
-          );
-          break;
-        case "Location":
-          randomDataForm = (
-            <LocationForm
-              dataDescription={data.dataSource.dataDescription}
-              dataPath="dataSource.dataDescription."
-              onChange={(dataPath, v) => this.onDataChange(dataPath, v)}
-            />
-          );
-          break;
-        default:
-          break;
-      }
-    }
+
     return (
       <TSModal
         title={`${isSensor ? "Sensor" : "Actuator"}`}
@@ -529,7 +484,7 @@ class SensorModal extends Component {
             label="Data Source"
             defaultValue={data.isFromDatabase ? "Replay" : "Generate"}
             onChange={(v) =>
-              {this.onDataChange("isFromDatabase", v === "Replay" ? true : false)}
+              {this.onChangeDataSource(v === "Replay" ? true : false)}
             }
             options={["Replay", "Generate"]}
           />
@@ -543,7 +498,7 @@ class SensorModal extends Component {
             <DataGeneratorForm
               dataPath={"dataSource"}
               dataSource = {data.dataSource}
-              onDataChange={(dataPath, value, index = null) => this.onDataChange(dataPath, value, index)}
+              onDataChange={(dataPath, value) => this.onDataChange(dataPath, value)}
             />
           )}
         </Form>

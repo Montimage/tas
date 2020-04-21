@@ -8,12 +8,13 @@ const FormRegularNumberItem = ({ label, items, onChange }) => (
       dataSource={items}
       renderItem={(item) => (
         <List.Item>
-          {`${item.title} `}
-          <InputNumber
-            onChange={(v) => onChange(item.dataPath, v)}
-            defaultValue={item.defaultValue ? item.defaultValue : 0}
-            placeholder={item.title}
-          />
+          <Card size="small" bordered={false}  title={item.title}>
+            <InputNumber
+              onChange={(v) => onChange(item.dataPath, v)}
+              defaultValue={item.defaultValue ? item.defaultValue : 0}
+              placeholder={item.title}
+            />
+          </Card>
         </List.Item>
       )}
     />
