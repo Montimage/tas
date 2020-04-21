@@ -61,9 +61,15 @@ const requestLogFiles = async (tool) => {
   return data.files;
 };
 
-const requestStartDeploy = async (tool) => {
-  const url = `${URL}/api/${tool}/run`;
-  const response = await fetch(url);
+const requestStartDeploy = async (tool, model) => {
+  const url = `${URL}/api/${tool}/deploy`;
+  const response = await fetch(url,{
+    method: 'POST',
+    headers: {
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify({model})
+  });
   const data = await response.json();
   if (data.error) {
     throw data.error;
