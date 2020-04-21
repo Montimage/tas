@@ -45,22 +45,30 @@ const updateObjectByPath = (obj, path, value) => {
     const array = lastKey.split('[');
     lastKey = array[0];
     let index = array[1].replace(']','');
-    if (!obj[lastKey]) {
-      // Create a new array if it does not exist
-      obj[lastKey] = [];
-    }
-    if (obj[lastKey].length === 0) {
-      // Empty array
-      index = 0;
-    } else if (obj[lastKey].length <= index || index < 0) {
-      // index out of range
-      index = obj[lastKey].length;
-    }
-    if (!obj[lastKey][index]) {
-      obj[lastKey].push(value);
-      // throw Error(`ERROR: Invalid data path: ${path} in object ${JSON.stringify(obj)}`);
+    if (value === null) {
+      // Remove an element
+      if (obj[lastKey] && obj[lastKey][index]) {
+        obj[lastKey].splice(index,1);
+      }
     } else {
-      obj[lastKey][index] = value;
+      // Add an element
+      if (!obj[lastKey]) {
+        // Create a new array if it does not exist
+        obj[lastKey] = [];
+      }
+      if (obj[lastKey].length === 0) {
+        // Empty array
+        index = 0;
+      } else if (obj[lastKey].length <= index || index < 0) {
+        // index out of range
+        index = obj[lastKey].length;
+      }
+      if (!obj[lastKey][index]) {
+        obj[lastKey].push(value);
+        // throw Error(`ERROR: Invalid data path: ${path} in object ${JSON.stringify(obj)}`);
+      } else {
+        obj[lastKey][index] = value;
+      }
     }
   } else {
     // Not contains array index
