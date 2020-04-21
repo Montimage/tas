@@ -1,1 +1,103 @@
-{"name":"DigitalHealthModel","things":[{"id":"medicalGW-01","scale":3,"protocol":"MQTT","connConfig":{"host":"192.168.1.123","port":1878,"options":null},"sensors":[{"id":"super-sensor","disable":false,"scale":1,"name":"Super Senso","isFromDatabase":false,"userData":{"project":"ENACT"},"options":{},"dataSource":{"timePeriod":7,"dosAttackSpeedUpRate":5,"timeBeforeFailed":20,"sensorBehaviours":["AB_LOW_ENERGY","AB_OUT_OF_ENERGY","NORMAL_BEHAVIOUR"],"withEnergy":true,"energy":{"type":"DATA_SOURCE_ENERGY","key":"battery-01","id":"batter-01","initValue":1501,"unit":"mA","behaviours":["AB_FIX_VALUE","AB_INVALID_VALUE"],"low":996,"slowDownRate":4,"consumInOnePeriod":195},"sources":[{"type":"DATA_SOURCE_BOOLEAN","key":"motion_detector-00","id":"motion-detector-01","initValue":false,"unit":null,"behaviours":["AB_INVALID_VALUE"]},{"type":"DATA_SOURCE_ENUM","key":"heating_level_01","id":"heating_level-01","initValue":"Low","unit":null,"behaviours":["NORMAL_BEHAVIOUR"],"values":["Low","Normal","High"]},{"type":"DATA_SOURCE_FLOAT","key":"room-temperature","id":"temp-01","initValue":2,"unit":"C","behaviours":["AB_FIX_VALUE"],"valueConstraints":{"min":-264,"max":100,"regularMin":-2,"regularMax":4,"step":3,"initValue":0}},{"type":"DATA_SOURCE_INTEGER","key":"blood_glucose_level_01","id":"blood-glucose-01","initValue":1,"unit":null,"behaviours":["NORMAL_BEHAVIOUR","AB_VALUE_OUT_OF_RANGE"],"valueConstraints":{"min":0,"max":10,"regularMin":2,"regularMax":8,"step":2,"initValue":0}}],"scale":2},"thingID":"medicalGW-01","enable":true}],"actuators":[{"id":"light-intensity-actuator","options":{"topic":"custom-actuator-topic"}},{"id":"heating-level-actuator"}],"name":"hehe","enable":true}]}
+{
+  "name": "DigitalHealthModel",
+  "things": [
+    {
+      "id": "thing-01",
+      "name": "Thing 01",
+      "protocol": "MQTT",
+      "scale": 1,
+      "connConfig": {
+        "host": "192.168.1.12",
+        "port": "1883",
+        "options": null
+      },
+      "sensors": [
+        {
+          "id": "super-sensor",
+          "disable": false,
+          "scale": 1,
+          "name": "Super Sensor",
+          "isFromDatabase": false,
+          "userData": {
+            "project": "ENACT"
+          },
+          "options": {},
+          "dataSource": {
+            "timePeriod": 5,
+            "dosAttackSpeedUpRate": 5,
+            "timeBeforeFailed": 20,
+            "sensorBehaviours": [
+              "AB_LOW_ENERGY",
+              "AB_OUT_OF_ENERGY"
+            ],
+            "energy": {
+              "type": "DATA_SOURCE_ENERGY",
+              "key": "battery",
+              "id": "batter-01",
+              "initValue": 1500,
+              "unit": "mA",
+              "behaviours": [],
+              "low": 1000,
+              "slowDownRate": 2,
+              "consumInOnePeriod": 200
+            },
+            "sources": [
+              {
+                "type": "DATA_SOURCE_BOOLEAN",
+                "key": "motion_detector",
+                "id": "motion-detector-01",
+                "initValue": false,
+                "unit": null,
+                "behaviours": []
+              },
+              {
+                "type": "DATA_SOURCE_ENUM",
+                "key": "heating_level",
+                "id": "heating_level-01",
+                "initValue": "Normal",
+                "unit": null,
+                "behaviours": [],
+                "values": [
+                  "Low",
+                  "Normal",
+                  "High"
+                ]
+              },
+              {
+                "type": "DATA_SOURCE_FLOAT",
+                "key": "temperature",
+                "id": "temp-01",
+                "initValue": 20,
+                "unit": "C",
+                "behaviours": [],
+                "valueConstraints": {
+                  "min": -273,
+                  "max": 100,
+                  "regularMin": 0,
+                  "regularMax": 35,
+                  "step": 0.5
+                }
+              },
+              {
+                "type": "DATA_SOURCE_INTEGER",
+                "key": "blood_glucose_level",
+                "id": "blood-glucose-01",
+                "initValue": 5,
+                "unit": null,
+                "behaviours": [],
+                "valueConstraints": {
+                  "min": 0,
+                  "max": 10,
+                  "regularMin": 2,
+                  "regularMax": 8,
+                  "step": 2
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "actuators": []
+    }
+  ]
+}

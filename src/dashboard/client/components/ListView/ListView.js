@@ -11,7 +11,7 @@ import TSListView from "./TSListView";
 import './style.css';
 
 const ListView = ({
-  model: { sensors, actuators, dbConfig, things, name },
+  model: { sensors, actuators, things, name },
   actions: {
     showModal,
     selectThing,
@@ -27,12 +27,16 @@ const ListView = ({
   if (things) {
     for (let index = 0; index < things.length; index++) {
       const { sensors, actuators } = things[index];
-      for (let sindex = 0; sindex < sensors.length; sindex++) {
-        allSensors.push({ ...sensors[sindex], thingID: things[index].id });
+      if (sensors) {
+        for (let sindex = 0; sindex < sensors.length; sindex++) {
+          allSensors.push({ ...sensors[sindex], thingID: things[index].id });
+        }
       }
 
-      for (let sindex = 0; sindex < actuators.length; sindex++) {
-        allActuators.push({ ...actuators[sindex], thingID: things[index].id });
+      if (actuators) {
+        for (let sindex = 0; sindex < actuators.length; sindex++) {
+          allActuators.push({ ...actuators[sindex], thingID: things[index].id });
+        }
       }
     }
   }
@@ -100,37 +104,6 @@ const ListView = ({
             }}
             itemAvatar={<BulbOutlined />}
           />
-        </div>
-      )}
-      {dbConfig && (
-        <div>
-          <PageHeader
-            className="site-page-header"
-            title="Data Storage"
-            subTitle="Configuration"
-          />
-          <List.Item
-            actions={[
-              <Button
-                key="list-loadmore-edit"
-                onClick={() => showModal('DATA-STORAGE-FORM')}
-              >
-                Edit
-              </Button>
-            ]}
-          >
-            <Skeleton avatar title={false} loading={false}>
-              <List.Item.Meta
-                avatar={
-                  <Avatar>
-                    <DatabaseOutlined />
-                  </Avatar>
-                }
-                title={"MongoDB"}
-                description={`host: ${dbConfig.host}, port: ${dbConfig.port}, dbname: ${dbConfig.dbname}`}
-              />
-            </Skeleton>
-          </List.Item>
         </div>
       )}
     </div>

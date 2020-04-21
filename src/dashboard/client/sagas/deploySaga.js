@@ -14,11 +14,13 @@ import {
 } from "../actions";
 
 const getTool = ({ tool }) => tool;
+const getModel = ({ model }) => model;
 
 function* handleRequestStartDeploy() {
   try {
     const tool = yield select(getTool);
-    const status = yield call(() => requestStartDeploy(tool));
+    const model = yield select(getModel);
+    const status = yield call(() => requestStartDeploy(tool, model));
     yield put(deployStartOK());
     yield put(setDeployStatus(status));
     yield put(
