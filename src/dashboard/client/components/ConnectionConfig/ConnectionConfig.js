@@ -3,9 +3,10 @@ import React from "react";
 import FormTextItem from "../FormItems/FormTextItem";
 import FormNumberItem from "../FormItems/FormNumberItem";
 import MongoDBOptions from "./MongoDBOptions";
+import CollapseForm from "../CollapseForm";
 
 const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
-  <React.Fragment>
+  <CollapseForm title="Connection Configuration" bordered={false}>
     <FormTextItem
       label="Host"
       defaultValue={defaultValue.host}
@@ -35,7 +36,7 @@ const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
       }
       placeholder="Connection options in JSON format"
     />
-  </React.Fragment>
+  </CollapseForm>
 );
 
 export default ConnectionConfig;

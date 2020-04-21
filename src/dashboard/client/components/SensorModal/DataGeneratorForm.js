@@ -191,8 +191,8 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
       }
       placement="topLeft"
     >
-      <Button>
-        New Measure <UpOutlined />
+      <Button type="primary" style={{margin: '20px'}}>
+        Add New Measure <UpOutlined />
       </Button>
     </Dropdown>
   </React.Fragment>

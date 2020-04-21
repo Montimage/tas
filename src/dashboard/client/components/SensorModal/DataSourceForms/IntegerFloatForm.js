@@ -5,6 +5,7 @@ import {
   FormRegularNumberItem,
   FormSwitchItem,
 } from "../../FormItems";
+import CollapseForm from '../../CollapseForm';
 const defaultValueConstraints = {
   min: 0,
   max: 100,
@@ -13,7 +14,7 @@ const defaultValueConstraints = {
   step: 2,
 };
 const ValueConstraintForm = ({ defaultValue, dataPath, onChange }) => (
-  <React.Fragment>
+  <CollapseForm title={"Value Constraints"}>
     <FormRegularNumberItem
       label="Range"
       items={[
@@ -51,7 +52,7 @@ const ValueConstraintForm = ({ defaultValue, dataPath, onChange }) => (
       ]}
       onChange={(dPath, v) => onChange(dPath, v)}
     />
-  </React.Fragment>
+  </CollapseForm>
 );
 
 const IntegerFloatForm = ({ dataPath, defaultValue, onChange }) => (
