@@ -37,14 +37,14 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
           sensorData["options"] = {};
         }
         sensorData.options["devType"] = "SENSOR";
-        const { id, scale, disable } = sensorData;
+        const { instanceId, scale, disable } = sensorData;
         if (disable) continue;
         let nbSensors = scale ? scale : 1;
         if (nbSensors === 1) {
-          th.addSensor(id, sensorData);
+          th.addSensor(instanceId, sensorData);
         } else {
           for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
-            const sID = `${id}-${sensorIndex}`;
+            const sID = `${instanceId}-${sensorIndex}`;
             th.addSensor(sID, sensorData);
           }
         }

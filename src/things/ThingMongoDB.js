@@ -74,10 +74,10 @@ class DataGenerator extends Thing {
       });
       newSensor.save((err, _data) => {
         if (err) {
-          console.error(`[${this.id}] Failed to save generated data of sensor ${publishID}`);
+          console.error(`[${this.thingId}] Failed to save generated data of sensor ${publishID}`);
           console.error(err);
         } else {
-          console.log(`[${this.id}] ${data.timestamp} ${JSON.stringify(data)}`);
+          console.log(`[${this.thingId}] ${data.timestamp} ${JSON.stringify(data)}`);
         }
       });
     } else if (options.devType === 'ACTUATOR') {
@@ -88,14 +88,14 @@ class DataGenerator extends Thing {
       });
       newActuator.save((err, _data) => {
         if (err) {
-          console.error(`[${this.id}] Failed to save generated data of actuator ${publishID}`);
+          console.error(`[${this.thingId}] Failed to save generated data of actuator ${publishID}`);
           console.error(err);
         } else {
-          console.log(`[${this.id}] ${data.timestamp} ${JSON.stringify(data)}`);
+          console.log(`[${this.thingId}] ${data.timestamp} ${JSON.stringify(data)}`);
         }
       });
     } else {
-      console.error(`[${this.id}] ERROR: Invalid data type ${options.devType}`);
+      console.error(`[${this.thingId}] ERROR: Invalid data type ${options.devType}`);
     }
   }
 }

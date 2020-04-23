@@ -14,8 +14,8 @@ const {
  *  + receive data - listen to multiple channels: `things/thing-id/actuators/#`
  */
 class Thing {
-  constructor(id) {
-    this.id = id;
+  constructor(thingId) {
+    this.thingId = thingId;
     this.sensors = [];
     this.actuators = [];
     this.status = OFFLINE; // OFFLINE | ONLINE | SIMULATING | PAUSE | STOP
@@ -27,7 +27,7 @@ class Thing {
    * @param {String} publishID The publisher id
    */
   publishData(data, publishID, options = null) {
-    console.log(`[${this.id}] ${publishID} going to publish data: `, data);
+    console.log(`[${this.thingId}] ${publishID} going to publish data: `, data);
   }
 
   /**
@@ -55,12 +55,8 @@ class Thing {
    * @param {Object} options Options: { maxNumberOfMessage, timeBeforeFailed, dbClient, sensorBehaviours, energy, sources, metaData }
    * @param {Object} options The publish options
    */
-  addSensor (id, sensorData) {
-    if (this.sensors[id]) {
-      console.error(`[${this.id}] Sensor ID ${id} has already existed!`);
-      return false;
-    }
-    const newSensor = new Sensor(id, sensorData, (data, publishID, options) => {
+  addSensor (instanceId, sensorData) {
+    const newSensor = new Sensor(instanceId, sensorData, (data, publishID, options) => {
       this.publishData(data, publishID, options);
     });
     this.sensors.push(newSensor);
@@ -68,7 +64,7 @@ class Thing {
     if (this.status === SIMULATING ) {
       this.sensors[this.sensors.length - 1].start();
     }
-    console.log(`[${this.id}] added new sensor ${id}`);
+    console.log(`[${this.thingId}] added new sensor ${instanceId}`);
     return true;
   }
 
@@ -79,12 +75,12 @@ class Thing {
    */
   addActuator (id) {
     if (this.actuators[id]) {
-      console.error(`[${this.id}] Actuator ID ${id} has already existed!`);
+      console.error(`[${this.thingId}] Actuator ID ${id} has already existed!`);
       return null;
     }
     const newActuator = new Actuator(id);
     this.actuators.push(newActuator);
-    console.log(`[${this.id}] added new actuator ${id}`);
+    console.log(`[${this.thingId}] added new actuator ${id}`);
     return newActuator;
   }
 
@@ -93,7 +89,7 @@ class Thing {
    * @param {Function} callback The callback function
    */
   initThing(callback) {
-    console.log(`[${this.id}] initializing...`);
+    console.log(`[${this.thingId}] initializing...`);
     this.status = ONLINE;
     return callback();
   }
@@ -108,10 +104,10 @@ class Thing {
         this.setStatus(SIMULATING);
         break;
       case OFFLINE:
-        console.error(`[${this.id}] must be online before starting simulation: ${this.getStatus()}`);
+        console.error(`[${this.thingId}] must be online before starting simulation: ${this.getStatus()}`);
         break;
       case SIMULATING:
-        console.log(`[${this.id}] is simulating!`);
+        console.log(`[${this.thingId}] is simulating!`);
         break;
       default:
         break;
@@ -124,13 +120,13 @@ class Thing {
   stop() {
     switch (this.getStatus()) {
       case OFFLINE:
-        console.error(`[${this.id}] ERROR: offline!`);
+        console.error(`[${this.thingId}] ERROR: offline!`);
         break;
       case ONLINE:
         this.setStatus(OFFLINE);
         break;
       case SIMULATING:
-        console.log(`[${this.id}] going to stop the simulation!`);
+        console.log(`[${this.thingId}] going to stop the simulation!`);
         this.sensors.map((sensor) => sensor.stop());
         this.setStatus(OFFLINE);
         break;
