@@ -37,18 +37,18 @@ const createThing = (id, protocol, connConfig, actuators) => {
           actuatorData["options"] = {};
         }
         actuatorData.options["devType"] = "ACTUATOR";
-        const { id, scale, disable } = actuatorData;
+        const { instanceId, scale, disable } = actuatorData;
         if (disable) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
-          th.addSensor(id, actuatorData);
+          th.addSensor(instanceId, actuatorData);
         } else {
           for (
             let actuatorIndex = 0;
             actuatorIndex < nbActuators;
             actuatorIndex++
           ) {
-            const sID = `${id}-${actuatorIndex}`;
+            const sID = `${instanceId}-${actuatorIndex}`;
             th.addSensor(sID, actuatorData);
           }
         }
@@ -83,7 +83,7 @@ if (process.argv[2] === "test") {
   readJSONFile(process.argv[3], (err, thingConfigs) => {
     if (err) {
       console.error(
-        `[Simulation] [ERROR] Cannot read the config of thing:`,
+        `[Actuated] [ERROR] Cannot read the config of thing:`,
         process.argv[3]
       );
       // console.error();

@@ -19,8 +19,8 @@ const FormTimeRangeItem = ({ label, onChange, defaultValue }) => {
       format="YYYY-MM-DD HH:mm"
       onChange={(value, dateString) =>
         onChange([
-          new Date(dateString[0]).getTime() / 1000,
-          new Date(dateString[1]).getTime() / 1000
+          new Date(dateString[0]).getTime(),
+          new Date(dateString[1]).getTime()
         ])
       }
     />

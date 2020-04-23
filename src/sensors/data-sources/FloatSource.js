@@ -9,6 +9,7 @@ const {
 } = require("../../AbnormalBehaviours");
 const {
   getRandomFloat,
+  getRandomInteger,
   getNotFloat,
   getRandomFloatWithStep,
   getFloatOutOfRange,
@@ -28,22 +29,28 @@ const {
 class FloatSource extends DataSourceAbstract {
   constructor(data) {
     super(data);
-    const {min, max, regularMin, regularMax, step} = data.valueConstraints;
-    this.min = min;
-    this.max = max;
-    this.regularMin = regularMin;
-    this.regularMax = regularMax;
-    this.step = step;
+    if (data.valueConstraints) {
+      const {min, max, regularMin, regularMax, step} = data.valueConstraints;
+      this.min = min  !== null ? min : -65535;
+      this.max = max  !== null ? max : 65535;
+      this.regularMin = regularMin ? regularMin : min;
+      this.regularMax = regularMax ? regularMax : max;
+      this.step = step ? step : 0;
+    }
   }
 
   readData() {
     let value = super.readData();
     if (value) return value;
     const beha = this.behaviours[
-      getRandomFloat(0, this.behaviours.length - 1)
+      getRandomInteger(0, this.behaviours.length - 1)
     ];
-    const rmin = this.regularMin !== null ? this.regularMin : this.min;
-    const rmax = this.regularMax !== null ? this.regularMax : this.max;
+    let rmin = -65535;
+    let rmax = 65535;
+    if (this.min !== undefined && this.max !== undefined) {
+      rmin = this.regularMin;
+      rmax = this.regularMax;
+    }
     switch (beha) {
       case AB_FIX_VALUE:
         value = this.value;
@@ -69,7 +76,7 @@ class FloatSource extends DataSourceAbstract {
           }
           break;
       case AB_VALUE_CHANGE_OUT_OF_REGULAR_STEP:
-        if (rmin===null || rmax===null || this.step===null) {
+        if (rmin===null || rmax===null || this.step===null || this.step === 0) {
           console.error(`[FloatSource] Invalid value range or step: ${rmin} - ${rmax}, ${this.step}`);
           value = this.value;
         } else {
@@ -81,7 +88,7 @@ class FloatSource extends DataSourceAbstract {
           console.error(`[FloatSource] Invalid value range: ${rmin} - ${rmax}`);
           value = this.value;
         } else {
-          if (this.step !== null) {
+          if (this.step !== null && this.step > 0) {
             value = getRandomFloatWithStep(rmin, rmax, this.step, this.value);
           } else {
             value = getRandomFloat(rmin, rmax);

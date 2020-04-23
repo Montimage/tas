@@ -1,0 +1,52 @@
+[
+  {
+    "id": "simplest-thing",
+    "name": "The Simplest Thing Ever",
+    "protocol": "MQTT",
+    "connConfig": {
+      "host": "192.168.1.12",
+      "port": "1883",
+      "options": null
+    },
+    "sensors": [
+      {
+        "instanceId": "0",
+        "name": "Simplest Sensor",
+        "isFromDatabase": false,
+        "dataSource": {
+          "timePeriod": 5,
+          "withEnergy": true,
+          "energy": {
+            "type": "DATA_SOURCE_ENERGY",
+            "resourceId": "battery",
+            "key": "batter-01",
+            "unit": "mA"
+          },
+          "sources": [
+            {
+              "type": "DATA_SOURCE_BOOLEAN",
+              "key": "motion-detector-01"
+            },
+            {
+              "type": "DATA_SOURCE_ENUM",
+              "key": "heating_level-01",
+              "values": [
+                "Low",
+                "Normal",
+                "High"
+              ]
+            },
+            {
+              "type": "DATA_SOURCE_FLOAT",
+              "key": "temp-01"
+            },
+            {
+              "type": "DATA_SOURCE_INTEGER",
+              "key": "blood-glucose-01"
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

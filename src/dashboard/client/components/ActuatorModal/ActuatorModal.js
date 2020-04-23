@@ -16,7 +16,8 @@ import {
 } from "../FormItems";
 
 const initActuator = () => ({
-  id: `act-id-${Date.now()}`,
+  instanceId: `act-id-${Date.now()}`,
+  objectId: null,
   name: `act-name-${Date.now()}`,
   options: null,
   enable: true,
@@ -107,7 +108,7 @@ class ActuatorModal extends Component {
       selectActuator,
     } = this.props;
     const newActuatorID = `act-${Date.now()}`;
-    const newData = { ...this.state.data, id: newActuatorID, name: 'New Actuator' };
+    const newData = { ...this.state.data, instanceId: newActuatorID, objectId: this.state.objectId, name: 'New Actuator' };
     addSimulationActuator(thingID, newData);
     showModal(null);
     setTimeout(() => {
@@ -169,9 +170,15 @@ class ActuatorModal extends Component {
             options={thingIDs}
           />
           <FormTextItem
-            label="Id"
-            defaultValue={data.id}
-            onChange={v => this.onDataChange("id", v)}
+            label="Instance Id"
+            defaultValue={data.instanceId}
+            onChange={v => this.onDataChange("instanceId", v)}
+          />
+          <FormTextItem
+            label="Object Id"
+            defaultValue={data.objectId}
+            onChange={v => this.onDataChange("objectId", v)}
+            placeholder="Identify of device type (IP Smart Object Format)"
           />
           <FormTextItem
             label="Name"

@@ -12,17 +12,25 @@ const Schema = mongoose.Schema;
 
 const actuatorSchema = new Schema(
   {
-    id: {
+    instanceId: {
       type: String,
       required: true
+    },
+    objectId: {
+      type: String,
+      required: false
     },
     timestamp: {
       type: Number,
       required: true
     },
-    value: {
+    values: {
       type: Object,
       required: true
+    },
+    userData: {
+      type: Object,
+      required: false
     }
   }
 );

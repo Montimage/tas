@@ -2,10 +2,9 @@
   "name": "DigitalHealthModel",
   "things": [
     {
-      "id": "thing-01",
-      "name": "Thing 01",
-      "protocol": "MQTT",
+      "id": "medicalGW-01",
       "scale": 1,
+      "protocol": "MQTT",
       "connConfig": {
         "host": "192.168.1.12",
         "port": "1883",
@@ -13,91 +12,41 @@
       },
       "sensors": [
         {
-          "id": "super-sensor",
-          "disable": false,
-          "scale": 1,
-          "name": "Super Sensor",
-          "isFromDatabase": false,
-          "userData": {
-            "project": "ENACT"
-          },
-          "options": {},
+          "instanceId": "instanceId-1587649856353",
+          "objectId": null,
+          "name": "name-1587649856353",
+          "enable": true,
+          "isFromDatabase": true,
+          "options": null,
+          "userData": null,
           "dataSource": {
-            "timePeriod": 5,
-            "dosAttackSpeedUpRate": 5,
-            "timeBeforeFailed": 20,
-            "sensorBehaviours": [
-              "AB_LOW_ENERGY",
-              "AB_OUT_OF_ENERGY"
-            ],
-            "energy": {
-              "type": "DATA_SOURCE_ENERGY",
-              "key": "battery",
-              "id": "batter-01",
-              "initValue": 1500,
-              "unit": "mA",
-              "behaviours": [],
-              "low": 1000,
-              "slowDownRate": 2,
-              "consumInOnePeriod": 200
+            "connConfig": {
+              "host": "localhost",
+              "port": 27017,
+              "username": null,
+              "password": null,
+              "options": null,
+              "dbname": "tasdb"
             },
-            "sources": [
-              {
-                "type": "DATA_SOURCE_BOOLEAN",
-                "key": "motion_detector",
-                "id": "motion-detector-01",
-                "initValue": false,
-                "unit": null,
-                "behaviours": []
-              },
-              {
-                "type": "DATA_SOURCE_ENUM",
-                "key": "heating_level",
-                "id": "heating_level-01",
-                "initValue": "Normal",
-                "unit": null,
-                "behaviours": [],
-                "values": [
-                  "Low",
-                  "Normal",
-                  "High"
-                ]
-              },
-              {
-                "type": "DATA_SOURCE_FLOAT",
-                "key": "temperature",
-                "id": "temp-01",
-                "initValue": 20,
-                "unit": "C",
-                "behaviours": [],
-                "valueConstraints": {
-                  "min": -273,
-                  "max": 100,
-                  "regularMin": 0,
-                  "regularMax": 35,
-                  "step": 0.5
-                }
-              },
-              {
-                "type": "DATA_SOURCE_INTEGER",
-                "key": "blood_glucose_level",
-                "id": "blood-glucose-01",
-                "initValue": 5,
-                "unit": null,
-                "behaviours": [],
-                "valueConstraints": {
-                  "min": 0,
-                  "max": 10,
-                  "regularMin": 2,
-                  "regularMax": 8,
-                  "step": 2
-                }
-              }
-            ]
-          }
+            "devId": "super-sensor",
+            "dbname": null,
+            "startTime": 1587646200000,
+            "endTime": 1587649800000
+          },
+          "thingID": "medicalGW-01"
         }
       ],
-      "actuators": []
+      "actuators": [
+        {
+          "instanceId": "light-intensity-actuator",
+          "options": {
+            "topic": "custom-actuator-topic"
+          }
+        },
+        {
+          "instanceId": "heating-level-actuator"
+        }
+      ]
     }
   ]
 }

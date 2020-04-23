@@ -1,38 +1,42 @@
-{
-  "name": "DigitalHealthModel2",
-  "type": "SIMULATOR",
-  "things": [
-    {
-      "id": "medicalGW-01",
-      "scale": 1,
-      "protocol": "MQTT",
-      "connConfig": {
-        "host": "192.168.1.12",
-        "port": "1883",
-        "options": null
-      },
-      "sensors": [
-        {
-          "id": "super-sensor",
-          "disable": false,
-          "scale": 1,
-          "name": "Super Sensor",
+[
+  {
+    "id": "data-generator",
+    "name": "Super Sensor Data Generator",
+    "protocol": "DATABASE",
+    "scale": 1,
+    "connConfig": {
+      "host": "192.168.1.12",
+      "port": "27017",
+      "user": null,
+      "password": null,
+      "dbname": "tasdb",
+      "options": null
+    },
+    "sensors": [
+      {
+        "instanceId": "super-sensor",
+        "objectId": "3355",
+        "disable": false,
+        "scale": 1,
+        "name": "Super Sensor",
+        "isFromDatabase": false,
+        "userData": {
+          "project": "ENACT"
+        },
+        "options": {},
+        "dataSource": {
           "timePeriod": 5,
-          "isFromDatabase": false,
           "dosAttackSpeedUpRate": 5,
           "timeBeforeFailed": 20,
+          "isIPSOFormat": true,
           "sensorBehaviours": [
             "AB_LOW_ENERGY",
             "AB_OUT_OF_ENERGY"
           ],
-          "metaData": {
-            "project": "ENACT"
-          },
-          "options": {},
           "energy": {
             "type": "DATA_SOURCE_ENERGY",
             "key": "battery",
-            "id": "batter-01",
+            "resourceId": "batter-01",
             "initValue": 1500,
             "unit": "mA",
             "behaviours": [],
@@ -44,7 +48,7 @@
             {
               "type": "DATA_SOURCE_BOOLEAN",
               "key": "motion_detector",
-              "id": "motion-detector-01",
+              "resourceId": "motion-detector-01",
               "initValue": false,
               "unit": null,
               "behaviours": []
@@ -52,7 +56,7 @@
             {
               "type": "DATA_SOURCE_ENUM",
               "key": "heating_level",
-              "id": "heating_level-01",
+              "resourceId": "heating_level-01",
               "initValue": "Normal",
               "unit": null,
               "behaviours": [],
@@ -65,7 +69,7 @@
             {
               "type": "DATA_SOURCE_FLOAT",
               "key": "temperature",
-              "id": "temp-01",
+              "resourceId": "temp-01",
               "initValue": 20,
               "unit": "C",
               "behaviours": [],
@@ -80,7 +84,7 @@
             {
               "type": "DATA_SOURCE_INTEGER",
               "key": "blood_glucose_level",
-              "id": "blood-glucose-01",
+              "resourceId": "blood-glucose-01",
               "initValue": 5,
               "unit": null,
               "behaviours": [],
@@ -94,18 +98,8 @@
             }
           ]
         }
-      ],
-      "actuators": [
-        {
-          "id": "light-intensity-actuator",
-          "options": {
-            "topic": "custom-actuator-topic"
-          }
-        },
-        {
-          "id": "heating-level-actuator"
-        }
-      ]
-    }
-  ]
-}
+      }
+    ],
+    "actuators": []
+  }
+]

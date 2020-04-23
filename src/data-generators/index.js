@@ -32,14 +32,14 @@ const createDataGenerator = (id, connConfig, sensors, actuators) => {
           sensorData["options"] = {};
         }
         sensorData.options["devType"] = "SENSOR";
-        const { id, scale, disable } = sensorData;
+        const { instanceId, scale, disable } = sensorData;
         if (disable) continue;
         let nbSensors = scale ? scale : 1;
         if (nbSensors === 1) {
-          th.addSensor(id, sensorData);
+          th.addSensor(instanceId, sensorData);
         } else {
           for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
-            const sID = `${id}-${sensorIndex}`;
+            const sID = `${instanceId}-${sensorIndex}`;
             th.addSensor(sID, sensorData);
           }
         }
@@ -54,18 +54,18 @@ const createDataGenerator = (id, connConfig, sensors, actuators) => {
           actuatorData["options"] = {};
         }
         actuatorData.options["devType"] = "ACTUATOR";
-        const { id, scale, disable } = actuatorData;
+        const { instanceId, scale, disable } = actuatorData;
         if (disable) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
-          th.addSensor(id, actuatorData);
+          th.addSensor(instanceId, actuatorData);
         } else {
           for (
             let actuatorIndex = 0;
             actuatorIndex < nbActuators;
             actuatorIndex++
           ) {
-            const sID = `${id}-${actuatorIndex}`;
+            const sID = `${instanceId}-${actuatorIndex}`;
             th.addSensor(sID, actuatorData);
           }
         }

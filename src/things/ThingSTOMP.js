@@ -54,10 +54,10 @@ class ThingSTOMP extends Thing {
               }
             }
             console.error(
-              `[${this.id}] ERROR: cannot find the actuator ${array[4]}`
+              `[${this.thingId}] ERROR: cannot find the actuator ${array[4]}`
             );
           } else {
-            console.log(`[${this.id}] Ignore message: `, topic, body);
+            console.log(`[${this.thingId}] Ignore message: `, topic, body);
           }
         }
       }
@@ -72,7 +72,7 @@ class ThingSTOMP extends Thing {
     const stompClient = stompit.connect(stompConfig, (err, client) => {
       if (err) {
         console.error(
-          `[${this.id}] ERROR: cannot connect to STOMP broker`,
+          `[${this.thingId}] ERROR: cannot connect to STOMP broker`,
           err
         );
       } else {
@@ -102,7 +102,7 @@ class ThingSTOMP extends Thing {
     const newActuator = super.addActuator(id, options);
     if (options && options.topic) {
       if (!this.stompClient) {
-        console.error(`[${this.id}] stompClient is not ready yet!`);
+        console.error(`[${this.thingId}] stompClient is not ready yet!`);
       } else {
         this.stompClient.subscribe({destination: options.topic},(err2, message) => {
           if (err2) {
@@ -144,9 +144,9 @@ class ThingSTOMP extends Thing {
       topic = options.topic;
       // console.log('custom topic: ', topic);
     } else {
-      topic = `things/${this.id}/sensors/${publishID}`;
+      topic = `things/${this.thingId}/sensors/${publishID}`;
     }
-    console.log(`[${this.id}] Going to publish data on topic: ${topic}`, data);
+    console.log(`[${this.thingId}] Going to publish data on topic: ${topic}`, data);
     const frame = this.stompClient.send({destination: topic});
     frame.write(JSON.stringify(data));
     frame.end();

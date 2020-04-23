@@ -12,49 +12,39 @@
       "dbname": "tasdb",
       "options": null
     },
-    "sensors": [
+    "actuators": [
       {
-        "id": "super-sensor",
+        "instanceId": "super-actuator",
         "disable": false,
-        "scale": 1,
-        "name": "Super Sensor",
-        "isFromDatabase": false,
-        "userData": {
-          "project": "ENACT"
-        },
-        "options": {},
+        "name": "Super Actuator",
         "dataSource": {
+          "scale": 1,
           "timePeriod": 5,
+          "isFromDatabase": false,
           "dosAttackSpeedUpRate": 5,
           "timeBeforeFailed": 20,
+          "dbClient": null,
           "sensorBehaviours": [
             "AB_LOW_ENERGY",
             "AB_OUT_OF_ENERGY"
           ],
-          "energy": {
-            "type": "DATA_SOURCE_ENERGY",
-            "key": "battery",
-            "id": "batter-01",
-            "initValue": 1500,
-            "unit": "mA",
-            "behaviours": [],
-            "low": 1000,
-            "slowDownRate": 2,
-            "consumInOnePeriod": 200
+          "metaData": {
+            "project": "ENACT"
           },
+          "options": {},
           "sources": [
             {
               "type": "DATA_SOURCE_BOOLEAN",
-              "key": "motion_detector",
-              "id": "motion-detector-01",
+              "key": "light-switch",
+              "resourceId": "light-switch-01",
               "initValue": false,
               "unit": null,
               "behaviours": []
             },
             {
               "type": "DATA_SOURCE_ENUM",
-              "key": "heating_level",
-              "id": "heating_level-01",
+              "key": "security-level",
+              "resourceId": "security-level-01",
               "initValue": "Normal",
               "unit": null,
               "behaviours": [],
@@ -66,107 +56,36 @@
             },
             {
               "type": "DATA_SOURCE_FLOAT",
-              "key": "temperature",
-              "id": "temp-01",
+              "key": "air-condition",
+              "resourceId": "ac-01",
               "initValue": 20,
               "unit": "C",
               "behaviours": [],
               "valueConstraints": {
-                "min": -273,
-                "max": 100,
-                "regularMin": 0,
-                "regularMax": 35,
+                "min": 15,
+                "max": 30,
+                "regularMin": 20,
+                "regularMax": 25,
                 "step": 0.5
               }
             },
             {
               "type": "DATA_SOURCE_INTEGER",
-              "key": "blood_glucose_level",
-              "id": "blood-glucose-01",
+              "key": "audio-volume",
+              "resourceId": "audio-volume-01",
               "initValue": 5,
               "unit": null,
               "behaviours": [],
               "valueConstraints": {
                 "min": 0,
-                "max": 10,
-                "regularMin": 2,
-                "regularMax": 8,
-                "step": 2
+                "max": 100,
+                "regularMin": 40,
+                "regularMax": 80,
+                "step": 1
               }
             }
           ]
         }
-      }
-    ],
-    "actuators": [
-      {
-        "id": "super-actuator",
-        "disable": false,
-        "scale": 1,
-        "name": "Super Actuator",
-        "timePeriod": 5,
-        "isFromDatabase": false,
-        "dosAttackSpeedUpRate": 5,
-        "timeBeforeFailed": 20,
-        "dbClient": null,
-        "sensorBehaviours": [
-          "AB_LOW_ENERGY",
-          "AB_OUT_OF_ENERGY"
-        ],
-        "metaData": {
-          "project": "ENACT"
-        },
-        "options": {
-        },
-        "sources": [
-          {
-            "type": "DATA_SOURCE_BOOLEAN",
-            "key": "light-switch",
-            "id": "light-switch-01",
-            "initValue": false,
-            "unit": null,
-            "behaviours": []
-          },
-          {
-            "type": "DATA_SOURCE_ENUM",
-            "key": "security-level",
-            "id": "security-level-01",
-            "initValue": "Normal",
-            "unit": null,
-            "behaviours": [],
-            "values": ["Low","Normal","High"]
-          },
-          {
-            "type": "DATA_SOURCE_FLOAT",
-            "key": "air-condition",
-            "id": "ac-01",
-            "initValue": 20,
-            "unit": "C",
-            "behaviours": [],
-            "valueConstraints": {
-              "min": 15,
-              "max": 30,
-              "regularMin": 20,
-              "regularMax": 25,
-              "step": 0.5
-            }
-          },
-          {
-            "type": "DATA_SOURCE_INTEGER",
-            "key": "audio-volume",
-            "id": "audio-volume-01",
-            "initValue": 5,
-            "unit": null,
-            "behaviours": [],
-            "valueConstraints": {
-              "min": 0,
-              "max": 100,
-              "regularMin": 40,
-              "regularMax": 80,
-              "step": 1
-            }
-          }
-        ]
       }
     ]
   }
