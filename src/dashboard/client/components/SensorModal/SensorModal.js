@@ -24,7 +24,7 @@ const replayDataSource = () => ({
     password: null,
     options: null,
   },
-  devID: null,
+  devId: null,
   dbname: null,
   startTime: Date.now(),
   endTime: Date.now(),
@@ -36,12 +36,15 @@ const generateDataSource = () => ({
   dosAttackSpeedupRateL: 5,
   timeBeforeFailed: 20,
   sensorBehaviours: [],
+  withEnergy: false,
+  isIPSOFormat: false,
   energy: null,
   sources: [],
 });
 
 const initSensor = () => ({
-  id: `id-${Date.now()}`,
+  instanceId: `instanceId-${Date.now()}`,
+  objectId: null,
   name: `name-${Date.now()}`,
   enable: true,
   isFromDatabase: false,
@@ -156,54 +159,6 @@ class SensorModal extends Component {
       return { data: newData, error: null };
     });
   }
-
-  // handleDelete() {
-  //   let deleted = false;
-  //   const { thingID, data } = this.state;
-  //   const {
-  //     tool,
-  //     formID,
-  //     deleteSimulationSensor,
-  //     deleteDGSensor,
-  //     deleteDGActuator
-  //   } = this.props;
-  //   if (formID === "SENSOR-FORM") {
-  //     // Add new sensor
-  //     if (tool === "simulation") {
-  //       // Add sensor to a simulation model
-  //       deleteSimulationSensor(data.id, thingID);
-  //       this.props.showModal(null);
-  //     } else if (tool === "data-generator") {
-  //       // add sensor to a data-generator model
-  //       deleteDGSensor(data.id);
-  //       this.props.showModal(null);
-  //     } else {
-  //       console.log(`[ERROR] Undefined tool: ${tool}`);
-  //       this.setState({ error: `[ERROR] Undefined tool: ${tool}` });
-  //     }
-  //   } else if (formID === "ACTUATOR-FORM") {
-  //     // Add new actuator
-  //     if (tool === "data-generator") {
-  //       // add actuator to a data-generator model
-  //       deleteDGActuator(data.id);
-  //       this.props.showModal(null);
-  //     } else {
-  //       console.log(
-  //         `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
-  //       );
-  //       this.setState({
-  //         error: `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
-  //       });
-  //     }
-  //   } else {
-  //     console.log(`[ERROR] Invalid form: ${formID}`);
-  //     this.setState({ error: `[ERROR] Invalid form: ${formID}` });
-  //   }
-
-  //   if (!deleted) {
-  //     this.setState(`Cannot delete thing ${data.id}: Not found!`);
-  //   }
-  // }
 
   handleOk() {
     const { thingID, data } = this.state;
@@ -387,9 +342,16 @@ class SensorModal extends Component {
             />
           )}
           <FormTextItem
-            label="Id"
-            defaultValue={data.id}
-            onChange={(v) => this.onDataChange("id", v)}
+            label="Instance Id"
+            defaultValue={data.instanceId}
+            onChange={(v) => this.onDataChange("instanceId", v)}
+            placeholder="Identify of the device"
+          />
+          <FormTextItem
+            label="Object Id"
+            defaultValue={data.objectId}
+            onChange={(v) => this.onDataChange("objectId", v)}
+            placeholder="Identify of the type of device (IPSO Standard)"
           />
           <FormTextItem
             label="Name"

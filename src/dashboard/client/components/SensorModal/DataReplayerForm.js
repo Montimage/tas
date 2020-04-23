@@ -16,12 +16,12 @@ const DataReplayerForm = ({dataPath, dataSource, onDataChange}) => (
     />
     <FormTextItem
       label="sensor-id"
-      defaultValue={dataSource.devID}
-      onChange={(v) => onDataChange(`${dataPath}.devID`, v)}
+      defaultValue={dataSource.devId}
+      onChange={(v) => onDataChange(`${dataPath}.devId`, v)}
     />
     <FormTimeRangeItem
-      label="Time"
-      defaultValue={[dataSource.startTime, dataSource.endTime]}
+      label="Time Range"
+      defaultValue={[dataSource.startTime ? dataSource.startTime : Date.now(), dataSource.endTime ? dataSource.endTime : Date.now()]}
       onChange={(v) => {
         onDataChange(`${dataPath}.startTime`, v[0]);
         onDataChange(`${dataPath}.endTime`, v[1]);

@@ -13,7 +13,7 @@ import { UpOutlined } from "@ant-design/icons";
 const initEnergy = () => ({
   type: "DATA_SOURCE_ENERGY",
   key: "battery",
-  id: "battery-01",
+  resourceId: "battery-01",
   initValue: 1500,
   unit: "mA",
   behaviours: [],
@@ -25,7 +25,7 @@ const initEnergy = () => ({
 const initBoolean = () => ({
   type: "DATA_SOURCE_BOOLEAN",
   key: "your-boolean-data-key",
-  id: "boolean-measure-id",
+  resourceId: "boolean-measure-id",
   initValue: true,
   unit: "",
   behaviours: [],
@@ -34,7 +34,7 @@ const initBoolean = () => ({
 const initEnum = () => ({
   type: "DATA_SOURCE_ENUM",
   key: "your-enum-data-key",
-  id: "enum-measure-id",
+  resourceId: "enum-measure-id",
   initValue: "value1",
   unit: "",
   behaviours: [],
@@ -44,7 +44,7 @@ const initEnum = () => ({
 const initInteger = () => ({
   type: "DATA_SOURCE_INTEGER",
   key: "your-integer-data-key",
-  id: "integer-measure-id",
+  resourceId: "integer-measure-id",
   initValue: 10,
   unit: "",
   behaviours: [],
@@ -60,7 +60,7 @@ const initInteger = () => ({
 const initFloat = () => ({
   type: "DATA_SOURCE_FLOAT",
   key: "your-float-data-key",
-  id: "float-measure-id",
+  resourceId: "float-measure-id",
   initValue: 10.0,
   unit: "",
   behaviours: [],
@@ -122,6 +122,13 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
         onChange={(v) => onDataChange(`${dataPath}.timeBeforeFailed`, v)}
       />
     )}
+    <FormSwitchItem
+      label="IP Smart Object Format"
+      onChange={(v) => onDataChange(`${dataPath}.isIPSOFormat`, v)}
+      checked={dataSource.isIPSOFormat ? true : false}
+      checkedChildren={"Enable"}
+      unCheckedChildren={"Disable"}
+    />
     <Divider>
       <h3>Measurements</h3>
     </Divider>

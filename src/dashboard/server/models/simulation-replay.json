@@ -30,7 +30,7 @@
               "dbname": "tasdb",
               "options": {}
             },
-            "devID": "super-sensor",
+            "devId": "super-sensor",
             "startTime": 0,
             "endTime": 0
           }
@@ -38,13 +38,13 @@
       ],
       "actuators": [
         {
-          "id": "light-intensity-actuator",
+          "instanceId": "light-intensity-actuator",
           "options": {
             "topic": "custom-actuator-topic"
           }
         },
         {
-          "id": "heating-level-actuator"
+          "instanceId": "heating-level-actuator"
         }
       ]
     }

@@ -19,9 +19,9 @@ const DataSourceForm = ({
 }) => (
   <CollapseForm title={defaultValue.key}>
       <FormTextItem
-        label="Id"
-        defaultValue={defaultValue.id}
-        onChange={(v) => onChange(`${dataPath}.id`, v)}
+        label="Resource Id"
+        defaultValue={defaultValue.resourceId}
+        onChange={(v) => onChange(`${dataPath}.resourceId`, v)}
         placeholder="Optional"
       />
       <FormTextItem
