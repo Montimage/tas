@@ -37,6 +37,7 @@ class Sensor {
   }
 
   dataHandler(values) {
+    values["timestamp"] = Date.now();
     values["instanceId"] = this.instanceId;
     if (this.userData) {
       values["userData"] = this.userData;
@@ -59,7 +60,8 @@ class Sensor {
         this.dataSource = new DataReplayer(
           this.instanceId,
           (values) => this.dataHandler(values),
-          this.dataSourceConfig
+          this.dataSourceConfig,
+          this.options.devType ? this.options.devType : 'SENSOR'
         );
       } else {
         this.dataSource = new DataGenerator(

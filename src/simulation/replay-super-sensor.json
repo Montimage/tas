@@ -11,7 +11,8 @@
         },
         "sensors": [
             {
-                "id": "super-sensor-new-id",
+                "instanceId": "super-sensor-new-id",
+                "objectId": "3355",
                 "disable": false,
                 "scale": 1,
                 "name": "Super Sensor New Name",
@@ -29,7 +30,7 @@
                         "dbname": "tasdb",
                         "options": {}
                     },
-                    "devID": "super-sensor",
+                    "devId": "super-sensor",
                     "startTime": 0,
                     "endTime": 0
                 }

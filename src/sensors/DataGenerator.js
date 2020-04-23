@@ -77,7 +77,7 @@ class DataGenerator extends DeviceDataSource {
       const value = source.getValue();
       this.values[source.key] = value;
     }
-    this.dataHandler({ values: this.values, timestamp: Date.now() });
+    this.dataHandler({ values: this.values});
   }
 
   collectAndReportDataInIPSOFormat() {
@@ -101,7 +101,7 @@ class DataGenerator extends DeviceDataSource {
         ...value,
       });
     }
-    this.dataHandler({ values: this.values, timestamp: Date.now() });
+    this.dataHandler({ values: this.values});
   }
 
   start() {

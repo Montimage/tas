@@ -1,10 +1,6 @@
 const { ENACTDB, ActuatorSchema, SensorSchema } = require("../enact-mongoose");
-const Thing = require('./Thing');
-const {
-  ONLINE,
-  OFFLINE,
-  SIMULATING,
-} = require('../DeviceStatus');
+const Thing = require("./Thing");
+const { ONLINE, OFFLINE, SIMULATING } = require("../DeviceStatus");
 /**
  * The Thing class presents a THING component:
  * - List of sensors
@@ -25,22 +21,34 @@ class DataGenerator extends Thing {
    */
   initThing(callback, dbConfig) {
     if (!dbConfig) {
-      console.error(`[Data-Generator] ERROR: Missing database configuration:`, dataConfig);
+      console.error(
+        `[Data-Generator] ERROR: Missing database configuration:`,
+        dataConfig
+      );
       return;
     }
 
     if (dbConfig.user && dbConfig.password) {
-      this.enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname, {
-        userName: dbConfig.user,
-        password: dbConfig.password
-      });
+      this.enactDB = new ENACTDB(
+        dbConfig.host,
+        dbConfig.port,
+        dbConfig.dbname,
+        {
+          userName: dbConfig.user,
+          password: dbConfig.password,
+        }
+      );
     } else {
       this.enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname);
     }
 
-    this.enactDB.connect(error => {
+    this.enactDB.connect((error) => {
       if (error) {
-        console.log("[Data-Generator] ERROR: Failed to connect to database", error, dbConfig);
+        console.log(
+          "[Data-Generator] ERROR: Failed to connect to database",
+          error,
+          dbConfig
+        );
         exit(1);
       }
       console.log("[Data-Generator] Connected to database");
@@ -66,37 +74,24 @@ class DataGenerator extends Thing {
    * @param {String} publishID The ID of the publisher
    */
   publishData(data, publishID, options = null) {
-    if (options.devType === 'SENSOR') {
-      const newSensor = new SensorSchema({
-        timestamp: data.timestamp,
-        id: publishID,
-        value: data.value
-      });
-      newSensor.save((err, _data) => {
-        if (err) {
-          console.error(`[${this.thingId}] Failed to save generated data of sensor ${publishID}`);
-          console.error(err);
-        } else {
-          console.log(`[${this.thingId}] ${data.timestamp} ${JSON.stringify(data)}`);
-        }
-      });
-    } else if (options.devType === 'ACTUATOR') {
-      const newActuator = new ActuatorSchema({
-        timestamp: data.timestamp,
-        id: data.id,
-        value: data.value
-      });
-      newActuator.save((err, _data) => {
-        if (err) {
-          console.error(`[${this.thingId}] Failed to save generated data of actuator ${publishID}`);
-          console.error(err);
-        } else {
-          console.log(`[${this.thingId}] ${data.timestamp} ${JSON.stringify(data)}`);
-        }
-      });
+    let newData = null;
+    if (options.devType === "ACTUATOR") {
+      newData = new ActuatorSchema(data);
     } else {
-      console.error(`[${this.thingId}] ERROR: Invalid data type ${options.devType}`);
+      newData = new SensorSchema(data);
     }
+    newData.save((err, _data) => {
+      if (err) {
+        console.error(
+          `[${this.thingId}] Failed to save generated data of sensor ${publishID}`
+        );
+        console.error(err);
+      } else {
+        console.log(
+          `[${this.thingId}] ${data.timestamp} ${JSON.stringify(data)}`
+        );
+      }
+    });
   }
 }
 

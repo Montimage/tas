@@ -3,13 +3,15 @@ const { ENACTDB, SensorSchema, ActuatorSchema } = require("../enact-mongoose");
 const DeviceDataSource = require('./DeviceDataSource');
 
 class DataReplayer extends DeviceDataSource{
-  constructor(instanceId, dataHandler, dataResource) {
+  constructor(instanceId, dataHandler, dataResource, devType, objectId) {
     super(instanceId, dataHandler);
-    const { connConfig, devID, startTime, endTime } = dataResource;
+    const { connConfig, devId, startTime, endTime } = dataResource;
     this.connConfig = connConfig;
-    this.devID = devID;
+    this.objectId = objectId;
+    this.devId = devId;
     this.startTime = startTime;
     this.endTime = endTime ? endTime : Date.now();
+    this.devType = devType;
   }
 
   /**
@@ -22,7 +24,8 @@ class DataReplayer extends DeviceDataSource{
       if (this.status === SIMULATING) {
         setTimeout(() => {
           if (this.status === SIMULATING) {
-            this.dataHandler(listData[index]);
+            const {instanceId, objectId, values, timestamp, name } = listData[index];
+            this.dataHandler({instanceId, objectId, values, timestamp, name });
             if (index === listData.length - 1) {
               console.log(`[${this.instanceId}] Finished!`);
               this.status = OFFLINE;
@@ -51,9 +54,14 @@ class DataReplayer extends DeviceDataSource{
     }
     dbClient.connect(() => {
       console.log(`[${this.instanceId}] connected to database`);
-      if (this.options.devType === "SENSOR") {
+      const filter = { instanceId: this.devId };
+        if (this.objectId) {
+          filter['objectId'] = this.objectId;
+        }
+      if (this.devType === "SENSOR") {
+
         SensorSchema.findSensorDataBetweenTimes(
-          { id: this.devID },
+          filter,
           this.startTime,
           this.endTime,
           (err, listData) => {
@@ -80,9 +88,9 @@ class DataReplayer extends DeviceDataSource{
             }
           }
         );
-      } else if (this.options.devType === "ACTUATOR") {
+      } else if (this.devType === "ACTUATOR") {
         ActuatorSchema.findActuatorDataBetweenTimes(
-          { id: this.devID },
+          filter,
           this.startTime,
           this.endTime,
           (err, listData) => {

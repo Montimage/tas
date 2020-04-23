@@ -1,7 +1,7 @@
 [
   {
-    "id": "thing-01",
-    "name": "Thing 01",
+    "id": "onboard-thing-01",
+    "name": "On Board Thing 01",
     "protocol": "MQTT",
     "scale": 1,
     "connConfig": {
@@ -12,10 +12,10 @@
     "sensors": [
       {
         "instanceId": "0",
-        "objectId": "3304",
+        "objectId": "3313",
         "disable": false,
         "scale": 1,
-        "name": "Super Sensor",
+        "name": "Accelerometer",
         "isFromDatabase": false,
         "userData": {
           "project": "ENACT"
@@ -25,15 +25,16 @@
           "timePeriod": 5,
           "dosAttackSpeedUpRate": 5,
           "timeBeforeFailed": 20,
-          "isIPSOFormat": false,
+          "isIPSOFormat": true,
           "sensorBehaviours": [
             "AB_LOW_ENERGY",
             "AB_OUT_OF_ENERGY"
           ],
+          "withEnergy": true,
           "energy": {
             "type": "DATA_SOURCE_ENERGY",
             "resourceId": "battery",
-            "key": "batter-01",
+            "key": "energy",
             "initValue": 1500,
             "unit": "mA",
             "behaviours": [],
@@ -43,32 +44,10 @@
           },
           "sources": [
             {
-              "type": "DATA_SOURCE_BOOLEAN",
-              "resourceId": "motion_detector",
-              "key": "motion-detector-01",
-              "initValue": false,
-              "unit": null,
-              "behaviours": []
-            },
-            {
-              "type": "DATA_SOURCE_ENUM",
-              "resourceId": "heating_level",
-              "key": "heating_level-01",
-              "initValue": "Normal",
-              "unit": null,
-              "behaviours": [],
-              "values": [
-                "Low",
-                "Normal",
-                "High"
-              ]
-            },
-            {
               "type": "DATA_SOURCE_FLOAT",
-              "resourceId": "temperature",
-              "key": "temp-01",
-              "initValue": 20,
-              "unit": "C",
+              "resourceId": "5702",
+              "key": "x-value",
+              "initValue": 10,
               "behaviours": [],
               "valueConstraints": {
                 "min": -273,
@@ -79,18 +58,31 @@
               }
             },
             {
-              "type": "DATA_SOURCE_INTEGER",
-              "resourceId": "blood_glucose_level",
-              "key": "blood-glucose-01",
-              "initValue": 5,
-              "unit": null,
+              "type": "DATA_SOURCE_FLOAT",
+              "resourceId": "5703",
+              "key": "y-value",
+              "initValue": 10,
               "behaviours": [],
               "valueConstraints": {
-                "min": 0,
-                "max": 10,
-                "regularMin": 2,
-                "regularMax": 8,
-                "step": 2
+                "min": -273,
+                "max": 100,
+                "regularMin": 0,
+                "regularMax": 35,
+                "step": 0.5
+              }
+            },
+            {
+              "type": "DATA_SOURCE_FLOAT",
+              "resourceId": "5704",
+              "key": "z-value",
+              "initValue": 10,
+              "behaviours": [],
+              "valueConstraints": {
+                "min": -273,
+                "max": 100,
+                "regularMin": 0,
+                "regularMax": 35,
+                "step": 0.5
               }
             }
           ]

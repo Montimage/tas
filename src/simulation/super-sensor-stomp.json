@@ -11,7 +11,7 @@
     },
     "sensors": [
       {
-        "id": "super-sensor",
+        "instanceId": "super-sensor",
         "disable": false,
         "scale": 1,
         "name": "Super Sensor",
@@ -24,6 +24,7 @@
           "timePeriod": 5,
           "dosAttackSpeedUpRate": 5,
           "timeBeforeFailed": 20,
+          "isIPSOFormat": false,
           "sensorBehaviours": [
             "AB_LOW_ENERGY",
             "AB_OUT_OF_ENERGY"
@@ -31,7 +32,7 @@
           "energy": {
             "type": "DATA_SOURCE_ENERGY",
             "key": "battery",
-            "id": "batter-01",
+            "resourceId": "batter-01",
             "initValue": 1500,
             "unit": "mA",
             "behaviours": [],
@@ -43,7 +44,7 @@
             {
               "type": "DATA_SOURCE_BOOLEAN",
               "key": "motion_detector",
-              "id": "motion-detector-01",
+              "resourceId": "motion-detector-01",
               "initValue": false,
               "unit": null,
               "behaviours": []
@@ -51,7 +52,7 @@
             {
               "type": "DATA_SOURCE_ENUM",
               "key": "heating_level",
-              "id": "heating_level-01",
+              "resourceId": "heating_level-01",
               "initValue": "Normal",
               "unit": null,
               "behaviours": [],
@@ -64,7 +65,7 @@
             {
               "type": "DATA_SOURCE_FLOAT",
               "key": "temperature",
-              "id": "temp-01",
+              "resourceId": "temp-01",
               "initValue": 20,
               "unit": "C",
               "behaviours": [],
@@ -79,7 +80,7 @@
             {
               "type": "DATA_SOURCE_INTEGER",
               "key": "blood_glucose_level",
-              "id": "blood-glucose-01",
+              "resourceId": "blood-glucose-01",
               "initValue": 5,
               "unit": null,
               "behaviours": [],

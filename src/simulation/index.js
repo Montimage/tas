@@ -53,18 +53,18 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
     // Add actuators
     if (actuators) {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
-        const { id, scale, disable, options } = actuators[aIndex];
+        const { instanceId, scale, disable, options } = actuators[aIndex];
         if (disable) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
-          th.addActuator(id, options);
+          th.addActuator(instanceId, options);
         } else {
           for (
             let actuatorIndex = 0;
             actuatorIndex < nbActuators;
             actuatorIndex++
           ) {
-            const actID = `${id}-${actuatorIndex}`;
+            const actID = `${instanceId}-${actuatorIndex}`;
             th.addActuator(actID, options);
           }
         }
