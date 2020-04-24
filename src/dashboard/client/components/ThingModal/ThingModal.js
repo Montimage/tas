@@ -16,13 +16,15 @@ import { updateObjectByPath, deepCloneObject } from "../../utils";
 class ThingModal extends Component {
   constructor(props) {
     super(props);
+    const {tool} = props;
+    const isSimulation = tool === 'simulation';
     const initThing = {
       id: `thing-id-${Date.now()}`,
       name: `thing-name-${Date.now()}`,
-      protocol: "MQTT",
+      protocol: isSimulation ? "MQTT" : "DATABASE",
       connConfig: {
         host: "localhost",
-        port: 1883,
+        port: isSimulation ? 1883: 27017 ,
         options: null,
       },
       sensors: [],
