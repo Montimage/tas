@@ -109,8 +109,8 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
         label="DOS attack speedup rate"
         min={1}
         max={100}
-        defaultValue={dataSource.dosAttackSpeedupRate}
-        onChange={(v) => onDataChange(`${dataPath}.dosAttackSpeedupRate`, v)}
+        defaultValue={dataSource.dosAttackSpeedUpRate}
+        onChange={(v) => onDataChange(`${dataPath}.dosAttackSpeedUpRate`, v)}
       />
     )}
     {dataSource.sensorBehaviours.indexOf("AB_NODE_FAILED") > -1 && (

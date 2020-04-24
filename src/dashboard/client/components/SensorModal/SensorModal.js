@@ -33,7 +33,7 @@ const replayDataSource = () => ({
 const generateDataSource = () => ({
   timePeriod: 5,
   scale: 1,
-  dosAttackSpeedupRateL: 5,
+  dosAttackSpeedUpRate: 5,
   timeBeforeFailed: 20,
   sensorBehaviours: [],
   withEnergy: false,

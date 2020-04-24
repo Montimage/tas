@@ -146,7 +146,7 @@ class DataGenerator extends DeviceDataSource {
           this.sensorBehaviours.indexOf(abnormalBehaviours.AB_DOS_ATTACK) > -1
         ) {
           if (this.timePeriod === this.originalTimePeriod) {
-            this.timePeriod = this.timePeriod / this.dosAttackSpeedUpRate; // Increase 1 second
+            this.timePeriod = this.timePeriod / this.dosAttackSpeedUpRate;
             console.log(
               `[${this.instanceId}] Injecting DOS_ATTACK with new time period: ${this.timePeriod} (original: ${this.originalTimePeriod})`
             );
