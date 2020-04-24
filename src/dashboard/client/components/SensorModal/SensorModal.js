@@ -73,7 +73,7 @@ class SensorModal extends Component {
     let replayDS = deepCloneObject(replayDataSource());
     let generateDS = deepCloneObject(generateDataSource());
     let data = initSensor();
-    console.log(data);
+    // console.log(data);
     if (selectedData) {
       data = deepCloneObject(selectedData);
       if (data.isFromDatabase) {
@@ -153,7 +153,7 @@ class SensorModal extends Component {
   onDataChange(dataPath, value) {
     this.setState((prevState) => {
       const newData = { ...prevState.data };
-      console.log(dataPath, value);
+      // console.log(dataPath, value);
       updateObjectByPath(newData, dataPath, value);
       return { data: newData, error: null };
     });
@@ -361,6 +361,7 @@ class SensorModal extends Component {
               onDataChange={(dataPath, value) =>
                 this.onDataChange(dataPath, value)
               }
+              isSimulation={tool === 'simulation'}
             />
           )}
         </Form>

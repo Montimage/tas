@@ -98,7 +98,7 @@ class ThingModal extends Component {
   onDataChange(dataPath, value) {
     this.setState((prevState) => {
       const newData = { ...prevState.data };
-      console.log(dataPath, value);
+      // console.log(dataPath, value);
       updateObjectByPath(newData, dataPath, value);
       return { data: newData, error: null };
     });

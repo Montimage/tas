@@ -73,7 +73,12 @@ const initFloat = () => ({
   },
 });
 
-const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
+const DataGeneratorForm = ({
+  dataPath,
+  dataSource,
+  onDataChange,
+  isSimulation = true,
+}) => (
   <React.Fragment>
     <FormNumberItem
       label="Scale"
@@ -132,19 +137,23 @@ const DataGeneratorForm = ({ dataPath, dataSource, onDataChange }) => (
     <Divider>
       <h3>Measurements</h3>
     </Divider>
-    <FormSwitchItem
-      label="Energy Measurement"
-      onChange={(v) => onDataChange(`${dataPath}.withEnergy`, v)}
-      checked={dataSource.withEnergy ? true : false}
-      checkedChildren={"Enable"}
-      unCheckedChildren={"Disable"}
-    />
-    {dataSource.withEnergy && (
-      <EnergyForm
-        dataPath={`${dataPath}.energy`}
-        defaultValue={dataSource.energy ? dataSource.energy : initEnergy()}
-        onChange={(dPath, v) => onDataChange(dPath, v)}
-      />
+    {isSimulation && (
+      <React.Fragment>
+        <FormSwitchItem
+          label="Energy Measurement"
+          onChange={(v) => onDataChange(`${dataPath}.withEnergy`, v)}
+          checked={dataSource.withEnergy ? true : false}
+          checkedChildren={"Enable"}
+          unCheckedChildren={"Disable"}
+        />
+        {dataSource.withEnergy && (
+          <EnergyForm
+            dataPath={`${dataPath}.energy`}
+            defaultValue={dataSource.energy ? dataSource.energy : initEnergy()}
+            onChange={(dPath, v) => onDataChange(dPath, v)}
+          />
+        )}
+      </React.Fragment>
     )}
     <MultipleDataSources
       dataPath={`${dataPath}.sources`}
