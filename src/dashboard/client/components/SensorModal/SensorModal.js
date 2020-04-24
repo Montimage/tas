@@ -3,8 +3,7 @@ import { connect } from "react-redux";
 import TSModal from "../TSModal";
 import {
   addSimulationSensor,
-  addDGSensor,
-  addDGActuator,
+  addSimulationActuator,
   showModal,
   selectActuator,
   selectSensor,
@@ -57,9 +56,9 @@ class SensorModal extends Component {
   constructor(props) {
     super(props);
 
-    const { tool, model, selectedSensor, selectedActuator, formID } = props;
+    const { model, selectedSensor, selectedActuator, formID } = props;
     const thingIDs = [];
-    if (tool === "simulation" && model.things) {
+    if (model.things) {
       const { things } = model;
       for (let index = 0; index < things.length; index++) {
         thingIDs.push(things[index].id);
@@ -94,10 +93,10 @@ class SensorModal extends Component {
   }
 
   componentWillReceiveProps(newProps) {
-    const { tool, model, selectedSensor, selectedActuator, formID } = newProps;
+    const { model, selectedSensor, selectedActuator, formID } = newProps;
 
     const thingIDs = [];
-    if (tool === "simulation" && model.things) {
+    if (model.things) {
       const { things } = model;
       for (let index = 0; index < things.length; index++) {
         thingIDs.push(things[index].id);
@@ -163,44 +162,22 @@ class SensorModal extends Component {
   handleOk() {
     const { thingID, data } = this.state;
     const {
-      tool,
       formID,
       addSimulationSensor,
-      addDGSensor,
-      addDGActuator,
+      addSimulationActuator,
       showModal,
     } = this.props;
     if (formID === "SENSOR-FORM") {
       // Add new sensor
-      if (tool === "simulation") {
-        // Add sensor to a simulation model
         addSimulationSensor(thingID, data);
         showModal(null);
         this.props.selectSensor(null);
-      } else if (tool === "data-generator") {
-        // add sensor to a data-generator model
-        addDGSensor(data);
-        showModal(null);
-        this.props.selectSensor(null);
-      } else {
-        console.log(`[ERROR] Undefined tool: ${tool}`);
-        this.setState({ error: `[ERROR] Undefined tool: ${tool}` });
-      }
     } else if (formID === "ACTUATOR-FORM") {
       // Add new actuator
-      if (tool === "data-generator") {
         // add actuator to a data-generator model
-        addDGActuator(data);
+        addSimulationActuator(thingID, data);
         showModal(null);
         this.props.selectActuator(null);
-      } else {
-        console.log(
-          `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`
-        );
-        this.setState({
-          error: `[ERROR] Undefined tool or invalid form: ${tool}, ${formID}`,
-        });
-      }
     } else {
       console.log(`[ERROR] Invalid form: ${formID}`);
       this.setState({ error: `[ERROR] Invalid form: ${formID}` });
@@ -219,8 +196,7 @@ class SensorModal extends Component {
       tool,
       formID,
       addSimulationSensor,
-      addDGSensor,
-      addDGActuator,
+      addSimulationActuator,
       showModal,
       selectSensor,
       selectActuator,
@@ -234,7 +210,6 @@ class SensorModal extends Component {
         name: "New Sensor",
       };
       // Add new sensor
-      if (tool === "simulation") {
         // Add sensor to a simulation model
         addSimulationSensor(thingID, newData);
         selectSensor(newData);
@@ -242,18 +217,6 @@ class SensorModal extends Component {
           showModal("SENSOR-FORM");
         }, 1000);
         showModal(null);
-      } else if (tool === "data-generator") {
-        // add sensor to a data-generator model
-        addDGSensor(newData);
-        setTimeout(() => {
-          selectSensor(newData);
-          showModal("SENSOR-FORM");
-        }, 1000);
-        showModal(null);
-      } else {
-        console.log(`[ERROR] Undefined tool: ${tool}`);
-        this.setState({ error: `[ERROR] Undefined tool: ${tool}` });
-      }
     } else if (formID === "ACTUATOR-FORM") {
       // Add new actuator
       const newThingID = `act-${Date.now()}`;
@@ -264,7 +227,7 @@ class SensorModal extends Component {
       };
       if (tool === "data-generator") {
         // add actuator to a data-generator model
-        addDGActuator(newData);
+        addSimulationActuator(newData);
         setTimeout(() => {
           showModal("ACTUATOR-FORM");
         }, 1000);
@@ -333,14 +296,12 @@ class SensorModal extends Component {
             span: 14,
           }}
         >
-          {tool === "simulation" && (
-            <FormSelectItem
-              label="Thing"
-              defaultValue={thingID}
-              onChange={(v) => this.onThingChange(v)}
-              options={thingIDs}
-            />
-          )}
+          <FormSelectItem
+            label="Thing"
+            defaultValue={thingID}
+            onChange={(v) => this.onThingChange(v)}
+            options={thingIDs}
+          />
           <FormTextItem
             label="Instance Id"
             defaultValue={data.instanceId}
@@ -421,8 +382,8 @@ const mapDispatchToProps = (dispatch) => ({
   showModal: (modalID) => dispatch(showModal(modalID)),
   addSimulationSensor: (thingID, data) =>
     dispatch(addSimulationSensor({ thingID, sensor: data })),
-  addDGSensor: (data) => dispatch(addDGSensor(data)),
-  addDGActuator: (data) => dispatch(addDGActuator(data)),
+  addSimulationActuator: (thingID, data) =>
+    dispatch(addSimulationActuator({ thingID, actuator: data })),
   // deleteSimulationSensor: (id, thingID) =>
   //   dispatch(deleteSimulationSensor({ thingID, sensorID: id })),
   // deleteDGSensor: id => dispatch(deleteDGSensor(id)),
