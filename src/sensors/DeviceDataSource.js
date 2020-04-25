@@ -1,10 +1,10 @@
 const { SIMULATING, OFFLINE } = require("../DeviceStatus");
 
 class DeviceDataSource {
-  constructor(instanceId,dataHandler) {
+  constructor(id,dataHandler) {
     this.dataHandler = dataHandler;
     this.status = OFFLINE;
-    this.instanceId = instanceId;
+    this.id = id;
   }
 
   getStatus() {
@@ -17,11 +17,11 @@ class DeviceDataSource {
 
   stop() {
     if (this.status === OFFLINE) {
-      console.log(`[${this.instanceId}] is offline!`);
+      console.log(`[${this.id}] is offline!`);
     } else {
       this.status = OFFLINE;
       console.log(
-        `[${this.instanceId}] stopped at: ${new Date().toLocaleTimeString()}`
+        `[${this.id}] stopped at: ${new Date().toLocaleTimeString()}`
       );
     }
   }

@@ -16,7 +16,7 @@ import {
 } from "../FormItems";
 
 const initActuator = () => ({
-  instanceId: `act-id-${Date.now()}`,
+  id: `act-id-${Date.now()}`,
   objectId: null,
   name: `act-name-${Date.now()}`,
   options: null,
@@ -108,7 +108,7 @@ class ActuatorModal extends Component {
       selectActuator,
     } = this.props;
     const newActuatorID = `act-${Date.now()}`;
-    const newData = { ...this.state.data, instanceId: newActuatorID, objectId: this.state.objectId, name: 'New Actuator' };
+    const newData = { ...this.state.data, id: newActuatorID, objectId: this.state.objectId, name: 'New Actuator' };
     addSimulationActuator(thingID, newData);
     showModal(null);
     setTimeout(() => {
@@ -171,8 +171,8 @@ class ActuatorModal extends Component {
           />
           <FormTextItem
             label="Instance Id"
-            defaultValue={data.instanceId}
-            onChange={v => this.onDataChange("instanceId", v)}
+            defaultValue={data.id}
+            onChange={v => this.onDataChange("id", v)}
           />
           <FormTextItem
             label="Object Id"

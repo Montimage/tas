@@ -77,7 +77,7 @@ const DataGeneratorForm = ({
   dataPath,
   dataSource,
   onDataChange,
-  isSimulation = true,
+  showEnergyOption = true,
 }) => (
   <React.Fragment>
     <FormNumberItem
@@ -137,7 +137,7 @@ const DataGeneratorForm = ({
     <Divider>
       <h3>Measurements</h3>
     </Divider>
-    {isSimulation && (
+    {showEnergyOption && (
       <React.Fragment>
         <FormSwitchItem
           label="Energy Measurement"

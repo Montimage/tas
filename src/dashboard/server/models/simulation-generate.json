@@ -12,7 +12,7 @@
       },
       "sensors": [
         {
-          "instanceId": "super-sensor",
+          "id": "super-sensor",
           "disable": false,
           "scale": 1,
           "name": "Super Sensor",
@@ -99,13 +99,13 @@
       ],
       "actuators": [
         {
-          "instanceId": "light-intensity-actuator",
+          "id": "light-intensity-actuator",
           "options": {
             "topic": "custom-actuator-topic"
           }
         },
         {
-          "instanceId": "heating-level-actuator"
+          "id": "heating-level-actuator"
         }
       ]
     }

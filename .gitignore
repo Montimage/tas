@@ -4,3 +4,4 @@ node_modules/
 *.pdf
 *.log
 *.DS_Store
+docs/

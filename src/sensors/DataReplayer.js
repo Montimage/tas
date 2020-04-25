@@ -3,8 +3,8 @@ const { ENACTDB, SensorSchema, ActuatorSchema } = require("../enact-mongoose");
 const DeviceDataSource = require('./DeviceDataSource');
 
 class DataReplayer extends DeviceDataSource{
-  constructor(instanceId, dataHandler, dataResource, devType, objectId) {
-    super(instanceId, dataHandler);
+  constructor(id, dataHandler, dataResource, devType, objectId) {
+    super(id, dataHandler);
     const { connConfig, devId, startTime, endTime } = dataResource;
     this.connConfig = connConfig;
     this.objectId = objectId;
@@ -27,7 +27,7 @@ class DataReplayer extends DeviceDataSource{
             const {instanceId, objectId, values, timestamp, name } = listData[index];
             this.dataHandler({instanceId, objectId, values, timestamp, name });
             if (index === listData.length - 1) {
-              console.log(`[${this.instanceId}] Finished!`);
+              console.log(`[${this.id}] Finished!`);
               this.status = OFFLINE;
             }
           }
@@ -41,7 +41,7 @@ class DataReplayer extends DeviceDataSource{
     let dbClient = null;
     const { host, port, user, password, dbname } = this.connConfig;
     console.log(
-      `[${this.instanceId}] read data from database ${host}:${port}/${dbname}`
+      `[${this.id}] read data from database ${host}:${port}/${dbname}`
     );
     console.log(`StartTime: ${this.startTime}, endTime: ${this.endTime}`);
     if (user && password) {
@@ -53,7 +53,7 @@ class DataReplayer extends DeviceDataSource{
       dbClient = new ENACTDB(host, port, dbname);
     }
     dbClient.connect(() => {
-      console.log(`[${this.instanceId}] connected to database`);
+      console.log(`[${this.id}] connected to database`);
       const filter = { instanceId: this.devId };
         if (this.objectId) {
           filter['objectId'] = this.objectId;
@@ -67,20 +67,20 @@ class DataReplayer extends DeviceDataSource{
           (err, listData) => {
             if (err) {
               console.error(
-                `[${this.instanceId}] ERROR: cannot find any data`,
+                `[${this.id}] ERROR: cannot find any data ${this.devId}`,
                 err
               );
               this.status = OFFLINE;
             } else {
               console.log(
-                `[${this.instanceId}] Number of data: ${listData.length}`
+                `[${this.id}] Number of data: ${listData.length}`
               );
               dbClient.close();
               if (listData.length > 0) {
                 this.handleDataList(listData);
               } else {
                 console.error(
-                  `[${this.instanceId}] ERROR: cannot find any data`,
+                  `[${this.id}] ERROR: cannot find any data ${this.devId}`,
                   err
                 );
                 this.status = OFFLINE;
@@ -96,20 +96,20 @@ class DataReplayer extends DeviceDataSource{
           (err, listData) => {
             if (err) {
               console.error(
-                `[${this.instanceId}] ERROR: cannot find any data`,
+                `[${this.id}] ERROR: cannot find any data ${this.devId}`,
                 err
               );
               this.status = OFFLINE;
             } else {
               console.log(
-                `[${this.instanceId}] Number of data: ${listData.length}`
+                `[${this.id}] Number of data: ${listData.length}`
               );
               dbClient.close();
               if (listData.length > 0) {
                 this.handleDataList(listData);
               } else {
                 console.error(
-                  `[${this.instanceId}] ERROR: cannot find any data`,
+                  `[${this.id}] ERROR: cannot find any data ${this.devId}`,
                   err
                 );
                 this.status = OFFLINE;
@@ -119,7 +119,7 @@ class DataReplayer extends DeviceDataSource{
         );
       } else {
         console.error(
-          `[${this.instanceId}] ERROR: Unsupported device ${this.devType}`
+          `[${this.id}] ERROR: Unsupported device ${this.devType}`
         );
         this.status = OFFLINE;
       }

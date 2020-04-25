@@ -5,8 +5,8 @@ const DataSource = require("./data-sources/DataSource");
 const DeviceDataSource = require("./DeviceDataSource");
 
 class DataGenerator extends DeviceDataSource {
-  constructor(instanceId, dataHandler, dataResourceConfig, objectId) {
-    super(instanceId, dataHandler);
+  constructor(id, dataHandler, dataResourceConfig, objectId) {
+    super(id, dataHandler);
     const {
       timePeriod,
       sources,
@@ -31,7 +31,7 @@ class DataGenerator extends DeviceDataSource {
         timeBeforeFailed === 0
       ) {
         console.error(
-          `[${this.instanceId}] Cannot initialize this sensor! timeBeforeFailed is 0`
+          `[${this.id}] Cannot initialize this sensor! timeBeforeFailed is 0`
         );
         return null;
       }
@@ -40,7 +40,7 @@ class DataGenerator extends DeviceDataSource {
         dosAttackSpeedUpRate === 0
       ) {
         console.error(
-          `[${this.instanceId}] Cannot initialize this sensor! dosAttackSpeedUpRate is 0`
+          `[${this.id}] Cannot initialize this sensor! dosAttackSpeedUpRate is 0`
         );
         return null;
       }
@@ -48,7 +48,7 @@ class DataGenerator extends DeviceDataSource {
     if (energy && withEnergy) {
       if (energy.type !== ds.DS_ENERGY) {
         console.warn(
-          `[${this.instanceId}] Energy data source is invalid: ${energy.type}`
+          `[${this.id}] Energy data source is invalid: ${energy.type}`
         );
       }
       const energySource = new DataSource(energy.key, ds.DS_ENERGY, energy);
@@ -87,7 +87,7 @@ class DataGenerator extends DeviceDataSource {
       const value = this.energy.getValue();
       this.values.push({
         objectId: this.objectId,
-        instanceId: this.instanceId,
+        instanceId: this.id,
         ...value,
       });
     }
@@ -97,7 +97,7 @@ class DataGenerator extends DeviceDataSource {
       const value = source.getValue();
       this.values.push({
         objectId: this.objectId,
-        instanceId: this.instanceId,
+        instanceId: this.id,
         ...value,
       });
     }
@@ -121,7 +121,7 @@ class DataGenerator extends DeviceDataSource {
           this.sensorBehaviours.indexOf(abnormalBehaviours.AB_NODE_FAILED) > -1
         ) {
           if (currentTime - this.startedTime >= this.timeBeforeFailed * 1000) {
-            console.log(`[${this.instanceId}] Going to FAIL!`);
+            console.log(`[${this.id}] Going to FAIL!`);
             this.stop();
           }
         }
@@ -134,7 +134,7 @@ class DataGenerator extends DeviceDataSource {
           if (this.timePeriod === this.originalTimePeriod) {
             this.timePeriod += 1; // Increase 1 second
             console.log(
-              `[${this.instanceId}] Injecting SLOW_DOS_ATTACK with new time period: ${this.timePeriod} (original: ${this.originalTimePeriod})`
+              `[${this.id}] Injecting SLOW_DOS_ATTACK with new time period: ${this.timePeriod} (original: ${this.originalTimePeriod})`
             );
             clearInterval(timerID);
             return this.start();
@@ -148,7 +148,7 @@ class DataGenerator extends DeviceDataSource {
           if (this.timePeriod === this.originalTimePeriod) {
             this.timePeriod = this.timePeriod / this.dosAttackSpeedUpRate;
             console.log(
-              `[${this.instanceId}] Injecting DOS_ATTACK with new time period: ${this.timePeriod} (original: ${this.originalTimePeriod})`
+              `[${this.id}] Injecting DOS_ATTACK with new time period: ${this.timePeriod} (original: ${this.originalTimePeriod})`
             );
             clearInterval(timerID);
             return this.start();
@@ -162,7 +162,7 @@ class DataGenerator extends DeviceDataSource {
             -1
           ) {
             if (this.energy.value <= 0) {
-              console.log(`[${this.instanceId}] Out of energy. Going to STOP!`);
+              console.log(`[${this.id}] Out of energy. Going to STOP!`);
               this.stop();
             }
           }
@@ -173,7 +173,7 @@ class DataGenerator extends DeviceDataSource {
           if (low_energy_index > -1) {
             if (this.energy.value <= this.energy.dataGenerator.low) {
               console.log(
-                `[${this.instanceId}] Low energy. Going to change the frequency!`
+                `[${this.id}] Low energy. Going to change the frequency!`
               );
               this.timePeriod =
                 this.timePeriod * this.energy.dataGenerator.slowDownRate;

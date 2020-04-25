@@ -42,7 +42,7 @@ const generateDataSource = () => ({
 });
 
 const initSensor = () => ({
-  instanceId: `instanceId-${Date.now()}`,
+  id: `id-${Date.now()}`,
   objectId: null,
   name: `name-${Date.now()}`,
   enable: true,
@@ -304,8 +304,8 @@ class SensorModal extends Component {
           />
           <FormTextItem
             label="Instance Id"
-            defaultValue={data.instanceId}
-            onChange={(v) => this.onDataChange("instanceId", v)}
+            defaultValue={data.id}
+            onChange={(v) => this.onDataChange("id", v)}
             placeholder="Identify of the device"
           />
           <FormTextItem
@@ -361,7 +361,7 @@ class SensorModal extends Component {
               onDataChange={(dataPath, value) =>
                 this.onDataChange(dataPath, value)
               }
-              isSimulation={tool === 'simulation'}
+              showEnergyOption={tool === 'simulation' && formID === 'SENSOR-FORM'}
             />
           )}
         </Form>

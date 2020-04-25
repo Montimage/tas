@@ -37,14 +37,14 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
           sensorData["options"] = {};
         }
         sensorData.options["devType"] = "SENSOR";
-        const { instanceId, scale, disable } = sensorData;
+        const { id, scale, disable } = sensorData;
         if (disable) continue;
         let nbSensors = scale ? scale : 1;
         if (nbSensors === 1) {
-          th.addSensor(instanceId, sensorData);
+          th.addSensor(id, sensorData);
         } else {
           for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
-            const sID = `${instanceId}-${sensorIndex}`;
+            const sID = `${id}-${sensorIndex}`;
             th.addSensor(sID, sensorData);
           }
         }
@@ -53,18 +53,18 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
     // Add actuators
     if (actuators) {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
-        const { instanceId, scale, disable, options } = actuators[aIndex];
+        const { id, scale, disable, options } = actuators[aIndex];
         if (disable) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
-          th.addActuator(instanceId, options);
+          th.addActuator(id, options);
         } else {
           for (
             let actuatorIndex = 0;
             actuatorIndex < nbActuators;
             actuatorIndex++
           ) {
-            const actID = `${instanceId}-${actuatorIndex}`;
+            const actID = `${id}-${actuatorIndex}`;
             th.addActuator(actID, options);
           }
         }

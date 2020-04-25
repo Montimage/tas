@@ -55,8 +55,8 @@ class Thing {
    * @param {Object} options Options: { maxNumberOfMessage, timeBeforeFailed, dbClient, sensorBehaviours, energy, sources, metaData }
    * @param {Object} options The publish options
    */
-  addSensor (instanceId, sensorData) {
-    const newSensor = new Sensor(instanceId, sensorData, (data, publishID, options) => {
+  addSensor (id, sensorData) {
+    const newSensor = new Sensor(id, sensorData, (data, publishID, options) => {
       this.publishData(data, publishID, options);
     });
     this.sensors.push(newSensor);
@@ -64,7 +64,7 @@ class Thing {
     if (this.status === SIMULATING ) {
       this.sensors[this.sensors.length - 1].start();
     }
-    console.log(`[${this.thingId}] added new sensor ${instanceId}`);
+    console.log(`[${this.thingId}] added new sensor ${id}`);
     return true;
   }
 

@@ -11,7 +11,7 @@
     },
     "sensors": [
       {
-        "instanceId": "0",
+        "id": "0",
         "objectId": "3313",
         "disable": false,
         "scale": 1,
@@ -80,7 +80,7 @@
         }
       },
       {
-        "instanceId": "0",
+        "id": "0",
         "objectId": "3336",
         "disable": false,
         "scale": 1,

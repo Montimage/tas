@@ -11,7 +11,7 @@
         },
         "sensors": [
             {
-                "instanceId": "super-sensor-new-id",
+                "id": "super-sensor-new-id",
                 "objectId": "3355",
                 "disable": false,
                 "scale": 1,

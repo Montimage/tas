@@ -11,7 +11,7 @@
     },
     "actuators": [
       {
-        "instanceId": "super-actuator-generator",
+        "id": "super-actuator-generator",
         "disable": false,
         "scale": 1,
         "name": "Super Actuator",

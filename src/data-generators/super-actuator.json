@@ -14,7 +14,7 @@
     },
     "actuators": [
       {
-        "instanceId": "super-actuator",
+        "id": "super-actuator",
         "disable": false,
         "name": "Super Actuator",
         "dataSource": {

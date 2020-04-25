@@ -11,7 +11,7 @@
     },
     "actuators": [
       {
-        "instanceId": "super-actuator-new-id",
+        "id": "super-actuator-new-id",
         "disable": false,
         "scale": 1,
         "name": "Super Actuator New Name",

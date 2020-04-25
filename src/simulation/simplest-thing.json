@@ -10,7 +10,7 @@
     },
     "sensors": [
       {
-        "instanceId": "0",
+        "id": "0",
         "name": "Simplest Sensor",
         "isFromDatabase": false,
         "dataSource": {

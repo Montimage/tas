@@ -38,13 +38,13 @@
       ],
       "actuators": [
         {
-          "instanceId": "light-intensity-actuator",
+          "id": "light-intensity-actuator",
           "options": {
             "topic": "custom-actuator-topic"
           }
         },
         {
-          "instanceId": "heating-level-actuator"
+          "id": "heating-level-actuator"
         }
       ]
     }
