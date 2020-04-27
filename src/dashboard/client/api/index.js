@@ -1,6 +1,6 @@
 // read and pass the environment variables into reactjs application
-const URL = `http://localhost:31057`;
-// const URL = "";
+// const URL = `http://localhost:31057`;
+const URL = "";
 
 const requestModel = async (tool) => {
   const url = `${URL}/api/${tool}/model`;

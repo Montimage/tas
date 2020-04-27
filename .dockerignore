@@ -1,0 +1,9 @@
+node_modules/
+npm-debug.log
+.vscode/
+docs/
+docker/
+genes-models/
+node-red-flows/
+light-controller.png
+src/dashboard/client/

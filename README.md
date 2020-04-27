@@ -143,6 +143,28 @@ Publish a message
 ```shell
 mosquitto_pub --host 192.168.0.11 --port 1882 -t "ext-01-sub-topic" -m "Hello World"
 ```
+### Build docker image
+
+Build a new version
+```
+npm run build
+```
+Create docker images
+```
+docker build -t montimage/iot_test_and_simulation .
+```
+Update new image to docker hub
+
+```
+docker push montimage/iot_test_and_simulation:latest
+```
+
+Start a new container
+
+```
+docker run --name tas -d -p 8080:31057 montimage/iot_test_and_simulation
+```
+
 
 ### docker useful commands
 
