@@ -1,7 +1,7 @@
 {
   "id": "rssi-00",
   "objectId": 3300,
-  "disable": false,
+  "enable": true,
   "scale": 1,
   "name": "Receive Signal Strength Indication",
   "isFromDatabase": false,

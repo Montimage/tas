@@ -1,7 +1,7 @@
 {
   "id": "rfid-00",
   "objectId": 3313,
-  "disable": false,
+  "enable": true,
   "scale": 1,
   "name": "Radio Frequency Identification",
   "isFromDatabase": false,

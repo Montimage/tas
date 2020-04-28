@@ -34,9 +34,9 @@ const createThing = (thingId, protocol, connConfig, actuators) => {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
         const actuatorData = actuators[aIndex];
         actuatorData["devType"] = "ACTUATOR";
-        const { id, scale, disable, objectId, topic } = actuatorData;
+        const { id, scale, enable, objectId, topic } = actuatorData;
         let topicPrefix = `things/${thingId}/actuators${objectId ? `/${objectId}`:''}/`;
-        if (disable) continue;
+        if (enable === false) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
           if (!topic) {
@@ -69,7 +69,8 @@ const createThing = (thingId, protocol, connConfig, actuators) => {
  */
 const startSimulation = (thingConfigs) => {
   for (let index = 0; index < thingConfigs.length; index++) {
-    const { scale, id, protocol, connConfig, actuators } = thingConfigs[index];
+    const { scale, id, protocol, connConfig, actuators, enable } = thingConfigs[index];
+    if (enable === false) continue;
     let nbThings = scale ? scale : 1;
     const proto = protocol.toUpperCase();
     if (nbThings === 1) {

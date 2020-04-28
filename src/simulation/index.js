@@ -34,8 +34,8 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
       for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
         const sensorData = sensors[sIndex];
         sensorData['devType'] = 'SENSOR';
-        const { id, scale, disable, objectId } = sensorData;
-        if (disable) continue;
+        const { id, scale, enable, objectId } = sensorData;
+        if (enable === false) continue;
         let nbSensors = scale ? scale : 1;
         if (nbSensors === 1) {
           th.addSensor(id, sensorData, objectId);
@@ -51,8 +51,8 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
     if (actuators) {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
         const actuatorData = actuators[aIndex];
-        const { id, scale, disable, objectId } = actuatorData;
-        if (disable) continue;
+        const { id, scale, enable, objectId } = actuatorData;
+        if (enable === false) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
           th.addActuator(id, actuatorData, objectId);
@@ -88,7 +88,9 @@ const startSimulator = (thingConfigs) => {
       connConfig,
       sensors,
       actuators,
+      enable,
     } = thingConfigs[index];
+    if (enable === false) continue; // skip this thing
     let nbThings = scale ? scale : 1;
     const proto = protocol.toUpperCase();
     if (nbThings === 1) {

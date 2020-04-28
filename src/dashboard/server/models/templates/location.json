@@ -1,7 +1,7 @@
 {
   "id": "location-00",
   "objectId": 3336,
-  "disable": false,
+  "enable": true,
   "scale": 1,
   "name": "GPS",
   "isFromDatabase": false,

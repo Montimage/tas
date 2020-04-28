@@ -29,8 +29,8 @@ const createDataGenerator = (id, connConfig, sensors, actuators) => {
       for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
         const sensorData = sensors[sIndex];
         sensorData['devType'] = "SENSOR";
-        const { id, scale, disable } = sensorData;
-        if (disable) continue;
+        const { id, scale, enable } = sensorData;
+        if (enable === false) continue;
         let nbSensors = scale ? scale : 1;
         if (nbSensors === 1) {
           th.addSensor(id, sensorData);
@@ -48,8 +48,8 @@ const createDataGenerator = (id, connConfig, sensors, actuators) => {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
         const actuatorData = actuators[aIndex];
         actuatorData['devType'] = "ACTUATOR";
-        const { id, scale, disable } = actuatorData;
-        if (disable) continue;
+        const { id, scale, enable } = actuatorData;
+        if (enable === false) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
           th.addSensor(id, actuatorData);
@@ -78,13 +78,14 @@ const createDataGenerator = (id, connConfig, sensors, actuators) => {
  */
 const startDataGenerator = (generatorConfigs) => {
   for (let index = 0; index < generatorConfigs.length; index++) {
-    const { id, protocol, connConfig, sensors, actuators } = generatorConfigs[
+    const { id, protocol, connConfig, sensors, actuators, enable } = generatorConfigs[
       index
     ];
     if (protocol.toUpperCase() !== "DATABASE") {
       console.error(`[Data-Generator] ERROR: Unsupported protocol ${protocol}`);
       continue;
     }
+    if (enable === false) continue;
     createDataGenerator(id, connConfig, sensors, actuators);
   }
 };

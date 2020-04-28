@@ -1,7 +1,7 @@
 {
   "id": "display-00",
   "objectId": 3306,
-  "disable": false,
+  "enable": true,
   "scale": 1,
   "name": "Display",
   "isFromDatabase": false,

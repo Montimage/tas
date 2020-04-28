@@ -1,7 +1,7 @@
 {
   "id": "led-00",
   "objectId": 3335,
-  "disable": false,
+  "enable": true,
   "scale": 1,
   "name": "LED",
   "isFromDatabase": false,

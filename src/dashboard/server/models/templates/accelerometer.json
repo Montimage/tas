@@ -1,7 +1,7 @@
 {
   "id": "accelerometer-00",
   "objectId": 3313,
-  "disable": false,
+  "enable": true,
   "scale": 1,
   "name": "Accelerometer",
   "isFromDatabase": false,

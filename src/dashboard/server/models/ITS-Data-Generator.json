@@ -2,7 +2,8 @@
   "name": "ITS Data-Generator",
   "things": [
     {
-      "id": "OnBoardGW-01",
+      "id": "on-board-gw-01",
+      "name":"OnBoard Gateway 01",
       "scale": 1,
       "protocol": "DATABASE",
       "connConfig": {
@@ -11,11 +12,12 @@
         "topic": null,
         "dbname": "tasdb"
       },
+      "enable": true,
       "sensors": [
         {
           "id": "accelerometer-00",
           "objectId": 3313,
-          "disable": false,
+          "enable": true,
           "scale": 1,
           "name": "Accelerometer",
           "isFromDatabase": false,
@@ -122,7 +124,7 @@
         {
           "id": "location-00",
           "objectId": 3336,
-          "disable": false,
+          "enable": true,
           "scale": 1,
           "name": "GPS",
           "isFromDatabase": false,
@@ -220,7 +222,7 @@
         {
           "id": "rfid-00",
           "objectId": 3313,
-          "disable": false,
+          "enable": true,
           "scale": 1,
           "name": "Radio Frequency Identification",
           "isFromDatabase": false,
@@ -266,7 +268,7 @@
         {
           "id": "rssi-00",
           "objectId": 3300,
-          "disable": false,
+          "enable": true,
           "scale": 1,
           "name": "Receive Signal Strength Indication",
           "isFromDatabase": false,
@@ -347,7 +349,7 @@
         {
           "id": "led-00",
           "objectId": 3335,
-          "disable": false,
+          "enable": true,
           "scale": 1,
           "name": "LED",
           "isFromDatabase": false,
@@ -394,7 +396,7 @@
         {
           "id": "display-00",
           "objectId": 3306,
-          "disable": false,
+          "enable": true,
           "scale": 1,
           "name": "Display",
           "isFromDatabase": false,
