@@ -1,0 +1,33 @@
+{
+  "name": "ITS Simulation",
+  "things": [
+    {
+      "id": "OnBoardGW-01",
+      "scale": 1,
+      "protocol": "MQTT",
+      "connConfig": {
+        "host": "192.168.1.12",
+        "port": "1883",
+        "options": null
+      },
+      "actuators": [
+        {
+          "id": "led-00",
+          "objectId": 3335,
+          "disable": false,
+          "scale": 1,
+          "name": "LED",
+          "topic": null
+        },
+        {
+          "id": "display-00",
+          "objectId": 3306,
+          "disable": false,
+          "scale": 1,
+          "name": "Display",
+          "topic": null
+        }
+      ]
+    }
+  ]
+}

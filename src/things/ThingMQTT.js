@@ -1,10 +1,6 @@
 const mqtt = require("mqtt");
-const Thing = require('./Thing');
-const {
-  ONLINE,
-  OFFLINE,
-  SIMULATING,
-} = require('../DeviceStatus');
+const Thing = require("./Thing");
+const { ONLINE, OFFLINE, SIMULATING } = require("../DeviceStatus");
 /**
  * The Thing class presents a THING component:
  * - List of sensors
@@ -27,8 +23,11 @@ class ThingMQTT extends Thing {
    * @param {String} message payload of the received packet
    * @param {Object} packet received packet, as defined in mqtt-packet
    */
-  handleMQTTMessage (topic, message, packet) {
-    console.log(`[${this.thingId}] received: ${this.mqttClient.options.href} ${topic}`, message);
+  handleMQTTMessage(topic, message, packet) {
+    console.log(
+      `[${this.thingId}] received: ${this.mqttClient.options.href} ${topic}`,
+      message
+    );
     if (this.mqttTopics[topic]) {
       // Check for the custom topic first
       const actuators = this.mqttTopics[topic];
@@ -39,8 +38,8 @@ class ThingMQTT extends Thing {
       }
     } else {
       if (topic.startsWith(this.actuatedTopic)) {
-        const subTopic = topic.replace(this.actuatedTopic,'');
-        const array = subTopic.split('/');
+        const subTopic = topic.replace(this.actuatedTopic, "");
+        const array = subTopic.split("/");
         // find the actuator id in the subtopic
         for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
           const actuator = this.actuators[aIndex];
@@ -49,7 +48,9 @@ class ThingMQTT extends Thing {
             return actuator.showStatus();
           }
         }
-        console.error(`[${this.thingId}] ERROR: cannot find the actuator ${array[4]}`);
+        console.error(
+          `[${this.thingId}] ERROR: cannot find the actuator ${array[4]}`
+        );
       } else {
         console.log(`[${this.thingId}] Ignore message: `, topic, message);
       }
@@ -61,37 +62,44 @@ class ThingMQTT extends Thing {
    * @param {Function} callback The callback function
    */
   initThing(callback, mqttConfig) {
-      const mqttBrokerURL = `mqtt://${mqttConfig.host}:${mqttConfig.port}`;
-      let mqttClient = null;
-      if (mqttConfig.options) {
-        mqttClient = mqtt.connect(mqttBrokerURL, mqttConfig.options);
-      } else {
-        mqttClient = mqtt.connect(mqttBrokerURL);
-      }
+    const mqttBrokerURL = `mqtt://${mqttConfig.host}:${mqttConfig.port}`;
+    let mqttClient = null;
+    if (mqttConfig.options) {
+      mqttClient = mqtt.connect(mqttBrokerURL, mqttConfig.options);
+    } else {
+      mqttClient = mqtt.connect(mqttBrokerURL);
+    }
 
-      mqttClient.on('connect', () => {
-        console.log(`[${this.thingId}] connected to MQTT broker ${mqttBrokerURL}`);
-        this.mqttClient = mqttClient;
-        this.setStatus(ONLINE);
-        // Subscribe to get the downstream data for actuators
-        this.mqttClient.subscribe(`${this.actuatedTopic}#`);
-        console.log(`[${this.thingId}] listening actuated data on channel: ${this.actuatedTopic}#`);
-        super.initThing(callback);
-      });
+    mqttClient.on("connect", () => {
+      console.log(
+        `[${this.thingId}] connected to MQTT broker ${mqttBrokerURL}`
+      );
+      this.mqttClient = mqttClient;
+      this.setStatus(ONLINE);
+      // Subscribe to get the downstream data for actuators
+      this.mqttClient.subscribe(`${this.actuatedTopic}#`);
+      console.log(
+        `[${this.thingId}] listening actuated data on channel: ${this.actuatedTopic}#`
+      );
+      super.initThing(callback);
+    });
 
-      mqttClient.on('error', (err) => {
-        console.error(`[${this.thingId}] ERROR: cannot connect to MQTT broker`, err);
-      });
+    mqttClient.on("error", (err) => {
+      console.error(
+        `[${this.thingId}] ERROR: cannot connect to MQTT broker`,
+        err
+      );
+    });
 
-      mqttClient.on('offline', () => {
-        console.log(`[${this.thingId}] gone offline!`);
-        this.setStatus(OFFLINE);
-      });
+    mqttClient.on("offline", () => {
+      console.log(`[${this.thingId}] gone offline!`);
+      this.setStatus(OFFLINE);
+    });
 
-      mqttClient.on('message', (topic, message, packet) => {
-        // console.log(`[${this.thingId}] received message on topic: ${topic}`);
-        this.handleMQTTMessage(topic, message.toString(), packet);
-      });
+    mqttClient.on("message", (topic, message, packet) => {
+      // console.log(`[${this.thingId}] received message on topic: ${topic}`);
+      this.handleMQTTMessage(topic, message.toString(), packet);
+    });
   }
 
   /**
@@ -99,19 +107,18 @@ class ThingMQTT extends Thing {
    * @param {String} id The actuator id
    * @param {Object} options The options for actuator
    */
-  addActuator(id, options) {
-    const newActuator = super.addActuator(id, options);
-    if (options && options.topic) {
-      if (!this.mqttClient) {
-        console.error(`[${this.thingId}] mqttClient is not ready yet!`);
-      } else {
-        this.mqttClient.subscribe(options.topic);
-        if (!this.mqttTopics[options.topic]) {
-          this.mqttTopics[options.topic] = [];
-        }
-        this.mqttTopics[options.topic].push(newActuator);
-      }
+  addActuator(id, actuatorData, objectId = null) {
+    const newActuator = super.addActuator(id, actuatorData, objectId);
+    if (!this.mqttClient) {
+      console.error(`[${this.thingId}] mqttClient is not ready yet!`);
+      return;
     }
+
+    this.mqttClient.subscribe(newActuator.topic);
+    if (!this.mqttTopics[newActuator.topic]) {
+      this.mqttTopics[newActuator.topic] = [];
+    }
+    this.mqttTopics[newActuator.topic].push(newActuator);
   }
 
   /**
@@ -128,23 +135,20 @@ class ThingMQTT extends Thing {
   /**
    * Override publish data function to publish data via mqtt channel
    * @param {Object} data Data to be published
-   * @param {String} publishID The ID of the publisher
+   * @param {Object} sensor The publisher
    */
-  publishData(data, publishID, options = null) {
-    // super.publishData(data,publishID);
+  publishData(data, sensor) {
+    if (!data) return ;
     let publishTopic = null;
-    if (options) {
-      const {topic, ipsoTopic} = options;
-      if (topic) {
-        publishTopic = topic;
-      } else if (ipsoTopic) {
-        publishTopic = `things/${this.thingId}/sensors/${ipsoTopic}`;
-      }
+    if (sensor.topic) {
+        publishTopic = sensor.topic;
+    } else {
+      publishTopic = `things/${this.thingId}/sensors/${sensor.topicEnd}`;
     }
-    if (!publishTopic) {
-      publishTopic = `things/${this.thingId}/sensors/${publishID}`;
-    }
-    console.log(`[${this.thingId}] published: ${this.mqttClient.options.href} ${publishTopic}`, data);
+    console.log(
+      `[${this.thingId}] published: ${this.mqttClient.options.href} ${publishTopic}`,
+      data
+    );
     this.mqttClient.publish(publishTopic, JSON.stringify(data));
   }
 }

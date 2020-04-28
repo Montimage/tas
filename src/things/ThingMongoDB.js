@@ -71,11 +71,11 @@ class DataGenerator extends Thing {
   /**
    * Override publish data function to publish data via mqtt channel
    * @param {Object} data Data to be published
-   * @param {String} publishID The ID of the publisher
+   * @param {Object} sensor The publisher
    */
-  publishData(data, publishID, options = null) {
+  publishData(data, sensor) {
     let newData = null;
-    if (options.devType === "ACTUATOR") {
+    if (sensor.devType === "ACTUATOR") {
       newData = new ActuatorSchema(data);
     } else {
       newData = new SensorSchema(data);
@@ -83,7 +83,7 @@ class DataGenerator extends Thing {
     newData.save((err, _data) => {
       if (err) {
         console.error(
-          `[${this.thingId}] Failed to save generated data of sensor ${publishID}`
+          `[${this.thingId}] Failed to save generated data of sensor ${sensor.id}`
         );
         console.error(err);
       } else {

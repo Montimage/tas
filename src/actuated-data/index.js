@@ -21,27 +21,28 @@ const stopSimulation = () => {
  * @param {Array} sensors List of sensors
  * @param {Array} actuators List of actuator
  */
-const createThing = (id, protocol, connConfig, actuators) => {
+const createThing = (thingId, protocol, connConfig, actuators) => {
   let Thing = ThingMQTT; // MQTT protocol by default
   if (protocol.toUpperCase() === "STOMP") {
     Thing = ThingSTOMP; // Switch to STOMP protocol
   }
   // Add more protocol here
-  const th = new Thing(id);
+  const th = new Thing(thingId);
   th.initThing(() => {
     // Add actuators
     if (actuators) {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
         const actuatorData = actuators[aIndex];
-        if (!actuatorData.options) {
-          actuatorData["options"] = {};
-        }
-        actuatorData.options["devType"] = "ACTUATOR";
-        const { id, scale, disable } = actuatorData;
+        actuatorData["devType"] = "ACTUATOR";
+        const { id, scale, disable, objectId, topic } = actuatorData;
+        let topicPrefix = `things/${thingId}/actuators${objectId ? `/${objectId}`:''}/`;
         if (disable) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
-          th.addSensor(id, actuatorData);
+          if (!topic) {
+            actuatorData['topic'] = `${topicPrefix}${id}`;
+          }
+          th.addSensor(id, actuatorData, objectId);
         } else {
           for (
             let actuatorIndex = 0;
@@ -49,7 +50,10 @@ const createThing = (id, protocol, connConfig, actuators) => {
             actuatorIndex++
           ) {
             const sID = `${id}-${actuatorIndex}`;
-            th.addSensor(sID, actuatorData);
+            if (!topic) {
+              actuatorData['topic'] = `${topicPrefix}${sID}`;
+            }
+            th.addSensor(sID, actuatorData, objectId);
           }
         }
       }
@@ -88,7 +92,14 @@ if (process.argv[2] === "test") {
       );
       // console.error();
     } else {
-      startSimulation(thingConfigs);
+      if (!thingConfigs.things || thingConfigs.things.length === 0) {
+        console.error(
+          `[Actuated] [ERROR] There is no simulator:`,
+          process.argv[3]
+        );
+      } else {
+        startSimulation(thingConfigs.things);
+      }
     }
   });
 }

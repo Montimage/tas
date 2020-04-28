@@ -4,7 +4,7 @@ import TSModal from "../TSModal";
 import {
   addSimulationActuator,
   showModal,
-  selectActuator
+  selectActuator,
 } from "../../actions";
 import { Form, Button, Alert } from "antd";
 import { updateObjectByPath, deepCloneObject } from "../../utils";
@@ -12,14 +12,14 @@ import {
   FormTextItem,
   FormSelectItem,
   FormNumberItem,
-  FormSwitchItem
+  FormSwitchItem,
 } from "../FormItems";
 
 const initActuator = () => ({
   id: `act-id-${Date.now()}`,
   objectId: null,
   name: `act-name-${Date.now()}`,
-  options: null,
+  topic: null,
   enable: true,
 });
 
@@ -37,10 +37,12 @@ class ActuatorModal extends Component {
     }
 
     this.state = {
-      data: selectedActuator ? deepCloneObject(selectedActuator) : initActuator(),
+      data: selectedActuator
+        ? deepCloneObject(selectedActuator)
+        : initActuator(),
       thingID: thingIDs[0],
       thingIDs,
-      error: null
+      error: null,
     };
   }
 
@@ -55,10 +57,12 @@ class ActuatorModal extends Component {
     }
 
     this.setState({
-      data: selectedActuator ? deepCloneObject(selectedActuator) : initActuator(),
+      data: selectedActuator
+        ? deepCloneObject(selectedActuator)
+        : initActuator(),
       thingID: thingIDs[0],
       thingIDs,
-      error: null
+      error: null,
     });
   }
 
@@ -67,7 +71,7 @@ class ActuatorModal extends Component {
   }
 
   onDataChange(dataPath, value) {
-    this.setState(prevState => {
+    this.setState((prevState) => {
       const newData = { ...prevState.data };
       updateObjectByPath(newData, dataPath, value);
       return { data: newData, error: null };
@@ -86,10 +90,7 @@ class ActuatorModal extends Component {
 
   handleOk() {
     const { thingID, data } = this.state;
-    const {
-      addSimulationActuator,
-      showModal
-    } = this.props;
+    const { addSimulationActuator, showModal } = this.props;
     addSimulationActuator(thingID, data);
     showModal(null);
     this.props.selectActuator(null);
@@ -102,19 +103,20 @@ class ActuatorModal extends Component {
 
   handleDuplicate() {
     const { thingID } = this.state;
-    const {
-      addSimulationActuator,
-      showModal,
-      selectActuator,
-    } = this.props;
+    const { addSimulationActuator, showModal, selectActuator } = this.props;
     const newActuatorID = `act-${Date.now()}`;
-    const newData = { ...this.state.data, id: newActuatorID, objectId: this.state.objectId, name: 'New Actuator' };
+    const newData = {
+      ...this.state.data,
+      id: newActuatorID,
+      objectId: this.state.objectId,
+      name: "New Actuator",
+    };
     addSimulationActuator(thingID, newData);
     showModal(null);
     setTimeout(() => {
       selectActuator(newData);
-      showModal('ACTUATOR-FORM');
-    },300);
+      showModal("ACTUATOR-FORM");
+    }, 300);
   }
 
   render() {
@@ -135,7 +137,7 @@ class ActuatorModal extends Component {
         </Button>,
         <Button key="ok" type="primary" onClick={() => this.handleOk()}>
           OK
-        </Button>
+        </Button>,
       ];
     } else {
       footer = [
@@ -144,46 +146,46 @@ class ActuatorModal extends Component {
         </Button>,
         <Button key="ok" type="primary" onClick={() => this.handleOk()}>
           OK
-        </Button>
+        </Button>,
       ];
     }
 
     return (
       <TSModal
         title={"Actuator"}
-        visible={formID==='ACTUATOR-FORM' && tool === 'simulation'}
+        visible={formID === "ACTUATOR-FORM" && tool === "simulation"}
         onCancel={() => this.handleCancel()}
         footer={footer}
       >
         <Form
           labelCol={{
-            span: 4
+            span: 4,
           }}
           wrapperCol={{
-            span: 14
+            span: 14,
           }}
         >
           <FormSelectItem
             label="Thing"
             defaultValue={thingID}
-            onChange={v => this.onThingChange(v)}
+            onChange={(v) => this.onThingChange(v)}
             options={thingIDs}
           />
           <FormTextItem
             label="Instance Id"
             defaultValue={data.id}
-            onChange={v => this.onDataChange("id", v)}
+            onChange={(v) => this.onDataChange("id", v)}
           />
           <FormTextItem
             label="Object Id"
             defaultValue={data.objectId}
-            onChange={v => this.onDataChange("objectId", v)}
+            onChange={(v) => this.onDataChange("objectId", v)}
             placeholder="Identify of device type (IP Smart Object Format)"
           />
           <FormTextItem
             label="Name"
             defaultValue={data.name}
-            onChange={v => this.onDataChange("name", v)}
+            onChange={(v) => this.onDataChange("name", v)}
           />
           <FormNumberItem
             label="Scale"
@@ -191,12 +193,20 @@ class ActuatorModal extends Component {
             max={1000000}
             placeholder="Number of instances"
             defaultValue={data.scale}
-            onChange={v => this.onDataChange("scale", v)}
+            onChange={(v) => this.onDataChange("scale", v)}
           />
           <FormTextItem
             label="Topic"
-            defaultValue={data.options ? data.options.topic : null}
-            onChange={v => this.onDataChange("options", { topic: v })}
+            defaultValue={
+              data.topic
+                ? data.topic
+                : `things/${thingID}/actuators${
+                    data.objectId ? `/${data.objectId}` : ""
+                  }/${data.id}/#`
+            }
+            onChange={(v) => {
+              this.onDataChange("topic", v);
+            }}
           />
           <FormSwitchItem
             label="Enable"
@@ -216,12 +226,12 @@ const mapPropsToStates = ({ editingForm, model, tool }) => ({
   formID: editingForm.formID,
   selectedActuator: editingForm.selectedActuator,
   model,
-  tool
+  tool,
 });
 
-const mapDispatchToProps = dispatch => ({
-  showModal: modalID => dispatch(showModal(modalID)),
-  selectActuator: act => dispatch(selectActuator(act)),
+const mapDispatchToProps = (dispatch) => ({
+  showModal: (modalID) => dispatch(showModal(modalID)),
+  selectActuator: (act) => dispatch(selectActuator(act)),
   addSimulationActuator: (thingID, data) =>
     dispatch(addSimulationActuator({ thingID, actuator: data })),
   // deleteSimulationActuator: (id, thingID) =>

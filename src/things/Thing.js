@@ -5,6 +5,14 @@ const {
   OFFLINE,
   SIMULATING,
 } = require('../DeviceStatus');
+const isExist = (id, objectId, array) => {
+  for (let index = 0; index < array.length; index++) {
+    const element = array[index];
+    if (element.id === id && objectId === element.objectId) return true;
+  }
+  return false;
+}
+
 /**
  * The Thing class presents a THING component:
  * - List of sensors
@@ -24,9 +32,9 @@ class Thing {
   /**
    *  Default publish data
    * @param {Object} data Data to be published
-   * @param {String} publishID The publisher id
+   * @param {Object} publisher The publisher
    */
-  publishData(data, publishID, options = null) {
+  publishData(data, publisher) {
     console.log(`[${this.thingId}] ${publishID} going to publish data: `, data);
   }
 
@@ -49,22 +57,25 @@ class Thing {
    * Add a new Sensor into the current THING
    * The sensor collect the data (generate randomly or from database) and publish the data to the gateway via mqtt broker
    * @param {String} id ID of the sensor
-   * @param {String} name Name of the sensor
-   * @param {Boolean} isFromDatabase true - read from database | false - otherwise
-   * @param {Number} timePeriod The time period to publish a data
-   * @param {Object} options Options: { maxNumberOfMessage, timeBeforeFailed, dbClient, sensorBehaviours, energy, sources, metaData }
-   * @param {Object} options The publish options
+   * @param {Object} sensorData Sensor data
+   * @param {String} objectId The object id of the sensor follow IP Smart Object Standard
    */
-  addSensor (id, sensorData) {
-    const newSensor = new Sensor(id, sensorData, (data, publishID, options) => {
-      this.publishData(data, publishID, options);
+  addSensor (id, sensorData, objectId = null) {
+    if (isExist(id, objectId, this.sensors)) {
+      console.error(`[${this.thingId}] Sensor ID ${id} ${objectId} has already existed!`);
+      return null;
+    }
+
+    const newSensor = new Sensor(id, sensorData, (data, publisher) => {
+      this.publishData(data, publisher);
     });
+
     this.sensors.push(newSensor);
     // HOT reload sensor
     if (this.status === SIMULATING ) {
       this.sensors[this.sensors.length - 1].start();
     }
-    console.log(`[${this.thingId}] added new sensor ${id}`);
+    console.log(`[${this.thingId}] added new sensor ${id} ${objectId}`);
     return true;
   }
 
@@ -73,14 +84,14 @@ class Thing {
    * The actuator receives the acuated data from the gateway and printout the status
    * @param {String} id The actuator's ID
    */
-  addActuator (id) {
-    if (this.actuators[id]) {
-      console.error(`[${this.thingId}] Actuator ID ${id} has already existed!`);
+  addActuator (id, actuatorData, objectId = null) {
+    if (isExist(id, objectId, this.actuators)) {
+      console.error(`[${this.thingId}] Actuator ID ${id} ${objectId} has already existed!`);
       return null;
     }
-    const newActuator = new Actuator(id);
+    const newActuator = new Actuator(id, actuatorData);
     this.actuators.push(newActuator);
-    console.log(`[${this.thingId}] added new actuator ${id}`);
+    console.log(`[${this.thingId}] added new actuator ${id} ${objectId}`);
     return newActuator;
   }
 

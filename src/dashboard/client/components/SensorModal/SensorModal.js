@@ -47,7 +47,7 @@ const initSensor = () => ({
   name: `name-${Date.now()}`,
   enable: true,
   isFromDatabase: false,
-  options: null,
+  topic: null,
   userData: null,
   dataSource: generateDataSource(),
 });
@@ -319,12 +319,21 @@ class SensorModal extends Component {
             defaultValue={data.name}
             onChange={(v) => this.onDataChange("name", v)}
           />
-          <FormTextItem
-            label="Options"
-            defaultValue={data.options ? data.options.topic : null}
-            onChange={(v) => this.onDataChange("options", { topic: v })}
-            placeholder="Options in JSON format"
-          />
+          {tool === 'simulation' &&
+            <FormTextItem
+              label="Topic"
+              defaultValue={
+                data.topic
+                  ? data.topic
+                  : `things/${thingID}/sensors${
+                      data.objectId ? `/${data.objectId}` : ""
+                    }/${data.id}`
+              }
+              onChange={(v) => this.onDataChange("topic", v)}
+              placeholder="Topic to publish data to"
+            />
+          }
+
           <FormTextItem
             label="User Data"
             defaultValue={JSON.stringify(data.userData)}
@@ -361,7 +370,9 @@ class SensorModal extends Component {
               onDataChange={(dataPath, value) =>
                 this.onDataChange(dataPath, value)
               }
-              showEnergyOption={tool === 'simulation' && formID === 'SENSOR-FORM'}
+              showEnergyOption={
+                tool === "simulation" && formID === "SENSOR-FORM"
+              }
             />
           )}
         </Form>

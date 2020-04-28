@@ -28,10 +28,7 @@ const createDataGenerator = (id, connConfig, sensors, actuators) => {
     if (sensors) {
       for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
         const sensorData = sensors[sIndex];
-        if (!sensorData.options) {
-          sensorData["options"] = {};
-        }
-        sensorData.options["devType"] = "SENSOR";
+        sensorData['devType'] = "SENSOR";
         const { id, scale, disable } = sensorData;
         if (disable) continue;
         let nbSensors = scale ? scale : 1;
@@ -50,10 +47,7 @@ const createDataGenerator = (id, connConfig, sensors, actuators) => {
     if (actuators) {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
         const actuatorData = actuators[aIndex];
-        if (!actuatorData.options) {
-          actuatorData["options"] = {};
-        }
-        actuatorData.options["devType"] = "ACTUATOR";
+        actuatorData['devType'] = "ACTUATOR";
         const { id, scale, disable } = actuatorData;
         if (disable) continue;
         let nbActuators = scale ? scale : 1;
@@ -104,7 +98,14 @@ if (process.argv[2] === "test") {
       );
       // console.error();
     } else {
-      startDataGenerator(generatorConfigs);
+      if (!generatorConfigs.things || generatorConfigs.things.length === 0) {
+        console.error(
+          `[Data-Generator] ERROR: Cannt find generator configuration:`,
+          process.argv[3]
+        );
+      } else {
+        startDataGenerator(generatorConfigs.things);
+      }
     }
   });
 }

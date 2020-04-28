@@ -19,7 +19,7 @@ class Sensor {
       objectId,
       name,
       isFromDatabase,
-      options,
+      topic,
       userData,
       dataSource,
     } = data;
@@ -29,8 +29,13 @@ class Sensor {
     // Optional attributes
     this.name = name ? name : `sensor-${id}`;
     this.objectId = objectId;
-    options["ipsoTopic"] = objectId ? `${objectId}/${id}` : id;
-    this.options = options;
+    this.topic = topic;
+    this.topicEnd = null;
+    if (objectId) {
+      this.topicEnd = `${objectId}/${id}`;
+    } else {
+      this.topicEnd = id;
+    }
     this.dataSource = null;
     this.publishDataFct = publishDataFct;
     this.userData = userData;
@@ -48,7 +53,7 @@ class Sensor {
     if (this.objectId) {
       values["objectId"] = this.objectId;
     }
-    this.publishDataFct(values, this.id, this.options);
+    this.publishDataFct(values, this);
   }
 
   /**

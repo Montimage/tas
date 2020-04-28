@@ -98,26 +98,25 @@ class ThingSTOMP extends Thing {
    * @param {String} id The actuator id
    * @param {Object} options The options for actuator
    */
-  addActuator(id, options) {
-    const newActuator = super.addActuator(id, options);
-    if (options && options.topic) {
-      if (!this.stompClient) {
-        console.error(`[${this.thingId}] stompClient is not ready yet!`);
-      } else {
-        this.stompClient.subscribe({destination: options.topic},(err2, message) => {
-          if (err2) {
-            console.error("Failed to read message", err2);
-          } else {
-            message.ack();
-            this.handleSTOMPMessage(message);
-          }
-        });
-        if (!this.stompTopics[options.topic]) {
-          this.stompTopics[options.topic] = [];
-        }
-        this.stompTopics[options.topic].push(newActuator);
-      }
+  addActuator(id, actuatorData, objectId = null) {
+    if (!this.stompClient) {
+      console.error(`[${this.thingId}] stompClient is not ready yet!`);
+      return;
     }
+
+    const newActuator = super.addActuator(id, actuatorData, objectId);
+    this.stompClient.subscribe({destination: newActuator.topic},(err2, message) => {
+      if (err2) {
+        console.error("Failed to read message", err2);
+      } else {
+        message.ack();
+        this.handleSTOMPMessage(message);
+      }
+    });
+    if (!this.stompTopics[newActuator.topic]) {
+      this.stompTopics[newActuator.topic] = [];
+    }
+    this.stompTopics[newActuator.topic].push(newActuator);
   }
 
   /**
@@ -134,18 +133,16 @@ class ThingSTOMP extends Thing {
   /**
    * Override publish data function to publish data via mqtt channel
    * @param {Object} data Data to be published
-   * @param {String} publishID The ID of the publisher
+   * @param {Object} sensor The publisher
    */
-  publishData(data, publishID) {
+  publishData(data, sensor) {
     if (!data) return;
-    // super.publishData(data,publishID);
-    let topic = null;
-    if (options && options.topic) {
-      topic = options.topic;
-      // console.log('custom topic: ', topic);
-    } else {
-      topic = `things/${this.thingId}/sensors/${publishID}`;
-    }
+    let publishTopic = null;
+    if (sensor.topic) {
+      publishTopic = sensor.topic;
+  } else {
+    publishTopic = `things/${this.thingId}/sensors/${sensor.topicEnd}`;
+  }
     console.log(`[${this.thingId}] Going to publish data on topic: ${topic}`, data);
     const frame = this.stompClient.send({destination: topic});
     frame.write(JSON.stringify(data));

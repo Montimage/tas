@@ -33,19 +33,16 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
     if (sensors) {
       for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
         const sensorData = sensors[sIndex];
-        if (!sensorData.options) {
-          sensorData["options"] = {};
-        }
-        sensorData.options["devType"] = "SENSOR";
-        const { id, scale, disable } = sensorData;
+        sensorData['devType'] = 'SENSOR';
+        const { id, scale, disable, objectId } = sensorData;
         if (disable) continue;
         let nbSensors = scale ? scale : 1;
         if (nbSensors === 1) {
-          th.addSensor(id, sensorData);
+          th.addSensor(id, sensorData, objectId);
         } else {
           for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
             const sID = `${id}-${sensorIndex}`;
-            th.addSensor(sID, sensorData);
+            th.addSensor(sID, sensorData, objectId);
           }
         }
       }
@@ -53,11 +50,12 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
     // Add actuators
     if (actuators) {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
-        const { id, scale, disable, options } = actuators[aIndex];
+        const actuatorData = actuators[aIndex];
+        const { id, scale, disable, objectId } = actuatorData;
         if (disable) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
-          th.addActuator(id, options);
+          th.addActuator(id, actuatorData, objectId);
         } else {
           for (
             let actuatorIndex = 0;
@@ -65,7 +63,7 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
             actuatorIndex++
           ) {
             const actID = `${id}-${actuatorIndex}`;
-            th.addActuator(actID, options);
+            th.addActuator(actID, actuatorData, objectId);
           }
         }
       }
@@ -113,7 +111,14 @@ if (process.argv[2] === "test") {
       );
       // console.error();
     } else {
-      startSimulator(thingConfigs);
+      if (!thingConfigs.things || thingConfigs.things.length === 0) {
+        console.error(
+          `[Simulation] [ERROR] There is no simulation:`,
+          process.argv[3]
+        );
+      } else {
+        startSimulator(thingConfigs.things);
+      }
     }
   });
 }
