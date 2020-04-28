@@ -145,6 +145,7 @@ class MainView extends Component {
             ) : (
               <ListView
                 model={model}
+                modelType={tool === 'simulation' ? "Simulation" : "Data Geneartor"}
                 actions={{
                   showModal,
                   selectThing,

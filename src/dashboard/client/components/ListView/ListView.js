@@ -1,17 +1,18 @@
 import React from "react";
-import { PageHeader, List, Avatar, Skeleton, Button } from "antd";
+import { PageHeader } from "antd";
 
 import {
   PartitionOutlined,
   BulbOutlined,
   BugOutlined,
-  DatabaseOutlined
 } from "@ant-design/icons";
 import TSListView from "./TSListView";
-import './style.css';
+import "./style.css";
+import CollapseForm from "../CollapseForm";
 
 const ListView = ({
   model: { sensors, actuators, things, name },
+  modelType,
   actions: {
     showModal,
     selectThing,
@@ -19,8 +20,8 @@ const ListView = ({
     selectSensor,
     deleteSensor,
     selectActuator,
-    deleteActuator
-  }
+    deleteActuator,
+  },
 }) => {
   const allSensors = sensors ? [...sensors] : [];
   const allActuators = actuators ? [...actuators] : [];
@@ -35,7 +36,10 @@ const ListView = ({
 
       if (actuators) {
         for (let sindex = 0; sindex < actuators.length; sindex++) {
-          allActuators.push({ ...actuators[sindex], thingID: things[index].id });
+          allActuators.push({
+            ...actuators[sindex],
+            thingID: things[index].id,
+          });
         }
       }
     }
@@ -43,11 +47,12 @@ const ListView = ({
 
   return (
     <div>
-      <h1>
-        {name}
-      </h1>
+      <CollapseForm title="Overview" active={true}>
+        <h1>Name: {name}</h1>
+        <h1>Type: {modelType}</h1>
+      </CollapseForm>
       {things && (
-        <div>
+        <CollapseForm title="Things" active={true}>
           <PageHeader
             className="site-page-header"
             title="Things"
@@ -55,19 +60,19 @@ const ListView = ({
           />
           <TSListView
             list={things}
-            editHandler={thing => {
+            editHandler={(thing) => {
               selectThing(thing);
               showModal("THING-FORM");
             }}
-            deleteHandler={thing => {
+            deleteHandler={(thing) => {
               deleteThing(thing.id);
             }}
             itemAvatar={<PartitionOutlined />}
           />
-        </div>
+        </CollapseForm>
       )}
       {allSensors && (
-        <div>
+        <CollapseForm title="Sensors" active={false}>
           <PageHeader
             className="site-page-header"
             title="Sensors"
@@ -75,19 +80,19 @@ const ListView = ({
           />
           <TSListView
             list={allSensors}
-            editHandler={sensor => {
+            editHandler={(sensor) => {
               selectSensor(sensor);
               showModal("SENSOR-FORM");
             }}
-            deleteHandler={sensor => {
+            deleteHandler={(sensor) => {
               deleteSensor(sensor.id, sensor.thingID);
             }}
             itemAvatar={<BugOutlined />}
           />
-        </div>
+        </CollapseForm>
       )}
       {allActuators && (
-        <div>
+        <CollapseForm title="Actuators" active={false}>
           <PageHeader
             className="site-page-header"
             title="Actuators"
@@ -95,16 +100,16 @@ const ListView = ({
           />
           <TSListView
             list={allActuators}
-            editHandler={actuator => {
+            editHandler={(actuator) => {
               selectActuator(actuator);
               showModal("ACTUATOR-FORM");
             }}
-            deleteHandler={actuator => {
+            deleteHandler={(actuator) => {
               deleteActuator(actuator.id, actuator.thingID);
             }}
             itemAvatar={<BulbOutlined />}
           />
-        </div>
+        </CollapseForm>
       )}
     </div>
   );
