@@ -6,9 +6,6 @@ FROM ubuntu:18.04
 # Update system
 RUN apt-get update -y
 
-# Install github - code version control
-RUN apt-get install -y git
-
 # Install wget - downloader for Unix terminal
 RUN apt-get install -y curl
 
@@ -25,10 +22,9 @@ RUN apt-get install -y nodejs
 WORKDIR /enact/
 
 # Get the source code
-RUN git clone https://gitlab.com/enact/test_and_simulation.git .
-RUN git pull
-RUN git status
-# Install dependencies
+COPY package*.json ./
 RUN npm install --only=production
+
+COPY . .
 
 CMD [ "node", "src/dashboard/server/app.js"]

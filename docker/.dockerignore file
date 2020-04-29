@@ -1,4 +1,11 @@
-node_modules
+node_modules/
 npm-debug.log
-genes-models
-node-red-flows
+.vscode/
+docs/
+docker/
+genes-models/
+node-red-flows/
+light-controller.png
+src/dashboard/client/
+src/dashboard/server/logs/simulation/*.log
+src/dashboard/server/logs/data-generator/*.log
