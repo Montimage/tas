@@ -28,7 +28,7 @@ class ActuatorModal extends Component {
     super(props);
 
     const { tool, model, selectedActuator } = props;
-    const thingIDs = [];
+    const thingIDs = [null];
     if (tool === "simulation" && model.things) {
       const { things } = model;
       for (let index = 0; index < things.length; index++) {
@@ -48,7 +48,7 @@ class ActuatorModal extends Component {
 
   componentWillReceiveProps(newProps) {
     const { tool, model, selectedActuator } = newProps;
-    const thingIDs = [];
+    const thingIDs = [null];
     if (tool === "simulation" && model.things) {
       const { things } = model;
       for (let index = 0; index < things.length; index++) {

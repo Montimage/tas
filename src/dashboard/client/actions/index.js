@@ -6,19 +6,16 @@ export const resetNotification = createAction('RESET_NOTIFICATION');
 // Model
 export const requestModel = createAction('REQUEST_MODEL');
 export const setModel = createAction('SET_MODEL');
-// Model - Simulation
+// Model - modification
+export const changeModelName = createAction('CHANGE_MODEL_NAME');
 export const addThing = createAction('ADD_THING');
 export const deleteThing = createAction('DELETE_THING');
 export const addSimulationSensor = createAction('ADD_SIMULATION_SENSOR');
 export const addSimulationActuator = createAction('ADD_SIMULATION_ACTUATOR');
 export const deleteSimulationSensor = createAction('DELETE_SIMULATION_SENSOR');
 export const deleteSimulationActuator = createAction('DELETE_SIMULATION_ACTUATOR');
-// Model - Data - generator
-export const addDGSensor = createAction('ADD_DATA_GENERATOR_SENSOR');
-export const addDGActuator = createAction('ADD_DATA_GENERATOR_ACTUATOR');
-export const deleteDGSensor = createAction('DELETE_DATA_GENERATOR_SENSOR');
-export const deleteDGActuator = createAction('DELETE_DATA_GENERATOR_ACTUATOR');
-export const updateDataStorage = createAction('UPDATE_DATA_STORAGE');
+export const changeStatusSensor = createAction('CHANGE_STATUS_SENSOR');
+export const changeStatusActuator = createAction('CHANGE_STATUS_ACTUATOR');
 // Save Model to Server
 export const uploadModel = createAction('UPLOAD_MODEL');
 export const uploadModelOK = createAction('UPLOAD_MODEL_OK');
@@ -52,6 +49,7 @@ export const changeTool = createAction('CHANGE_TOOL');
 // editing forms
 export const showModal = createAction('SHOW_MODAL');
 export const selectThing = createAction('SELECT_THING');
+export const changeStatusThing = createAction('CHANGE_STATUS_THING');
 export const selectSensor = createAction('SELECT_SENSOR');
 export const selectActuator = createAction('SELECT_ACTUATOR');
 export const selectDataStorage = createAction('SELECT_DATA_STORAGE');

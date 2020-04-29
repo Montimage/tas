@@ -3,17 +3,16 @@ import produce from "immer";
 import {
   setModel,
   resetModel,
+  changeModelName,
   addThing,
   deleteThing,
+  changeStatusThing,
   addSimulationSensor,
-  addDGSensor,
-  addDGActuator,
   deleteSimulationSensor,
-  deleteDGSensor,
-  deleteDGActuator,
+  changeStatusSensor,
   addSimulationActuator,
   deleteSimulationActuator,
-  updateDataStorage
+  changeStatusActuator,
 } from "../actions";
 import { addNewElementToArray, removeElementFromArray } from "../utils";
 
@@ -23,7 +22,10 @@ export default createReducer(
   {
     [setModel]: produce((draft, model) => (draft = model)),
     [resetModel]: state => initState,
-    // Simulation
+    // modification
+    [changeModelName]: produce((draft, newName) => {
+      draft.name = newName;
+    }),
     [addThing]: produce((draft, thing) => {
       if (draft.things) {
         const newThings = addNewElementToArray(draft.things, thing);
@@ -35,6 +37,15 @@ export default createReducer(
     [deleteThing]: produce((draft, thingID) => {
       const newThings = removeElementFromArray(draft.things, thingID);
       if (newThings) draft.things = [...newThings];
+    }),
+    [changeStatusThing]: produce((draft, thingID) => {
+      for (let index = 0; index < draft.things.length; index++) {
+        if (draft.things[index].id === thingID) {
+          draft.things[index].enable = !draft.things[index].enable;
+          return;
+        };
+      }
+      console.error(`[ERROR] Cannot find the thing ${thingID}`);
     }),
     [addSimulationSensor]: produce((draft, { thingID, sensor }) => {
       let foundThing = false;
@@ -127,6 +138,34 @@ export default createReducer(
         }
       }
     }),
+    [changeStatusSensor]: produce((draft, { sensorID, thingID }) => {
+      if (!thingID) {
+        // free sensors
+        if (draft.sensors) {
+          for (let index = 0; index < draft.sensors.length; index++) {
+            if (draft.sensors[index].id === sensorID) {
+              draft.sensors[index].enable = !draft.sensors[index].enable;
+              return;
+            }
+          }
+        }
+        console.log(`[ERROR] Cannot change status of sensor ${sensorID} in ${thingID}`);
+      } else {
+        // Remove sensors from a thing
+        for (let tIndex = 0; tIndex < draft.things.length; tIndex++) {
+          if (draft.things[tIndex].id === thingID) {
+            for (let index = 0; index < draft.things[tIndex].sensors.length; index++) {
+              if (draft.things[tIndex].sensors[index].id === sensorID) {
+                draft.things[tIndex].sensors[index].enable = !draft.things[tIndex].sensors[index].enable;
+                return;
+              }
+            }
+            break;
+          }
+        }
+        console.log(`[ERROR] Cannot change status of sensor ${sensorID} in ${thingID}`);
+      }
+    }),
     [deleteSimulationActuator]: produce((draft, { actuatorID, thingID }) => {
       if (!thingID) {
         // Remove a free actuators
@@ -157,39 +196,34 @@ export default createReducer(
           console.log(`[ERROR] Cannot remove ${actuatorID} from ${thingID}`);
         }
       }
-    }),
-    // Data-generator
-    [addDGSensor]: produce((draft, sensor) => {
-      if (draft.sensors) {
-        const newSensors = addNewElementToArray(draft.sensors, sensor);
-        draft.sensors = [...newSensors];
+    }),[changeStatusActuator]: produce((draft, { actuatorID, thingID }) => {
+      if (!thingID) {
+        // free actuator
+        if (draft.actuators) {
+          for (let index = 0; index < draft.actuators.length; index++) {
+            if (draft.actuators[index].id === actuatorID) {
+              draft.actuators[index].enable = !draft.actuators[index].enable;
+              return;
+            }
+          }
+        }
+        console.log(`[ERROR] Cannot change status of actuator ${actuatorID} in ${thingID}`);
       } else {
-        draft.sensors = [sensor];
+        // Remove sensors from a thing
+        for (let tIndex = 0; tIndex < draft.things.length; tIndex++) {
+          if (draft.things[tIndex].id === thingID) {
+            for (let index = 0; index < draft.things[tIndex].actuators.length; index++) {
+              if (draft.things[tIndex].actuators[index].id === actuatorID) {
+                draft.things[tIndex].actuators[index].enable = !draft.things[tIndex].actuators[index].enable;
+                return;
+              }
+            }
+            break;
+          }
+        }
+        console.log(`[ERROR] Cannot change status of actuator ${actuatorID} in ${thingID}`);
       }
-    }),
-    [deleteDGSensor]: produce((draft, sensorID) => {
-      const newSensors = removeElementFromArray(draft.sensors, sensorID);
-      if (newSensors) draft.sensors = [...newSensors];
-    }),
-    [addDGActuator]: produce((draft, actuator) => {
-      if (draft.actuators) {
-        const newActuators = addNewElementToArray(draft.actuators, actuator);
-        draft.actuators = [...newActuators];
-      } else {
-        draft.actuators = [actuator];
-      }
-    }),
-    [deleteDGActuator]: produce((draft, actuatorID) => {
-      const newActuators = removeElementFromArray(draft.actuators, actuatorID);
-      if (newActuators) draft.actuators = [...newActuators];
-    }),
-    [updateDataStorage]: (state, dataStorage) => ({
-      ...state,
-      dbConfig: dataStorage
     })
   },
   initState
 );
-
-// export const deleteDGSensor = createAction('DELETE_DATA_GENERATOR_SENSOR');
-// export const deleteDGActuator = createAction('DELETE_DATA_GENERATOR_ACTUATOR');

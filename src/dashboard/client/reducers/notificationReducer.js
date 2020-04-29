@@ -8,11 +8,6 @@ import {
   addSimulationActuator,
   deleteSimulationSensor,
   deleteSimulationActuator,
-  addDGSensor,
-  addDGActuator,
-  deleteDGSensor,
-  deleteDGActuator,
-  updateDataStorage
 } from "../actions";
 
 export default createReducer(
@@ -42,26 +37,6 @@ export default createReducer(
     [deleteSimulationActuator]: (state, {actuatorID, thingID}) => ({
       type: "success",
       message: `Actuator ${actuatorID} has been removed${thingID? `from Thing ${thingID}`: ''}!`
-    }),
-    [addDGSensor]: (state, sensor) => ({
-      type: "success",
-      message: `Sensor ${sensor.id} has been added!`
-    }),
-    [deleteDGSensor]: (state, sensorID) => ({
-      type: "success",
-      message: `Sensor ${sensorID} has been removed!`
-    }),
-    [addDGActuator]: (state, actuator) => ({
-      type: "success",
-      message: `Actuator ${actuator.id} has been added!`
-    }),
-    [deleteDGActuator]: (state, actuatorID) => ({
-      type: "success",
-      message: `Actuator ${actuatorID} has been removed!`
-    }),
-    [updateDataStorage]: (state, dataStorage) => ({
-      type: "success",
-      message: `Data Storage has been updated!`
     })
   },
   null

@@ -57,7 +57,7 @@ class SensorModal extends Component {
     super(props);
 
     const { model, selectedSensor, selectedActuator, formID } = props;
-    const thingIDs = [];
+    const thingIDs = [null];
     if (model.things) {
       const { things } = model;
       for (let index = 0; index < things.length; index++) {
@@ -95,7 +95,7 @@ class SensorModal extends Component {
   componentWillReceiveProps(newProps) {
     const { model, selectedSensor, selectedActuator, formID } = newProps;
 
-    const thingIDs = [];
+    const thingIDs = [null];
     if (model.things) {
       const { things } = model;
       for (let index = 0; index < things.length; index++) {
@@ -398,8 +398,6 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(addSimulationActuator({ thingID, actuator: data })),
   // deleteSimulationSensor: (id, thingID) =>
   //   dispatch(deleteSimulationSensor({ thingID, sensorID: id })),
-  // deleteDGSensor: id => dispatch(deleteDGSensor(id)),
-  // deleteDGActuator: id => dispatch(deleteDGActuator(id)),
   selectActuator: (act) => dispatch(selectActuator(act)),
   selectSensor: (sensor) => dispatch(selectSensor(sensor)),
 });

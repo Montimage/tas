@@ -5,7 +5,6 @@ import { Button, notification, Spin, Alert } from "antd";
 import ThingModal from "../ThingModal";
 import SensorModal from "../SensorModal";
 import ActuatorModal from "../ActuatorModal";
-// import DataStorageModal from "../DataStorageModal";
 
 import {
   requestModel,
@@ -13,13 +12,15 @@ import {
   uploadModel,
   showModal,
   selectThing,
+  changeModelName,
   deleteThing,
+  changeStatusThing,
   selectSensor,
   deleteSimulationSensor,
-  deleteDGSensor,
+  changeStatusSensor,
   selectActuator,
   deleteSimulationActuator,
-  deleteDGActuator,
+  changeStatusActuator,
   resetNotification,
   requestDeployStatus,
   selectLogFile,
@@ -82,16 +83,20 @@ class MainView extends Component {
       showModal,
       selectThing,
       deleteThing,
+      changeStatusThing,
       selectSensor,
       deleteSensor,
+      changeStatusSensor,
       selectActuator,
       deleteActuator,
+      changeStatusActuator,
       tool,
       formID,
       resetNotification,
       selectLogFile,
       resetLogFile,
-      deleteLogFile
+      deleteLogFile,
+      changeModelName
     } = this.props;
     let statusMessage = null;
     if (deployStatus) {
@@ -150,10 +155,14 @@ class MainView extends Component {
                   showModal,
                   selectThing,
                   deleteThing,
+                  changeStatusThing,
                   selectSensor,
                   deleteSensor,
+                  changeStatusSensor,
                   selectActuator,
-                  deleteActuator
+                  deleteActuator,
+                  changeStatusActuator,
+                  changeModelName,
                 }}
               />
             )}
@@ -170,9 +179,6 @@ class MainView extends Component {
         {tool === "simulation" && formID === "ACTUATOR-FORM" && (
           <ActuatorModal />
         )}
-        {/* {tool === "data-generator" && formID === "DATA-STORAGE-FORM" && (
-          <DataStorageModal />
-        )} */}
         {(formID === "SENSOR-FORM" || (formID === "ACTUATOR-FORM" && tool==="data-generator")) && (
           <SensorModal />
         )}
@@ -213,24 +219,16 @@ const mapDispatchToProps = dispatch => ({
     dispatch(uploadModel());
   },
   showModal: formID => dispatch(showModal(formID)),
+  changeModelName: newName => dispatch(changeModelName(newName)),
   selectThing: thing => dispatch(selectThing(thing)),
   deleteThing: thingID => dispatch(deleteThing(thingID)),
+  changeStatusThing: (thingID) => dispatch(changeStatusThing(thingID)),
   selectSensor: sensor => dispatch(selectSensor(sensor)),
-  deleteSensor: (sensorID, thingID) => {
-    if (thingID) {
-      dispatch(deleteSimulationSensor({ sensorID, thingID }));
-    } else {
-      dispatch(deleteDGSensor(sensorID));
-    }
-  },
+  deleteSensor: (sensorID, thingID) => dispatch(deleteSimulationSensor({ sensorID, thingID })),
+  changeStatusSensor: (sensorID, thingID) => dispatch(changeStatusSensor({ sensorID, thingID })),
   selectActuator: actuator => dispatch(selectActuator(actuator)),
-  deleteActuator: (actuatorID, thingID) => {
-    if (thingID) {
-      dispatch(deleteSimulationActuator({ actuatorID, thingID }));
-    } else {
-      dispatch(deleteDGActuator(actuatorID));
-    }
-  },
+  deleteActuator: (actuatorID, thingID) => dispatch(deleteSimulationActuator({ actuatorID, thingID })),
+  changeStatusActuator: (actuatorID, thingID) => dispatch(changeStatusActuator({ actuatorID, thingID })),
   resetNotification: () => dispatch(resetNotification()),
   selectLogFile: file => {
     dispatch(selectLogFile(file));
