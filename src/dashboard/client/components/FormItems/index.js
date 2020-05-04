@@ -6,6 +6,7 @@ import FormSwitchItem from './FormSwitchItem';
 import FormCheckBoxItems from './FormCheckBoxItems';
 import FormCheckBoxSingleItem from './FormCheckBoxSingleItem';
 import FormRegularNumberItem from './FormRegularNumberItem';
+import FormEditableTextItem from './FormEditableTextItem';
 
 export {
   FormTextItem,
@@ -15,5 +16,6 @@ export {
   FormSwitchItem,
   FormCheckBoxItems,
   FormCheckBoxSingleItem,
-  FormRegularNumberItem
+  FormRegularNumberItem,
+  FormEditableTextItem
 }

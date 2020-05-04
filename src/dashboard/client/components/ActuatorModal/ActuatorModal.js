@@ -13,6 +13,7 @@ import {
   FormSelectItem,
   FormNumberItem,
   FormSwitchItem,
+  FormEditableTextItem,
 } from "../FormItems";
 
 const initActuator = () => ({
@@ -29,10 +30,22 @@ class ActuatorModal extends Component {
 
     const { tool, model, selectedActuator } = props;
     const thingIDs = [null];
+    let thingID = null;
     if (tool === "simulation" && model.things) {
       const { things } = model;
       for (let index = 0; index < things.length; index++) {
         thingIDs.push(things[index].id);
+        if (selectedActuator && !thingID) {
+          const {actuators} = things[index];
+          if (actuators) {
+            for(let aid = 0; aid < actuators.length; aid++) {
+              if (actuators[aid].id === selectedActuator.id) {
+                thingID = things[index].id;
+                break;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -40,7 +53,7 @@ class ActuatorModal extends Component {
       data: selectedActuator
         ? deepCloneObject(selectedActuator)
         : initActuator(),
-      thingID: thingIDs[0],
+      thingID: thingID ? thingID : thingIDs[0],
       thingIDs,
       error: null,
     };
@@ -49,10 +62,22 @@ class ActuatorModal extends Component {
   componentWillReceiveProps(newProps) {
     const { tool, model, selectedActuator } = newProps;
     const thingIDs = [null];
+    let thingID = null;
     if (tool === "simulation" && model.things) {
       const { things } = model;
       for (let index = 0; index < things.length; index++) {
         thingIDs.push(things[index].id);
+        if (selectedActuator && !thingID) {
+          const {actuators} = things[index];
+          if (actuators) {
+            for(let aid = 0; aid < actuators.length; aid++) {
+              if (actuators[aid].id === selectedActuator.id) {
+                thingID = things[index].id;
+                break;
+              }
+            }
+          }
+        }
       }
     }
 
@@ -60,7 +85,7 @@ class ActuatorModal extends Component {
       data: selectedActuator
         ? deepCloneObject(selectedActuator)
         : initActuator(),
-      thingID: thingIDs[0],
+      thingID: thingID ? thingID : thingIDs[0],
       thingIDs,
       error: null,
     });
@@ -150,6 +175,12 @@ class ActuatorModal extends Component {
       ];
     }
 
+    const topic = data.topic
+      ? data.topic
+      : `things/${thingID}/actuators${
+          data.objectId ? `/${data.objectId}` : ""
+        }/${data.id}/#`;
+
     return (
       <TSModal
         title={"Actuator"}
@@ -195,19 +226,11 @@ class ActuatorModal extends Component {
             defaultValue={data.scale}
             onChange={(v) => this.onDataChange("scale", v)}
           />
-          <FormTextItem
-            label="Topic"
-            defaultValue={
-              data.topic
-                ? data.topic
-                : `things/${thingID}/actuators${
-                    data.objectId ? `/${data.objectId}` : ""
-                  }/${data.id}/#`
-            }
-            onChange={(v) => {
-              this.onDataChange("topic", v);
-            }}
-          />
+          <FormEditableTextItem
+              label="Topic"
+              defaultValue={topic}
+              onChange={(v) => this.onDataChange("topic", v)}
+            />
           <FormSwitchItem
             label="Enable"
             onChange={(v) => this.onDataChange(`enable`, v)}

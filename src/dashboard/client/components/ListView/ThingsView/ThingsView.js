@@ -41,7 +41,7 @@ const ThingItem = ({
           key="thing-delete"
           size="small"
           onClick={() => {
-            deleteThing(thing);
+            deleteThing(thing.id);
           }}
           type="danger"
         >

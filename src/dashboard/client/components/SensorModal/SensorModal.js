@@ -10,7 +10,7 @@ import {
 } from "../../actions";
 import { Form, Button, Alert } from "antd";
 import { updateObjectByPath, deepCloneObject } from "../../utils";
-import { FormTextItem, FormSelectItem, FormSwitchItem } from "../FormItems";
+import { FormTextItem, FormSelectItem, FormSwitchItem, FormEditableTextItem } from "../FormItems";
 // import DatabaseConfigForm from "../DatabaseConfigForm";
 import DataReplayerForm from "./DataReplayerForm";
 import DataGeneratorForm from "./DataGeneratorForm";
@@ -58,18 +58,37 @@ class SensorModal extends Component {
 
     const { model, selectedSensor, selectedActuator, formID } = props;
     const thingIDs = [null];
-    if (model.things) {
-      const { things } = model;
-      for (let index = 0; index < things.length; index++) {
-        thingIDs.push(things[index].id);
-      }
-    }
+    let thingID = null;
     let selectedData =
       formID === "SENSOR-FORM"
         ? selectedSensor
         : formID === "ACTUATOR-FORM"
         ? selectedActuator
         : null;
+    if (model.things) {
+      const { things } = model;
+      for (let index = 0; index < things.length; index++) {
+        thingIDs.push(things[index].id);
+        if (selectedData !== null && thingID === null) {
+          const {sensors, actuators} = things[index];
+          if (formID === "SENSOR-FORM" && sensors) {
+            for(let sid = 0; sid < sensors.length; sid++) {
+              if (sensors[sid].id === selectedData.id) {
+                thingID = things[index].id;
+                break;
+              }
+            }
+          } else if (formID === "ACTUATOR-FORM" && actuators) {
+            for(let aid = 0; aid < actuators.length; aid++) {
+              if (actuators[aid].id === selectedData.id) {
+                thingID = things[index].id;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
     let replayDS = deepCloneObject(replayDataSource());
     let generateDS = deepCloneObject(generateDataSource());
     let data = initSensor();
@@ -84,7 +103,7 @@ class SensorModal extends Component {
     }
     this.state = {
       data,
-      thingID: thingIDs[0],
+      thingID: thingIDs[1],
       thingIDs,
       replayDS,
       generateDS,
@@ -96,18 +115,37 @@ class SensorModal extends Component {
     const { model, selectedSensor, selectedActuator, formID } = newProps;
 
     const thingIDs = [null];
-    if (model.things) {
-      const { things } = model;
-      for (let index = 0; index < things.length; index++) {
-        thingIDs.push(things[index].id);
-      }
-    }
+    let thingID = null;
     let selectedData =
       formID === "SENSOR-FORM"
         ? selectedSensor
         : formID === "ACTUATOR-FORM"
         ? selectedActuator
         : null;
+    if (model.things) {
+      const { things } = model;
+      for (let index = 0; index < things.length; index++) {
+        thingIDs.push(things[index].id);
+        if (selectedData !== null && thingID === null) {
+          const {sensors, actuators} = things[index];
+          if (formID === "SENSOR-FORM" && sensors) {
+            for(let sid = 0; sid < sensors.length; sid++) {
+              if (sensors[sid].id === selectedData.id) {
+                thingID = things[index].id;
+                break;
+              }
+            }
+          } else if (formID === "ACTUATOR-FORM" && actuators) {
+            for(let aid = 0; aid < actuators.length; aid++) {
+              if (actuators[aid].id === selectedData.id) {
+                thingID = things[index].id;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
     let replayDS = deepCloneObject(replayDataSource());
     let generateDS = deepCloneObject(generateDataSource());
     let data = initSensor();
@@ -121,7 +159,7 @@ class SensorModal extends Component {
     }
     this.setState({
       data,
-      thingID: thingIDs[0],
+      thingID: thingID ? thingID : thingIDs[1],
       thingIDs,
       replayDS,
       generateDS,
@@ -278,7 +316,11 @@ class SensorModal extends Component {
       ];
     }
     const isSensor = formID === "SENSOR-FORM" ? true : false;
-
+    const topic = data.topic
+      ? data.topic
+      : `things/${thingID}/sensors${data.objectId ? `/${data.objectId}` : ""}/${
+          data.id
+        }`;
     return (
       <TSModal
         title={`${isSensor ? "Sensor" : "Actuator"}`}
@@ -320,17 +362,10 @@ class SensorModal extends Component {
             onChange={(v) => this.onDataChange("name", v)}
           />
           {tool === 'simulation' &&
-            <FormTextItem
+            <FormEditableTextItem
               label="Topic"
-              defaultValue={
-                data.topic
-                  ? data.topic
-                  : `things/${thingID}/sensors${
-                      data.objectId ? `/${data.objectId}` : ""
-                    }/${data.id}`
-              }
+              defaultValue={topic}
               onChange={(v) => this.onDataChange("topic", v)}
-              placeholder="Topic to publish data to"
             />
           }
 
