@@ -14,6 +14,7 @@ class ThingMQTT extends Thing {
     super(thingId);
     this.mqttClient = null;
     this.mqttTopics = {};
+    this.mqttConfig = null;
     this.actuatedTopic = `things/${thingId}/actuators/`;
   }
 
@@ -24,6 +25,8 @@ class ThingMQTT extends Thing {
    * @param {Object} packet received packet, as defined in mqtt-packet
    */
   handleMQTTMessage(topic, message, packet) {
+    this.lastActivity = Date.now();
+    this.numberOfReceivedData++;
     console.log(
       `[${this.thingId}] received: ${this.mqttClient.options.href} ${topic}`,
       message
@@ -62,6 +65,7 @@ class ThingMQTT extends Thing {
    * @param {Function} callback The callback function
    */
   initThing(callback, mqttConfig) {
+    this.mqttConfig = mqttConfig;
     const mqttBrokerURL = `mqtt://${mqttConfig.host}:${mqttConfig.port}`;
     let mqttClient = null;
     if (mqttConfig.options) {
@@ -138,6 +142,7 @@ class ThingMQTT extends Thing {
    * @param {Object} sensor The publisher
    */
   publishData(data, sensor) {
+    super.publishData(data,sensor);
     if (!data) return ;
     let publishTopic = null;
     if (sensor.topic) {
@@ -150,6 +155,12 @@ class ThingMQTT extends Thing {
       data
     );
     this.mqttClient.publish(publishTopic, JSON.stringify(data));
+  }
+
+  getStats() {
+    const stats = super.getStats();
+    const {host, port} = this.mqttConfig;
+    return {...stats, protocol: "MQTT", host, port};
   }
 }
 

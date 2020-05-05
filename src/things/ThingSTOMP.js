@@ -18,6 +18,7 @@ class ThingSTOMP extends Thing {
     this.stompClient = null;
     this.stompTopics = {};
     this.actuatedTopic = `things/${id}/actuators/`;
+    this.stompConfig = null;
   }
 
   /**
@@ -28,6 +29,8 @@ class ThingSTOMP extends Thing {
    */
   handleSTOMPMessage(message) {
     // this.stompClient.ack(message); // ack message
+    this.lastActivity = Date.now();
+    this.numberOfReceivedData++;
     const topic = message.headers.destination;
     message.readString("UTF-8", (err, body) => {
       if (err) {
@@ -69,6 +72,7 @@ class ThingSTOMP extends Thing {
    * @param {Function} callback The callback function
    */
   initThing(callback, stompConfig) {
+    this.stompConfig = stompConfig;
     const stompClient = stompit.connect(stompConfig, (err, client) => {
       if (err) {
         console.error(
@@ -136,6 +140,7 @@ class ThingSTOMP extends Thing {
    * @param {Object} sensor The publisher
    */
   publishData(data, sensor) {
+    super.publishData(data,sensor);
     if (!data) return;
     let publishTopic = null;
     if (sensor.topic) {
@@ -147,6 +152,12 @@ class ThingSTOMP extends Thing {
     const frame = this.stompClient.send({destination: topic});
     frame.write(JSON.stringify(data));
     frame.end();
+  }
+
+  getStats() {
+    const stats = super.getStats();
+    const {host, port} = this.stompConfig;
+    return {...stats, protocol: "STOMP", host, port};
   }
 }
 

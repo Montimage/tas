@@ -13,6 +13,7 @@ class DataGenerator extends Thing {
   constructor(id) {
     super(id);
     this.enactDB = null;
+    this.dbConfig = null;
   }
 
   /**
@@ -20,6 +21,7 @@ class DataGenerator extends Thing {
    * @param {Function} callback The callback function
    */
   initThing(callback, dbConfig) {
+    this.dbConfig = dbConfig;
     if (!dbConfig) {
       console.error(
         `[Data-Generator] ERROR: Missing database configuration:`,
@@ -74,6 +76,7 @@ class DataGenerator extends Thing {
    * @param {Object} sensor The publisher
    */
   publishData(data, sensor) {
+    super.publishData(data,sensor);
     let newData = null;
     if (sensor.devType === "ACTUATOR") {
       newData = new ActuatorSchema(data);
@@ -92,6 +95,12 @@ class DataGenerator extends Thing {
         );
       }
     });
+  }
+
+  getStats() {
+    const stats = super.getStats();
+    const {host, port} = this.dbConfig;
+    return {...stats, protocol: "MONGODB", host, port};
   }
 }
 

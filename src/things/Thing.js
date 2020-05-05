@@ -28,6 +28,22 @@ class Thing {
     this.sensors = [];
     this.actuators = [];
     this.status = OFFLINE; // OFFLINE | ONLINE | SIMULATING | PAUSE | STOP
+    this.numberOfSentData = 0;
+    this.numberOfReceivedData = 0;
+    this.startedTime = 0;
+    this.lastActivity = Date.now();
+  }
+
+  getStats() {
+    return {
+      status: this.status,
+      numberOfSensors: this.sensors.length,
+      numberOfActuators: this.actuators.length,
+      numberOfSentData: this.numberOfSentData,
+      numberOfReceivedData: this.numberOfReceivedData,
+      startedTime: this.startedTime,
+      lastActivity: this.lastActivity
+    }
   }
 
   /**
@@ -36,7 +52,10 @@ class Thing {
    * @param {Object} publisher The publisher
    */
   publishData(data, publisher) {
-    console.log(`[${this.thingId}] ${publishID} going to publish data: `, data);
+    this.lastActivity = Date.now();
+    this.numberOfSentData++;
+    console.log(`[${this.thingId}] ${publisher.id} going to publish data: `, data);
+    console.log('stats: ', this.getStats());
   }
 
   /**
@@ -119,6 +138,7 @@ class Thing {
   start() {
     switch (this.getStatus()) {
       case ONLINE:
+        this.startedTime = Date.now();
         // Check for the gateway behaviour
         this.sensors.map((sensor) => sensor.start());
         this.setStatus(SIMULATING);
