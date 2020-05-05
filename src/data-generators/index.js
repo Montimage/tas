@@ -20,7 +20,7 @@ const stopDataGenerator = () => {
  * @param {Array} sensors List of sensors
  * @param {Array} actuators List of actuator
  */
-const createDataGenerator = (id, connConfig, sensors, actuators) => {
+const createDataGenerator = (id, connConfig, sensors, actuators, behaviours, timeToDown) => {
   // Add more protocol here
   const th = new ThingMongoDB(id);
   th.initThing(() => {
@@ -65,7 +65,12 @@ const createDataGenerator = (id, connConfig, sensors, actuators) => {
         }
       }
     }
-
+    if (behaviours && behaviours.length > 0) {
+      for (let index = 0; index < behaviours.length; index++) {
+        th.addBehaviour(behaviours[index]);
+      }
+    }
+    if (timeToDown > 0) th.timeToDown = timeToDown;
     th.start();
 
     allThings.push(th);
@@ -78,7 +83,7 @@ const createDataGenerator = (id, connConfig, sensors, actuators) => {
  */
 const startDataGenerator = (generatorConfigs) => {
   for (let index = 0; index < generatorConfigs.length; index++) {
-    const { id, protocol, connConfig, sensors, actuators, enable } = generatorConfigs[
+    const { id, protocol, connConfig, sensors, actuators, enable, behaviours, timeToDown } = generatorConfigs[
       index
     ];
     if (protocol.toUpperCase() !== "DATABASE") {
@@ -86,7 +91,7 @@ const startDataGenerator = (generatorConfigs) => {
       continue;
     }
     if (enable === false) continue;
-    createDataGenerator(id, connConfig, sensors, actuators);
+    createDataGenerator(id, connConfig, sensors, actuators, behaviours, timeToDown);
   }
 };
 

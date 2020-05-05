@@ -24,6 +24,7 @@ const isExist = (id, objectId, array) => {
 class Thing {
   constructor(thingId) {
     this.thingId = thingId;
+    this.behaviours = [];
     this.sensors = [];
     this.actuators = [];
     this.status = OFFLINE; // OFFLINE | ONLINE | SIMULATING | PAUSE | STOP
@@ -95,6 +96,13 @@ class Thing {
     return newActuator;
   }
 
+  addBehaviour (behaviour) {
+    if (this.behaviours.indexOf(behaviour) > -1) {
+      console.error(`[${this.thingId}] Behaviours ${behaviour} has already existed!`);
+    } else {
+      this.behaviours.push(behaviour);
+    }
+  }
   /**
    * Initialise the THING
    * @param {Function} callback The callback function
@@ -111,8 +119,14 @@ class Thing {
   start() {
     switch (this.getStatus()) {
       case ONLINE:
+        // Check for the gateway behaviour
         this.sensors.map((sensor) => sensor.start());
         this.setStatus(SIMULATING);
+        if (this.behaviours.indexOf('GATEWAY_DOWN') > -1 && this.timeToDown > 0) {
+          setTimeout(() => {
+            this.stop();
+          }, this.timeToDown * 1000);
+        }
         break;
       case OFFLINE:
         console.error(`[${this.thingId}] must be online before starting simulation: ${this.getStatus()}`);

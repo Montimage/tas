@@ -9,6 +9,7 @@ import {
   FormSelectItem,
   FormNumberItem,
   FormSwitchItem,
+  FormCheckBoxItems
 } from "../FormItems";
 import ConnectionConfig from '../ConnectionConfig';
 import { updateObjectByPath, deepCloneObject } from "../../utils";
@@ -22,6 +23,8 @@ class ThingModal extends Component {
       id: `thing-id-${Date.now()}`,
       name: `thing-name-${Date.now()}`,
       protocol: isSimulation ? "MQTT" : "DATABASE",
+      behaviours: [],
+      timeToDown: 0,
       connConfig: {
         host: "localhost",
         port: isSimulation ? 1883: 27017 ,
@@ -171,6 +174,23 @@ class ThingModal extends Component {
             defaultValue={data.scale}
             onChange={(v) => this.onDataChange("scale", v)}
           />
+          <FormCheckBoxItems
+            label="Gateway Behaviours"
+            defaultValue={data.behaviours ? data.behaviours : []}
+            onChange={(v) => this.onDataChange('behaviours', v)}
+            options={[
+              "GATEWAY_DOWN"
+            ]}
+          />
+          {data.behaviours && data.behaviours.indexOf("GATEWAY_DOWN") > -1 && (
+            <FormNumberItem
+              label="Time Before Down"
+              min={1}
+              max={65535}
+              defaultValue={data.timeToDown ? data.timeToDown : 10}
+              onChange={(v) => this.onDataChange('timeToDown', v)}
+            />
+          )}
           <span>Communication detail</span>
           <p />
           {tool === "simulation" ? (

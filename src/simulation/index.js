@@ -21,7 +21,7 @@ const stopSimulator = () => {
  * @param {Array} sensors List of sensors
  * @param {Array} actuators List of actuator
  */
-const createThing = (id, protocol, connConfig, sensors, actuators) => {
+const createThing = (id, protocol, connConfig, sensors, actuators, behaviours, timeToDown) => {
   let Thing = ThingMQTT; // MQTT protocol by default
   if (protocol.toUpperCase() === "STOMP") {
     Thing = ThingSTOMP; // Switch to STOMP protocol
@@ -68,7 +68,12 @@ const createThing = (id, protocol, connConfig, sensors, actuators) => {
         }
       }
     }
-
+    if (behaviours && behaviours.length > 0) {
+      for (let index = 0; index < behaviours.length; index++) {
+        th.addBehaviour(behaviours[index]);
+      }
+    }
+    if (timeToDown > 0) th.timeToDown = timeToDown;
     th.start();
 
     allThings.push(th);
@@ -89,16 +94,18 @@ const startSimulator = (thingConfigs) => {
       sensors,
       actuators,
       enable,
+      behaviours,
+      timeToDown
     } = thingConfigs[index];
     if (enable === false) continue; // skip this thing
     let nbThings = scale ? scale : 1;
     const proto = protocol.toUpperCase();
     if (nbThings === 1) {
-      createThing(id, proto, connConfig, sensors, actuators);
+      createThing(id, proto, connConfig, sensors, actuators, behaviours, timeToDown);
     } else {
       for (let tIndex = 0; tIndex < nbThings; tIndex++) {
         const tID = `${id}-${tIndex}`;
-        createThing(tID, proto, connConfig, sensors, actuators);
+        createThing(tID, proto, connConfig, sensors, actuators, behaviours, timeToDown);
       }
     }
   }
