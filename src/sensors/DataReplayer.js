@@ -14,6 +14,19 @@ class DataReplayer extends DeviceDataSource{
     this.devType = devType;
   }
 
+  getStats() {
+    return {
+      dbConfig: {
+        host: this.connConfig.host,
+        port: this.connConfig.port
+      },
+      devId: this.devId,
+      startTime: this.startTime,
+      endTime: this.endTime,
+      devType: this.devType
+    }
+  }
+
   /**
    * Publish list of sensor's data
    * @param {Array} listData List of sensor's data to be published

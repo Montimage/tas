@@ -39,6 +39,25 @@ class Sensor {
     this.dataSource = null;
     this.publishDataFct = publishDataFct;
     this.userData = userData;
+    // Statstics
+    this.lastActivity = Date.now();
+    this.startedTime = 0;
+    this.numberOfSentData = 0;
+    this.lastSentData = null;
+  }
+
+  getStats() {
+    return {
+      id: this.id,
+      status: this.status,
+      numberOfSentData: this.numberOfSentData,
+      startedTime: this.startedTime,
+      lastActivity: this.lastActivity,
+      lastSentData: this.lastSentData,
+      isFromDatabase: this.isFromDatabase,
+      dataSource: this.dataSource ? this.dataSource.getStats() : null,
+      topic: this.topic
+    }
   }
 
   dataHandler(values) {
@@ -54,6 +73,10 @@ class Sensor {
       values["objectId"] = this.objectId;
     }
     this.publishDataFct(values, this);
+    // Statistics
+    this.lastActivity = Date.now();
+    this.lastSentData = values;
+    this.numberOfSentData++;
   }
 
   /**
@@ -78,11 +101,11 @@ class Sensor {
       }
     }
     if (this.dataSource.getStatus() !== SIMULATING) {
-      const startedTime = Date.now();
+      this.startedTime = Date.now();
       console.log(
         `[${this.objectId ? this.objectId : "sensor"}-${
           this.id
-        }] has been started at: ${new Date(startedTime).toLocaleTimeString()}`
+        }] has been started at: ${new Date(this.startedTime).toLocaleTimeString()}`
       );
       this.dataSource.start();
     } else {

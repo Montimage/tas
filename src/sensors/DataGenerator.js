@@ -64,6 +64,16 @@ class DataGenerator extends DeviceDataSource {
     this.values = null;
   }
 
+  getStats() {
+    let numberOfMeasurements = this.sources.length;
+    if (this.withEnergy) numberOfMeasurements++;
+    return {
+      timePeriod: this.timePeriod,
+      sensorBehaviours: this.sensorBehaviours,
+      numberOfMeasurements,
+    }
+  }
+
   collectAndReportData() {
     this.values = {};
     if (this.energy) {

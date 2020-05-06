@@ -22,6 +22,20 @@ class Actuator {
         this.topic = `things/${this.thingId}/actuators/${this.id}/#`;
       }
     }
+    // Statistics
+    this.lastActivity = Date.now();
+    this.numberOfReceivedData = 0;
+    this.lastReceivedData = null;
+  }
+
+  getStats() {
+    return {
+      id: this.id,
+      numberOfReceivedData: this.numberOfReceivedData,
+      lastActivity: this.lastActivity,
+      lastReceivedData: this.lastReceivedData,
+      topic: this.topic
+    }
   }
 
   /**
@@ -32,6 +46,9 @@ class Actuator {
   updateActuatedData(newData, timestamp = Date.now()) {
     this.actuatedData = newData;
     this.timestamp = timestamp;
+    this.lastActivity = Date.now();
+    this.lastReceivedData = newData;
+    this.numberOfReceivedData++;
   }
 
   /**

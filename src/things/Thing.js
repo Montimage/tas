@@ -28,6 +28,7 @@ class Thing {
     this.sensors = [];
     this.actuators = [];
     this.status = OFFLINE; // OFFLINE | ONLINE | SIMULATING | PAUSE | STOP
+    // Statstics
     this.numberOfSentData = 0;
     this.numberOfReceivedData = 0;
     this.startedTime = 0;
@@ -36,6 +37,7 @@ class Thing {
 
   getStats() {
     return {
+      id: this.thingId,
       status: this.status,
       numberOfSensors: this.sensors.length,
       numberOfActuators: this.actuators.length,
