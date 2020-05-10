@@ -1,0 +1,40 @@
+[
+    {
+        "id": "thing-01",
+        "name": "Thing 01",
+        "protocol": "MQTT",
+        "scale": 1,
+        "connConfig": {
+            "host": "192.168.1.12",
+            "port": "1883",
+            "options": null
+        },
+        "sensors": [
+            {
+                "id": "super-sensor-new-id",
+                "objectId": "3355",
+                "disable": false,
+                "scale": 1,
+                "name": "Super Sensor New Name",
+                "isFromDatabase": true,
+                "userData":{
+                    "projectName": "ENACT"
+                },
+                "options": {},
+                "dataSource": {
+                    "connConfig": {
+                        "host": "192.168.1.12",
+                        "port": "27017",
+                        "user": "",
+                        "password": "",
+                        "dbname": "tasdb",
+                        "options": {}
+                    },
+                    "devId": "super-sensor",
+                    "startTime": 0,
+                    "endTime": 0
+                }
+            }
+        ]
+    }
+]
