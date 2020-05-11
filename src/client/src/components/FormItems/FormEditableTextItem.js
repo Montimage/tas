@@ -1,6 +1,6 @@
 import React from "react";
 import { Form, Typography } from "antd";
-const { Paragraph, Text } = Typography;
+const { Paragraph } = Typography;
 
 const FormEditableTextItem = ({ label, defaultValue, onChange }) => (
   <Form.Item label={label}>

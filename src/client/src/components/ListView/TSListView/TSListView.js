@@ -42,9 +42,9 @@ const TSListView = ({
           <List.Item.Meta
             avatar={<Avatar>{itemAvatar}</Avatar>}
             title={
-              <a onClick={() => editHandler(item)}>
+              <span onClick={() => editHandler(item)} style={{cursor:'pointer'}}>
                 {item.name ? item.name : item.id}
-              </a>
+              </span>
             }
             description={`Id: ${item.id}${
               item.name ? `- name: ${item.name}` : ""

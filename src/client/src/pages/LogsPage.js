@@ -1,24 +1,34 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { List, Skeleton, Avatar, Button, Spin, PageHeader } from "antd";
+import { List, Skeleton, Avatar, Button, PageHeader } from "antd";
 import { ClockCircleOutlined } from "@ant-design/icons";
 import { getCreatedTimeFromFileName, isDataGenerator } from "../utils";
 
 import { requestLogFiles, requestDeleteLogFile } from "../actions";
+import LayoutPage from "./LayoutPage";
 
 class LogsPage extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      logFiles: props.logFiles,
+    };
+  }
+
   componentDidMount() {
     this.props.initData(isDataGenerator());
   }
 
+  componentWillReceiveProps(newProps) {
+    this.setState({ logFiles: newProps.logFiles });
+  }
+
   render() {
-    const { logFiles, deleteLogFile, requesting } = this.props;
+    const { deleteLogFile } = this.props;
+    const { logFiles } = this.state;
     const isDG = isDataGenerator();
-    if (requesting) {
-      return <Spin tip="Loading..." />;
-    }
     return (
-      <React.Fragment>
+      <LayoutPage>
         <PageHeader className="site-page-header" title="Log files" />
         <List
           bordered
@@ -55,13 +65,12 @@ class LogsPage extends Component {
             </List.Item>
           )}
         />
-      </React.Fragment>
+      </LayoutPage>
     );
   }
 }
 
-const mapPropsToStates = ({ requesting, logs }) => ({
-  requesting,
+const mapPropsToStates = ({ logs }) => ({
   logFiles: logs.logFiles,
 });
 

@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { connect, batch } from "react-redux";
-import { Layout, Menu, Row, Col, Select, Typography } from "antd";
+import { connect } from "react-redux";
+import { Layout, Menu, Row, Col, Typography } from "antd";
 import {
   CaretRightOutlined,
   GatewayOutlined,
@@ -75,6 +75,7 @@ class TSHeader extends Component {
               <img
                 src={logo}
                 className="logo"
+                alt="Logo"
                 style={{ maxWidth: "250px", objectFit: "contain" }}
               />
             </a>
@@ -129,13 +130,13 @@ class TSHeader extends Component {
                 </Menu.Item>
               </SubMenu>
               <Menu.Item key="3">
-                <a href={isDG ? "/data-generator/logs" : "/logs"}>
+                <a href={isDG ? "/data-generator/logs" : "/logs"} rel="noopener noreferrer" target="_blank">
                   <ProfileOutlined />
                   Logs
                 </a>
               </Menu.Item>
               <Menu.Item key="4">
-                <a href={isDG ? "/" : "/data-generator"}>
+                <a href={isDG ? "/" : "/data-generator"} rel="noopener noreferrer" target="_blank">
                   <ExportOutlined />
                   <Text style={{ color: "#ffff00fc" }}>
                     {isDG ? "Simulation" : "Data Generator"}

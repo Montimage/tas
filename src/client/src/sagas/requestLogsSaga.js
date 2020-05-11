@@ -1,8 +1,8 @@
 // watcher saga -> actions -> worker saga
-import { call, put, takeEvery, select } from "redux-saga/effects";
+import { call, put, takeEvery } from "redux-saga/effects";
 
 import { requestLogs, requestLogFiles, requestDeleteLogFile } from "../api";
-import { requestLogsOK, setNotification, requestLogFilesOK, selectLogFile } from "../actions";
+import { requestLogsOK, setNotification, requestLogFilesOK } from "../actions";
 
 function* handleRequestLogFiles(action) {
   try {

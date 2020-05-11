@@ -11,8 +11,8 @@ export default createReducer(
   {
     [requestLogsOK]: (state, logs) => ({...state, logs}),
     [requestLogFilesOK]: (state, logFiles) => ({...state, logFiles}),
-    [requestDeleteLogFile]: produce((draft, file) => {
-      const index = draft.logFiles.indexOf(file);
+    [requestDeleteLogFile]: produce((draft, {isDG, logFile}) => {
+      const index = draft.logFiles.indexOf(logFile);
       if (index > - 1) {
         draft.logFiles.splice(index, 1);
       }

@@ -65,14 +65,15 @@ const ThingItem = ({
           </Avatar>
         }
         title={
-          <a
+          <span
+            style={{cursor:'pointer'}}
             onClick={() => {
               selectThing(thing);
               showModal("THING-FORM");
             }}
           >
             {thing.name ? thing.name : thing.id}
-          </a>
+          </span>
         }
         description={`Id: ${thing.id}${
           thing.name ? `- name: ${thing.name}` : ""

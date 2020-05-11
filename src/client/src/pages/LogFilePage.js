@@ -2,8 +2,8 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { Row, Col, Typography, PageHeader } from "antd";
 import { getLastURLPath, isDataGenerator } from "../utils";
-
-import { selectLogFile, requestLogs } from "../actions";
+import LayoutPage from "./LayoutPage";
+import { requestLogs } from "../actions";
 
 const { Text } = Typography;
 
@@ -34,13 +34,16 @@ class LogsPage extends Component {
     const isDG = isDataGenerator();
     this.setState({ logFile: decodeURIComponent(logFile) });
     this.props.requestLogs(isDG, logFile);
+    setInterval(() => {
+      this.props.requestLogs(isDG, logFile);
+    }, 5000);
   }
 
   render() {
     const { logFile } = this.state;
     const { logs } = this.props;
     return (
-      <React.Fragment>
+      <LayoutPage>
         <PageHeader className="site-page-header" title={logFile} />
         <LogLine
           key={-1}
@@ -74,13 +77,12 @@ class LogsPage extends Component {
             );
           })
         )}
-      </React.Fragment>
+      </LayoutPage>
     );
   }
 }
 
-const mapPropsToStates = ({ requesting, logs }) => ({
-  requesting,
+const mapPropsToStates = ({ logs }) => ({
   logs: logs.logs,
   logFile: logs.logFile,
 });
