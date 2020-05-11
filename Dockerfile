@@ -12,4 +12,4 @@ RUN npm install --only=production
 # Bundle app source
 COPY . .
 EXPOSE 31057
-CMD [ "node", "src/dashboard/server/app.js" ]
+CMD [ "node", "src/server/app.js" ]

@@ -1,0 +1,58 @@
+{
+    "things": [
+        {
+            "id": "gw-01",
+            "name": "Gateway is going to down",
+            "behaviours": [
+                "GATEWAY_DOWN"
+            ],
+            "timeToDown": 20,
+            "protocol": "MQTT",
+            "connConfig": {
+                "host": "localhost",
+                "port": "1883",
+                "options": null
+            },
+            "sensors": [
+                {
+                    "id": "0",
+                    "name": "Simplest Sensor",
+                    "isFromDatabase": false,
+                    "dataSource": {
+                        "timePeriod": 5,
+                        "withEnergy": true,
+                        "energy": {
+                            "type": "DATA_SOURCE_ENERGY",
+                            "resourceId": "battery",
+                            "key": "batter-01",
+                            "unit": "mA"
+                        },
+                        "sources": [
+                            {
+                                "type": "DATA_SOURCE_BOOLEAN",
+                                "key": "motion-detector-01"
+                            },
+                            {
+                                "type": "DATA_SOURCE_ENUM",
+                                "key": "heating_level-01",
+                                "values": [
+                                    "Low",
+                                    "Normal",
+                                    "High"
+                                ]
+                            },
+                            {
+                                "type": "DATA_SOURCE_FLOAT",
+                                "key": "temp-01"
+                            },
+                            {
+                                "type": "DATA_SOURCE_INTEGER",
+                                "key": "blood-glucose-01"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

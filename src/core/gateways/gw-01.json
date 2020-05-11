@@ -1,0 +1,68 @@
+[
+  {
+    "id": "gw-01",
+    "things": [
+      {
+        "id": "t01",
+        "scale": 2,
+        "mqttConfig": {
+          "host": "localhost",
+          "port": "1883",
+          "options": null
+        }
+      }
+    ],
+    "externals": [
+      {
+        "id": "ext-01",
+        "mqttConfig": {
+          "host": "localhost",
+          "port": "1882",
+          "options": null
+        },
+        "subTopic": "actuated-datas/#"
+      }
+    ],
+    "upstreams": [
+      {
+        "in": "t01",
+        "out": [
+          "ext-01"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gw-02",
+    "things": [
+      {
+        "id": "t02",
+        "scale": 2,
+        "mqttConfig": {
+          "host": "localhost",
+          "port": "1883",
+          "options": null
+        }
+      }
+    ],
+    "externals": [
+      {
+        "id": "ext-02",
+        "mqttConfig": {
+          "host": "localhost",
+          "port": "1882",
+          "options": null
+        },
+        "subTopic": "actuated-datas/#"
+      }
+    ],
+    "upstreams": [
+      {
+        "in": "t02",
+        "out": [
+          "ext-02"
+        ]
+      }
+    ]
+  }
+]
