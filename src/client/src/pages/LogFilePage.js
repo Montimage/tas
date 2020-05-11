@@ -36,7 +36,7 @@ class LogsPage extends Component {
     this.props.requestLogs(isDG, logFile);
     setInterval(() => {
       this.props.requestLogs(isDG, logFile);
-    }, 5000);
+    }, 20000);
   }
 
   render() {

@@ -77,6 +77,18 @@ const createDataGenerator = (id, connConfig, sensors, actuators, behaviours, tim
   }, connConfig);
 };
 
+
+const getStatsDataGenerator = () => {
+  const stats = [];
+  if (!allThings) return null;
+  for (let index = 0; index < allThings.length; index++) {
+    const thing = allThings[index];
+    const thingStats = thing.getStats();
+    if (thingStats) stats.push(thingStats);
+  }
+  return stats;
+};
+
 /**
  * Start the simulation
  * @param {Array} generatorConfigs The list of things
@@ -119,4 +131,5 @@ if (process.argv[2] === "test") {
 module.exports = {
   startDataGenerator,
   stopDataGenerator,
+  getStatsDataGenerator,
 };

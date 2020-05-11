@@ -1,6 +1,6 @@
 /* Working with Data Generator */
 var express = require("express");
-
+const {SIMULATING} = require('../../core/DeviceStatus');
 const {
   readJSONFile,
   readTextFile,
@@ -8,10 +8,11 @@ const {
   readDir,
   deleteFile,
 } = require("../../core/utils");
-const { startSimulator, stopSimulator } = require("../../core/simulation");
+const { startSimulator, stopSimulator, getStatsSimulator } = require("../../core/simulation");
 const {
   startDataGenerator,
   stopDataGenerator,
+  getStatsDataGenerator
 } = require("../../core/data-generators");
 
 const modelsPath = `${__dirname}/../models/`;
@@ -23,12 +24,14 @@ const createRouter = (isSimulation = true) => {
   let defaultModel = "simulation.json";
   let start = startSimulator;
   let stop = stopSimulator;
+  let getStats = getStatsSimulator;
 
   if (!isSimulation) {
     logsPath = `${__dirname}/../logs/data-generator/`;
     defaultModel = "data-generator.json";
     start = startDataGenerator;
     stop = stopDataGenerator;
+    getStats = getStatsDataGenerator;
   }
 
   ///////////////
@@ -191,9 +194,24 @@ null
     }
     res.send({ error: null, deployStatus: copiedStatus });
   });
-
+  let stats = null;
   router.get("/status", (req, res, next) => {
-    res.send({ error: null, deployStatus });
+    stats = getStats();
+    let isOffline = true;
+    if (stats) {
+      for (let index = 0; index < stats.length; index++) {
+        const thing = stats[index];
+        if (thing.status === SIMULATING) {
+          isOffline = false;
+          break;
+        };
+      }
+    }
+    res.send({ error: null, deployStatus: isOffline ? null : deployStatus });
+  });
+
+  router.get("/stats", (req, res, next) => {
+    res.send({ error: null, stats });
   });
 
   ///////////////

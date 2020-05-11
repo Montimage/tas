@@ -111,6 +111,17 @@ const startSimulator = (thingConfigs) => {
   }
 };
 
+const getStatsSimulator = () => {
+  const stats = [];
+  if (!allThings) return null;
+  for (let index = 0; index < allThings.length; index++) {
+    const thing = allThings[index];
+    const thingStats = thing.getStats();
+    if (thingStats) stats.push(thingStats);
+  }
+  return stats;
+};
+
 if (process.argv[2] === "test") {
   readJSONFile(process.argv[3], (err, thingConfigs) => {
     if (err) {
@@ -135,4 +146,5 @@ if (process.argv[2] === "test") {
 module.exports = {
   startSimulator,
   stopSimulator,
+  getStatsSimulator,
 };

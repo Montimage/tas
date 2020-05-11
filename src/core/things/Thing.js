@@ -36,6 +36,24 @@ class Thing {
   }
 
   getStats() {
+    const sensorStats = [];
+    if (this.sensors) {
+      for (let index = 0; index < this.sensors.length; index++) {
+        const sensor = this.sensors[index];
+        const stats = sensor.getStats();
+        if (stats) sensorStats.push(stats);
+      }
+    }
+
+    const actuatorStats = [];
+    if (this.actuators) {
+      for (let index = 0; index < this.actuators.length; index++) {
+        const actuator = this.actuators[index];
+        const stats = actuator.getStats();
+        if (stats) actuatorStats.push(stats);
+      }
+    }
+
     return {
       id: this.thingId,
       status: this.status,
@@ -44,7 +62,9 @@ class Thing {
       numberOfSentData: this.numberOfSentData,
       numberOfReceivedData: this.numberOfReceivedData,
       startedTime: this.startedTime,
-      lastActivity: this.lastActivity
+      lastActivity: this.lastActivity,
+      sensorStats,
+      actuatorStats
     }
   }
 
