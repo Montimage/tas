@@ -8,9 +8,11 @@ import notificationReducer from './notificationReducer';
 import logsReducer from './logsReducer';
 import editingFormReducer from './editingFormReducer';
 import deployStatusReducer from './deployStatusReducer';
+import statsReducer from './statsReducer';
 
 const rootReducer = combineReducers({
   model: modelReducer,
+  stats: statsReducer,
   logs: logsReducer,
   notify: notificationReducer,
   requesting: requestingReducer,

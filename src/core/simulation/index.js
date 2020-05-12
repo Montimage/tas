@@ -85,6 +85,10 @@ const createThing = (id, protocol, connConfig, sensors, actuators, behaviours, t
  * @param {Array} thingConfigs The list of things
  */
 const startSimulator = (thingConfigs) => {
+  while(allThings.length > 0) {
+    allThings.pop();
+  }
+
   for (let index = 0; index < thingConfigs.length; index++) {
     const {
       scale,

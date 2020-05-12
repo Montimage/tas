@@ -79,31 +79,35 @@ class ModelPage extends Component {
 
     let viewType = getQuery("view");
     if (!viewType) viewType = "list";
+    let view = null;
+    if (viewType === "json") {
+      view = <JSONView value={model} onChange={this.onModelChange} />;
+    } else if (viewType === "graph") {
+      view = <GraphView />;
+    } else {
+      view = (
+        <ListView
+          model={model}
+          modelType={!isDG ? "Simulation" : "Data Geneartor"}
+          actions={{
+            showModal,
+            selectThing,
+            deleteThing,
+            changeStatusThing,
+            selectSensor,
+            deleteSensor,
+            changeStatusSensor,
+            selectActuator,
+            deleteActuator,
+            changeStatusActuator,
+            changeModelName,
+          }}
+        />
+      );
+    }
     return (
       <LayoutPage>
-        {viewType === "json" ? (
-          <JSONView value={model} onChange={this.onModelChange} />
-        ) : viewType === "graph" ? (
-          <GraphView model={model} onChange={this.onModelChange} />
-        ) : (
-          <ListView
-            model={model}
-            modelType={!isDG ? "Simulation" : "Data Geneartor"}
-            actions={{
-              showModal,
-              selectThing,
-              deleteThing,
-              changeStatusThing,
-              selectSensor,
-              deleteSensor,
-              changeStatusSensor,
-              selectActuator,
-              deleteActuator,
-              changeStatusActuator,
-              changeModelName,
-            }}
-          />
-        )}
+        {view}
         <Button
           type="primary"
           onClick={() => saveModel(isDG, this.state.tempModel)}
@@ -121,17 +125,8 @@ class ModelPage extends Component {
   }
 }
 
-const mapPropsToStates = ({
-  requesting,
-  notify,
+const mapPropsToStates = ({ model, editingForm }) => ({
   model,
-  editingForm,
-  deployStatus,
-}) => ({
-  model,
-  notify,
-  requesting,
-  deployStatus,
   formID: editingForm.formID,
 });
 

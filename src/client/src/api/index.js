@@ -38,6 +38,16 @@ const requestLogs = async (tool, logFile) => {
   return data.content;
 };
 
+const requestStats = async (tool) => {
+  const url = `${URL}/api/${tool}/stats`;
+  const response = await fetch(url);
+  const data = await response.json();
+  if (data.error) {
+    throw data.error;
+  }
+  return data.stats;
+};
+
 const requestDeleteLogFile = async (tool, logFile) => {
   const url = `${URL}/api/${tool}/logs/${logFile}`;
   const response = await fetch(url, {
@@ -105,5 +115,6 @@ export {
   requestDeployStatus,
   requestLogs,
   requestLogFiles,
-  requestDeleteLogFile
+  requestDeleteLogFile,
+  requestStats,
 };

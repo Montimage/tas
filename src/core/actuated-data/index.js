@@ -74,6 +74,9 @@ const createThing = (thingId, protocol, connConfig, actuators, behaviours, timeT
  * @param {Array} thingConfigs The list of things
  */
 const startSimulation = (thingConfigs) => {
+  while(allThings.length > 0) {
+    allThings.pop();
+  }
   for (let index = 0; index < thingConfigs.length; index++) {
     const { scale, id, protocol, connConfig, actuators, enable, behaviours, timeToDown } = thingConfigs[index];
     if (enable === false) continue;

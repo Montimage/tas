@@ -94,6 +94,9 @@ const getStatsDataGenerator = () => {
  * @param {Array} generatorConfigs The list of things
  */
 const startDataGenerator = (generatorConfigs) => {
+  while(allThings.length > 0) {
+    allThings.pop();
+  }
   for (let index = 0; index < generatorConfigs.length; index++) {
     const { id, protocol, connConfig, sensors, actuators, enable, behaviours, timeToDown } = generatorConfigs[
       index
