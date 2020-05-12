@@ -344,7 +344,7 @@ class SensorModal extends Component {
           }}
         >
           <FormSelectItem
-            label="Thing"
+            label="Device"
             defaultValue={thingID}
             onChange={(v) => this.onThingChange(v)}
             options={thingIDs}

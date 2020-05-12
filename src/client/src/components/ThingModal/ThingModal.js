@@ -19,8 +19,8 @@ class ThingModal extends Component {
     super(props);
     const isDG = isDataGenerator();
     const initThing = {
-      id: `thing-id-${Date.now()}`,
-      name: `thing-name-${Date.now()}`,
+      id: `dev-id-${Date.now()}`,
+      name: `dev-name-${Date.now()}`,
       protocol: isDG ? "DATABASE":"MQTT",
       behaviours: [],
       timeToDown: 0,
@@ -88,10 +88,10 @@ class ThingModal extends Component {
 
   handleDuplicate() {
     const { addThing, showModal, selectThing } = this.props;
-    const newThingID = `thing-${Date.now()}`;
+    const newThingID = `dev-id-${Date.now()}`;
     const newData = { ...this.state.data };
     updateObjectByPath(newData, "id", newThingID);
-    updateObjectByPath(newData, "name", "New Thing");
+    updateObjectByPath(newData, "name", "New Device");
     addThing(newData);
     selectThing(newData);
     setTimeout(() => {
@@ -143,7 +143,7 @@ class ThingModal extends Component {
 
     return (
       <TSModal
-        title={"Thing"}
+        title={"Device"}
         visible={formID === "THING-FORM" ? true : false}
         onCancel={() => this.handleCancel()}
         footer={footer}
@@ -167,11 +167,11 @@ class ThingModal extends Component {
             onChange={(v) => this.onDataChange("name", v)}
           />
           <FormNumberItem
-            label="Scale"
+            label="Number of Instance"
             min={1}
             max={1000000}
             placeholder="Number of instances"
-            defaultValue={data.scale}
+            defaultValue={data.scale ? data.scale : 1}
             onChange={(v) => this.onDataChange("scale", v)}
           />
           <FormCheckBoxItems

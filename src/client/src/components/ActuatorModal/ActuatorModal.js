@@ -184,7 +184,7 @@ class ActuatorModal extends Component {
           }}
         >
           <FormSelectItem
-            label="Thing"
+            label="Device"
             defaultValue={thingID}
             onChange={(v) => this.onThingChange(v)}
             options={thingIDs}
@@ -206,11 +206,11 @@ class ActuatorModal extends Component {
             onChange={(v) => this.onDataChange("name", v)}
           />
           <FormNumberItem
-            label="Scale"
+            label="Number of Instance"
             min={1}
             max={1000000}
             placeholder="Number of instances"
-            defaultValue={data.scale}
+            defaultValue={data.scale ? data.scale : 1}
             onChange={(v) => this.onDataChange("scale", v)}
           />
           <FormEditableTextItem

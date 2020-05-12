@@ -81,11 +81,11 @@ const DataGeneratorForm = ({
 }) => (
   <React.Fragment>
     <FormNumberItem
-      label="Scale"
+      label="Number of Instance"
       min={1}
       max={1000000}
       placeholder="Number of instances"
-      defaultValue={dataSource.scale}
+      defaultValue={dataSource.scale ? dataSource.scale : 1}
       onChange={(v) => onDataChange(`${dataPath}.scale`, v)}
     />
     <FormNumberItem
@@ -141,7 +141,12 @@ const DataGeneratorForm = ({
       <React.Fragment>
         <FormSwitchItem
           label="Energy Measurement"
-          onChange={(v) => onDataChange(`${dataPath}.withEnergy`, v)}
+          onChange={(v) => {
+            onDataChange(`${dataPath}.withEnergy`, v);
+            if (v && !dataSource.energy) {
+              onDataChange(`${dataPath}.energy`, initEnergy());
+            }
+          }}
           checked={dataSource.withEnergy ? true : false}
           checkedChildren={"Enable"}
           unCheckedChildren={"Disable"}

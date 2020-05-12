@@ -17,19 +17,19 @@ class LeftSider extends Component {
     const menuItems = [
       {
         key: 3,
-        text: "Thing",
+        text: "Add Device",
         action: () => showModal("THING-FORM"),
         icon: <PartitionOutlined />
       },
       {
         key: 1,
-        text: "Sensor",
+        text: "Add Sensor",
         action: () => showModal("SENSOR-FORM"),
         icon: <BugOutlined />
       },
       {
         key: 2,
-        text: "Actuator",
+        text: "Add Actuator",
         action: () => showModal("ACTUATOR-FORM"),
         icon: <BulbOutlined />
       }
