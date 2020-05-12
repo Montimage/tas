@@ -12,22 +12,21 @@ import {
   FormCheckBoxItems
 } from "../FormItems";
 import ConnectionConfig from '../ConnectionConfig';
-import { updateObjectByPath, deepCloneObject } from "../../utils";
+import { updateObjectByPath, deepCloneObject, isDataGenerator } from "../../utils";
 
 class ThingModal extends Component {
   constructor(props) {
     super(props);
-    const {tool} = props;
-    const isSimulation = tool === 'simulation';
+    const isDG = isDataGenerator();
     const initThing = {
       id: `thing-id-${Date.now()}`,
       name: `thing-name-${Date.now()}`,
-      protocol: isSimulation ? "MQTT" : "DATABASE",
+      protocol: isDG ? "DATABASE":"MQTT",
       behaviours: [],
       timeToDown: 0,
       connConfig: {
         host: "localhost",
-        port: isSimulation ? 1883: 27017 ,
+        port: !isDG ? 1883: 27017 ,
         options: null,
       },
       sensors: [],
@@ -37,6 +36,7 @@ class ThingModal extends Component {
     this.state = {
       data: props.selectedThing ? deepCloneObject(props.selectedThing) : initThing,
       error: null,
+      isDG: isDataGenerator()
     };
   }
 
@@ -113,7 +113,7 @@ class ThingModal extends Component {
     // this.onDataChange("connConfig.host","localhost");
     // this.onDataChange("name","NEW_NAME");
     const { data, error } = this.state;
-    const { formID, tool } = this.props;
+    const { formID } = this.props;
     let footer = null;
     if (this.props.selectedThing) {
       footer = [
@@ -193,7 +193,7 @@ class ThingModal extends Component {
           )}
           <span>Communication detail</span>
           <p />
-          {tool === "simulation" ? (
+          {!this.state.isDG ? (
             <React.Fragment>
               <FormSelectItem
                 label="Protocol"
@@ -234,11 +234,10 @@ class ThingModal extends Component {
   }
 }
 
-const mapPropsToStates = ({ editingForm, model, tool }) => ({
+const mapPropsToStates = ({ editingForm, model }) => ({
   formID: editingForm.formID,
   selectedThing: editingForm.selectedThing,
   things: model.things,
-  tool,
 });
 
 const mapDispatchToProps = (dispatch) => ({
