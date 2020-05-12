@@ -46,3 +46,7 @@ export const selectSensor = createAction('SELECT_SENSOR');
 export const selectActuator = createAction('SELECT_ACTUATOR');
 export const selectDataStorage = createAction('SELECT_DATA_STORAGE');
 
+
+// Statistics
+export const requestStats = createAction('REQUEST_STATS');
+export const requestStatsOK = createAction('REQUEST_STATS_OK');

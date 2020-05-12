@@ -151,8 +151,11 @@ null
 ```
  */
   let deployStatus = null;
+  let stats = null;
   // Deploy a model
   router.post("/deploy", function (req, res, next) {
+    stats = null;
+    deployStatus = null;
     const thingConfigs = req.body.model;
     // Check if the simulation is running
     if (deployStatus) {
@@ -173,16 +176,37 @@ null
         return res.send({ error: "Invalid model", model: thingConfigs });
       }
 
-      const startedTime = Date.now();
-      const logFile = `${name}_${Date.now()}.log`;
-      getLogger("SIMULATOR", `${logsPath}${logFile}`);
-      start(things);
-      deployStatus = {
-        model: thingConfigs.name,
-        startedTime,
-        logFile,
-      };
-      res.send({ error: null, model: thingConfigs, deployStatus });
+      // Save model
+      const modelFile = `${modelsPath}${defaultModel}`;
+      writeToFile(modelFile, JSON.stringify(thingConfigs), (err, data) => {
+        if (err) {
+          console.error("[SERVER] Cannot save the new configuration ", err);
+          res.send({ error: "Cannot save the new configuration" });
+        } else {
+          // res.send({ error: null, model });
+          const startedTime = Date.now();
+          const logFile = `${name}_${Date.now()}.log`;
+          getLogger("SIMULATOR", `${logsPath}${logFile}`);
+          start(things);
+          deployStatus = {
+            model: thingConfigs.name,
+            startedTime,
+            logFile,
+          };
+          res.send({ error: null, model: thingConfigs, deployStatus });
+        }
+      });
+
+      // const startedTime = Date.now();
+      // const logFile = `${name}_${Date.now()}.log`;
+      // getLogger("SIMULATOR", `${logsPath}${logFile}`);
+      // start(things);
+      // deployStatus = {
+      //   model: thingConfigs.name,
+      //   startedTime,
+      //   logFile,
+      // };
+      // res.send({ error: null, model: thingConfigs, deployStatus });
     }
   });
 
@@ -194,7 +218,7 @@ null
     }
     res.send({ error: null, deployStatus: copiedStatus });
   });
-  let stats = null;
+
   router.get("/status", (req, res, next) => {
     stats = getStats();
     let isOffline = true;

@@ -10,20 +10,11 @@ import "./styles.css";
 const { Content } = Layout;
 
 class LayoutPage extends Component {
-  componentDidMount() {
-    const isDG = isDataGenerator();
-    this.props.requestDeployStatus(isDG);
-    setInterval(() => {
-      this.props.requestDeployStatus(isDG);
-    }, 3000);
-  }
-
-  render() {
-    const isDG = isDataGenerator();
-    const isLogPage = window.location.pathname.indexOf("/logs") > -1;
-    const { requesting, deployStatus, notify , resetNotification} = this.props;
-
+  constructor(props) {
+    super(props);
+    const {deployStatus} = props;
     let statusMessage = null;
+    const isDG = isDataGenerator();
     if (deployStatus) {
       statusMessage = `${
         !isDG ? "Simulation" : "Data Generator"
@@ -31,6 +22,36 @@ class LayoutPage extends Component {
         deployStatus.startedTime
       )}`;
     }
+    this.state = {
+      isDG,
+      isLogPage: window.location.pathname.indexOf("/logs") > -1,
+      statusMessage,
+    }
+  }
+
+  componentWillReceiveProps(newProps) {
+    const {deployStatus} = newProps;
+    let statusMessage = null;
+    if (deployStatus) {
+      statusMessage = `${
+        !this.state.isDG ? "Simulation" : "Data Generator"
+      } is running. Model name ${deployStatus.model}. Started time: ${new Date(
+        deployStatus.startedTime
+      )}`;
+    }
+    this.setState({statusMessage});
+  }
+
+  componentDidMount() {
+    this.props.requestDeployStatus(this.state.isDG);
+    setInterval(() => {
+      this.props.requestDeployStatus(this.state.isDG);
+    }, 3000);
+  }
+
+  render() {
+    const { isLogPage, statusMessage} = this.state;
+    const { requesting, notify , resetNotification} = this.props;
 
     return (
       <Layout>

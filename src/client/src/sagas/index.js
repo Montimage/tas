@@ -4,13 +4,15 @@ import requestModelSaga from "./requestModelSaga";
 import uploadModelSaga from "./uploadModelSaga";
 import deploySaga from "./deploySaga";
 import requestLogsSaga from './requestLogsSaga';
+import requestStats from "./requestStatsSaga";
 
 function* rootSaga() {
   yield all([
     requestModelSaga(),
     uploadModelSaga(),
     deploySaga(),
-    requestLogsSaga()
+    requestLogsSaga(),
+    requestStats(),
   ]);
 }
 

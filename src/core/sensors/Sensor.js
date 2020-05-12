@@ -51,7 +51,7 @@ class Sensor {
   getStats() {
     return {
       id: this.id,
-      status: this.status,
+      status: this.dataSource ? this.dataSource.getStatus() : null,
       numberOfSentData: this.numberOfSentData,
       startedTime: this.startedTime,
       lastActivity: this.lastActivity,
