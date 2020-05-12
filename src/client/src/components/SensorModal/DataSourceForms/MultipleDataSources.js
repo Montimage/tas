@@ -30,7 +30,6 @@ const MultipleDataSources = ({ dataPath, sources, onChange }) => (
               defaultValue={source}
               onChange={(dPath, v) => onChange(dPath, v)}
             />;
-          break;
         }
       }
     })}

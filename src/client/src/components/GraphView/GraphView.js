@@ -6,11 +6,10 @@ import {
   BugOutlined,
   PartitionOutlined,
 } from "@ant-design/icons";
-import { Popover, Typography, Avatar, Badge } from "antd";
+import { Popover, Avatar } from "antd";
 import { connect } from "react-redux";
 import { requestStats } from "../../actions";
 import { isDataGenerator } from "../../utils";
-const { Text } = Typography;
 const StatsView = ({ id, stats, children }) => (
   <div>
     <p>Id: {id}</p>
@@ -52,7 +51,6 @@ const popOverContent = (data) => {
       );
     default:
       return <p>{id}</p>;
-      break;
   }
 };
 
@@ -85,11 +83,6 @@ const CustomNode = ({ data }) => {
     </Popover>
   );
 };
-
-const CustomLink = ({data}) => {
-  console.log('custom link: ', data);
-  return <p>{data.numberOfData}</p>;
-}
 
 const graphConfig = {
   automaticRearrangeAfterDropNode: false,
