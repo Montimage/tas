@@ -4,7 +4,21 @@
   "description": "ENACT Test and Simulation Enabler",
   "scripts": {
     "start": "NODE_ENV=production node src/server/app.js",
-    "server": "node src/server/app.js"
+    "server": "nodemon src/server/app.js"
+  },
+  "nodemonConfig": {
+    "verbose": true,
+    "ignore": [
+      "*.test.js",
+      "src/client/*",
+      "src/public/*",
+      "src/server/logs/*",
+      "src/server/models/*"
+    ],
+    "execMap": {
+      "rb": "ruby",
+      "pde": "processing --sketch={{pwd}} --run"
+    }
   },
   "keywords": [
     "Test",

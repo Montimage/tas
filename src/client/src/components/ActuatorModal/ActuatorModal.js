@@ -55,7 +55,7 @@ class ActuatorModal extends Component {
       data: selectedActuator
         ? deepCloneObject(selectedActuator)
         : initActuator(),
-      thingID: thingID ? thingID : thingIDs[0],
+      thingID: thingID ? thingID : thingIDs[1],
       thingIDs,
       error: null,
     };
@@ -85,7 +85,7 @@ class ActuatorModal extends Component {
       data: selectedActuator
         ? deepCloneObject(selectedActuator)
         : initActuator(),
-      thingID: thingID ? thingID : thingIDs[0],
+      thingID: thingID ? thingID : thingIDs[1],
       thingIDs,
       error: null,
     });

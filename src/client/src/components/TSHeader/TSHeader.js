@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Layout, Menu, Row, Col, Typography } from "antd";
+import { Layout, Menu, Row, Col, Typography, Badge, Spin } from "antd";
 import {
   CaretRightOutlined,
   GatewayOutlined,
@@ -114,9 +114,8 @@ class TSHeader extends Component {
               <SubMenu
                 title={
                   <span className="submenu-title-wrapper">
-                    <DeploymentUnitOutlined />
-                    {isDG ? "Generate" : "Simulate"}
-                    {deployStatus ? <SyncOutlined spin /> : null}
+                    {deployStatus ? <Spin indicator={<DeploymentUnitOutlined spin style={{fontSize: '24'}}/>}/>: <DeploymentUnitOutlined />}
+                    {isDG ? "Generate " : "Simulate "}
                   </span>
                 }
               >

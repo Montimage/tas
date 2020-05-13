@@ -1,0 +1,11 @@
+.OFFLINE{
+  color: red;
+}
+
+.ONLINE{
+  color: green;
+}
+
+.SIMULATING{
+  color: blue;
+}
