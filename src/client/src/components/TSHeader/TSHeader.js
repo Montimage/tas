@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Layout, Menu, Row, Col, Typography, Badge, Spin } from "antd";
+import { Layout, Menu, Row, Col, Typography, Spin } from "antd";
 import {
   CaretRightOutlined,
   GatewayOutlined,
@@ -9,7 +9,6 @@ import {
   StopOutlined,
   ImportOutlined,
   ClearOutlined,
-  SyncOutlined,
   ExportOutlined,
 } from "@ant-design/icons";
 
