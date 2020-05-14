@@ -51,6 +51,20 @@ npm run forever-stop
 
 ## DEVELOPMENT
 
+### Create docker image for multiple platform
+Source: https://www.docker.com/blog/multi-arch-images/
+- Enable `buildx`:
+- Create new build engine:
+```
+docker buildx create --name mybuilder
+docker buildx use mybuilder
+docker buildx inspect --bootstrap
+```
+- Build a new image for multiple platform
+```
+docker buildx build --platform linux/amd64,linux/arm64 -t enactproject/iot_test_and_simulation:latest --push .
+```
+
 ### Create docker image
 
 Create docker image
