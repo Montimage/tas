@@ -15,6 +15,7 @@ const EnergyForm = ({ dataPath, defaultValue, onChange }) => (
         max={65535}
         defaultValue={defaultValue.initValue}
         onChange={(v) => onChange(`${dataPath}.initValue`, v)}
+        helpText="The initialize energy value!"
       />
       <FormRegularNumberItem
         label="Energy"
@@ -36,6 +37,7 @@ const EnergyForm = ({ dataPath, defaultValue, onChange }) => (
           },
         ]}
         onChange={(dPath, v) => onChange(dPath, v)}
+        helpText="The energy specification!"
       />
     </DataSourceForm>
   </React.Fragment>

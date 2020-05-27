@@ -30,6 +30,7 @@ const ValueConstraintForm = ({ defaultValue, dataPath, onChange }) => (
         },
       ]}
       onChange={(dPath, v) => onChange(dPath, v)}
+      helpText="The valid value range. For example the humage lifespan can be from 0 - 200"
     />
     <FormRegularNumberItem
       label="Regular Range"
@@ -51,6 +52,7 @@ const ValueConstraintForm = ({ defaultValue, dataPath, onChange }) => (
         },
       ]}
       onChange={(dPath, v) => onChange(dPath, v)}
+      helpText="The regular value range. For example the teenages age can be from 13-19. The step is the maximum different between 2 reports!"
     />
   </CollapseForm>
 );
@@ -71,6 +73,7 @@ const IntegerFloatForm = ({ dataPath, defaultValue, onChange }) => (
         label="Init Value"
         defaultValue={defaultValue.initValue}
         onChange={(v) => onChange(`${dataPath}.initValue`, v)}
+        helpText="Initial value!"
       />
       <FormSwitchItem
         label="Value Constraints"
@@ -78,6 +81,7 @@ const IntegerFloatForm = ({ dataPath, defaultValue, onChange }) => (
         checked={defaultValue.withValueConstraints ? true : false}
         checkedChildren={"Enable"}
         unCheckedChildren={"Disable"}
+        helpText="Enable or disable the value constraints specification"
       />
       {defaultValue.withValueConstraints ? (
         defaultValue.valueConstraints ? (

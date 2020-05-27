@@ -87,13 +87,21 @@ const DataGeneratorForm = ({
       placeholder="Number of instances"
       defaultValue={dataSource.scale ? dataSource.scale : 1}
       onChange={(v) => onDataChange(`${dataPath}.scale`, v)}
+      helpText="The number of device with the same configuration. The id of device will be indexed automatically!"
     />
     <FormNumberItem
-      label="Time Period"
+      label="Time Internal (in seconds)"
       min={1}
       max={65535}
-      defaultValue={dataSource.timePeriod}
+      defaultValue={dataSource.timePeriod ? dataSource.timePeriod : 5}
       onChange={(v) => onDataChange(`${dataPath}.timePeriod`, v)}
+      helpText="The time period to define the publishing data frequency"
+      rules = {[
+              {
+                required: true,
+                message: "Time internal is required!"
+              }
+            ]}
     />
 
     <FormCheckBoxItems
@@ -108,23 +116,26 @@ const DataGeneratorForm = ({
         "AB_SLOW_DOS_ATTACK",
         "NORMAL_BEHAVIOUR",
       ]}
+      helpText="The possible behaviours of the sensor"
     />
     {dataSource.sensorBehaviours.indexOf("AB_DOS_ATTACK") > -1 && (
       <FormNumberItem
-        label="DOS attack speedup rate"
+        label="Speedup rate"
         min={1}
         max={100}
         defaultValue={dataSource.dosAttackSpeedUpRate}
         onChange={(v) => onDataChange(`${dataPath}.dosAttackSpeedUpRate`, v)}
+        helpText="The speedup rate in DDOS attack. Define how many time faster the sensor will publish data compare to normal condition"
       />
     )}
     {dataSource.sensorBehaviours.indexOf("AB_NODE_FAILED") > -1 && (
       <FormNumberItem
-        label="Time Before Failed"
+        label="Time Before Failed (seconds)"
         min={1}
         max={65535}
         defaultValue={dataSource.timeBeforeFailed}
         onChange={(v) => onDataChange(`${dataPath}.timeBeforeFailed`, v)}
+        helpText="The time before this device going to be failed!"
       />
     )}
     <FormSwitchItem
@@ -133,6 +144,7 @@ const DataGeneratorForm = ({
       checked={dataSource.isIPSOFormat ? true : false}
       checkedChildren={"Enable"}
       unCheckedChildren={"Disable"}
+      helpText="Change the data report to IP Smart Object format"
     />
     <Divider>
       <h3>Measurements</h3>
@@ -150,6 +162,7 @@ const DataGeneratorForm = ({
           checked={dataSource.withEnergy ? true : false}
           checkedChildren={"Enable"}
           unCheckedChildren={"Disable"}
+          helpText="Enable or disable the energy measurement for this device"
         />
         {dataSource.withEnergy && (
           <EnergyForm

@@ -14,12 +14,20 @@ const EnumForm = ({ dataPath, defaultValue, onChange }) => (
         defaultValue={defaultValue.initValue}
         onChange={(v) => onChange(`${dataPath}.initValue`, v)}
         options={defaultValue.values}
+        helpText="Initial value!"
       />
       <FormTextItem
         label="Value"
         defaultValue={JSON.stringify(defaultValue.values)}
         onChange={(v) => onChange(`${dataPath}.values`, JSON.parse(v))}
-        placeholder="List of value should be separated by comma (,)"
+        placeholder="value1, value2, value3"
+        helpText="The list of possible values. Each value should be separated by a comma (,)"
+        rules = {[
+              {
+                required: true,
+                message: "Values is required!"
+              }
+            ]}
       />
     </DataSourceForm>
   </React.Fragment>

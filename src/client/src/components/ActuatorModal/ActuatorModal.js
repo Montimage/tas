@@ -188,22 +188,32 @@ class ActuatorModal extends Component {
             defaultValue={thingID}
             onChange={(v) => this.onThingChange(v)}
             options={thingIDs}
+            helpText="The identify of the device which this actuator will connect to"
           />
           <FormTextItem
-            label="Instance Id"
+            label="Id"
             defaultValue={data.id}
             onChange={(v) => this.onDataChange("id", v)}
+            helpText="The identify of the actuator"
+            rules = {[
+              {
+                required: true,
+                message: "Id is required!"
+              }
+            ]}
           />
           <FormTextItem
             label="Object Id"
             defaultValue={data.objectId}
             onChange={(v) => this.onDataChange("objectId", v)}
             placeholder="Identify of device type (IP Smart Object Format)"
+            helpText="The identify of the device type based on IPSO format. For example 3313 - for temperature"
           />
           <FormTextItem
             label="Name"
             defaultValue={data.name}
             onChange={(v) => this.onDataChange("name", v)}
+            helpText="The actuator's name"
           />
           <FormNumberItem
             label="Number of Instance"
@@ -212,11 +222,13 @@ class ActuatorModal extends Component {
             placeholder="Number of instances"
             defaultValue={data.scale ? data.scale : 1}
             onChange={(v) => this.onDataChange("scale", v)}
+            helpText="The number of actuators with the same configuration. The id of the generated actuator will be indexed automatically"
           />
           <FormEditableTextItem
             label="Topic"
             defaultValue={topic}
             onChange={(v) => this.onDataChange("topic", v)}
+            helpText="The MQTT/STOMP topic on which the actuator will be listening to receive actuated data"
           />
           <FormSwitchItem
             label="Enable"
@@ -224,6 +236,7 @@ class ActuatorModal extends Component {
             checked={data.enable ? true : false}
             checkedChildren={"On"}
             unCheckedChildren={"Off"}
+            helpText="Enable or disable this actuator from the simulation"
           />
         </Form>
         {error && <Alert message={error} type="error" />}

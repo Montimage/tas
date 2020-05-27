@@ -11,6 +11,13 @@ const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
       label="Host"
       defaultValue={defaultValue.host}
       onChange={(v) => onDataChange(`${dataPath ? `${dataPath}.` : ""}host`, v)}
+      helpText="Host name"
+      rules = {[
+              {
+                required: true,
+                message: "Host name is required!"
+              }
+            ]}
     />
     <FormNumberItem
       label="Port"
@@ -18,6 +25,13 @@ const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
       max={65535}
       defaultValue={defaultValue.port}
       onChange={(v) => onDataChange(`${dataPath ? `${dataPath}.` : ""}port`, v)}
+      helpText="Port number"
+      rules = {[
+              {
+                required: true,
+                message: "Port number is required!"
+              }
+            ]}
     />
     {type === "MONGODB" && (
       <React.Fragment>
@@ -34,7 +48,8 @@ const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
       onChange={(v) =>
         onDataChange(`${dataPath ? `${dataPath}.` : ""}options`, v)
       }
-      placeholder="Connection options in JSON format"
+      placeholder="{}"
+      helpText="Connection options. Depends on the protocol. It must be in JSON format!"
     />
   </CollapseForm>
 );

@@ -4,7 +4,7 @@ import moment from 'moment';
 
 const { RangePicker } = DatePicker;
 
-const FormTimeRangeItem = ({ label, onChange, defaultValue }) => {
+const FormTimeRangeItem = ({ label, onChange, defaultValue, helpText = null }) => {
   let startTime = moment();
   let endTime = moment();
   if (defaultValue && defaultValue.length === 2) {
@@ -12,7 +12,7 @@ const FormTimeRangeItem = ({ label, onChange, defaultValue }) => {
     endTime = moment(defaultValue[1]);
   }
   return (
-    <Form.Item label={label}>
+    <Form.Item label={label} extra={helpText}>
     <RangePicker
       defaultValue={[startTime, endTime]}
       showTime={{ format: "HH:mm" }}

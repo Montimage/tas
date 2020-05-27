@@ -11,7 +11,6 @@ import {
 import { Form, Button, Alert } from "antd";
 import { updateObjectByPath, deepCloneObject, isDataGenerator } from "../../utils";
 import { FormTextItem, FormSelectItem, FormSwitchItem, FormEditableTextItem } from "../FormItems";
-// import DatabaseConfigForm from "../DatabaseConfigForm";
 import DataReplayerForm from "./DataReplayerForm";
 import DataGeneratorForm from "./DataGeneratorForm";
 
@@ -348,29 +347,40 @@ class SensorModal extends Component {
             defaultValue={thingID}
             onChange={(v) => this.onThingChange(v)}
             options={thingIDs}
+            helpText={`The identify of the device which the ${isSensor ? 'sensor':'actuator'} will connect to`}
           />
           <FormTextItem
-            label="Instance Id"
+            label="Id"
             defaultValue={data.id}
             onChange={(v) => this.onDataChange("id", v)}
             placeholder="Identify of the device"
+            helpText="The identify of the device"
+            rules = {[
+              {
+                required: true,
+                message: "Id is required!"
+              }
+            ]}
           />
           <FormTextItem
             label="Object Id"
             defaultValue={data.objectId}
             onChange={(v) => this.onDataChange("objectId", v)}
             placeholder="Identify of the type of device (IPSO Standard)"
+            helpText="The identify of the device type based on IPSO format. For example 3313 - for temperature"
           />
           <FormTextItem
             label="Name"
             defaultValue={data.name}
             onChange={(v) => this.onDataChange("name", v)}
+            helpText="The name of the device"
           />
           {!isDG &&
             <FormEditableTextItem
               label="Topic"
               defaultValue={topic}
               onChange={(v) => this.onDataChange("topic", v)}
+              helpText="The topic to which the sensor will publish data!"
             />
           }
 
@@ -378,7 +388,8 @@ class SensorModal extends Component {
             label="User Data"
             defaultValue={JSON.stringify(data.userData)}
             onChange={(v) => this.onDataChange("userData", v)}
-            placeholder="User data in JSON format"
+            placeholder="{}"
+            helpText="The user's extra data which the user want to send along with the sensor data. It must be in JSON format"
           />
           <FormSwitchItem
             label="Enable"
@@ -386,6 +397,7 @@ class SensorModal extends Component {
             checked={data.enable ? true : false}
             checkedChildren={"On"}
             unCheckedChildren={"Off"}
+            helpText="Enable or disable this device from the simulation"
           />
           <FormSelectItem
             label="Data Source"
@@ -394,6 +406,7 @@ class SensorModal extends Component {
               this.onChangeDataSource(v === "Replay" ? true : false);
             }}
             options={["Replay", "Generate"]}
+            helpText="Select the source of the input data for the simulation."
           />
           {data.isFromDatabase ? (
             <DataReplayerForm

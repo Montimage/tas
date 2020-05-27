@@ -1,8 +1,8 @@
 import React from "react";
 import { Form, InputNumber, List, Card } from "antd";
 
-const FormRegularNumberItem = ({ label, items, onChange }) => (
-  <Form.Item label={label}>
+const FormRegularNumberItem = ({ label, items, onChange, helpText = null  }) => (
+  <Form.Item label={label} extra={helpText}>
     <List
       grid={{ gutter: 16, column: items.length }}
       dataSource={items}

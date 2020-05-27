@@ -160,11 +160,19 @@ class ThingModal extends Component {
             label="Id"
             defaultValue={data.id}
             onChange={(v) => this.onDataChange("id", v)}
+            helpText="The ID to identify this device"
+            rules = {[
+              {
+                required: true,
+                message: "Id is required!"
+              }
+            ]}
           />
           <FormTextItem
             label="Name"
             defaultValue={data.name}
             onChange={(v) => this.onDataChange("name", v)}
+            helpText="The device's name"
           />
           <FormNumberItem
             label="Number of Instance"
@@ -173,6 +181,7 @@ class ThingModal extends Component {
             placeholder="Number of instances"
             defaultValue={data.scale ? data.scale : 1}
             onChange={(v) => this.onDataChange("scale", v)}
+            helpText="Number of device with the same configuration. The id will be indexed automatically"
           />
           <FormCheckBoxItems
             label="Gateway Behaviours"
@@ -181,14 +190,16 @@ class ThingModal extends Component {
             options={[
               "GATEWAY_DOWN"
             ]}
+            helpText="Select the abnormal behaviours of the device"
           />
           {data.behaviours && data.behaviours.indexOf("GATEWAY_DOWN") > -1 && (
             <FormNumberItem
-              label="Time Before Down"
+              label="Down Time (seconds)"
               min={1}
               max={65535}
               defaultValue={data.timeToDown ? data.timeToDown : 10}
               onChange={(v) => this.onDataChange('timeToDown', v)}
+              helpText="The time before the gateway going to be failed!"
             />
           )}
           <span>Communication detail</span>
@@ -200,6 +211,7 @@ class ThingModal extends Component {
                 defaultValue={data.protocol}
                 onChange={(v) => this.onDataChange("protocol", v)}
                 options={["MQTT", "STOMP"]}
+                helpText="The communication protocol to connect with the other component to send and receive data."
               />
               <ConnectionConfig
                 defaultValue={data.connConfig}
@@ -226,6 +238,7 @@ class ThingModal extends Component {
             checked={data.enable ? true : false}
             checkedChildren={"On"}
             unCheckedChildren={"Off"}
+            helpText="Enable or disable this device and all of its children (sensors/actuators)"
           />
         </Form>
         {error && <Alert message={error} type="error" />}

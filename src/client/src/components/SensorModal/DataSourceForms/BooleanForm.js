@@ -15,6 +15,7 @@ const BooleanForm = ({ dataPath, defaultValue, onChange }) => (
         checked={defaultValue.initValue ? true : false}
         checkedChildren={"True"}
         unCheckedChildren={"False"}
+        helpText="Initial value!"
       />
     </DataSourceForm>
   </React.Fragment>

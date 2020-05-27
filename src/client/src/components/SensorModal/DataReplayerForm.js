@@ -3,7 +3,6 @@ import {
   FormTextItem,
   FormTimeRangeItem,
 } from "../FormItems";
-// import DatabaseConfigForm from "../DatabaseConfigForm";
 import ConnectionConfig from "../ConnectionConfig";
 
 const DataReplayerForm = ({dataPath, dataSource, onDataChange}) => (
@@ -18,6 +17,13 @@ const DataReplayerForm = ({dataPath, dataSource, onDataChange}) => (
       label="sensor-id"
       defaultValue={dataSource.devId}
       onChange={(v) => onDataChange(`${dataPath}.devId`, v)}
+      helpText="The id of the sensor whose data will be replayed by current sensor"
+      rules = {[
+              {
+                required: true,
+                message: "Replayed device's id is required!"
+              }
+            ]}
     />
     <FormTimeRangeItem
       label="Time Range"
@@ -26,6 +32,7 @@ const DataReplayerForm = ({dataPath, dataSource, onDataChange}) => (
         onDataChange(`${dataPath}.startTime`, v[0]);
         onDataChange(`${dataPath}.endTime`, v[1]);
       }}
+      helpText="The time range when the data should be replayed."
     />
   </React.Fragment>
 );

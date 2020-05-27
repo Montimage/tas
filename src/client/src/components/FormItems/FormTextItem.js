@@ -1,19 +1,20 @@
-import React from 'react';
+import React from "react";
 import { Form, Input } from "antd";
 
-const FormTextItem = ({label, defaultValue, onChange, placeholder}) =>(
-  <Form.Item label={label}>
-    {defaultValue ? (
-      <Input
-        defaultValue={defaultValue}
-        onChange={v => onChange(v.target.value)}
-      />
-    ):(
-      <Input
-        onChange={v => onChange(v.target.value)}
-        placeholder={placeholder}
-      />
-    )}
+const FormTextItem = ({
+  label,
+  defaultValue,
+  onChange,
+  placeholder,
+  helpText = null,
+  rules=null,
+}) => (
+  <Form.Item label={label} name={label} extra={helpText} rules={rules}>
+    <Input
+      defaultValue={defaultValue}
+      onChange={(v) => onChange(v.target.value)}
+      placeholder={placeholder}
+    />
   </Form.Item>
 );
 
