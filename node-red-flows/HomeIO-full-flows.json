@@ -1,0 +1,898 @@
+[
+    {
+        "id": "4a83e495.fd047c",
+        "type": "tab",
+        "label": "HomeIO",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "a68d2dd8.5b2a7",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "mosquitto-broker",
+        "broker": "192.168.1.12",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "13b9565e.27d32a",
+        "type": "ui_tab",
+        "z": "",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "d5a39e63.5cee5",
+        "type": "ui_group",
+        "z": "",
+        "name": "Temperature",
+        "tab": "13b9565e.27d32a",
+        "order": 4,
+        "disp": true,
+        "width": "6",
+        "collapse": true
+    },
+    {
+        "id": "f9bf8cef.cc846",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-dark",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#097479",
+                    "value": "#097479",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#097479",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#000000",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#0eb8c0",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#555555",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#eeeeee",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#097479",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "bb4616a2.9147d8",
+        "type": "ui_group",
+        "z": "",
+        "name": "Energy",
+        "tab": "13b9565e.27d32a",
+        "order": 5,
+        "disp": true,
+        "width": "6",
+        "collapse": true
+    },
+    {
+        "id": "b5edea92.b78dd8",
+        "type": "ui_group",
+        "z": "",
+        "name": "Light",
+        "tab": "13b9565e.27d32a",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": true
+    },
+    {
+        "id": "bf0586c8.d88058",
+        "type": "ui_group",
+        "z": "",
+        "name": "Siren",
+        "tab": "13b9565e.27d32a",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": true
+    },
+    {
+        "id": "29f7f7cf.dde948",
+        "type": "ui_group",
+        "z": "",
+        "name": "Shades",
+        "tab": "13b9565e.27d32a",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": true
+    },
+    {
+        "id": "df626e52.0ac1b",
+        "type": "mqtt in",
+        "z": "4a83e495.fd047c",
+        "name": "Sensors' data input",
+        "topic": "things/homeio-gw/sensors/#",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 270,
+        "y": 460,
+        "wires": [
+            [
+                "f8ea910c.9beb2"
+            ]
+        ]
+    },
+    {
+        "id": "f8ea910c.9beb2",
+        "type": "switch",
+        "z": "4a83e495.fd047c",
+        "name": "Dispatch",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "doors",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "motion",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "smoke",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "temperature",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "brightness",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "shades",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "power",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "cloudiness",
+                "vt": "str"
+            }
+        ],
+        "checkall": "false",
+        "repair": false,
+        "outputs": 8,
+        "x": 460,
+        "y": 460,
+        "wires": [
+            [
+                "efd2a07d.b42ee"
+            ],
+            [
+                "fc9b7c6c.1390b"
+            ],
+            [
+                "da54efda.bc338"
+            ],
+            [
+                "8d447def.5e32e"
+            ],
+            [
+                "f8114faf.44399"
+            ],
+            [
+                "a013166e.951eb8"
+            ],
+            [
+                "32212dd1.23dbf2"
+            ],
+            [
+                "8f977746.785ff8"
+            ]
+        ]
+    },
+    {
+        "id": "efd2a07d.b42ee",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Get Door's Status",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {door} = values;    \n        if (door) {\n            msg.payload = door.value;\n            flow.set('door', door.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 710,
+        "y": 40,
+        "wires": [
+            [
+                "5c98a6fa.cb0258",
+                "27c98877.a5b458"
+            ]
+        ]
+    },
+    {
+        "id": "5c98a6fa.cb0258",
+        "type": "ui_text",
+        "z": "4a83e495.fd047c",
+        "group": "bf0586c8.d88058",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "Door",
+        "label": "Door Closed Detector",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 950,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "fc9b7c6c.1390b",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Get Motion's Status",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {motion} = values;    \n        if (motion) {\n            msg.payload = motion.value;\n            flow.set('motion', motion.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 720,
+        "y": 100,
+        "wires": [
+            [
+                "eaf0b20c.910ab",
+                "27c98877.a5b458"
+            ]
+        ]
+    },
+    {
+        "id": "eaf0b20c.910ab",
+        "type": "ui_text",
+        "z": "4a83e495.fd047c",
+        "group": "bf0586c8.d88058",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "name": "Motion Detector",
+        "label": "Motion Detector",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 980,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "da54efda.bc338",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Get Smoke's Status",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {smoke} = values;    \n        if (smoke) {\n            msg.payload = smoke.value;\n            flow.set('smoke', smoke.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 700,
+        "y": 200,
+        "wires": [
+            [
+                "b2742395.76d17",
+                "27c98877.a5b458"
+            ]
+        ]
+    },
+    {
+        "id": "b2742395.76d17",
+        "type": "ui_text",
+        "z": "4a83e495.fd047c",
+        "group": "bf0586c8.d88058",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "name": "Smoke Detector",
+        "label": "Smoke Detector",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 980,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "8d447def.5e32e",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Get Temperature",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {temp} = values;    \n        if (temp) {\n            msg.payload = Math.round(temp.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 710,
+        "y": 360,
+        "wires": [
+            [
+                "d6e48f77.fe3f1",
+                "c60008f.a529ff8"
+            ]
+        ]
+    },
+    {
+        "id": "d6e48f77.fe3f1",
+        "type": "ui_gauge",
+        "z": "4a83e495.fd047c",
+        "name": "Temperature",
+        "group": "d5a39e63.5cee5",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "wave",
+        "title": "Temperature",
+        "label": "C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "50",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 970,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "f8114faf.44399",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Get Brightness",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {brightness} = values;    \n        if (brightness) {\n            msg.payload = Math.round(brightness.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 700,
+        "y": 520,
+        "wires": [
+            [
+                "1865b26c.5b052e",
+                "c75009e.d116df8"
+            ]
+        ]
+    },
+    {
+        "id": "1865b26c.5b052e",
+        "type": "ui_gauge",
+        "z": "4a83e495.fd047c",
+        "name": "Brightness",
+        "group": "b5edea92.b78dd8",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "wave",
+        "title": "Brightness",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "10",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 970,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "a013166e.951eb8",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Get Shades",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {shades} = values;    \n        if (shades) {\n            msg.payload = Math.round(shades.value*100)/100;\n            flow.set('shades', shades.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 690,
+        "y": 700,
+        "wires": [
+            [
+                "71362a20.963a14",
+                "cadbd0e6.44e93"
+            ]
+        ]
+    },
+    {
+        "id": "71362a20.963a14",
+        "type": "ui_gauge",
+        "z": "4a83e495.fd047c",
+        "name": "Shades",
+        "group": "29f7f7cf.dde948",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "wave",
+        "title": "Shades",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "10",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 960,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "32212dd1.23dbf2",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Get Power",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {power} = values;    \n        if (power) {\n            msg.payload = Math.round(power.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 690,
+        "y": 900,
+        "wires": [
+            [
+                "1c70c914.301b97"
+            ]
+        ]
+    },
+    {
+        "id": "1c70c914.301b97",
+        "type": "ui_gauge",
+        "z": "4a83e495.fd047c",
+        "name": "Power",
+        "group": "bb4616a2.9147d8",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Power",
+        "label": "mA",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "2500",
+        "colors": [
+            "#ec0461",
+            "#e6e600",
+            "#3acb43"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 940,
+        "y": 900,
+        "wires": []
+    },
+    {
+        "id": "8f977746.785ff8",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Get Cloudiness",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {cloudiness} = values;    \n        if (cloudiness) {\n            msg.payload = Math.round(cloudiness.value*100)/100;\n            flow.set('cloudiness', cloudiness.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 700,
+        "y": 760,
+        "wires": [
+            [
+                "b4af1f09.5ca36",
+                "cadbd0e6.44e93"
+            ]
+        ]
+    },
+    {
+        "id": "b4af1f09.5ca36",
+        "type": "ui_gauge",
+        "z": "4a83e495.fd047c",
+        "name": "Cloudiness",
+        "group": "29f7f7cf.dde948",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "wave",
+        "title": "Cloudiness",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "10",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 970,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "7760a4a.b5a265c",
+        "type": "mqtt out",
+        "z": "4a83e495.fd047c",
+        "name": "",
+        "topic": "things/homeio-gw/actuators/siren",
+        "qos": "",
+        "retain": "",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 1640,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "cd47f9c9.8bf3e8",
+        "type": "mqtt out",
+        "z": "4a83e495.fd047c",
+        "name": "",
+        "topic": "things/homeio-gw/actuators/roller-shades",
+        "qos": "",
+        "retain": "",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 1660,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "6026b4b8.b9317c",
+        "type": "mqtt out",
+        "z": "4a83e495.fd047c",
+        "name": "",
+        "topic": "things/homeio-gw/actuators/heater",
+        "qos": "",
+        "retain": "",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 1640,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "7a54a9d8.3293a8",
+        "type": "mqtt out",
+        "z": "4a83e495.fd047c",
+        "name": "",
+        "topic": "things/homeio-gw/actuators/lights",
+        "qos": "",
+        "retain": "",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 1640,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "30553d84.6d02e2",
+        "type": "ui_switch",
+        "z": "4a83e495.fd047c",
+        "name": "Siren Controller",
+        "label": "Siren Controller",
+        "tooltip": "",
+        "group": "bf0586c8.d88058",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 1360,
+        "y": 160,
+        "wires": [
+            [
+                "7760a4a.b5a265c"
+            ]
+        ]
+    },
+    {
+        "id": "348e1651.9f6eaa",
+        "type": "ui_switch",
+        "z": "4a83e495.fd047c",
+        "name": "Roller Shade Up Controller",
+        "label": "Roller Shade Up Controller",
+        "tooltip": "",
+        "group": "29f7f7cf.dde948",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 1260,
+        "y": 800,
+        "wires": [
+            [
+                "cd47f9c9.8bf3e8"
+            ]
+        ]
+    },
+    {
+        "id": "c9be6497.699c88",
+        "type": "ui_slider",
+        "z": "4a83e495.fd047c",
+        "name": "Heat Controller",
+        "label": "Heat Controller",
+        "tooltip": "Control the heat level",
+        "group": "d5a39e63.5cee5",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "end",
+        "topic": "",
+        "min": 0,
+        "max": 10,
+        "step": 1,
+        "x": 1220,
+        "y": 420,
+        "wires": [
+            [
+                "6026b4b8.b9317c"
+            ]
+        ]
+    },
+    {
+        "id": "25ceb01.e80a15",
+        "type": "ui_slider",
+        "z": "4a83e495.fd047c",
+        "name": "Lights Controller",
+        "label": "Lights",
+        "tooltip": "Control the lights level",
+        "group": "b5edea92.b78dd8",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "end",
+        "topic": "",
+        "min": 0,
+        "max": 10,
+        "step": 1,
+        "x": 1220,
+        "y": 580,
+        "wires": [
+            [
+                "7a54a9d8.3293a8"
+            ]
+        ]
+    },
+    {
+        "id": "27c98877.a5b458",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Siren calculation",
+        "func": "const door = flow.get('door');\nconst motion = flow.get('motion');\nconst smoke = flow.get('smoke');\nlet sirenMsg = 'All is good!';\nlet sirenStatus = false;\nif (smoke) {\n    sirenMsg = 'Smoke detected!';\n    sirenStatus = true;\n}\nif (door && motion) {\n    if (!smoke) {\n        sirenMsg = 'Thief detected!';    \n    } else {\n        sirenMsg = `${sirenMsg}. Thief detected!`;\n    }\n    sirenStatus = true;\n}\nflow.set('sirenStatus', sirenMsg);\nmsg.payload = sirenStatus;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1120,
+        "y": 80,
+        "wires": [
+            [
+                "7d435c8f.d8a774",
+                "2437b522.a4dfea"
+            ]
+        ]
+    },
+    {
+        "id": "7d435c8f.d8a774",
+        "type": "switch",
+        "z": "4a83e495.fd047c",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1330,
+        "y": 80,
+        "wires": [
+            [
+                "30553d84.6d02e2"
+            ]
+        ]
+    },
+    {
+        "id": "c60008f.a529ff8",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Temperature Calculation",
+        "func": "const currentTemp = Math.round(msg.payload/3);\nconst heatingLevel = 10 - currentTemp;\nif (heatingLevel < 0){\n    msg.payload = 0;\n} else if (heatingLevel > 10){\n    msg.payload = 10;\n} else {\n    msg.payload = heatingLevel;\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1150,
+        "y": 360,
+        "wires": [
+            [
+                "c9be6497.699c88"
+            ]
+        ]
+    },
+    {
+        "id": "951b053c.3328c8",
+        "type": "ui_text",
+        "z": "4a83e495.fd047c",
+        "group": "bf0586c8.d88058",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "Event",
+        "label": "Status",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 1550,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "2437b522.a4dfea",
+        "type": "change",
+        "z": "4a83e495.fd047c",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "sirenStatus",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1300,
+        "y": 220,
+        "wires": [
+            [
+                "951b053c.3328c8"
+            ]
+        ]
+    },
+    {
+        "id": "c75009e.d116df8",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Brightness Calculation",
+        "func": "const brightness = msg.payload;\nconst lightLevel = 10 - brightness;\nif (lightLevel < 0){\n    msg.payload = 0;\n} else if (lightLevel > 10){\n    msg.payload = 10;\n} else {\n    msg.payload = lightLevel;\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1140,
+        "y": 520,
+        "wires": [
+            [
+                "25ceb01.e80a15"
+            ]
+        ]
+    },
+    {
+        "id": "cadbd0e6.44e93",
+        "type": "function",
+        "z": "4a83e495.fd047c",
+        "name": "Calculate shades level",
+        "func": "const cloudiness = flow.get('cloudiness');\nconst shades = flow.get('shades');\nif (cloudiness > 0.5 && shades < 5) {\n    msg.payload = true;\n} else {\n    msg.payload = false;\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1140,
+        "y": 720,
+        "wires": [
+            [
+                "348e1651.9f6eaa"
+            ]
+        ]
+    }
+]

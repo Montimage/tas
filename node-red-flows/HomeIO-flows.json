@@ -1,0 +1,557 @@
+[
+    {
+        "id": "93a81233.5770c",
+        "type": "tab",
+        "label": "HomeIO",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "a68d2dd8.5b2a7",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "mosquitto-broker",
+        "broker": "192.168.1.12",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "13b9565e.27d32a",
+        "type": "ui_tab",
+        "z": "",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "d5a39e63.5cee5",
+        "type": "ui_group",
+        "z": "",
+        "name": "Temperature",
+        "tab": "13b9565e.27d32a",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": true
+    },
+    {
+        "id": "f9bf8cef.cc846",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-dark",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#097479",
+                    "value": "#097479",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#097479",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#000000",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#0eb8c0",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#555555",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#eeeeee",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#097479",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "bb4616a2.9147d8",
+        "type": "ui_group",
+        "z": "",
+        "name": "Energy",
+        "tab": "13b9565e.27d32a",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": true
+    },
+    {
+        "id": "bf0586c8.d88058",
+        "type": "ui_group",
+        "z": "",
+        "name": "Siren",
+        "tab": "13b9565e.27d32a",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": true
+    },
+    {
+        "id": "f86cf3c.9d0cd1",
+        "type": "mqtt in",
+        "z": "93a81233.5770c",
+        "name": "Sensors' data input",
+        "topic": "things/homeio-gw/sensors/#",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 270,
+        "y": 460,
+        "wires": [
+            [
+                "820fc83c.c0a678"
+            ]
+        ]
+    },
+    {
+        "id": "820fc83c.c0a678",
+        "type": "switch",
+        "z": "93a81233.5770c",
+        "name": "Dispatch",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "door",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "motion",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "temp",
+                "vt": "str"
+            },
+            {
+                "t": "cont",
+                "v": "power",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 4,
+        "x": 460,
+        "y": 460,
+        "wires": [
+            [
+                "ff8d92e4.0a187"
+            ],
+            [
+                "50b18060.47443"
+            ],
+            [
+                "91f4da28.e00078"
+            ],
+            [
+                "44e2dbb0.721a44",
+                "ba5a3869.454398"
+            ]
+        ]
+    },
+    {
+        "id": "ff8d92e4.0a187",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "name": "Get Door's Status",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {door} = values;    \n        if (door) {\n            msg.payload = door.value;\n            flow.set('door', door.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 730,
+        "y": 200,
+        "wires": [
+            [
+                "80f7d7fb.6a6fd8",
+                "5c255d28.1cefd4"
+            ]
+        ]
+    },
+    {
+        "id": "80f7d7fb.6a6fd8",
+        "type": "ui_text",
+        "z": "93a81233.5770c",
+        "group": "bf0586c8.d88058",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "Door",
+        "label": "Door Closed Detector",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 970,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "50b18060.47443",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "name": "Get Motion's Status",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {motion} = values;    \n        if (motion) {\n            msg.payload = motion.value;\n            flow.set('motion', motion.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 740,
+        "y": 260,
+        "wires": [
+            [
+                "d57de20a.a23d5",
+                "5c255d28.1cefd4"
+            ]
+        ]
+    },
+    {
+        "id": "d57de20a.a23d5",
+        "type": "ui_text",
+        "z": "93a81233.5770c",
+        "group": "bf0586c8.d88058",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "name": "Motion Detector",
+        "label": "Motion Detector",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 1000,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "91f4da28.e00078",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "name": "Get Temperature",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {temp} = values;    \n        if (temp) {\n            msg.payload = Math.round(temp.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 710,
+        "y": 500,
+        "wires": [
+            [
+                "2cd368d.858c598",
+                "df86bca7.3591b"
+            ]
+        ]
+    },
+    {
+        "id": "2cd368d.858c598",
+        "type": "ui_gauge",
+        "z": "93a81233.5770c",
+        "name": "Temperature",
+        "group": "d5a39e63.5cee5",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "wave",
+        "title": "Temperature",
+        "label": "C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "50",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 970,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "44e2dbb0.721a44",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "name": "Get Power",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {values} = data;\n    if (values) {\n        const {power} = values;    \n        if (power) {\n            msg.payload = Math.round(power.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 690,
+        "y": 760,
+        "wires": [
+            [
+                "7eac4e71.88545"
+            ]
+        ]
+    },
+    {
+        "id": "7eac4e71.88545",
+        "type": "ui_gauge",
+        "z": "93a81233.5770c",
+        "name": "Power",
+        "group": "bb4616a2.9147d8",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Power",
+        "label": "mA",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "2500",
+        "colors": [
+            "#ec0461",
+            "#e6e600",
+            "#3acb43"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 940,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "446467d.0d56e98",
+        "type": "mqtt out",
+        "z": "93a81233.5770c",
+        "name": "",
+        "topic": "things/homeio-gw/actuators/siren",
+        "qos": "",
+        "retain": "",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 1640,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "e5476d3f.75691",
+        "type": "mqtt out",
+        "z": "93a81233.5770c",
+        "name": "",
+        "topic": "things/homeio-gw/actuators/heater",
+        "qos": "",
+        "retain": "",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 1640,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "f74a1e2c.9f418",
+        "type": "ui_switch",
+        "z": "93a81233.5770c",
+        "name": "Siren Controller",
+        "label": "Siren Controller",
+        "tooltip": "",
+        "group": "bf0586c8.d88058",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "x": 1220,
+        "y": 280,
+        "wires": [
+            [
+                "446467d.0d56e98"
+            ]
+        ]
+    },
+    {
+        "id": "38d3ae56.84d542",
+        "type": "ui_slider",
+        "z": "93a81233.5770c",
+        "name": "Heat Controller",
+        "label": "Heat Controller",
+        "tooltip": "Control the heat level",
+        "group": "d5a39e63.5cee5",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "end",
+        "topic": "",
+        "min": 0,
+        "max": 10,
+        "step": 1,
+        "x": 1220,
+        "y": 560,
+        "wires": [
+            [
+                "e5476d3f.75691"
+            ]
+        ]
+    },
+    {
+        "id": "5c255d28.1cefd4",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "name": "Siren calculation",
+        "func": "const door = flow.get('door');\nconst motion = flow.get('motion');\nmsg.payload = door && motion;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1140,
+        "y": 200,
+        "wires": [
+            [
+                "9cb2f3f0.ebb2e"
+            ]
+        ]
+    },
+    {
+        "id": "9cb2f3f0.ebb2e",
+        "type": "switch",
+        "z": "93a81233.5770c",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1350,
+        "y": 200,
+        "wires": [
+            [
+                "f74a1e2c.9f418"
+            ]
+        ]
+    },
+    {
+        "id": "df86bca7.3591b",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "name": "Temperature Calculation",
+        "func": "const currentTemp = Math.round(msg.payload/3);\nconst heatingLevel = 10 - currentTemp;\nif (heatingLevel < 0){\n    msg.payload = 0;\n} else if (heatingLevel > 10){\n    msg.payload = 10;\n} else {\n    msg.payload = heatingLevel;\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1150,
+        "y": 500,
+        "wires": [
+            [
+                "38d3ae56.84d542"
+            ]
+        ]
+    },
+    {
+        "id": "51a30d26.9b61c4",
+        "type": "ui_text",
+        "z": "93a81233.5770c",
+        "group": "d5a39e63.5cee5",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "Time",
+        "label": "Last Received Time",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 950,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "ba5a3869.454398",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "name": "Get Time",
+        "func": "const data = JSON.parse(msg.payload);\nif (data){\n    const {timestamp} = data;\n    if (timestamp) {\n        msg.payload = (new Date(timestamp)).toLocaleTimeString();\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 680,
+        "y": 620,
+        "wires": [
+            [
+                "51a30d26.9b61c4"
+            ]
+        ]
+    }
+]
