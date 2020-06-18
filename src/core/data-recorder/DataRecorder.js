@@ -179,7 +179,7 @@ class DataRecorder {
         return callback(error);
       } else {
         this.dataStorage['dsClient'] = dsClient;
-        // TODO: update dataset
+        dsClient.saveDataSet(this.dataStorage.dataset);
         return callback();
       }
     });

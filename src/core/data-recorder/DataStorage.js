@@ -1,6 +1,7 @@
 const {
   ENACTDB,
-  RecordedDataSchema
+  RecordedDataSchema,
+  DataSetSchema
 } = require('../enact-mongoose');
 
 /**
@@ -72,6 +73,11 @@ class DataStorage {
   save(data) {
     const rcData = new RecordedDataSchema(data);
     rcData.save();
+  }
+
+  saveDataSet(dataset) {
+    const newDS = new DataSetSchema({...dataset, createdAt: Date.now()});
+    newDS.save();
   }
 
   /**
