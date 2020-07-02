@@ -1,5 +1,5 @@
 const fs = require('fs');
-
+const path = require('path');
 const readDir = (dirPath, callback) => {
   fs.readdir(dirPath, callback);
 };
@@ -39,8 +39,18 @@ const readJSONFile = (filePath, callback) => {
  * @param {String} filePath Path to the output file
  * @param {String} data data to be written
  * @param {Function} callback The callback function
+ * @param {Boolean} isOverwrite The flag to indicate if the file should be overwrite or not
  */
-const writeToFile = (filePath, data, callback) => {
+const writeToFile = (_filePath, data, callback, isOverwrite = false) => {
+  let filePath = _filePath;
+  if (!isOverwrite) {
+    if (fs.existsSync(filePath)) {
+      // Need to change the file name;
+      const extName = path.extname(_filePath);
+      filePath = `${_filePath.replace(extName, '')}-${Date.now()}${extName}`;
+    }
+  }
+  
   try {
     fs.writeFile(filePath, data, (err, result) => {
       if (err) return callback(err);
