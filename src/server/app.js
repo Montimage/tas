@@ -8,6 +8,11 @@ const dotenv = require('dotenv');
 const env = dotenv.config().parsed;
 
 var apiRouter = require('./routes');
+const modelRouter = require('./routes/model');
+const dataRecorderRouter = require('./routes/data-recorders');
+const dataStorageRouter = require('./routes/data-storage');
+const createLogRouter = require('./routes/logs');
+const createReportRouter = require('./routes/reports');
 
 var app = express();
 var compression = require('compression');
@@ -44,6 +49,13 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/api/models', modelRouter);
+app.use('/api/data-recorders', dataRecorderRouter);
+app.use('/api/data-storage', dataStorageRouter);
+app.use('/api/logs/data-recorders', createLogRouter('data-recorders'));
+app.use('/api/logs/simulations', createLogRouter('simulations'));
+app.use('/api/logs/test-campaigns', createLogRouter('test-campaigns'));
+app.use('/api/reports/test-campaigns', createReportRouter('test-campaigns'));
 app.use('/api/simulation', apiRouter(true));
 app.use('/api/data-generator', apiRouter(false));
 app.get('/*', function (req, res) {
