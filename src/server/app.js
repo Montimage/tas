@@ -13,6 +13,10 @@ const dataRecorderRouter = require('./routes/data-recorders');
 const dataStorageRouter = require('./routes/data-storage');
 const createLogRouter = require('./routes/logs');
 const createReportRouter = require('./routes/reports');
+const testCaseRouter = require('./routes/test-cases');
+const testCampaignRouter = require('./routes/test-campaigns');
+const dataSetRouter = require('./routes/data-sets');
+const eventRouter = require('./routes/events');
 
 var app = express();
 var compression = require('compression');
@@ -22,8 +26,13 @@ app.use(compression()); //Compress all routes
 app.use(helmet());
 app.set("port", env.SERVER_PORT);
 
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({limit: '50mb',  extended: true }))
+app.use(bodyParser.json({
+  limit: '50mb'
+}));
+app.use(bodyParser.urlencoded({
+  limit: '50mb',
+  extended: true
+}))
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -56,6 +65,10 @@ app.use('/api/logs/data-recorders', createLogRouter('data-recorders'));
 app.use('/api/logs/simulations', createLogRouter('simulations'));
 app.use('/api/logs/test-campaigns', createLogRouter('test-campaigns'));
 app.use('/api/reports/test-campaigns', createReportRouter('test-campaigns'));
+app.use('/api/data-sets', dataSetRouter);
+app.use('/api/test-cases', testCaseRouter);
+app.use('/api/test-campaigns', testCampaignRouter);
+app.use('/api/events', eventRouter);
 app.use('/api/simulation', apiRouter(true));
 app.use('/api/data-generator', apiRouter(false));
 app.get('/*', function (req, res) {

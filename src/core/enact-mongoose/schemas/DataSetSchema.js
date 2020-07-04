@@ -15,73 +15,78 @@ const Schema = mongoose.Schema;
  * - get Dataset by name/id
  * - get dataset by tags
  */
-const dataSetSchema = new Schema(
-  {
-    id: {
-      type: String,
-      required: true
-    },
-    name: {
-      type: String,
-      required: true
-    },
-    tags: {
-      type: Array,
-      required: true
-    },
-    description: {
-      type: String,
-      required: false
-    },
-    createdAt: {
-      type: Number,
-      required: true
-    }
+const dataSetSchema = new Schema({
+  id: {
+    type: String,
+    required: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  tags: {
+    type: Array,
+    required: true
+  },
+  description: {
+    type: String,
+    required: false
+  },
+  createdAt: {
+    type: Number,
+    required: true
+  },
+  lastModified: {
+    type: Number,
+    required: true
+  },
+  source: {
+    type: String,
+    enum: ['RECORDED', 'GENERATED', 'MUTATED'],
+    required: true
   }
-);
+});
 
-dataSetSchema.statics.findDataSetWithOptions = function(options, callback) {
+dataSetSchema.statics.findDataSetsWithPagingOptions = function (options, page, callback) {
   this.find(options)
-    .sort({ timestamp: 1 })
+    .limit(20)
+    .skip(page * 20)
+    .sort({
+      lastModified: 1
+    })
     .exec((err, data) => {
       if (err) {
         return callback(err);
       }
 
       if (!data) {
-        return callback({ error: `Cannot find any recorded data` });
+        return callback({
+          error: `Cannot find any event data`
+        });
       }
 
       return callback(null, data);
     });
 };
 
-dataSetSchema.statics.findDataSetBetweenTimes = function(
-  filter,
-  startTime,
-  endTime,
-  callback
-) {
-
-  const options = {
-    $and: [
-      {
-        timestamp: {
-          $gte: Number(startTime)
-        }
-      },
-      {
-        timestamp: {
-          $lte: Number(endTime)
-        }
+dataSetSchema.statics.findDataSetsWithOptions = function (options, callback) {
+  this.find(options)
+    .sort({
+      lastModified: 1
+    })
+    .exec((err, data) => {
+      if (err) {
+        return callback(err);
       }
-    ]
-  };
 
-  if (filter) {
-    options['$and'].push(filter);
-  }
-  return this.findDataSetWithOptions(options, callback);
+      if (!data) {
+        return callback({
+          error: `Cannot find any recorded data`
+        });
+      }
+
+      return callback(null, data);
+    });
 };
 
 module.exports = mongoose.model("DataSet", dataSetSchema);

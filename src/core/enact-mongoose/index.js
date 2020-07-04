@@ -3,8 +3,10 @@ const mongoose = require("mongoose");
 // Schemas
 const SensorSchema = require('./schemas/SensorSchema');
 const ActuatorSchema = require('./schemas/ActuatorSchema');
-const RecordedDataSchema = require('./schemas/RecordedDataSchema');
+const EventSchema = require('./schemas/EventSchema');
 const DataSetSchema = require('./schemas/DataSetSchema');
+const TestCaseSchema = require('./schemas/TestCaseSchema');
+const TestCampaignSchema = require('./schemas/TestCampaignSchema');
 
 function ENACTDB(host, port, dbName, auth = null) {
   this.host = host;
@@ -56,6 +58,8 @@ module.exports = {
   ENACTDB,
   SensorSchema,
   ActuatorSchema,
-  RecordedDataSchema,
-  DataSetSchema
+  EventSchema,
+  DataSetSchema,
+  TestCaseSchema,
+  TestCampaignSchema
 };

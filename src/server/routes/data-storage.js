@@ -1,40 +1,24 @@
 /* Working with Data Generator */
 var express = require("express");
 const {
-  readJSONFile,
-  writeToFile,
-} = require("../../core/utils");
-
-const dataStoragePath = `${__dirname}/../data/data-storage.json`;
+  getDataStorage,
+  dbConnector,
+  updateDataStorage
+} = require('./db-connector');
 let router = express.Router();
 
-///////////////
-// Data Storage
-///////////////
-// Read a specific model by its name:
 router.get("/", function (req, res, next) {
-  readJSONFile(dataStoragePath, (err, data) => {
+  getDataStorage((err, dataStorage) => {
     if (err) {
-      console.error("[SERVER]", err);
       res.send({
-        error: "No default data storage",
-        dataStorage: {
-          protocol: "MONGODB",
-          host: "localhost",
-          port: 27017,
-          username: null,
-          password: null,
-          dbname: null,
-          options: null,
-        },
+        error: 'Cannot get data storage'
       });
     } else {
       res.send({
-        error: null,
-        dataStorage: data
+        dataStorage
       });
     }
-  });
+  })
 });
 
 // Save the default data storage
@@ -48,24 +32,22 @@ router.post("/", function (req, res, next) {
       error: "Cannot find data storage in body"
     });
   }
-  writeToFile(dataStoragePath, JSON.stringify(dataStorage), (err, data) => {
+  updateDataStorage(dataStorage, (err, ds) => {
     if (err) {
-      console.error("[SERVER]", err);
       res.send({
-        error: "Cannot save the new data storage configuration"
+        error: 'Failed to update data storage'
       });
     } else {
       res.send({
-        error: null,
-        dataStorage
+        dataStorage: ds
       });
     }
-  }, true);
+  });
 });
 
 // Test the connection to the default data storage
-router.get('/test', (req, res, next) => {
-  res.send('Not implemented yet!');
+router.get('/test', dbConnector, (req, res, next) => {
+  res.send(true);
 });
 
 
