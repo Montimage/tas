@@ -1,6 +1,10 @@
 /* Working with Data Generator */
 var express = require("express");
 var path = require('path');
+const {
+  startRecording,
+  stopRecording
+} = require('../../core/data-recorder');
 
 const {
   readJSONFile,
@@ -10,13 +14,100 @@ const {
 } = require("../../core/utils");
 const dataRecorderssPath = `${__dirname}/../data/data-recorders/`;
 let router = express.Router();
-
+let getLogger = require("../logger");
+let logsPath = `${__dirname}/../logs/data-recorders/`;
 ///////////////
 // DATA RECORDERS
 ///////////////
 
+/**
+ * status
+ * {
+ *    isRunning: true|false,
+ *    model: {},
+ *    startedTime: timestamp,
+ *    stoppedTime: timestamp,
+ *    logFile: String
+ * }
+ */
+let runningStatus = null;
+let stats = null;
+
+/**
+ * Get the running status of data recorder
+ */
+router.get("/status", (req, res, next) => {
+  res.send({
+    runningStatus
+  });
+});
+
+// Stop the running data recorder
+router.get("/stop", function (req, res, next) {
+  const copiedStatus = runningStatus;
+  if (runningStatus) {
+    stopRecording();
+    runningStatus = null;
+    copiedStatus.isRunning = false;
+  }
+  res.send({
+    error: null,
+    runningStatus: copiedStatus
+  });
+});
+
+// Start a data recorder
+router.post("/start", (req, res, next) => {
+  if (runningStatus && runningStatus.isRunning) {
+    res.send({
+      error: 'A data recorder is running. Only one can be run at the time'
+    });
+  } else {
+    runningStatus = null;
+    stats = null;
+    const {
+      model
+    } = req.body;
+    if (!model) {
+      console.error("[data-recorders] Cannot find data recorder configuration");
+      res.send({
+        error: "Cannot find data recorder configuration"
+      });
+    } else {
+      const {
+        name,
+        dataRecorders
+      } = model;
+      if (!name || !dataRecorders) {
+        console.error("[data-recorders] Invalid data recorder model");
+        res.send({
+          error: " Invalid data recorder model"
+        });
+      } else {
+        const startedTime = Date.now();
+        const logFile = `${name}_${startedTime}.log`;
+        getLogger("DATA-RECORDER", `${logsPath}${logFile}`);
+        console.log('[data-recorders] A data recorder has been started ...');
+        runningStatus = {
+          isRunning: true,
+          model: name,
+          startedTime,
+          endTime: null,
+          logFile
+        };
+        startRecording(dataRecorders);
+        res.send({
+          error: null,
+          model,
+          runningStatus
+        });
+      }
+    }
+  }
+});
+
 // Read the list of data recorders
-router.get("/", (req, res, next) => {
+router.get("/models/", (req, res, next) => {
   readDir(dataRecorderssPath, (err, files) => {
     if (err) {
       console.error("[SERVER]", err);
@@ -33,7 +124,7 @@ router.get("/", (req, res, next) => {
 });
 
 // Read a specific data recorder by its name:
-router.get("/:fileName", function (req, res, next) {
+router.get("/models/:fileName", function (req, res, next) {
   const {
     fileName
   } = req.params;
@@ -54,7 +145,7 @@ router.get("/:fileName", function (req, res, next) {
 });
 
 // Update a data recorder
-router.post("/:fileName", function (req, res, next) {
+router.post("/models/:fileName", function (req, res, next) {
   const {
     fileName
   } = req.params;
@@ -92,11 +183,11 @@ router.post("/:fileName", function (req, res, next) {
         dataRecorder: dataRecorder
       });
     }
-  },true);
+  }, true);
 });
 
 // Save a new dataRecorder
-router.post("/", function (req, res, next) {
+router.post("/models/", function (req, res, next) {
   const {
     dataRecorder
   } = req.body;
@@ -135,7 +226,7 @@ router.post("/", function (req, res, next) {
 });
 
 // Delete a data recorder
-router.delete("/:fileName", function (req, res, next) {
+router.delete("/models/:fileName", function (req, res, next) {
   const {
     fileName
   } = req.params;

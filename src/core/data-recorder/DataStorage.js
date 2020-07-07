@@ -1,6 +1,6 @@
 const {
   ENACTDB,
-  RecordedDataSchema,
+  EventSchema,
   DataSetSchema
 } = require('../enact-mongoose');
 
@@ -71,7 +71,7 @@ class DataStorage {
    * @param {Object} data The data to be saved into the database
    */
   save(data) {
-    const rcData = new RecordedDataSchema(data);
+    const rcData = new EventSchema(data);
     rcData.save();
   }
 

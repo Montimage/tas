@@ -64,6 +64,9 @@ class MQTTBus{
       }
     });
   }
+  close() {
+    if (this.mqttClient) this.mqttClient.end();
+  }
 }
 
 module.exports = MQTTBus;

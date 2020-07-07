@@ -27,7 +27,7 @@ class DataRecorder {
    * @param {String} _topic The topic of the receiving message
    * @param {Object} packet The attribute of the received message
    */
-  isUpStreamData(_topic, packet) {
+  isSensorData(_topic, packet) {
     const {
       upStreams
     } = this.source;
@@ -48,9 +48,9 @@ class DataRecorder {
    */
   messageHandler(topic, message, packet) {
     console.log('[DataRecorder] Received a message on topic: ', topic, message);
-    let isUpStream = false;
-    if (this.isUpStreamData(topic, packet)) {
-      isUpStream = true;
+    let isSensorData = false;
+    if (this.isSensorData(topic, packet)) {
+      isSensorData = true;
       // Forward message, keep the original topic name
       if (this.forwarder) {
         this.forwarder.mqClient.publish(topic, message);
@@ -63,7 +63,7 @@ class DataRecorder {
       this.dataStorage.dsClient.save({
         datasetId: this.dataStorage.dataset.id,
         topic,
-        isUpStream,
+        isSensorData,
         timestamp: Date.now(),
         values: message
       });
@@ -252,7 +252,7 @@ class DataRecorder {
     }
 
     if (this.dataStorage && this.dataStorage.dsClient) {
-      this.dataStorage.dsClient.close();
+      this.dataStorage.dsClient.stop();
     }
   }
 }
