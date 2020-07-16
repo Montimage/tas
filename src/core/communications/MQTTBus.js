@@ -18,8 +18,17 @@ class MQTTBus{
 
   subscribe(topic) {
     if (this.mqttClient) {
+      console.log('[MQTTBus] Subscribed to topic: ', topic);
       this.mqttClient.subscribe(topic);
-      console.error('[MQTTBus] Subscribed to topic: ', topic);
+    } else {
+      console.error('[MQTTBus] ERROR: The MQTT Client has not been connected!');
+    }
+  }
+  
+  unsubscribe(topic) {
+    if (this.mqttClient) {
+      console.log('[MQTTBus] Unsubscribed to topic: ', topic);
+      this.mqttClient.unsubscribe(topic);
     } else {
       console.error('[MQTTBus] ERROR: The MQTT Client has not been connected!');
     }

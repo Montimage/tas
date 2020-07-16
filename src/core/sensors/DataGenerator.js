@@ -5,7 +5,7 @@ const DataSource = require("./data-sources/DataSource");
 const DeviceDataSource = require("./DeviceDataSource");
 
 class DataGenerator extends DeviceDataSource {
-  constructor(id, dataHandler, dataResourceConfig, objectId) {
+  constructor(id, dataHandler, dataSpecs, objectId) {
     super(id, dataHandler);
     const {
       timePeriod,
@@ -16,7 +16,7 @@ class DataGenerator extends DeviceDataSource {
       withEnergy,
       energy,
       isIPSOFormat,
-    } = dataResourceConfig;
+    } = dataSpecs;
     this.timePeriod = timePeriod;
     this.isIPSOFormat = isIPSOFormat;
     this.objectId = objectId ? objectId : null;
@@ -87,7 +87,7 @@ class DataGenerator extends DeviceDataSource {
       const value = source.getValue();
       this.values[source.key] = value;
     }
-    this.dataHandler({ values: this.values});
+    this.dataHandler(this.values);
   }
 
   collectAndReportDataInIPSOFormat() {
@@ -111,7 +111,7 @@ class DataGenerator extends DeviceDataSource {
         ...value,
       });
     }
-    this.dataHandler({ values: this.values});
+    this.dataHandler(this.values);
   }
 
   start() {

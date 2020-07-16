@@ -1,5 +1,5 @@
-const MQBus = require('./MQBus');
-const DataStorage = require('./DataStorage');
+const MQBus = require('../communications/MQBus');
+const DataStorage = require('../communications/DataStorage');
 /**
  * DataRecorder class present a data recorder who have 3 functionalities:
  * - Listen data from a source (broker)

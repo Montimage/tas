@@ -47,7 +47,7 @@ class MQBus {
    * @param {Array|String} topics The topics to be listening on
    */
   subscribe(topics) {
-    console.log('[MQTTBus]Going to subscribe to topics: ',topics);
+    console.log('[MQBus]Going to subscribe to topics: ',topics);
     if (typeof topics === 'string') {
       // single topic
       this.mqClient.subscribe(topics);
@@ -59,7 +59,23 @@ class MQBus {
       }
     }
   }
-
+  /**
+   * Unsubscribe to a topic or a list of topics
+   * @param {Array|String} topics the topics to be unsubscribed
+   */
+  unsubscribe(topics) {
+    console.log('[MQBus]Going to subscribe to topics: ',topics);
+    if (typeof topics === 'string') {
+      // single topic
+      this.mqClient.unsubscribe(topics);
+    } else if (topics && topics.length > 0) {
+      // multiple topics
+      for (let index = 0; index < topics.length; index++) {
+        const topic = topics[index];
+        this.mqClient.unsubscribe(topic);
+      }
+    }
+  }
   /**
    * Publish a data to a topic  
    * @param {String} topic The topic to be published to

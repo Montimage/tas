@@ -53,7 +53,7 @@ class DataStorage {
 
       this.dsClient.connect((error) => {
         if (error) {
-          console.log(
+          console.error(
             "[DataStorage] ERROR: Failed to connect to database",
             error,
             dbConfig
@@ -70,14 +70,36 @@ class DataStorage {
    * Save data to database
    * @param {Object} data The data to be saved into the database
    */
-  save(data) {
+  saveEvent(data) {
     const rcData = new EventSchema(data);
     rcData.save();
   }
 
   saveDataSet(dataset) {
-    const newDS = new DataSetSchema({...dataset, createdAt: Date.now()});
-    newDS.save();
+    const currentTime = Date.now();
+    DataSetSchema.findOne({id: dataset.id}, (err, ds) => {
+      if (ds) {
+        DataSetSchema.findByIdAndUpdate(ds._id, dataset);
+      } else {
+        const newDS = new DataSetSchema({...dataset, createdAt: currentTime, createdAt: currentTime});
+        newDS.save();
+      }
+    });
+    
+  }
+
+  getEvents(topic, datasetId, timeConstraints, callback) {
+    let {startTime, endTime } = timeConstraints; 
+    if (!startTime) startTime = 0;
+    if (!endTime) endTime = Date.now();
+    EventSchema.findEventsBetweenTimes({topic, datasetId}, startTime, endTime, (err, events) => {
+      if (err) {
+        console.error('[DataStorage] Cannot get events!', topic, datasetId, timeConstraints, err);
+        return callback(err);
+      } else {
+        return callback(null, events);
+      }
+    });
   }
 
   /**

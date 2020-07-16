@@ -7,7 +7,7 @@ const dotenv = require('dotenv');
 // read and pass the environment variables into reactjs application
 const env = dotenv.config().parsed;
 
-var apiRouter = require('./routes');
+const simulationRouter = require('./routes/simulation');
 const modelRouter = require('./routes/model');
 const dataRecorderRouter = require('./routes/data-recorders');
 const dataStorageRouter = require('./routes/data-storage');
@@ -69,8 +69,7 @@ app.use('/api/data-sets', dataSetRouter);
 app.use('/api/test-cases', testCaseRouter);
 app.use('/api/test-campaigns', testCampaignRouter);
 app.use('/api/events', eventRouter);
-app.use('/api/simulation', apiRouter(true));
-app.use('/api/data-generator', apiRouter(false));
+app.use('/api/simulation', simulationRouter);
 app.get('/*', function (req, res) {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });

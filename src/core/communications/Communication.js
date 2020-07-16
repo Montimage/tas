@@ -1,5 +1,3 @@
-const mqtt = require("mqtt");
-
 /**
  * The Communication class presents a communication
  * - subscribe to channels
@@ -22,7 +20,7 @@ class Communication {
    * - In a ThingComm, the arrived messages are the sensors data
    * - In a External Component, the arrived messages are the actuated data
    */
-  constructor(id, mqttConfig, messageHandler) {
+  constructor(protocol, connConfig, messageHandler) {
     this.id = id;
     this.mqttConfig = mqttConfig;
     this.mqttClient = null;

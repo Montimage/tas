@@ -1,142 +1,69 @@
-const { SIMULATING, OFFLINE } = require("../DeviceStatus");
-const { ENACTDB, SensorSchema, ActuatorSchema } = require("../enact-mongoose");
+const {
+  SIMULATING,
+  OFFLINE
+} = require("../DeviceStatus");
+
 const DeviceDataSource = require('./DeviceDataSource');
 
-class DataReplayer extends DeviceDataSource{
-  constructor(id, dataHandler, dataResource, devType, objectId) {
+class DataReplayer extends DeviceDataSource {
+  constructor(id, dataHandler, replayOptions, events, objectId) {
     super(id, dataHandler);
-    const { connConfig, devId, startTime, endTime } = dataResource;
-    this.connConfig = connConfig;
     this.objectId = objectId;
-    this.devId = devId;
-    this.startTime = startTime;
-    this.endTime = endTime ? endTime : Date.now();
-    this.devType = devType;
+    this.repeat = false;
+    this.speedup = 1;
+    if (replayOptions) {
+      if (replayOptions.repeat) this.repeat = replayOptions.repeat;
+      if (replayOptions.speedup) this.speedup = replayOptions.speedup;
+    }
+    this.events = events;
+    this.nbRepeated = 0;
   }
 
   getStats() {
     return {
-      dbConfig: {
-        host: this.connConfig.host,
-        port: this.connConfig.port
-      },
-      devId: this.devId,
       startTime: this.startTime,
       endTime: this.endTime,
-      devType: this.devType
-    }
+      repeat: this.repeat,
+      speedup: this.speedup,
+      numberOfRepeats: this.nbRepeated
+    };
   }
 
-  /**
-   * Publish list of sensor's data
-   * @param {Array} listData List of sensor's data to be published
-   */
-  handleDataList(listData) {
-    const startTime = listData[0].timestamp;
-    for (let index = 0; index < listData.length; index++) {
+  replayData() {
+    this.nbRepeated++;
+    if (!this.events) {
+      console.error(`[ERROR] No data to be replayed`);
+      return;
+    }
+    const startTime = this.events[0].timestamp;
+    for (let index = 0; index < this.events.length; index++) {
+      const event = this.events[index];
+      const waitingTime = (event.timestamp - startTime) / this.speedup;
       if (this.status === SIMULATING) {
         setTimeout(() => {
           if (this.status === SIMULATING) {
-            const {instanceId, objectId, values, timestamp, name } = listData[index];
-            this.dataHandler({instanceId, objectId, values, timestamp, name });
-            if (index === listData.length - 1) {
-              console.log(`[${this.id}] Finished!`);
-              this.status = OFFLINE;
+            const {
+              values
+            } = event;
+            this.dataHandler(values);
+            if (index === this.events.length - 1) {
+              if (!this.repeat) {
+                console.log(`[${this.id}] Finished!`);
+                this.status = OFFLINE;
+              } else {
+                console.log('Go to next repeating!');
+                this.replayData();
+              }
             }
           }
-        }, listData[index].timestamp - startTime);
+        }, waitingTime);
       }
     }
   }
 
   start() {
     super.start();
-    let dbClient = null;
-    const { host, port, user, password, dbname } = this.connConfig;
-    console.log(
-      `[${this.id}] read data from database ${host}:${port}/${dbname}`
-    );
-    console.log(`StartTime: ${this.startTime}, endTime: ${this.endTime}`);
-    if (user && password) {
-      dbClient = new ENACTDB(host, port, dbname, {
-        userName: user,
-        password: password,
-      });
-    } else {
-      dbClient = new ENACTDB(host, port, dbname);
-    }
-    dbClient.connect(() => {
-      console.log(`[${this.id}] connected to database`);
-      const filter = { instanceId: this.devId };
-        if (this.objectId) {
-          filter['objectId'] = this.objectId;
-        }
-      if (this.devType === "SENSOR") {
-
-        SensorSchema.findSensorDataBetweenTimes(
-          filter,
-          this.startTime,
-          this.endTime,
-          (err, listData) => {
-            if (err) {
-              console.error(
-                `[${this.id}] ERROR: cannot find any data ${this.devId}`,
-                err
-              );
-              this.status = OFFLINE;
-            } else {
-              console.log(
-                `[${this.id}] Number of data: ${listData.length}`
-              );
-              dbClient.close();
-              if (listData.length > 0) {
-                this.handleDataList(listData);
-              } else {
-                console.error(
-                  `[${this.id}] ERROR: cannot find any data ${this.devId}`,
-                  err
-                );
-                this.status = OFFLINE;
-              }
-            }
-          }
-        );
-      } else if (this.devType === "ACTUATOR") {
-        ActuatorSchema.findActuatorDataBetweenTimes(
-          filter,
-          this.startTime,
-          this.endTime,
-          (err, listData) => {
-            if (err) {
-              console.error(
-                `[${this.id}] ERROR: cannot find any data ${this.devId}`,
-                err
-              );
-              this.status = OFFLINE;
-            } else {
-              console.log(
-                `[${this.id}] Number of data: ${listData.length}`
-              );
-              dbClient.close();
-              if (listData.length > 0) {
-                this.handleDataList(listData);
-              } else {
-                console.error(
-                  `[${this.id}] ERROR: cannot find any data ${this.devId}`,
-                  err
-                );
-                this.status = OFFLINE;
-              }
-            }
-          }
-        );
-      } else {
-        console.error(
-          `[${this.id}] ERROR: Unsupported device ${this.devType}`
-        );
-        this.status = OFFLINE;
-      }
-    });
+    this.replayData();
   }
 }
 

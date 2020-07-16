@@ -1,4 +1,11 @@
-const { SIMULATING, OFFLINE } = require("../DeviceStatus");
+const {
+  SIMULATING,
+  OFFLINE
+} = require("../DeviceStatus");
+const {
+  DS_DATASET,
+  DS_RECORDER
+} = require('../DataSourceType');
 const DataReplayer = require("./DataReplayer");
 const DataGenerator = require("./DataGenerator");
 /**
@@ -14,20 +21,23 @@ class Sensor {
    * @param {Object} dataSource The data source of the sensor
    * -
    */
-  constructor(id, data, publishDataFct) {
+  constructor(id, data, productionBroker, publishDataFct, events) {
     const {
       objectId,
       name,
-      isFromDatabase,
       topic,
-      userData,
+      dataSpecs,
       dataSource,
-      devType
+      replayOptions
     } = data;
     this.id = id;
-    this.isFromDatabase = isFromDatabase;
-    this.dataSourceConfig = dataSource;
-    this.devType = devType;
+    this.productionBroker = productionBroker;
+    this.publishDataFct = publishDataFct;
+    this.dataSourceType = dataSource;
+    this.dataSource = null;
+    this.dataSpecs = dataSpecs;
+    this.replayOptions = replayOptions;
+    this.events = events;
     // Optional attributes
     this.name = name ? name : `sensor-${id}`;
     this.objectId = objectId;
@@ -38,9 +48,7 @@ class Sensor {
     } else {
       this.topicEnd = id;
     }
-    this.dataSource = null;
-    this.publishDataFct = publishDataFct;
-    this.userData = userData;
+    this.status = OFFLINE;
     // Statstics
     this.lastActivity = Date.now();
     this.startedTime = 0;
@@ -59,63 +67,74 @@ class Sensor {
       isFromDatabase: this.isFromDatabase,
       dataSource: this.dataSource ? this.dataSource.getStats() : null,
       topic: this.topic
-    }
+    };
   }
 
   dataHandler(values) {
     values["timestamp"] = Date.now();
     values["instanceId"] = this.id;
-    if (this.userData) {
-      values["userData"] = this.userData;
-    }
     if (this.name) {
       values["name"] = this.name;
     }
     if (this.objectId) {
       values["objectId"] = this.objectId;
     }
-    this.publishDataFct(values, this);
+    this.publishDataFct(this.topic, values);
     // Statistics
     this.lastActivity = Date.now();
     this.lastSentData = values;
     this.numberOfSentData++;
+    console.log(this.getStats());
   }
 
   /**
    * Start simulating a sensor
    */
   start() {
-    if (!this.dataSource) {
-      if (this.isFromDatabase) {
-        this.dataSource = new DataReplayer(
-          this.id,
-          (values) => this.dataHandler(values),
-          this.dataSourceConfig,
-          this.devType ? this.devType : 'SENSOR'
+    if (this.status === SIMULATING) {
+      console.log(`[SENSOR]Sensor ${this.id} has already started!`);
+      return;
+    }
+    if (this.dataSourceType === DS_RECORDER) {
+      this.productionBroker.subscribe(this.topic);
+      this.status = SIMULATING;
+    } else {
+      if (!this.dataSource) {
+        // Init
+        if (this.dataSourceType === DS_DATASET) {
+          console.log('Number of events to be replayed: ', this.events.length, this.replayOptions);
+          this.dataSource = new DataReplayer(
+            this.id,
+            (values) => this.dataHandler(values),
+            this.replayOptions,
+            this.events,
+            this.objectId
+          );
+        } else {
+          this.dataSource = new DataGenerator(
+            this.id,
+            (values) => this.dataHandler(values),
+            this.dataSpecs,
+            this.objectId
+          );
+        }
+      }
+      if (this.dataSource.getStatus() !== SIMULATING) {
+        this.startedTime = Date.now();
+        console.log(
+          `[${this.objectId ? this.objectId : "sensor"}-${
+            this.id
+          }] has been started at: ${new Date(this.startedTime).toLocaleTimeString()}`
         );
+        this.dataSource.start();
+        this.status = SIMULATING;
       } else {
-        this.dataSource = new DataGenerator(
-          this.id,
-          (values) => this.dataHandler(values),
-          this.dataSourceConfig,
-          this.objectId
+        console.log(
+          `[${this.id}${
+            this.objectId ? this.objectId : "sensor-"
+          }] is simulating!`
         );
       }
-    }
-    if (this.dataSource.getStatus() !== SIMULATING) {
-      this.startedTime = Date.now();
-      console.log(
-        `[${this.objectId ? this.objectId : "sensor"}-${
-          this.id
-        }] has been started at: ${new Date(this.startedTime).toLocaleTimeString()}`
-      );
-      this.dataSource.start();
-    } else {
-      console.log(
-        `[${this.id}${
-          this.objectId ? this.objectId : "sensor-"
-        }] is simulating!`
-      );
     }
   }
 
@@ -123,20 +142,32 @@ class Sensor {
    * Stop simulating the sensor
    */
   stop() {
-    if (this.dataSource.getStatus() === OFFLINE) {
-      console.log(
-        `[${this.objectId ? this.objectId : "sensor"}-${
-          this.id
-        }] is offline!`
-      );
-    } else {
-      this.dataSource.stop();
-      console.log(
-        `[${this.objectId ? this.objectId : "sensor"}-${
-          this.id
-        }] stopped at: ${new Date().toLocaleTimeString()}`
-      );
+    if (this.status === OFFLINE) {
+      console.log(`[SENSOR]Sensor ${this.id} is already offline!`);
+      return;
     }
+    if (this.dataSourceType === DS_RECORDER) {
+      this.productionBroker.unsubscribe(this.topic);
+      this.status = OFFLINE;
+    } else {
+      if (this.dataSource) {
+        if (this.dataSource.getStatus() === OFFLINE) {
+          console.log(
+            `[${this.objectId ? this.objectId : "sensor"}-${
+              this.id
+            }] is offline!`
+          );
+        } else {
+          this.dataSource.stop();
+          console.log(
+            `[${this.objectId ? this.objectId : "sensor"}-${
+                this.id
+              }] stopped at: ${new Date().toLocaleTimeString()}`
+          );
+        }
+      }
+    }
+    this.status = OFFLINE;
   }
 }
 

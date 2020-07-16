@@ -1,27 +1,21 @@
+const { OFFLINE, SIMULATING } = require("../DeviceStatus");
+
 /**
  * The Actuator class presents an actuator
  * - Receive the actuated data from gateway
  * - Display the status
  */
 class Actuator {
-  constructor(id, actuatorData, objectId = null) {
+  constructor(id, actuatorData, testBroker, objectId = null) {
     this.id = id;
+    this.testBroker = testBroker;
     const { name, topic } = actuatorData;
     this.name = name;
     this.objectId = objectId;
     this.actuatedData = null;
     this.timestamp = null;
-    this.topic = null;
-    if (topic) {
-      this.topic = topic;
-    }
-    if (!topic) {
-      if (objectId) {
-        this.topic = `things/${this.thingId}/actuators/${objectId}/${this.id}/#`;
-      } else {
-        this.topic = `things/${this.thingId}/actuators/${this.id}/#`;
-      }
-    }
+    this.topic = topic;
+    this.status = OFFLINE;
     // Statistics
     this.lastActivity = Date.now();
     this.numberOfReceivedData = 0;
@@ -60,6 +54,24 @@ class Actuator {
         this.actuatedData
       )}`
     );
+  }
+
+  start() {
+    if (this.status === SIMULATING) {
+      console.log(`Actuator ${this.id} has been started already!`);
+    } else {
+      this.testBroker.subscribe(this.topic);
+      this.status = SIMULATING;
+    }
+  }
+
+  stop() {
+    if (this.status === OFFLINE) {
+      console.log(`Actuator ${this.id} is offline!`);
+    } else {
+      this.testBroker.unsubscribe(this.topic);
+      this.status = OFFLINE;
+    }
   }
 }
 
