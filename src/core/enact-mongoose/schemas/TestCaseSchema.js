@@ -35,6 +35,10 @@ const testCaseSchema = new Schema({
   datasetIds: {
     type: Array,
     required: false
+  },
+  modelFilePath: {
+    type: String,
+    require: true
   }
 });
 

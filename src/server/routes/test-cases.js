@@ -1,6 +1,7 @@
 /* Working with Test Case */
 const express = require("express");
 const router = express.Router();
+const modelsPath = `${__dirname}/../data/models/`;
 const {
   TestCaseSchema,
   dbConnector
@@ -54,14 +55,16 @@ router.post("/", dbConnector, function (req, res, next) {
     name,
     tags,
     description,
-    datasetIds
+    datasetIds,
+    modelFilePath
   } = testCase;
   const newTestCase = new TestCaseSchema({
     id,
     name,
     tags,
     description,
-    datasetIds
+    datasetIds,
+    modelFilePath:`${modelsPath}/${modelFilePath}`
   });
   newTestCase.save((err, _testCase) => {
     if (err) {

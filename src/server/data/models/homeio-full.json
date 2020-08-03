@@ -1,0 +1,195 @@
+{
+    "name": "HomeIO",
+    "dataStorage": {
+        "protocol": "MONGODB",
+        "connConfig":{
+            "host": "192.168.1.21",
+            "port": 27017,
+            "dbname": "tasdb"
+        }
+    },
+    "datasetId": "my-data-set-replay",
+    "newDataset": {
+        "id": "my-data-set-replay-2",
+        "name": "My Data Set",
+        "tags": ["data-set","test"],
+        "description": "My data set",
+        "source": "GENERATED"
+    },
+    "devices": [
+        {
+            "id": "device-01",
+            "name": "HomeIO Device 01",
+            "enable": true,
+            "scale": 1,
+            "behaviours": [],
+            "timeToDown": 0,
+            "testBroker": {
+                "protocol": "MQTT",
+                "connConfig": {
+                    "host": "192.168.1.21",
+                    "port": 1882,
+                    "options": null
+                }
+            },
+            "productionBroker": {
+                "protocol": "MQTT",
+                "connConfig": {
+                    "host": "192.168.1.21",
+                    "port": 1883,
+                    "options": null
+                }
+            },
+            "sensors": [
+                {
+                    "id": "motion",
+                    "objectId": null,
+                    "name": "Motion Detector",
+                    "enable": true,
+                    "topic": null,
+                    "dataSource": "DATA_SOURCE_RECORDER",
+                    "replayOptions": {
+                        "repeat": true,
+                        "startTime": null,
+                        "endTime": null,
+                        "speedup": 5
+                    },
+                    "dataSpecs": {
+                        "timePeriod": 5,
+                        "scale": 1,
+                        "dosAttackSpeedUpRate": 5,
+                        "timeBeforeFailed": 20,
+                        "sensorBehaviours": [],
+                        "withEnergy": false,
+                        "isIPSOFormat": false,
+                        "energy": null,
+                        "sources": [
+                            {
+                                "type": "DATA_SOURCE_BOOLEAN",
+                                "key": "motion",
+                                "resourceId": "",
+                                "initValue": true,
+                                "unit": "",
+                                "behaviours": []
+                            }
+                        ]
+                    }
+                },
+                { 
+                    "id": "temperature",
+                    "objectId": null,
+                    "name": "Temperature",
+                    "enable": false,
+                    "isFromDatabase": false,
+                    "topic": null,
+                    "dataSource": "DATA_SOURCE_RECORDER",
+                    "dataSpecs": {
+                        "timePeriod": 5,
+                        "scale": 1,
+                        "dosAttackSpeedUpRate": 5,
+                        "timeBeforeFailed": 20,
+                        "sensorBehaviours": [],
+                        "withEnergy": false,
+                        "isIPSOFormat": false,
+                        "energy": null,
+                        "sources": [
+                            {
+                                "type": "DATA_SOURCE_FLOAT",
+                                "key": "temp",
+                                "resourceId": "",
+                                "initValue": 10,
+                                "unit": "C",
+                                "behaviours": [],
+                                "valueConstraints": {
+                                    "min": -50,
+                                    "max": 100,
+                                    "regularMin": 5,
+                                    "regularMax": 45,
+                                    "step": 2
+                                },
+                                "withValueConstraints": true
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "brightness",
+                    "objectId": null,
+                    "name": "Brightness",
+                    "enable": false,
+                    "isFromDatabase": false,
+                    "topic": null,
+                    "dataSource": "DATA_SOURCE_DATASET",
+                    "replayOptions": {
+                        "repeat": false,
+                        "startedTime": null,
+                        "endTime": null,
+                        "speedUp": 2
+                    },
+                    "dataSpecs": {
+                        "timePeriod": 5,
+                        "scale": 1,
+                        "dosAttackSpeedUpRate": 5,
+                        "timeBeforeFailed": 20,
+                        "sensorBehaviours": [],
+                        "withEnergy": false,
+                        "isIPSOFormat": false,
+                        "energy": null,
+                        "sources": [
+                            {
+                                "type": "DATA_SOURCE_INTEGER",
+                                "key": "brightness",
+                                "resourceId": "",
+                                "initValue": 5,
+                                "unit": "",
+                                "behaviours": [],
+                                "valueConstraints": {
+                                    "min": 0,
+                                    "max": 10,
+                                    "regularMin": 0,
+                                    "regularMax": 10,
+                                    "step": 1
+                                },
+                                "withValueConstraints": true
+                            }
+                        ]
+                    }
+                }
+            ],
+            "actuators": [
+                {
+                    "id": "siren",
+                    "objectId": null,
+                    "name": "Siren",
+                    "topic": null,
+                    "enable": true,
+                    "scale": 1
+                },
+                {
+                    "id": "roller-shades",
+                    "objectId": null,
+                    "name": "Roller Shades",
+                    "topic": null,
+                    "enable": true,
+                    "scale": 1
+                },
+                {
+                    "id": "lights",
+                    "objectId": null,
+                    "name": "Lights",
+                    "topic": null,
+                    "enable": true,
+                    "scale": 1
+                },
+                {
+                    "id": "heater",
+                    "objectId": null,
+                    "name": "Heater",
+                    "topic": null,
+                    "enable": true,
+                    "scale": 1
+                }
+            ]
+        }
+    ]
+}

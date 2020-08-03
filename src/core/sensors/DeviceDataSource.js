@@ -1,10 +1,11 @@
 const { SIMULATING, OFFLINE } = require("../DeviceStatus");
 
 class DeviceDataSource {
-  constructor(id,dataHandler) {
+  constructor(id,dataHandler, callbackWhenFinish = null) {
     this.dataHandler = dataHandler;
     this.status = OFFLINE;
     this.id = id;
+    this.callbackWhenFinish = callbackWhenFinish;
   }
 
   getStatus() {
@@ -23,6 +24,7 @@ class DeviceDataSource {
       console.log(
         `[${this.id}] stopped at: ${new Date().toLocaleTimeString()}`
       );
+      if (this.callbackWhenFinish) this.callbackWhenFinish();
     }
   }
 }

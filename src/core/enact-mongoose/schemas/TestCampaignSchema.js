@@ -28,17 +28,9 @@ const testCampaignSchema = new Schema({
     type: String,
     required: false
   },
-  isDefault: {
-    type: Boolean,
-    required: false
-  },
   testCaseIds: {
     type: Array,
     required: false
-  },
-  model: {
-    type: String,
-    require: true
   },
   webhookURL: {
     type: String,

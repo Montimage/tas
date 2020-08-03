@@ -3,6 +3,8 @@ const {
   EventSchema,
   DataSetSchema
 } = require('../enact-mongoose');
+const TestCampaignSchema = require('../enact-mongoose/schemas/TestCampaignSchema');
+const TestCaseSchema = require('../enact-mongoose/schemas/TestCaseSchema');
 
 /**
  * DataStorage class presents the interface of a data base
@@ -102,6 +104,33 @@ class DataStorage {
     });
   }
 
+  getTestCampaignById(testCampaignId, callback) {
+    TestCampaignSchema.findOne({id: testCampaignId}, (err, tc) => {
+      if (err) {
+        console.error(`[DataStorage] Cannot get test campaign: ${testCampaignId}`, err);
+        return callback(err, null);
+      } else if (!tc) {
+        console.error(`[DataStorage] Cannot get test campaign: ${testCampaignId}. TestCampaign is null`);
+        return callback("Test Campaign is NULL", null);
+      } else {
+        return callback(null, tc);
+      }
+    });
+  }
+
+  getTestCaseById(testCaseId, callback) {
+    TestCaseSchema.findOne({id: testCaseId}, (err, tc) => {
+      if (err) {
+        console.error(`[DataStorage] Cannot get test Case: ${testCaseId}`, err);
+        return callback(err, null);
+      } else if (!tc) {
+        console.error(`[DataStorage] Cannot get test Case: ${testCaseId}. TestCase is null`);
+        return callback("Test Case is NULL", null);
+      } else {
+        return callback(null, tc);
+      }
+    });
+  }
   /**
    * Disconnect with the database
    */

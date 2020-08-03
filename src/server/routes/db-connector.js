@@ -41,31 +41,37 @@ const getDBClient = (callback) => {
         console.error('[SERVER] Cannot get the data storage configuration');
         return callback(err);
       } else {
-        console.log('[SERVER] configuration: ', dataStorageConfig);
-        const {
-          host,
-          port,
-          dbname,
-          username,
-          password,
-          options
-        } = dataStorageConfig;
-        let auth = null;
-        if (username && password) {
-          auth = {
-            userName: username,
-            password
-          };
-        }
-        dbClient = new ENACTDB(host, port, dbname, auth);
-        dbClient.connect((err2) => {
-          if (err2) {
-            console.error('[SERVER] Cannot connect to the database');
-            return callback(err2);
-          } else {
-            return callback(null, dbClient);
+        console.log('[SERVER] configuration: ', dataStorage);
+        const { protocol, connConfig} = dataStorage;
+        if(protocol === 'MONGODB') {
+          const {
+            host,
+            port,
+            dbname,
+            username,
+            password,
+            options
+          } = connConfig;
+          let auth = null;
+          if (username && password) {
+            auth = {
+              userName: username,
+              password
+            };
           }
-        });
+          dbClient = new ENACTDB(host, port, dbname, auth);
+          dbClient.connect((err2) => {
+            if (err2) {
+              console.error('[SERVER] Cannot connect to the database');
+              return callback(err2);
+            } else {
+              return callback(null, dbClient);
+            }
+          });
+        } else {
+          console.error(`[db-connector] Protocol is not supported ${protocol}`);
+          return callback(`Protocol is not supported ${protocol}`);
+        }
       }
     });
   }

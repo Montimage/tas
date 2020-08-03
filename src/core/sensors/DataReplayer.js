@@ -6,8 +6,8 @@ const {
 const DeviceDataSource = require('./DeviceDataSource');
 
 class DataReplayer extends DeviceDataSource {
-  constructor(id, dataHandler, replayOptions, events, objectId) {
-    super(id, dataHandler);
+  constructor(id, dataHandler, callbackWhenFinish, replayOptions, events, objectId) {
+    super(id, dataHandler, callbackWhenFinish);
     this.objectId = objectId;
     this.repeat = false;
     this.speedup = 1;
@@ -49,7 +49,7 @@ class DataReplayer extends DeviceDataSource {
             if (index === this.events.length - 1) {
               if (!this.repeat) {
                 console.log(`[${this.id}] Finished!`);
-                this.status = OFFLINE;
+                super.stop();
               } else {
                 console.log('Go to next repeating!');
                 this.replayData();

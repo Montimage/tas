@@ -106,6 +106,7 @@ class Sensor {
           this.dataSource = new DataReplayer(
             this.id,
             (values) => this.dataHandler(values),
+            null,
             this.replayOptions,
             this.events,
             this.objectId
@@ -114,6 +115,7 @@ class Sensor {
           this.dataSource = new DataGenerator(
             this.id,
             (values) => this.dataHandler(values),
+            null,
             this.dataSpecs,
             this.objectId
           );

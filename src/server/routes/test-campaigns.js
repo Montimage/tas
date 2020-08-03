@@ -22,6 +22,41 @@ router.get("/", dbConnector, function (req, res, next) {
   });
 });
 
+// Add a new test campaign
+router.post("/", dbConnector, function (req, res, next) {
+  const {
+    testCampaign
+  } = req.body;
+  const {
+    id,
+    name,
+    isDefault,
+    description,
+    testCaseIds,
+    webhookURL,
+  } = testCampaign;
+  const newtestCampaign = new TestCampaignSchema({
+    id,
+    name,
+    isDefault,
+    description,
+    testCaseIds,
+    webhookURL,
+  });
+  newtestCampaign.save((err, _testCampaign) => {
+    if (err) {
+      console.error('[SERVER] Failed to save the test campaigns', err);
+      res.send({
+        error: 'Failed to save the test campaign'
+      });
+    } else {
+      res.send({
+        testCampaign: _testCampaign
+      });
+    }
+  });
+});
+
 /**
  * Get a test campaign by id
  */
@@ -39,43 +74,6 @@ router.get("/:testCampaignId", dbConnector, function (req, res, next) {
     } else {
       res.send({
         testCampaign
-      });
-    }
-  });
-});
-
-// Add a new test campaign
-router.post("/", dbConnector, function (req, res, next) {
-  const {
-    testCampaign
-  } = req.body;
-  const {
-    id,
-    name,
-    isDefault,
-    description,
-    testCaseIds,
-    webhookURL,
-    model
-  } = testCampaign;
-  const newtestCampaign = new TestCampaignSchema({
-    id,
-    name,
-    isDefault,
-    description,
-    testCaseIds,
-    webhookURL,
-    model
-  });
-  newtestCampaign.save((err, _testCampaign) => {
-    if (err) {
-      console.error('[SERVER] Failed to save the test campaigns', err);
-      res.send({
-        error: 'Failed to save the test campaign'
-      });
-    } else {
-      res.send({
-        testCampaign: _testCampaign
       });
     }
   });

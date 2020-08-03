@@ -12,7 +12,7 @@ const {
   readDir,
   deleteFile,
 } = require("../../core/utils");
-const dataRecorderssPath = `${__dirname}/../data/data-recorders/`;
+const dataRecordersPath = `${__dirname}/../data/data-recorders/`;
 let router = express.Router();
 let getLogger = require("../logger");
 let logsPath = `${__dirname}/../logs/data-recorders/`;
@@ -108,7 +108,7 @@ router.post("/start", (req, res, next) => {
 
 // Read the list of data recorders
 router.get("/models/", (req, res, next) => {
-  readDir(dataRecorderssPath, (err, files) => {
+  readDir(dataRecordersPath, (err, files) => {
     if (err) {
       console.error("[SERVER]", err);
       res.send({
@@ -128,7 +128,7 @@ router.get("/models/:fileName", function (req, res, next) {
   const {
     fileName
   } = req.params;
-  const dataRecorderFile = `${dataRecorderssPath}${fileName}`;
+  const dataRecorderFile = `${dataRecordersPath}${fileName}`;
   readJSONFile(dataRecorderFile, (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
@@ -149,7 +149,7 @@ router.post("/models/:fileName", function (req, res, next) {
   const {
     fileName
   } = req.params;
-  const dataRecorderFile = `${dataRecorderssPath}${fileName}`;
+  const dataRecorderFile = `${dataRecordersPath}${fileName}`;
   const {
     dataRecorder
   } = req.body;
@@ -209,7 +209,7 @@ router.post("/models/", function (req, res, next) {
     });
   }
 
-  let dataRecorderFile = `${dataRecorderssPath}_${dataRecorder.name}.json`;
+  let dataRecorderFile = `${dataRecordersPath}_${dataRecorder.name}.json`;
   writeToFile(dataRecorderFile, JSON.stringify(dataRecorder), (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
@@ -230,7 +230,7 @@ router.delete("/models/:fileName", function (req, res, next) {
   const {
     fileName
   } = req.params;
-  const dataRecorderFile = `${dataRecorderssPath}${fileName}`;
+  const dataRecorderFile = `${dataRecordersPath}${fileName}`;
   deleteFile(dataRecorderFile, (err) => {
     if (err) {
       console.error("[SERVER]", err);

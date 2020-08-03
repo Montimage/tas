@@ -5,8 +5,8 @@ const DataSource = require("./data-sources/DataSource");
 const DeviceDataSource = require("./DeviceDataSource");
 
 class DataGenerator extends DeviceDataSource {
-  constructor(id, dataHandler, dataSpecs, objectId) {
-    super(id, dataHandler);
+  constructor(id, dataHandler, callbackWhenFinish, dataSpecs, objectId) {
+    super(id, dataHandler, callbackWhenFinish);
     const {
       timePeriod,
       sources,

@@ -3,15 +3,10 @@ var express = require("express");
 const {
   SIMULATING
 } = require('../../core/DeviceStatus');
-
-const {
-  startSimulator,
-  stopSimulator,
-  getStatsSimulator
-} = require("../../core/simulation");
+let getLogger = require("../logger");
+const Simulation = require("../../core/simulation");
 
 let router = express.Router();
-let getLogger = require("../logger");
 let logsPath = `${__dirname}/../logs/simulations/`;
 
 /**
@@ -37,13 +32,14 @@ null
 ```
  */
 let deployStatus = null;
-let stats = null;
+let simulation = null;
 // Start simulating a model
 router.post("/start", function (req, res, next) {
   stats = null;
   deployStatus = null;
   const {
-    model, options
+    model,
+    options
   } = req.body;
   // Check if the simulation is running
   if (deployStatus) {
@@ -72,7 +68,8 @@ router.post("/start", function (req, res, next) {
     const startedTime = Date.now();
     const logFile = `${name}_${Date.now()}.log`;
     getLogger("SIMULATION", `${logsPath}${logFile}`);
-    startSimulator(model, options);
+    simulation = new Simulation(model, options);
+    simulation.start();
     deployStatus = {
       model: model.name,
       startedTime,
@@ -88,8 +85,8 @@ router.post("/start", function (req, res, next) {
 
 router.get("/stop", function (req, res, next) {
   const copiedStatus = deployStatus;
-  if (deployStatus) {
-    stopSimulator();
+  if (deployStatus && simulation) {
+    simulation.stop();
     deployStatus = null;
   }
   res.send({
@@ -99,7 +96,7 @@ router.get("/stop", function (req, res, next) {
 });
 
 router.get("/status", (req, res, next) => {
-  stats = getStatsSimulator();
+  stats = simulation.getStats();
   let isOffline = true;
   if (stats) {
     for (let index = 0; index < stats.length; index++) {
@@ -117,6 +114,7 @@ router.get("/status", (req, res, next) => {
 });
 
 router.get("/stats", (req, res, next) => {
+  stats = simulation.getStats();
   res.send({
     error: null,
     stats
