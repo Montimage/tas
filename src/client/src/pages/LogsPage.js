@@ -1,70 +1,86 @@
 import React, { Component } from "react";
+import moment from "moment";
 import { connect } from "react-redux";
-import { List, Skeleton, Avatar, Button, PageHeader } from "antd";
-import { ClockCircleOutlined } from "@ant-design/icons";
-import { getCreatedTimeFromFileName, isDataGenerator } from "../utils";
+import { Table, Button, PageHeader } from "antd";
+import { getCreatedTimeFromFileName, getLastPath, getQuery } from "../utils";
 
-import { requestLogFiles, requestDeleteLogFile } from "../actions";
+import {
+  requestAllLogFiles,
+  requestDeleteLogFile,
+  requestLogFile,
+} from "../actions";
 import LayoutPage from "./LayoutPage";
+import LogFileContent from "./LogFileContent";
 
 class LogsPage extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      logFiles: props.logFiles,
+      tool: null,
+      isLogPage: false,
+      logFile: null,
     };
   }
 
   componentDidMount() {
-    this.props.initData(isDataGenerator());
-  }
-
-  componentWillReceiveProps(newProps) {
-    this.setState({ logFiles: newProps.logFiles });
+    const tool = getLastPath();
+    const logFile = getQuery("logFile");
+    const { fetchAllLogFiles, fetchLogs } = this.props;
+    if (logFile) {
+      fetchLogs(tool, logFile);
+      this.setState({ tool, isLogPage: true, logFile });
+    } else {
+      fetchAllLogFiles(tool);
+      this.setState({ tool, isLogPage: false });
+    }
   }
 
   render() {
-    const { deleteLogFile } = this.props;
-    const { logFiles } = this.state;
-    const isDG = isDataGenerator();
+    const { logFiles, logs, deleteLogFile } = this.props;
+    const { tool, isLogPage, logFile } = this.state;
+    if (isLogPage) {
+      return <LogFileContent logs={logs} logFile={logFile} />;
+    }
+    const dataSource = logFiles.map((file, index) => ({
+      name: file,
+      key: index,
+      createdAt: getCreatedTimeFromFileName(file),
+    }));
+    const columns = [
+      {
+        title: "Log File",
+        key: "name",
+        dataIndex: "name",
+        sorter: (a, b) => a.name.localeCompare(b.name),
+        render: (name) => <a href={`/logs/${tool}?logFile=${name}`}>{name}</a>,
+      },
+      {
+        title: "CreatedAt",
+        key: "createdAt",
+        dataIndex: "createdAt",
+        sorter: (a, b) => a.createdAt - b.createdAt,
+        render: (createdAt) => moment(createdAt).fromNow(),
+      },
+      {
+        title: "Action",
+        render: (file) => (
+          <Button
+            danger
+            size="small"
+            onClick={() => deleteLogFile(tool, file.name)}
+          >
+            Delete
+          </Button>
+        ),
+      },
+    ];
     return (
       <LayoutPage>
-        <PageHeader className="site-page-header" title="Log files" />
-        <List
-          bordered
-          dataSource={logFiles}
-          renderItem={(item) => (
-            <List.Item
-              actions={[
-                <Button
-                  key="list-loadmore-edit"
-                  onClick={() => deleteLogFile(isDG, item)}
-                  type="danger"
-                >
-                  Delete
-                </Button>,
-              ]}
-            >
-              <Skeleton avatar title={false} loading={item.loading}>
-                <List.Item.Meta
-                  avatar={
-                    <Avatar>
-                      <ClockCircleOutlined />
-                    </Avatar>
-                  }
-                  title={
-                    <a href={`${isDG ? "/data-generator" : ""}/logs/${item}`}>
-                      {item}
-                    </a>
-                  }
-                  description={`Created at: ${getCreatedTimeFromFileName(
-                    item
-                  )}`}
-                />
-              </Skeleton>
-            </List.Item>
-          )}
+        <PageHeader
+          className="site-page-header"
+          title={`${logFiles.length} Log Files`}
         />
+        <Table columns={columns} dataSource={dataSource} />
       </LayoutPage>
     );
   }
@@ -72,15 +88,15 @@ class LogsPage extends Component {
 
 const mapPropsToStates = ({ logs }) => ({
   logFiles: logs.logFiles,
+  logs: logs.logs,
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  deleteLogFile: (isDG, logFile) => {
-    dispatch(requestDeleteLogFile({ isDG, logFile }));
+  deleteLogFile: (tool, logFile) => {
+    dispatch(requestDeleteLogFile({ tool, logFile }));
   },
-  initData: (isDG) => {
-    dispatch(requestLogFiles(isDG));
-  },
+  fetchLogs: (tool, logFile) => dispatch(requestLogFile({ tool, logFile })),
+  fetchAllLogFiles: (tool) => dispatch(requestAllLogFiles(tool)),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(LogsPage);

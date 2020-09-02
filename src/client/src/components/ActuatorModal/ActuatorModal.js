@@ -6,174 +6,59 @@ import {
   showModal,
   selectActuator,
 } from "../../actions";
-import { Form, Button, Alert } from "antd";
+import { Form, Button } from "antd";
 import {
   updateObjectByPath,
-  deepCloneObject,
-  isDataGenerator,
 } from "../../utils";
 import {
   FormTextItem,
-  FormSelectItem,
+  FormTextNotEditableItem,
   FormNumberItem,
   FormSwitchItem,
   FormEditableTextItem,
 } from "../FormItems";
 
-const initActuator = () => ({
-  id: `act-id-${Date.now()}`,
-  objectId: null,
-  name: `act-name-${Date.now()}`,
-  topic: null,
-  enable: true,
-});
-
 class ActuatorModal extends Component {
   constructor(props) {
     super(props);
-
-    const { model, selectedActuator } = props;
-    const thingIDs = [null];
-    let thingID = null;
-    if (model.things) {
-      const { things } = model;
-      for (let index = 0; index < things.length; index++) {
-        thingIDs.push(things[index].id);
-        if (selectedActuator !== null && thingID === null) {
-          const { actuators } = things[index];
-          for (let aid = 0; aid < actuators.length; aid++) {
-            if (actuators[aid].id === selectedActuator.id) {
-              thingID = things[index].id;
-              break;
-            }
-          }
-        }
-      }
-    }
-
+    const { actuatorData } = props;
     this.state = {
-      data: selectedActuator
-        ? deepCloneObject(selectedActuator)
-        : initActuator(),
-      thingID: thingID ? thingID : thingIDs[1],
-      thingIDs,
-      error: null,
+      actuatorData,
+      isChanged: false
     };
-  }
-
-  componentWillReceiveProps(newProps) {
-    const { model, selectedActuator } = newProps;
-    const thingIDs = [null];
-    let thingID = null;
-    if (model.things) {
-      const { things } = model;
-      for (let index = 0; index < things.length; index++) {
-        thingIDs.push(things[index].id);
-        if (selectedActuator !== null && thingID === null) {
-          const { actuators } = things[index];
-          for (let aid = 0; aid < actuators.length; aid++) {
-            if (actuators[aid].id === selectedActuator.id) {
-              thingID = things[index].id;
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    this.setState({
-      data: selectedActuator
-        ? deepCloneObject(selectedActuator)
-        : initActuator(),
-      thingID: thingID ? thingID : thingIDs[1],
-      thingIDs,
-      error: null,
-    });
-  }
-
-  onThingChange(tID) {
-    this.setState({ thingID: tID });
   }
 
   onDataChange(dataPath, value) {
     this.setState((prevState) => {
-      const newData = { ...prevState.data };
+      const newData = { ...prevState };
       updateObjectByPath(newData, dataPath, value);
-      return { data: newData, error: null };
+      return { ...newData, isChanged: true };
     });
   }
 
-  handleOk() {
-    const { thingID, data } = this.state;
-    const { addSimulationActuator, showModal } = this.props;
-    addSimulationActuator(thingID, data);
-    showModal(null);
-    this.props.selectActuator(null);
-  }
-
-  handleCancel() {
-    this.props.showModal(null);
-    this.props.selectActuator(null);
-  }
-
-  handleDuplicate() {
-    const { thingID } = this.state;
-    const { addSimulationActuator, showModal, selectActuator } = this.props;
-    const newActuatorID = `act-${Date.now()}`;
-    const newData = {
-      ...this.state.data,
-      id: newActuatorID,
-      objectId: this.state.objectId,
-      name: "New Actuator",
-    };
-    addSimulationActuator(thingID, newData);
-    showModal(null);
-    setTimeout(() => {
-      selectActuator(newData);
-      showModal("ACTUATOR-FORM");
-    }, 300);
+  saveData() {
+    const {actuatorData} = this.state;
+    this.props.onOK({actuatorData});
+    this.props.onClose();
   }
 
   render() {
-    const { data, error, thingID, thingIDs } = this.state;
-    const { formID } = this.props;
-    let footer = null;
-
-    if (this.props.selectedActuator) {
-      footer = [
-        <Button key="duplicate" onClick={() => this.handleDuplicate()}>
-          Duplicate
-        </Button>,
-        <Button key="cancel" onClick={() => this.handleCancel()}>
-          Cancel
-        </Button>,
-        <Button key="ok" type="primary" onClick={() => this.handleOk()}>
-          OK
-        </Button>,
-      ];
-    } else {
-      footer = [
-        <Button key="cancel" onClick={() => this.handleCancel()}>
-          Cancel
-        </Button>,
-        <Button key="ok" type="primary" onClick={() => this.handleOk()}>
-          OK
-        </Button>,
-      ];
-    }
-
-    const topic = data.topic
-      ? data.topic
-      : `things/${thingID}/actuators${
-          data.objectId ? `/${data.objectId}` : ""
-        }/${data.id}/#`;
-    const isDG = isDataGenerator();
+    const { actuatorData, isChanged } = this.state;
+    if (!actuatorData) return null;
+    const { deviceId, onClose, enable} = this.props;
     return (
       <TSModal
         title={"Actuator"}
-        visible={formID === "ACTUATOR-FORM" && !isDG}
-        onCancel={() => this.handleCancel()}
-        footer={footer}
+        visible={enable}
+        onCancel={() => onClose()}
+        footer={
+          [<Button key="cancel" onClick={() => onClose()}>
+          Cancel
+        </Button>,
+        <Button key="ok" type="primary" onClick={() => this.saveData()} disabled={isChanged? false:true}>
+          OK
+        </Button>]
+        }
       >
         <Form
           labelCol={{
@@ -183,17 +68,11 @@ class ActuatorModal extends Component {
             span: 14,
           }}
         >
-          <FormSelectItem
-            label="Device"
-            defaultValue={thingID}
-            onChange={(v) => this.onThingChange(v)}
-            options={thingIDs}
-            helpText="The identify of the device which this actuator will connect to"
-          />
+        <FormTextNotEditableItem label="Device" value={deviceId} />
           <FormTextItem
             label="Id"
-            defaultValue={data.id}
-            onChange={(v) => this.onDataChange("id", v)}
+            defaultValue={actuatorData.id}
+            onChange={(v) => this.onDataChange("actuatorData.id", v)}
             helpText="The identify of the actuator"
             rules = {[
               {
@@ -204,15 +83,15 @@ class ActuatorModal extends Component {
           />
           <FormTextItem
             label="Object Id"
-            defaultValue={data.objectId}
-            onChange={(v) => this.onDataChange("objectId", v)}
+            defaultValue={actuatorData.objectId}
+            onChange={(v) => this.onDataChange("actuatorData.objectId", v)}
             placeholder="Identify of device type (IP Smart Object Format)"
             helpText="The identify of the device type based on IPSO format. For example 3313 - for temperature"
           />
           <FormTextItem
             label="Name"
-            defaultValue={data.name}
-            onChange={(v) => this.onDataChange("name", v)}
+            defaultValue={actuatorData.name}
+            onChange={(v) => this.onDataChange("actuatorData.name", v)}
             helpText="The actuator's name"
           />
           <FormNumberItem
@@ -220,26 +99,25 @@ class ActuatorModal extends Component {
             min={1}
             max={1000000}
             placeholder="Number of instances"
-            defaultValue={data.scale ? data.scale : 1}
-            onChange={(v) => this.onDataChange("scale", v)}
+            defaultValue={actuatorData.scale ? actuatorData.scale : 1}
+            onChange={(v) => this.onDataChange("actuatorData.scale", v)}
             helpText="The number of actuators with the same configuration. The id of the generated actuator will be indexed automatically"
           />
           <FormEditableTextItem
             label="Topic"
-            defaultValue={topic}
-            onChange={(v) => this.onDataChange("topic", v)}
+            defaultValue={actuatorData.topic}
+            onChange={(v) => this.onDataChange("actuatorData.topic", v)}
             helpText="The MQTT/STOMP topic on which the actuator will be listening to receive actuated data"
           />
           <FormSwitchItem
             label="Enable"
-            onChange={(v) => this.onDataChange(`enable`, v)}
-            checked={data.enable ? true : false}
+            onChange={(v) => this.onDataChange("actuatorData.enable", v)}
+            checked={actuatorData.enable ? true : false}
             checkedChildren={"On"}
             unCheckedChildren={"Off"}
             helpText="Enable or disable this actuator from the simulation"
           />
         </Form>
-        {error && <Alert message={error} type="error" />}
       </TSModal>
     );
   }
@@ -254,8 +132,8 @@ const mapPropsToStates = ({ editingForm, model }) => ({
 const mapDispatchToProps = (dispatch) => ({
   showModal: (modalID) => dispatch(showModal(modalID)),
   selectActuator: (act) => dispatch(selectActuator(act)),
-  addSimulationActuator: (thingID, data) =>
-    dispatch(addSimulationActuator({ thingID, actuator: data })),
+  addSimulationActuator: (deviceID, data) =>
+    dispatch(addSimulationActuator({ deviceID, actuator: data })),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(ActuatorModal);

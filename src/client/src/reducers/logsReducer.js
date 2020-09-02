@@ -1,17 +1,17 @@
 import { createReducer } from "redux-act";
 import produce from 'immer';
-import { requestLogsOK, requestLogFilesOK, requestDeleteLogFile } from "../actions";
+import { requestLogFileOK, requestAllLogFilesOK, requestDeleteLogFileOK } from "../actions";
 
 const initState = {
   logs: null,
-  logFiles: []
+  logFiles: [],
 };
 
 export default createReducer(
   {
-    [requestLogsOK]: (state, logs) => ({...state, logs}),
-    [requestLogFilesOK]: (state, logFiles) => ({...state, logFiles}),
-    [requestDeleteLogFile]: produce((draft, {isDG, logFile}) => {
+    [requestLogFileOK]: (state, logs) => ({...state, logs}),
+    [requestAllLogFilesOK]: (state, logFiles) => ({...state, logFiles}),
+    [requestDeleteLogFileOK]: produce((draft, logFile) => {
       const index = draft.logFiles.indexOf(logFile);
       if (index > - 1) {
         draft.logFiles.splice(index, 1);

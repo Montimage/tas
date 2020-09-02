@@ -91,8 +91,7 @@ class GraphView extends React.Component {
   componentDidMount() {
     const isDG = isDataGenerator();
     this.props.requestStats(isDG);
-    console.log(this.timerId);
-    if (this.props.deployStatus) {
+    if (this.props.simulationStatus) {
       this.timerId = setInterval(() => {
         this.props.requestStats(isDG);
       }, 5000);
@@ -101,11 +100,10 @@ class GraphView extends React.Component {
 
   componentWillReceiveProps(newProps) {
     const isDG = isDataGenerator();
-    console.log(this.timerId);
     const { model, stats } = newProps;
     const data = buildGraphData(model, stats);
     this.setState({ data });
-    if (newProps.deployStatus) {
+    if (newProps.simulationStatus) {
       if (!this.timerId) {
         newProps.requestStats(isDG);
         this.timerId = setInterval(() => {
@@ -124,7 +122,6 @@ class GraphView extends React.Component {
   render() {
     const { data } = this.state;
     if (!data) return <p>Empty model</p>;
-    console.log(data);
     return (
       <Graph
         id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
@@ -135,10 +132,10 @@ class GraphView extends React.Component {
   }
 }
 
-const mapPropsToStates = ({ model, stats, deployStatus }) => ({
+const mapPropsToStates = ({ model, stats, simulationStatus }) => ({
   model,
   stats,
-  deployStatus,
+  simulationStatus,
 });
 
 const mapDispatchToProps = (dispatch) => ({

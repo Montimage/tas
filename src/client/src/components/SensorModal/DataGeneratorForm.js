@@ -73,19 +73,14 @@ const initFloat = () => ({
   },
 });
 
-const DataGeneratorForm = ({
-  dataPath,
-  dataSource,
-  onDataChange,
-  showEnergyOption = true,
-}) => (
+const DataGeneratorForm = ({ dataPath, dataSpecs, onDataChange }) => (
   <React.Fragment>
     <FormNumberItem
       label="Number of Instance"
       min={1}
       max={1000000}
       placeholder="Number of instances"
-      defaultValue={dataSource.scale ? dataSource.scale : 1}
+      defaultValue={dataSpecs.scale ? dataSpecs.scale : 1}
       onChange={(v) => onDataChange(`${dataPath}.scale`, v)}
       helpText="The number of device with the same configuration. The id of device will be indexed automatically!"
     />
@@ -93,20 +88,20 @@ const DataGeneratorForm = ({
       label="Time Internal (in seconds)"
       min={1}
       max={65535}
-      defaultValue={dataSource.timePeriod ? dataSource.timePeriod : 5}
+      defaultValue={dataSpecs.timePeriod ? dataSpecs.timePeriod : 5}
       onChange={(v) => onDataChange(`${dataPath}.timePeriod`, v)}
       helpText="The time period to define the publishing data frequency"
-      rules = {[
-              {
-                required: true,
-                message: "Time internal is required!"
-              }
-            ]}
+      rules={[
+        {
+          required: true,
+          message: "Time internal is required!",
+        },
+      ]}
     />
 
     <FormCheckBoxItems
       label="Sensor Behaviours"
-      defaultValue={dataSource.sensorBehaviours}
+      defaultValue={dataSpecs.sensorBehaviours}
       onChange={(v) => onDataChange(`${dataPath}.sensorBehaviours`, v)}
       options={[
         "AB_LOW_ENERGY",
@@ -118,22 +113,22 @@ const DataGeneratorForm = ({
       ]}
       helpText="The possible behaviours of the sensor"
     />
-    {dataSource.sensorBehaviours.indexOf("AB_DOS_ATTACK") > -1 && (
+    {dataSpecs.sensorBehaviours.indexOf("AB_DOS_ATTACK") > -1 && (
       <FormNumberItem
         label="Speedup rate"
         min={1}
         max={100}
-        defaultValue={dataSource.dosAttackSpeedUpRate}
+        defaultValue={dataSpecs.dosAttackSpeedUpRate}
         onChange={(v) => onDataChange(`${dataPath}.dosAttackSpeedUpRate`, v)}
         helpText="The speedup rate in DDOS attack. Define how many time faster the sensor will publish data compare to normal condition"
       />
     )}
-    {dataSource.sensorBehaviours.indexOf("AB_NODE_FAILED") > -1 && (
+    {dataSpecs.sensorBehaviours.indexOf("AB_NODE_FAILED") > -1 && (
       <FormNumberItem
         label="Time Before Failed (seconds)"
         min={1}
         max={65535}
-        defaultValue={dataSource.timeBeforeFailed}
+        defaultValue={dataSpecs.timeBeforeFailed}
         onChange={(v) => onDataChange(`${dataPath}.timeBeforeFailed`, v)}
         helpText="The time before this device going to be failed!"
       />
@@ -141,7 +136,7 @@ const DataGeneratorForm = ({
     <FormSwitchItem
       label="IP Smart Object Format"
       onChange={(v) => onDataChange(`${dataPath}.isIPSOFormat`, v)}
-      checked={dataSource.isIPSOFormat ? true : false}
+      checked={dataSpecs.isIPSOFormat ? true : false}
       checkedChildren={"Enable"}
       unCheckedChildren={"Disable"}
       helpText="Change the data report to IP Smart Object format"
@@ -149,33 +144,29 @@ const DataGeneratorForm = ({
     <Divider>
       <h3>Measurements</h3>
     </Divider>
-    {showEnergyOption && (
-      <React.Fragment>
-        <FormSwitchItem
-          label="Energy Measurement"
-          onChange={(v) => {
-            onDataChange(`${dataPath}.withEnergy`, v);
-            if (v && !dataSource.energy) {
-              onDataChange(`${dataPath}.energy`, initEnergy());
-            }
-          }}
-          checked={dataSource.withEnergy ? true : false}
-          checkedChildren={"Enable"}
-          unCheckedChildren={"Disable"}
-          helpText="Enable or disable the energy measurement for this device"
-        />
-        {dataSource.withEnergy && (
-          <EnergyForm
-            dataPath={`${dataPath}.energy`}
-            defaultValue={dataSource.energy ? dataSource.energy : initEnergy()}
-            onChange={(dPath, v) => onDataChange(dPath, v)}
-          />
-        )}
-      </React.Fragment>
+    <FormSwitchItem
+      label="Energy Measurement"
+      onChange={(v) => {
+        onDataChange(`${dataPath}.withEnergy`, v);
+        if (v && !dataSpecs.energy) {
+          onDataChange(`${dataPath}.energy`, initEnergy());
+        }
+      }}
+      checked={dataSpecs.withEnergy ? true : false}
+      checkedChildren={"Enable"}
+      unCheckedChildren={"Disable"}
+      helpText="Enable or disable the energy measurement for this device"
+    />
+    {dataSpecs.withEnergy && (
+      <EnergyForm
+        dataPath={`${dataPath}.energy`}
+        defaultValue={dataSpecs.energy ? dataSpecs.energy : initEnergy()}
+        onChange={(dPath, v) => onDataChange(dPath, v)}
+      />
     )}
     <MultipleDataSources
       dataPath={`${dataPath}.sources`}
-      sources={dataSource.sources ? dataSource.sources : []}
+      sources={dataSpecs.sources ? dataSpecs.sources : []}
       onChange={(dPath, v) => onDataChange(dPath, v)}
     />
     <Dropdown
@@ -184,7 +175,7 @@ const DataGeneratorForm = ({
           <Menu.Item
             key="1"
             onClick={() => {
-              const index = dataSource.sources.length;
+              const index = dataSpecs.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
               onDataChange(dPath, initBoolean());
             }}
@@ -194,7 +185,7 @@ const DataGeneratorForm = ({
           <Menu.Item
             key="2"
             onClick={() => {
-              const index = dataSource.sources.length;
+              const index = dataSpecs.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
               onDataChange(dPath, initEnum());
             }}
@@ -204,7 +195,7 @@ const DataGeneratorForm = ({
           <Menu.Item
             key="3"
             onClick={() => {
-              const index = dataSource.sources.length;
+              const index = dataSpecs.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
               onDataChange(dPath, initInteger());
             }}
@@ -214,7 +205,7 @@ const DataGeneratorForm = ({
           <Menu.Item
             key="4"
             onClick={() => {
-              const index = dataSource.sources.length;
+              const index = dataSpecs.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
               onDataChange(dPath, initFloat());
             }}

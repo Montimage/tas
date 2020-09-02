@@ -2,23 +2,22 @@
 const express = require("express");
 const router = express.Router();
 const {
-  DataSetSchema,
+  DatasetSchema,
   dbConnector
 } = require('./db-connector');
 
 router.get("/", dbConnector, function (req, res, next) {
-  console.log(req.param('page'));
-  let page = req.param('page');
+  let page = req.query.page;
   if (!page) page = 0;
-  DataSetSchema.findDataSetsWithPagingOptions(null, page, (err2, dataSets) => {
+  DatasetSchema.findDatasetsWithPagingOptions(null, page, (err2, datasets) => {
     if (err2) {
-      console.error('[SERVER] Failed to get dataSets', err2);
+      console.error('[SERVER] Failed to get datasets', err2);
       res.send({
         error: 'Failed to get data set'
       });
     } else {
       res.send({
-        dataSets
+        datasets
       });
     }
   });
@@ -27,20 +26,20 @@ router.get("/", dbConnector, function (req, res, next) {
 /**
  * Get a data set by id
  */
-router.get("/:dataSetId", dbConnector, function (req, res, next) {
+router.get("/:datasetId", dbConnector, function (req, res, next) {
   const {
-    dataSetId
+    datasetId
   } = req.params;
 
-  DataSetSchema.findById(dataSetId, (err2, dataSet) => {
+  DatasetSchema.findOne({id: datasetId}, (err2, dataset) => {
     if (err2) {
-      console.error('[SERVER] Failed to get dataSets', err2);
+      console.error('[SERVER] Failed to get datasets', err2);
       res.send({
         error: 'Failed to get data set'
       });
     } else {
       res.send({
-        dataSet
+        dataset
       });
     }
   });
@@ -49,7 +48,7 @@ router.get("/:dataSetId", dbConnector, function (req, res, next) {
 // Add a new data set
 router.post("/", dbConnector, function (req, res, next) {
   const {
-    dataSet
+    dataset
   } = req.body;
   const {
     id,
@@ -57,9 +56,9 @@ router.post("/", dbConnector, function (req, res, next) {
     tags,
     description,
     source,
-  } = dataSet;
+  } = dataset;
   const currentTime = Date.now();
-  const newdataSet = new DataSetSchema({
+  const newdataset = new DatasetSchema({
     id,
     name,
     tags,
@@ -68,7 +67,7 @@ router.post("/", dbConnector, function (req, res, next) {
     createdAt: currentTime,
     lastModified: currentTime
   });
-  newdataSet.save((err, _dataSet) => {
+  newdataset.save((err, _dataset) => {
     if (err) {
       console.error('[SERVER] Failed to save the data sets', err);
       res.send({
@@ -76,7 +75,7 @@ router.post("/", dbConnector, function (req, res, next) {
       });
     } else {
       res.send({
-        dataSet: _dataSet
+        dataset: _dataset
       });
     }
   });
@@ -85,15 +84,15 @@ router.post("/", dbConnector, function (req, res, next) {
 /**
  * Update a data set
  */
-router.post("/:dataSetId", dbConnector, function (req, res, next) {
+router.post("/:datasetId", dbConnector, function (req, res, next) {
   const {
-    dataSet
+    dataset
   } = req.body;
   const {
-    dataSetId
+    datasetId
   } = req.params;
 
-  DataSetSchema.findByIdAndUpdate(dataSetId, {...dataSet, lastModified: Date.now()}, (err, ts) => {
+  DatasetSchema.findOneAndUpdate({id: datasetId}, {...dataset, lastModified: Date.now()}, (err, ts) => {
     if (err) {
       console.error('[SERVER] Failed to save the data sets', err);
       res.send({
@@ -101,7 +100,7 @@ router.post("/:dataSetId", dbConnector, function (req, res, next) {
       });
     } else {
       res.send({
-        dataSet: ts
+        dataset: ts
       });
     }
   });
@@ -110,12 +109,12 @@ router.post("/:dataSetId", dbConnector, function (req, res, next) {
 /**
  * Delete a data set by id
  */
-router.delete("/:dataSetId", dbConnector, function (req, res, next) {
+router.delete("/:datasetId", dbConnector, function (req, res, next) {
   const {
-    dataSetId
+    datasetId
   } = req.params;
 
-  DataSetSchema.findByIdAndDelete(dataSetId, (err, ret) => {
+  DatasetSchema.findOneAndDelete({id: datasetId}, (err, ret) => {
     if (err) {
       console.error('[SERVER] Failed to save the data sets', err);
       res.send({

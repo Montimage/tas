@@ -149,12 +149,8 @@ class ThingMQTT extends Thing {
         publishTopic = sensor.topic;
     } else {
       publishTopic = `things/${this.thingId}/sensors/${sensor.topicEnd}`;
-    }
-    console.log(
-      `[${this.thingId}] published: ${this.mqttClient.options.href} ${publishTopic}`,
-      data
-    );
-    this.mqttClient.publish(publishTopic, JSON.stringify(data));
+    }    
+    this.mqttClient.publish(publishTopic, typeof data === "object" ? JSON.stringify(data): data);
   }
 
   getStats() {

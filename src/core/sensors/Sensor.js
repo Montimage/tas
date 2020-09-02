@@ -21,16 +21,18 @@ class Sensor {
    * @param {Object} dataSource The data source of the sensor
    * -
    */
-  constructor(id, data, productionBroker, publishDataFct, events) {
+  constructor(id, data, productionBroker, publishDataFct, events, startReplayingTime) {
     const {
       objectId,
       name,
       topic,
       dataSpecs,
       dataSource,
+      reportFormat,
       replayOptions
     } = data;
     this.id = id;
+    this.reportFormat = reportFormat ? reportFormat: 0;
     this.productionBroker = productionBroker;
     this.publishDataFct = publishDataFct;
     this.dataSourceType = dataSource;
@@ -54,6 +56,11 @@ class Sensor {
     this.startedTime = 0;
     this.numberOfSentData = 0;
     this.lastSentData = null;
+    this.startReplayingTime = startReplayingTime;
+  }
+
+  updateStartReplayingTime(time) {
+    this.startReplayingTime = time;
   }
 
   getStats() {
@@ -71,20 +78,23 @@ class Sensor {
   }
 
   dataHandler(values) {
-    values["timestamp"] = Date.now();
-    values["instanceId"] = this.id;
-    if (this.name) {
-      values["name"] = this.name;
+    if (typeof values === 'object') {
+      values["timestamp"] = Date.now();
+      values["instanceId"] = this.id;
+      if (this.name) {
+        values["name"] = this.name;
+      }
+      if (this.objectId) {
+        values["objectId"] = this.objectId;
+      }
     }
-    if (this.objectId) {
-      values["objectId"] = this.objectId;
-    }
+    console.log(`Sensor ${this.id} published data: ${typeof values ==="object" ? JSON.stringify(values): values}`);
     this.publishDataFct(this.topic, values);
     // Statistics
     this.lastActivity = Date.now();
     this.lastSentData = values;
     this.numberOfSentData++;
-    console.log(this.getStats());
+    // console.log(this.getStats());
   }
 
   /**
@@ -102,14 +112,15 @@ class Sensor {
       if (!this.dataSource) {
         // Init
         if (this.dataSourceType === DS_DATASET) {
-          console.log('Number of events to be replayed: ', this.events.length, this.replayOptions);
+          console.log(`[SENSOR] ${this.id} Number of events to be replayed: ${this.events.length} with replayOptions: ${JSON.stringify(this.replayOptions)}`);
           this.dataSource = new DataReplayer(
             this.id,
             (values) => this.dataHandler(values),
             null,
             this.replayOptions,
             this.events,
-            this.objectId
+            this.objectId,
+            this.startReplayingTime
           );
         } else {
           this.dataSource = new DataGenerator(
@@ -117,7 +128,8 @@ class Sensor {
             (values) => this.dataHandler(values),
             null,
             this.dataSpecs,
-            this.objectId
+            this.objectId,
+            this.reportFormat
           );
         }
       }

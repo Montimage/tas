@@ -12,7 +12,13 @@ import {
 
 export default createReducer(
   {
-    [setNotification]: (state, { type, message }) => ({ type, message }),
+    [setNotification]: (state, { type, message }) => {
+      if (message !== {}) {
+        return { type, message };
+      } else {
+        return null;
+      }
+    },
     [resetNotification]: state => null,
     [addThing]: (state, thing) => ({
       type: "success",

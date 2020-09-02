@@ -2,17 +2,29 @@ import { all } from "redux-saga/effects";
 
 import requestModelSaga from "./requestModelSaga";
 import uploadModelSaga from "./uploadModelSaga";
-import deploySaga from "./deploySaga";
+import simulationSaga from "./simulationSaga";
 import requestLogsSaga from './requestLogsSaga';
-import requestStats from "./requestStatsSaga";
+import requestDataRecorderSaga from "./requestDataRecorderSaga";
+import dataStorageSaga from './dataStorageSaga';
+import testCampaignsSaga from './testCampaignsSaga';
+import testCasesSaga from './testCasesSaga';
+import datasetsSaga from './datasetsSaga';
+import eventsSaga from './eventsSaga';
+import devOptsSaga from './devOptsSaga';
 
 function* rootSaga() {
   yield all([
     requestModelSaga(),
+    requestDataRecorderSaga(),
     uploadModelSaga(),
-    deploySaga(),
+    simulationSaga(),
     requestLogsSaga(),
-    requestStats(),
+    dataStorageSaga(),
+    testCampaignsSaga(),
+    devOptsSaga(),
+    testCasesSaga(),
+    datasetsSaga(),
+    eventsSaga(),
   ]);
 }
 

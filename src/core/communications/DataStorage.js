@@ -1,10 +1,10 @@
 const {
   ENACTDB,
   EventSchema,
-  DataSetSchema
+  DatasetSchema,
+  TestCampaignSchema,
+  TestCaseSchema
 } = require('../enact-mongoose');
-const TestCampaignSchema = require('../enact-mongoose/schemas/TestCampaignSchema');
-const TestCaseSchema = require('../enact-mongoose/schemas/TestCaseSchema');
 
 /**
  * DataStorage class presents the interface of a data base
@@ -56,10 +56,9 @@ class DataStorage {
       this.dsClient.connect((error) => {
         if (error) {
           console.error(
-            "[DataStorage] ERROR: Failed to connect to database",
-            error,
-            dbConfig
-          );
+            `[DataStorage] ERROR: Failed to connect to database:`);
+          console.error(error);
+          console.error(this.connConfig);
           return callback(error);
         }
         console.log("[DataStorage] Connected to database");
@@ -77,17 +76,17 @@ class DataStorage {
     rcData.save();
   }
 
-  saveDataSet(dataset) {
+  saveDataset(dataset) {
     const currentTime = Date.now();
-    DataSetSchema.findOne({id: dataset.id}, (err, ds) => {
+    DatasetSchema.findOne({id: dataset.id}, (err, ds) => {
       if (ds) {
-        DataSetSchema.findByIdAndUpdate(ds._id, dataset);
+        DatasetSchema.findByIdAndUpdate(ds._id, dataset);
       } else {
-        const newDS = new DataSetSchema({...dataset, createdAt: currentTime, createdAt: currentTime});
+        const newDS = new DatasetSchema({...dataset, createdAt: currentTime, lastModified: currentTime, source: dataset.source ? dataset.source: 'RECORDED'});
         newDS.save();
+        console.log('[DataStorage] A new dataset has been created: ', dataset);
       }
     });
-    
   }
 
   getEvents(topic, datasetId, timeConstraints, callback) {

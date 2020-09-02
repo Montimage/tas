@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import TSModal from "../TSModal";
-import { addThing, deleteThing, showModal, selectThing } from "../../actions";
+import { addThing, deleteThing, showModal, selectDevice } from "../../actions";
 import { Form, Button, Alert } from "antd";
 
 import {
@@ -34,7 +34,7 @@ class ThingModal extends Component {
       enable: true,
     };
     this.state = {
-      data: props.selectedThing ? deepCloneObject(props.selectedThing) : initThing,
+      data: props.selectedDevice ? deepCloneObject(props.selectedDevice) : initThing,
       error: null,
       isDG: isDataGenerator()
     };
@@ -59,7 +59,7 @@ class ThingModal extends Component {
 
   handleOk() {
     // Validate data
-    const { addThing, showModal, selectThing } = this.props;
+    const { addThing, showModal, selectDevice } = this.props;
     const { data } = this.state;
     const newThing = { ...data };
     let errorMsg = null;
@@ -77,23 +77,23 @@ class ThingModal extends Component {
     } else {
       addThing(data);
       showModal(null);
-      selectThing(null);
+      selectDevice(null);
     }
   }
 
   handleCancel() {
     this.props.showModal(null);
-    this.props.selectThing(null);
+    this.props.selectDevice(null);
   }
 
   handleDuplicate() {
-    const { addThing, showModal, selectThing } = this.props;
+    const { addThing, showModal, selectDevice } = this.props;
     const newThingID = `dev-id-${Date.now()}`;
     const newData = { ...this.state.data };
     updateObjectByPath(newData, "id", newThingID);
     updateObjectByPath(newData, "name", "New Device");
     addThing(newData);
-    selectThing(newData);
+    selectDevice(newData);
     setTimeout(() => {
       showModal("THING-FORM");
     }, 500);
@@ -115,7 +115,7 @@ class ThingModal extends Component {
     const { data, error } = this.state;
     const { formID } = this.props;
     let footer = null;
-    if (this.props.selectedThing) {
+    if (this.props.selectedDevice) {
       footer = [
         // <Button key="delete" type="danger" onClick={() => this.handleDelete()}>
         //   Delete
@@ -249,7 +249,7 @@ class ThingModal extends Component {
 
 const mapPropsToStates = ({ editingForm, model }) => ({
   formID: editingForm.formID,
-  selectedThing: editingForm.selectedThing,
+  selectedDevice: editingForm.selectedDevice,
   things: model.things,
 });
 
@@ -257,7 +257,7 @@ const mapDispatchToProps = (dispatch) => ({
   showModal: (modalID) => dispatch(showModal(modalID)),
   deleteThing: (thingID) => dispatch(deleteThing(thingID)),
   addThing: (thingData) => dispatch(addThing(thingData)),
-  selectThing: (thing) => dispatch(selectThing(thing)),
+  selectDevice: (thing) => dispatch(selectDevice(thing)),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(ThingModal);

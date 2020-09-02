@@ -1,10 +1,10 @@
 import React from "react";
 import { Form, Typography } from "antd";
-const { Paragraph } = Typography;
+const { Text } = Typography;
 
 const FormEditableTextItem = ({ label, defaultValue, onChange, helpText=null }) => (
   <Form.Item label={label} extra={helpText}>
-      <Paragraph
+      <Text
         editable={{
           onChange: (v) => {
             onChange(v);
@@ -12,7 +12,7 @@ const FormEditableTextItem = ({ label, defaultValue, onChange, helpText=null }) 
         }}
       >
         {defaultValue}
-      </Paragraph>
+      </Text>
   </Form.Item>
 );
 

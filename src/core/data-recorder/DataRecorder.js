@@ -47,7 +47,8 @@ class DataRecorder {
    * @param {Object} packet Full attributes of the packets
    */
   messageHandler(topic, message, packet) {
-    console.log('[DataRecorder] Received a message on topic: ', topic, message);
+    console.log(`[DataRecorder] Received a message on topic: ${topic}`);
+    console.log(message);
     let isSensorData = false;
     if (this.isSensorData(topic, packet)) {
       isSensorData = true;
@@ -60,7 +61,7 @@ class DataRecorder {
     // Save data into database
     
     if (this.dataStorage) {
-      this.dataStorage.dsClient.save({
+      this.dataStorage.dsClient.saveEvent({
         datasetId: this.dataStorage.dataset.id,
         topic,
         isSensorData,
@@ -179,8 +180,14 @@ class DataRecorder {
         return callback(error);
       } else {
         this.dataStorage['dsClient'] = dsClient;
-        dsClient.saveDataSet(this.dataStorage.dataset);
-        return callback();
+        if (this.dataStorage.dataset) {
+          dsClient.saveDataset(this.dataStorage.dataset);
+          return callback();
+        } else {
+          console.error('Failed to create DataStorage: dataset missing');
+          dsClient.stop();
+          return callback('Dataset missing');
+        }
       }
     });
   }
@@ -224,7 +231,7 @@ class DataRecorder {
       });
     } else {
       // - without forwarder
-      if (dataStorage) {
+      if (this.dataStorage) {
         // Init the data storage
         this.initDataStorage((err) => {
           if (!err) {

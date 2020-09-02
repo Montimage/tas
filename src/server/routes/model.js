@@ -26,7 +26,7 @@ router.get("/", (req, res, next) => {
     } else {
       res.send({
         error: null,
-        files: files.filter(f => path.extname(f) === '.json')
+        models: files.filter(f => path.extname(f) === '.json')
       });
     }
   });
@@ -53,15 +53,36 @@ router.get("/:fileName", function (req, res, next) {
   });
 });
 
-// Update a model
-router.post("/:fileName", function (req, res, next) {
-  const {
-    fileName
-  } = req.params;
+const duplicateModel = (fileName, res) => {
   const modelFile = `${modelsPath}${fileName}`;
-  const {
-    model
-  } = req.body;
+  readJSONFile(modelFile, (err, data) => {
+    if (err) {
+      console.error("[SERVER]", err);
+      res.send({
+        error: `Cannot read model ${fileName}`
+      });
+    } else {
+      const newName = `${data.name} [Duplicated]`;
+      const newModel = {...data, name: newName};
+      const newFileName = `${newName}.json`;
+      writeToFile(`${modelsPath}${newFileName}`, JSON.stringify(newModel), (err, dupModel) => {
+        if (err) {
+          console.error("[SERVER]", err);
+          res.send({
+            error: "Cannot save the duplicated model"
+          });
+        } else {
+          res.send({
+            modelFileName: newFileName
+          });
+        }
+      }, true);
+    }
+  });
+}
+
+const updateModel = (model, fileName, res) => {
+  
   if (!model) {
     console.error("[SERVER]", "Cannot find model in body");
     return res.send({
@@ -71,28 +92,70 @@ router.post("/:fileName", function (req, res, next) {
 
   const {
     name,
-    things
+    devices
   } = model;
-  if (!name || !things) {
+  if (!name || !devices) {
     console.error("[SERVER]", `Invalid model ${JSON.stringify(model)}`);
     return res.send({
       error: `Invalid model ${JSON.stringify(model)}`
     });
   }
+  const newName = `${name}.json`;
+  if (fileName === newName) {
+    const modelFile = `${modelsPath}${fileName}`;
+    writeToFile(modelFile, JSON.stringify(model), (err, data) => {
+      if (err) {
+        console.error("[SERVER]", err);
+        res.send({
+          error: "Cannot save the new configuration"
+        });
+      } else {
+        res.send({
+          modelFileName: fileName
+        });
+      }
+    }, true);
+  }
+  else {
+    const modelFile = `${modelsPath}${newName}`;
+    const oldModelFile = `${modelsPath}${fileName}`;
+    writeToFile(modelFile, JSON.stringify(model), (err, data) => {
+      if (err) {
+        console.error("[SERVER]", err);
+        res.send({
+          error: "Cannot save the new configuration"
+        });
+      } else {
+        // Delete the old model
+        deleteFile(oldModelFile, (err2) => {
+          if (err2) {
+            console.error(err2);
+          }
+          res.send({
+            modelFileName: newName
+          });
+        });
+      }
+    }, true);
+  }
+};
 
-  writeToFile(modelFile, JSON.stringify(model), (err, data) => {
-    if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot save the new configuration"
-      });
-    } else {
-      res.send({
-        error: null,
-        model: model
-      });
-    }
-  }, true);
+// Update a model - or duplicate a model
+router.post("/:fileName", function (req, res, next) {
+  const {
+    fileName
+  } = req.params;
+
+  const {
+    model, isDuplicated
+  } = req.body;
+  if (isDuplicated) {
+    // Duplicate the model
+    duplicateModel(fileName, res);
+  } else {
+    // Update model
+    updateModel(model, fileName, res);
+  }  
 });
 
 // Save a new model
@@ -109,17 +172,18 @@ router.post("/", function (req, res, next) {
 
   const {
     name,
-    things
+    devices
   } = model;
-  if (!name || !things) {
+  if (!name || !devices) {
     console.error("[SERVER]", `Invalid model ${JSON.stringify(model)}`);
     return res.send({
       error: `Invalid model ${JSON.stringify(model)}`
     });
   }
 
-  let modelFile = `${modelsPath}_${model.name}.json`;
-  writeToFile(modelFile, JSON.stringify(model), (err, data) => {
+  const modelFileName = `${model.name}.json`;
+  const modelFilePath = `${modelsPath}${modelFileName}`;
+  writeToFile(modelFilePath, JSON.stringify(model), (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
       res.send({
@@ -127,8 +191,7 @@ router.post("/", function (req, res, next) {
       });
     } else {
       res.send({
-        error: null,
-        model: model
+        modelFileName
       });
     }
   });
@@ -148,7 +211,6 @@ router.delete("/:fileName", function (req, res, next) {
       });
     } else {
       res.send({
-        error: null,
         result: true
       });
     }

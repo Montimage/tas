@@ -6,7 +6,7 @@ const {
 const DeviceDataSource = require('./DeviceDataSource');
 
 class DataReplayer extends DeviceDataSource {
-  constructor(id, dataHandler, callbackWhenFinish, replayOptions, events, objectId) {
+  constructor(id, dataHandler, callbackWhenFinish, replayOptions, events, objectId, startReplayingTime) {
     super(id, dataHandler, callbackWhenFinish);
     this.objectId = objectId;
     this.repeat = false;
@@ -17,6 +17,7 @@ class DataReplayer extends DeviceDataSource {
     }
     this.events = events;
     this.nbRepeated = 0;
+    this.startReplayingTime = startReplayingTime;
   }
 
   getStats() {
@@ -35,7 +36,8 @@ class DataReplayer extends DeviceDataSource {
       console.error(`[ERROR] No data to be replayed`);
       return;
     }
-    const startTime = this.events[0].timestamp;
+    const startTime = this.startReplayingTime;
+    console.log(`startReplayingTime: ${this.startReplayingTime}`);
     for (let index = 0; index < this.events.length; index++) {
       const event = this.events[index];
       const waitingTime = (event.timestamp - startTime) / this.speedup;

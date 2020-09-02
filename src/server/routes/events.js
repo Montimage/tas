@@ -8,14 +8,19 @@ const {
 
 // Get all the events
 router.get("/", dbConnector, function (req, res, next) {
-  console.log(req.param('page'));
-  let page = req.param('page');
+  let page = req.query.page;
   if (!page) page = 0;
   let filter = null;
-  const datasetId = req.param('datasetId');
+  const datasetId = req.query.datasetId;
   if (datasetId) {
     filter = {datasetId};    
   }
+
+  const topic = req.query.topic;
+  if (topic) {
+    filter = {...filter, topic};
+  }
+
   EventSchema.findEventsWithPagingOptions(filter, page, (err2, events) => {
     if (err2) {
       console.error('[SERVER] Failed to get events', err2);

@@ -1,16 +1,16 @@
 import { createReducer } from 'redux-act';
-import { selectThing, selectSensor, selectActuator, showModal } from '../actions';
+import { selectDevice, selectSensor, selectActuator, showModal } from '../actions';
 
 const initState = {
   formID: null,
-  selectedThing: null,
+  selectedDevice: null,
   selectedSensor: null,
   selectedActuator: null,
   dataStorage: null
 }
 export default createReducer({
   [showModal] : (state, formID) => ({...state, formID}),
-  [selectThing] : (state, selectedThing) => ({...state, selectedThing}),
+  [selectDevice] : (state, selectedDevice) => ({...state, selectedDevice}),
   [selectSensor] : (state, selectedSensor) => ({...state, selectedSensor}),
   [selectActuator] : (state, selectedActuator) => ({...state, selectedActuator})
 }, initState);

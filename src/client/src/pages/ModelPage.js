@@ -1,17 +1,16 @@
-import React, { Component } from "react";
+import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button } from "antd";
+import { Button, Switch, Form, List, Typography, Divider } from "antd";
 // all the edit forms
-import ThingModal from "../components/ThingModal";
 import SensorModal from "../components/SensorModal";
 import ActuatorModal from "../components/ActuatorModal";
 
 import {
   requestModel,
-  setModel,
-  uploadModel,
+  requestAddNewModel,
+  requestUpdateModel,
   showModal,
-  selectThing,
+  selectDevice,
   changeModelName,
   deleteThing,
   changeStatusThing,
@@ -23,104 +22,601 @@ import {
   changeStatusActuator,
 } from "../actions";
 import JSONView from "../components/JSONView";
-import GraphView from "../components/GraphView";
-import ListView from "../components/ListView";
 import LayoutPage from "./LayoutPage";
 
-import { isDataGenerator, getQuery } from "../utils";
+import { SwitcherOutlined, ExportOutlined } from "@ant-design/icons";
+import {
+  FormEditableTextItem,
+  FormSelectItem,
+  FormTextItem,
+  FormTextAreaItem,
+} from "../components/FormItems";
+import ConnectionConfig from "../components/ConnectionConfig";
+import CollapseForm from "../components/CollapseForm";
+import {
+  getQuery,
+  getLastPath,
+  updateObjectByPath,
+  deepCloneObject,
+} from "../utils";
 
-// console.log(ace.acequire('editor'));
+const { Text } = Typography;
+
+const ModelDeviceItem = ({
+  data,
+  onChange,
+  onDelete,
+  onDuplicate,
+  changeModalId,
+  selectedModalId,
+  onEnable,
+}) => (
+  <CollapseForm
+    title={`${data.name}`}
+    extra={
+      <Fragment>
+        <Switch
+          defaultChecked={data.enable ? true : false}
+          checkedChildren="Enable"
+          unCheckedChildren="Disable"
+          onClick={(value, event) => {
+            event.stopPropagation();
+            onEnable();
+          }}
+          style={{ marginRight: 10 }}
+        />
+        <Button
+          onClick={(event) => {
+            event.stopPropagation();
+            onDuplicate();
+          }}
+          size="small"
+          style={{ marginRight: 10 }}
+        >
+          Duplicate
+        </Button>
+        <Button
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete();
+          }}
+          size="small"
+          danger
+        >
+          Delete
+        </Button>
+      </Fragment>
+    }
+  >
+    <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+      <FormEditableTextItem
+        label="Name"
+        defaultValue={data.name}
+        onChange={(newName) => onChange("name", newName)}
+      />
+      <FormEditableTextItem
+        label="Id"
+        defaultValue={data.id}
+        onChange={(newId) => onChange("id", newId)}
+      />
+      <Divider orientation="left">Test Broker </Divider>
+      <FormSelectItem
+        label="Protocol"
+        defaultValue={data.testBroker.protocol}
+        onChange={(v) => onChange("testBroker.protocol", v)}
+        options={["MQTT", "MONGODB"]}
+      />
+      <ConnectionConfig
+        defaultValue={data.testBroker.connConfig}
+        dataPath={"testBroker.connConfig"}
+        onDataChange={onChange}
+        type={data.testBroker.protocol}
+      />
+      <Divider orientation="left">Production Broker </Divider>
+      {data.productionBroker ? (
+        <Fragment>
+          <FormSelectItem
+            label="Protocol"
+            defaultValue={data.productionBroker.protocol}
+            onChange={(v) => onChange("productionBroker.protocol", v)}
+            options={["MQTT", "MONGODB"]}
+          />
+          <ConnectionConfig
+            defaultValue={data.productionBroker.connConfig}
+            dataPath={"productionBroker.connConfig"}
+            onDataChange={onChange}
+            type={data.productionBroker.protocol}
+          />
+          <Button danger onClick={() => onChange("productionBroker", null)}>
+            Remove Production Broker
+          </Button>
+        </Fragment>
+      ) : (
+        <Button
+          onClick={() =>
+            onChange("productionBroker", {
+              protocol: "MQTT",
+              connConfig: {
+                host: "localhost",
+                port: 1883,
+                options: null,
+              },
+            })
+          }
+        >
+          Add Production Broker
+        </Button>
+      )}
+      <Divider orientation="left">Sensors</Divider>
+      <List
+        header={<strong>Sensors ({data.sensors.length})</strong>}
+        footer={
+          <Button onClick={() => showModal("SENSOR-FORM")}>
+            Add New Sensor
+          </Button>
+        }
+        size="small"
+        bordered
+        dataSource={data.sensors}
+        renderItem={(item, index) => (
+          <List.Item
+            actions={[
+              <Switch
+                checkedChildren="Enable"
+                unCheckedChildren="Disable"
+                defaultChecked={item.enable ? true : false}
+                onChange={() =>
+                  onChange(`sensors[${index}].enable`, !item.enable)
+                }
+              />,
+              <Button
+                size="small"
+                key="edit"
+                onClick={() => changeModalId(item.id)}
+              >
+                Edit
+              </Button>,
+              <Button
+                size="small"
+                key="duplicate"
+                onClick={() => {
+                  const newSensor = {
+                    ...item,
+                    id: `${item.id}-duplicated`,
+                    name: `${item.name} [duplicaed]`,
+                  };
+                  let newSensors = [...data.sensors, newSensor];
+                  onChange("sensors", newSensors);
+                }}
+              >
+                Duplicate
+              </Button>,
+              <Button
+                size="small"
+                danger
+                key="delete"
+                onClick={() => {
+                  if (data.sensors.length === 1) {
+                    onChange("sensors", []);
+                  } else {
+                    let newSensors = [...data.sensors];
+                    newSensors.splice(index, 1);
+                    onChange("sensors", newSensors);
+                  }
+                }}
+              >
+                Delete
+              </Button>,
+            ]}
+          >
+            <Text>{item.name}</Text>
+            <SensorModal
+              enable={selectedModalId === item.id}
+              sensorData={item}
+              deviceId={data.id}
+              onOK={(dataPath, value) =>
+                onChange(`sensors[${index}].${dataPath}`, value)
+              }
+              onClose={() => {
+                changeModalId(null);
+              }}
+            />
+          </List.Item>
+        )}
+      />
+      <p></p>
+      <Divider orientation="left">Actuator </Divider>
+      <List
+        header={<strong>Actuators ({data.actuators.length})</strong>}
+        footer={
+          <Button onClick={() => showModal("ACTUATOR-FORM")}>
+            Add New Actuator
+          </Button>
+        }
+        size="small"
+        bordered
+        dataSource={data.actuators}
+        renderItem={(item, index) => (
+          <List.Item
+            actions={[
+              <Switch
+                checkedChildren="Enable"
+                unCheckedChildren="Disable"
+                defaultChecked={item.enable ? true : false}
+                onChange={() =>
+                  onChange(`actuators[${index}].enable`, !item.enable)
+                }
+              />,
+              <Button
+                size="small"
+                key="edit"
+                onClick={() => changeModalId(item.id)}
+              >
+                Edit
+              </Button>,
+              <Button
+                size="small"
+                key="duplicate"
+                onClick={() => {
+                  const newActuator = {
+                    ...item,
+                    id: `${item.id}-duplicated`,
+                    name: `${item.name} [duplicaed]`,
+                  };
+                  let newActuators = [...data.actuators, newActuator];
+                  onChange("actuators", newActuators);
+                }}
+              >
+                Duplicate
+              </Button>,
+              <Button
+                size="small"
+                danger
+                key="delete"
+                onClick={() => {
+                  if (data.actuators.length === 1) {
+                    onChange("actuators", []);
+                  } else {
+                    let newActuators = [...data.actuators];
+                    newActuators.splice(index, 1);
+                    onChange("actuators", newActuators);
+                  }
+                }}
+              >
+                Delete
+              </Button>,
+            ]}
+          >
+            <Text>{item.name}</Text>
+            <ActuatorModal
+              enable={selectedModalId === item.id}
+              actuatorData={item}
+              deviceId={data.id}
+              onOK={(dataPath, value) =>
+                onChange(`actuators[${index}].${dataPath}`, value)
+              }
+              onClose={() => {
+                changeModalId(null);
+              }}
+            />
+          </List.Item>
+        )}
+      />
+    </Form>
+  </CollapseForm>
+);
+
+const newDevice = () => {
+  const currentTime = Date.now();
+  return {
+    id: `id-new-device-${currentTime}`,
+    name: `name-new-device-${currentTime}`,
+    enable: false,
+    scale: 1,
+    behaviours: [],
+    timeToDown: 0,
+    testBroker: {
+      protocol: "MQTT",
+      connConfig: {
+        host: "192.168.1.21",
+        port: 1883,
+        options: null,
+      },
+    },
+    productionBroker: null,
+    sensors: [],
+    actuators: [],
+  };
+};
+
 class ModelPage extends Component {
   constructor(props) {
     super(props);
+    let modelFileName = getLastPath();
+    let isNewModel = modelFileName.indexOf(".json") === -1;
     this.state = {
-      tempModel: props.model,
-      isDG: false,
+      modelFileName: isNewModel ? `${modelFileName}.json` : modelFileName,
+      tempModel: isNewModel
+        ? {
+            name: modelFileName,
+          }
+        : {},
+      isNewModel,
+      selectedModalId: null,
+      isChanged: false,
     };
+
     this.onModelChange = this.onModelChange.bind(this);
   }
 
   componentDidMount() {
-    const isDG = isDataGenerator();
-    this.props.initData(isDG);
-    this.setState({ isDG });
+    let modelFileName = getLastPath();
+    if (modelFileName.indexOf(".json") === -1) {
+      // This is a new model page
+      this.setState({
+        modelFileName: `${modelFileName}.json`,
+        tempModel: {
+          name: modelFileName,
+        },
+        isNewModel: true,
+      });
+    } else {
+      this.props.requestModel(modelFileName);
+      this.setState({ modelFileName, isNewModel: false });
+    }
   }
 
   componentWillReceiveProps(newProps) {
     this.setState({
-      tempModel: newProps.model,
+      tempModel: deepCloneObject(newProps.model),
     });
   }
 
   onModelChange(newModel) {
     this.setState({
       tempModel: newModel,
+      isChanged: true,
     });
   }
 
+  onDataChange(dataPath, value) {
+    this.setState((prevState) => {
+      const newData = { ...prevState.tempModel };
+      updateObjectByPath(newData, dataPath, value);
+      return { tempModel: newData, error: null, isChanged: true };
+    });
+  }
+
+  exportModel(model) {
+    if (model) {
+      const fileData = JSON.stringify(model);
+      const blob = new Blob([fileData], { type: "text/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = `${model.name.replace(/ /g, "")}.json`;
+      link.href = url;
+      link.click();
+    }
+  }
+
+  addNewDevice() {
+    this.setState((prevState) => ({
+      tempModel: {
+        ...prevState.tempModel,
+        devices: [...prevState.tempModel.devices, newDevice()],
+      },
+      isChanged: true,
+    }));
+  }
+
+  changeModalId(newId) {
+    this.setState({ selectedModalId: newId });
+  }
+
   render() {
-    const { isDG } = this.state;
     const {
-      model,
-      saveModel,
-      showModal,
-      selectThing,
-      deleteThing,
-      changeStatusThing,
-      selectSensor,
-      deleteSensor,
-      changeStatusSensor,
-      selectActuator,
-      deleteActuator,
-      changeStatusActuator,
-      formID,
-      changeModelName,
-    } = this.props;
+      modelFileName,
+      tempModel,
+      isNewModel,
+      selectedModalId,
+      isChanged,
+    } = this.state;
+    const { addNewModel, updateModel, showModal } = this.props;
 
     let viewType = getQuery("view");
-    if (!viewType) viewType = "list";
+    if (!viewType) viewType = "form";
     let view = null;
     if (viewType === "json") {
-      view = <JSONView value={model} onChange={this.onModelChange} />;
-    } else if (viewType === "graph") {
-      view = <GraphView />;
+      view = <JSONView value={tempModel} onChange={this.onModelChange} />;
     } else {
       view = (
-        <ListView
-          model={model}
-          modelType={!isDG ? "Simulation" : "Data Geneartor"}
-          actions={{
-            showModal,
-            selectThing,
-            deleteThing,
-            changeStatusThing,
-            selectSensor,
-            deleteSensor,
-            changeStatusSensor,
-            selectActuator,
-            deleteActuator,
-            changeStatusActuator,
-            changeModelName,
-          }}
-        />
+        <Fragment>
+          <p></p>
+          <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+            <FormEditableTextItem
+              label="Name"
+              defaultValue={tempModel.name}
+              onChange={(newName) => this.onDataChange("name", newName)}
+            />
+            <Divider orientation="left">Dataset </Divider>
+            <p>The Id of data source</p>
+            <FormEditableTextItem
+              label="Dataset Id"
+              defaultValue={tempModel.datasetId ? tempModel.datasetId : null}
+              onChange={(newDatasetId) =>
+                this.onDataChange("datasetId", newDatasetId)
+              }
+            />
+            {tempModel.newDataset ? (
+              <Fragment>
+                <p>New Dataset to save the simulated data</p>
+                <FormTextItem
+                  label="Id"
+                  placeholder="Dataset Id"
+                  helpText="The Id of the dataset to be used in the simulation"
+                  defaultValue={tempModel.newDataset.id}
+                  onChange={(value) =>
+                    this.onDataChange("newDataset.id", value)
+                  }
+                />
+                <FormTextItem
+                  label="Name"
+                  placeholder="Name"
+                  defaultValue={tempModel.newDataset.name}
+                  onChange={(value) =>
+                    this.onDataChange("newDataset.name", value)
+                  }
+                />
+                <FormTextAreaItem
+                  label="Description"
+                  defaultValue={tempModel.newDataset.description}
+                  onChange={(value) =>
+                    this.onDataChange("newDataset.description", value)
+                  }
+                />
+                <FormTextItem
+                  label="Tags"
+                  placeholder="Tags"
+                  defaultValue={JSON.stringify(tempModel.newDataset.tags)}
+                  onChange={(value) =>
+                    this.onDataChange("newDataset.tags", JSON.parse(value))
+                  }
+                />
+                <Button
+                  danger
+                  onClick={() => this.onDataChange("newDataset", null)}
+                >
+                  Remove New Dataset
+                </Button>
+              </Fragment>
+            ) : (
+              <Button
+                onClick={() =>
+                  this.onDataChange("newDataset", {
+                    id: `new-data-set-${Date.now()}`,
+                    name: `New Data Set ${Date.now()}`,
+                    description: "Dataset descriptions",
+                    tags: ["recorded", "random", "test"],
+                  })
+                }
+              >
+                Add New Dataset
+              </Button>
+            )}
+            <Divider orientation="left">Data Storage </Divider>
+            {tempModel.dataStorage ? (
+              <ConnectionConfig
+                defaultValue={tempModel.dataStorage.connConfig}
+                dataPath={"dataStorage.connConfig"}
+                onDataChange={(dataPath, value) =>
+                  this.onDataChange(dataPath, value)
+                }
+                type={tempModel.dataStorage.protocol}
+              />
+            ) : (
+              <Button
+                onClick={() =>
+                  this.onDataChange("dataStorage", {
+                    protocol: "MONGODB",
+                    connConfig: {
+                      host: "localhost",
+                      port: 27017,
+                      username: null,
+                      password: null,
+                      dbname: "my_db_name",
+                      options: null,
+                    },
+                  })
+                }
+              >
+                Add Data Storage
+              </Button>
+            )}
+          </Form>
+          <Divider orientation="left">Devices </Divider>
+          {tempModel.devices ? (
+            <Fragment>
+              <p>Number of devices: {tempModel.devices.length}</p>
+              <Button onClick={() => showModal("THING-FORM")}>
+                Add New Device
+              </Button>
+              {tempModel.devices.map((device, index) => (
+                <ModelDeviceItem
+                  key={index}
+                  data={device}
+                  selectedModalId={selectedModalId}
+                  changeModalId={(newId) => this.changeModalId(newId)}
+                  onEnable={() => {
+                    this.onDataChange(
+                      `devices[${index}].enable`,
+                      !device.enable
+                    );
+                  }}
+                  onChange={(dataPath, value) =>
+                    this.onDataChange(`devices[${index}].${dataPath}`, value)
+                  }
+                  onDelete={() => {
+                    let newDevices = [...tempModel.devices];
+                    newDevices.splice(index, 1);
+                    this.onDataChange("devices", newDevices);
+                  }}
+                  onDuplicate={() => {
+                    let newDevice = {
+                      ...device,
+                      id: `${device.id}-duplicated`,
+                      name: `${device.name} [duplicated]`,
+                    };
+                    let newDevices = [...tempModel.devices, newDevice];
+                    this.onDataChange("devices", newDevices);
+                  }}
+                />
+              ))}
+            </Fragment>
+          ) : (
+            <Button onClick={() => showModal("THING-FORM")}>
+              Add New Device
+            </Button>
+          )}
+          <p></p>
+          <ActuatorModal />
+        </Fragment>
       );
     }
+
     return (
-      <LayoutPage>
-        {view}
-        <Button
-          type="primary"
-          onClick={() => saveModel(isDG, this.state.tempModel)}
-          style={{ marginTop: "10px" }}
-        >
-          Save
-        </Button>
-        {formID === "THING-FORM" && <ThingModal />}
-        {!isDG && formID === "ACTUATOR-FORM" && <ActuatorModal />}
-        {(formID === "SENSOR-FORM" || (formID === "ACTUATOR-FORM" && isDG)) && (
-          <SensorModal />
-        )}
-      </LayoutPage>
+      <Fragment>
+        <LayoutPage>
+          <a
+            href={`${window.location.pathname}?view=${
+              viewType === "json" ? "form" : "json"
+            }`}
+            style={{ marginRight: 10 }}
+          >
+            {" "}
+            <SwitcherOutlined /> Switch View
+          </a>
+          <Button onClick={() => this.exportModel(tempModel)}>
+            <ExportOutlined />
+            Export Model
+          </Button>
+          <p></p>
+          {view}
+          <Button
+            type="primary"
+            onClick={() => {
+              if (isNewModel) {
+                addNewModel(tempModel);
+              } else {
+                updateModel(modelFileName, tempModel);
+              }
+            }}
+            style={{ marginTop: "10px" }}
+            disabled={isChanged ? false : true}
+          >
+            Save
+          </Button>
+        </LayoutPage>
+      </Fragment>
     );
   }
 }
@@ -131,16 +627,13 @@ const mapPropsToStates = ({ model, editingForm }) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  initData: (isDG) => {
-    dispatch(requestModel(isDG));
-  },
-  saveModel: (isDG, newModel) => {
-    dispatch(setModel(newModel));
-    dispatch(uploadModel(isDG));
-  },
+  requestModel: (modelFileName) => dispatch(requestModel(modelFileName)),
+  addNewModel: (newModel) => dispatch(requestAddNewModel(newModel)),
+  updateModel: (modelFileName, model) =>
+    dispatch(requestUpdateModel({ modelFileName, model })),
   showModal: (formID) => dispatch(showModal(formID)),
   changeModelName: (newName) => dispatch(changeModelName(newName)),
-  selectThing: (thing) => dispatch(selectThing(thing)),
+  selectDevice: (device) => dispatch(selectDevice(device)),
   deleteThing: (thingID) => dispatch(deleteThing(thingID)),
   changeStatusThing: (thingID) => dispatch(changeStatusThing(thingID)),
   selectSensor: (sensor) => dispatch(selectSensor(sensor)),

@@ -1,14 +1,13 @@
 /* Working with Data Generator */
 var express = require("express");
-const {
-  SIMULATING
-} = require('../../core/DeviceStatus');
+const { SIMULATING } = require("../../core/DeviceStatus");
 let getLogger = require("../logger");
 const Simulation = require("../../core/simulation");
+const { readJSONFile } = require("../../core/utils");
 
 let router = express.Router();
-let logsPath = `${__dirname}/../logs/simulations/`;
-
+const logsPath = `${__dirname}/../logs/simulations/`;
+const modelsPath = `${__dirname}/../data/models/`;
 /**
  * ```javascript
 //Init
@@ -31,71 +30,85 @@ null
 }
 ```
  */
-let deployStatus = null;
+let simulationStatus = null;
 let simulation = null;
 // Start simulating a model
+
+const startSimulation = (model, options, res, modelFileName = null) => {
+  // Check if there is a configuration
+  if (!model) {
+    console.error("[SERVER]", "Cannot simulate a null model");
+    return res.send({
+      error: "Cannot simulate a null model",
+    });
+  }
+  const { name, devices } = model;
+  if (!name || !devices) {
+    return res.send({
+      error: "Invalid model",
+      model: model,
+    });
+  }
+
+  const startedTime = Date.now();
+  const logFile = `${name}_${Date.now()}.log`;
+  getLogger("SIMULATION", `${logsPath}${logFile}`);
+  simulation = new Simulation(model, options);
+  simulation.start();
+  simulationStatus = {
+    model: model.name,
+    startedTime,
+    logFile,
+    datasetId: simulation.datasetId,
+    newDataset: simulation.newDataset,
+    modelFileName
+  };
+  res.send({
+    model: model,
+    simulationStatus,
+  });
+};
+
 router.post("/start", function (req, res, next) {
   stats = null;
-  deployStatus = null;
-  const {
-    model,
-    options
-  } = req.body;
+  simulationStatus = null;
+  const { model, modelFileName, options } = req.body;
   // Check if the simulation is running
-  if (deployStatus) {
+  if (simulationStatus) {
     res.send({
       error: "A simulation is running. Only one simulation can be running",
     });
   } else {
-    // Check if there is a configuration
-    if (!model) {
-      console.error("[SERVER]", "Cannot simulate a null model");
-      return res.send({
-        error: "Cannot simulate a null model",
+    if (modelFileName) {
+      const modelFilePath = `${modelsPath}${modelFileName}`;
+      readJSONFile(modelFilePath, (err, myModel) => {
+        if (err) {
+          console.error(`Cannot read model ${modelFileName}`, err);
+          res.send({ error: `Cannot read model ${modelFileName}` });
+        } else {
+          startSimulation(myModel, options, res, modelFileName);
+        }
       });
+    } else {
+      startSimulation(model, options, res);
     }
-    const {
-      name,
-      devices
-    } = model;
-    if (!name || !devices) {
-      return res.send({
-        error: "Invalid model",
-        model: model
-      });
-    }
-
-    const startedTime = Date.now();
-    const logFile = `${name}_${Date.now()}.log`;
-    getLogger("SIMULATION", `${logsPath}${logFile}`);
-    simulation = new Simulation(model, options);
-    simulation.start();
-    deployStatus = {
-      model: model.name,
-      startedTime,
-      logFile,
-    };
-    res.send({
-      error: null,
-      model: model,
-      deployStatus
-    });
   }
 });
 
 router.get("/stop", function (req, res, next) {
-  const copiedStatus = deployStatus;
-  if (deployStatus && simulation) {
+  const copiedStatus = simulationStatus;
+  if (simulationStatus && simulation) {
     simulation.stop();
-    deployStatus = null;
+    simulationStatus = null;
   }
   res.send({
     error: null,
-    deployStatus: copiedStatus
+    simulationStatus: copiedStatus,
   });
 });
 
 router.get("/status", (req, res, next) => {
+  if (!simulation) return res.send({ error: null, simulationStatus: null });
   stats = simulation.getStats();
   let isOffline = true;
   if (stats) {
@@ -104,20 +117,21 @@ router.get("/status", (req, res, next) => {
       if (thing.status === SIMULATING) {
         isOffline = false;
         break;
-      };
+      }
     }
   }
   res.send({
     error: null,
-    deployStatus: isOffline ? null : deployStatus
+    simulationStatus: isOffline ? null : simulationStatus,
   });
 });
 
 router.get("/stats", (req, res, next) => {
+  if (!simulation) return res.send({ error: null, stats: null });
   stats = simulation.getStats();
   res.send({
     error: null,
-    stats
+    stats,
   });
 });
 

@@ -5,6 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: white;
 }
 
 code {
@@ -16,11 +17,14 @@ code {
   background: #fff;
 }
 
-#root{
+#root {
   height: 100%;
 }
 
-.ant-modal{
+.ant-modal {
   min-width: 60%;
 }
 
+.ant-layout {
+  background: white;
+}

@@ -35,7 +35,11 @@ class MQTTBus{
   }
 
   publish(topic, data) {
-    this.mqttClient.publish(topic, JSON.stringify(data));
+    let reportedData = data;
+    if (typeof data !=="string") {
+      reportedData = JSON.stringify(data);
+    }
+    this.mqttClient.publish(topic, reportedData);
   }
 
   connect(callback) {

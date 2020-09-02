@@ -1,78 +1,47 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Layout, Menu, Row, Col, Typography, Spin } from "antd";
+import { Layout, Menu, Row, Col } from "antd";
 import {
-  CaretRightOutlined,
-  GatewayOutlined,
-  ProfileOutlined,
-  DeploymentUnitOutlined,
-  StopOutlined,
-  ImportOutlined,
-  ClearOutlined,
-  ExportOutlined,
+  ClusterOutlined, DatabaseOutlined, DeploymentUnitOutlined, InteractionOutlined, FileTextOutlined, FolderOpenOutlined, EyeOutlined,
 } from "@ant-design/icons";
 
 import {
-  setModel,
-  resetModel,
-  sendDeployStart,
-  sendDeployStop,
   setNotification,
-  requestLogFiles,
 } from "../../actions";
 import "./styles.css";
-import { isDataGenerator } from "../../utils";
 
-const { SubMenu } = Menu;
 const { Header } = Layout;
-const { Text } = Typography;
 
 class TSHeader extends Component {
-  onUpload(files) {
-    const fileReader = new FileReader();
-    fileReader.onloadend = () => {
-      try {
-        const newModel = JSON.parse(fileReader.result);
-        this.props.setNewModel(newModel);
-      } catch (error) {
-        this.props.setNotification({ type: "error", message: error });
-      }
-    };
-    fileReader.readAsText(files[0]);
-  }
-
-  exportModel(model) {
-    if (model) {
-      const fileData = JSON.stringify(model);
-      const blob = new Blob([fileData], { type: "text/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.download = `${model.name.replace(/ /g, "")}.json`;
-      link.href = url;
-      link.click();
-    }
-  }
-
   render() {
-    const {
-      resetEditor,
-      startDeploy,
-      stopDeploy,
-      deployStatus,
-      model,
-    } = this.props;
-    const isDG = isDataGenerator();
-    const logo =
-      isDG
-        ? "/img/logo-data-generator.png"
-        : "/img/logo-simulation.png";
+    const menuLinks = [
+      '/test-campaigns',
+      '/test-cases',
+      '/models',
+      '/simulation',
+      '/data-recorders',
+      '/data-sets',
+      '/data-storage'
+    ];
+    // Calculate the selected menu
+    let selectedMenu = 0;
+    const fullPath = window.location.pathname;
+    let currentPositionIndex = fullPath.length - 1;
+    for (let index = 0; index < menuLinks.length; index++) {
+      const positionIndex = fullPath.indexOf(menuLinks[index]);
+      if ( positionIndex > -1 && positionIndex < currentPositionIndex) {
+        currentPositionIndex = positionIndex;
+        selectedMenu = index;
+      }
+    }
+
     return (
       <Header>
         <Row>
           <Col span={4}>
             <a href="/">
               <img
-                src={logo}
+                src={'/img/Logo.png'}
                 className="logo"
                 alt="Logo"
                 style={{ maxWidth: "250px", objectFit: "contain" }}
@@ -80,106 +49,65 @@ class TSHeader extends Component {
             </a>
           </Col>
           <Col span={14} push={6}>
-            <Menu theme="dark" mode="horizontal" style={{ lineHeight: "64px" }}>
-              <SubMenu
-                title={
-                  <a
-                    className="submenu-title-wrapper"
-                    href={isDG ? "/data-generator" : "/"}
-                  >
-                    <GatewayOutlined />
-                    Model
-                  </a>
-                }
-              >
-                <Menu.Item
-                  key="model:1"
-                  onClick={() => this.inputFileDOM.click()}
-                >
-                  <ImportOutlined /> Import Model
-                </Menu.Item>
-                <Menu.Item
-                  key="model:2"
-                  onClick={() => this.exportModel(model)}
-                >
-                  <ExportOutlined />
-                  Export Model
-                </Menu.Item>
-                <Menu.Item key="model:3" onClick={resetEditor}>
-                  <ClearOutlined />
-                  Reset Editor
-                </Menu.Item>
-              </SubMenu>
-              <SubMenu
-                title={
-                  <span className="submenu-title-wrapper">
-                    {deployStatus ? <Spin indicator={<DeploymentUnitOutlined spin style={{fontSize: '24'}}/>}/>: <DeploymentUnitOutlined />}
-                    {isDG ? "Generate " : "Simulate "}
-                  </span>
-                }
-              >
-                <Menu.Item key="deploy:1" onClick={() => startDeploy(isDG)}>
-                  <CaretRightOutlined />
-                  {isDG ? "Generate" : "Simulate"}
-                </Menu.Item>
-                <Menu.Item key="deploy:2" onClick={() => stopDeploy(isDG)}>
-                  <StopOutlined />
-                  Terminate
-                </Menu.Item>
-              </SubMenu>
+            <Menu theme="dark" mode="horizontal" style={{ lineHeight: "64px" }} selectedKeys={`${selectedMenu}`}>
+              <Menu.Item key="0">
+                <a href={menuLinks[0]}>
+                  <InteractionOutlined />
+                  Test Campaign
+                </a>
+              </Menu.Item>
+              <Menu.Item key="1">
+                <a href={menuLinks[1]}>
+                  <FolderOpenOutlined />
+                  Test Case
+                </a>
+              </Menu.Item>
+              <Menu.Item key="2">
+                <a href={menuLinks[2]}>
+                  <ClusterOutlined />
+                  Topology
+                </a>
+              </Menu.Item>
               <Menu.Item key="3">
-                <a href={isDG ? "/data-generator/logs" : "/logs"} rel="noopener noreferrer" target="_blank">
-                  <ProfileOutlined />
-                  Logs
+                <a href={menuLinks[3]}>
+                  <DeploymentUnitOutlined />
+                  Simulation
                 </a>
               </Menu.Item>
               <Menu.Item key="4">
-                <a href={isDG ? "/" : "/data-generator"} rel="noopener noreferrer" target="_blank">
-                  <ExportOutlined />
-                  <Text style={{ color: "#ffff00fc" }}>
-                    {isDG ? "Simulation" : "Data Generator"}
-                  </Text>
+                <a href={menuLinks[4]}>
+                  <EyeOutlined />
+                  Data Recorder
+                </a>
+              </Menu.Item>
+              <Menu.Item key="5">
+                <a href={menuLinks[5]}>
+                  <FileTextOutlined />
+                  Data Set
+                </a>
+              </Menu.Item>
+              <Menu.Item key="6">
+                <a href={menuLinks[6]}>
+                  <DatabaseOutlined />
+                  Data Storage
                 </a>
               </Menu.Item>
             </Menu>
           </Col>
         </Row>
 
-        <input
-          type="file"
-          onChange={(event) => this.onUpload(event.target.files)}
-          ref={(input) => {
-            this.inputFileDOM = input;
-          }}
-          style={{ display: "none" }}
-          accept=".json"
-          multiple={false}
-        />
       </Header>
     );
   }
 }
 
-const mapPropsToStates = ({ requesting, model, deployStatus }) => ({
+const mapPropsToStates = ({ requesting }) => ({
   requesting,
-  model,
-  deployStatus,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   setNotification: ({ type, message }) =>
     dispatch(setNotification({ type, message })),
-  setNewModel: (newModel) => {
-    dispatch(setModel(newModel));
-  },
-  resetEditor: () => {
-    dispatch(resetModel());
-  },
-  startDeploy: (isDG) => dispatch(sendDeployStart(isDG)),
-  stopDeploy: (isDG) => dispatch(sendDeployStop(isDG)),
-  viewLogs: () => {
-    dispatch(requestLogFiles());
-  }
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(TSHeader);

@@ -139,6 +139,18 @@ const getQuery = (qname) => {
   return query.get(qname);
 };
 
+/**
+ * Get the last path in the URL /this-is-the-last-path?not-this-part
+ */
+const getLastPath = () => {
+  const array = window.location.pathname.split('/');
+  let lastPath = array[array.length - 1];
+  if (lastPath) {
+    lastPath = lastPath.split('?')[0]; // Remove query path
+  }
+  return lastPath;
+}
+
 export {
   getQuery,
   isDataGenerator,
@@ -148,4 +160,5 @@ export {
   removeElementFromArray,
   getCreatedTimeFromFileName,
   deepCloneObject,
+  getLastPath
 };

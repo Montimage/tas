@@ -14,6 +14,7 @@ const FormTextItem = ({
       defaultValue={defaultValue}
       onChange={(v) => onChange(v.target.value)}
       placeholder={placeholder}
+      style={{ minWidth: 300 }} 
     />
   </Form.Item>
 );

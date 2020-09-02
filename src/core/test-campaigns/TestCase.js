@@ -1,8 +1,8 @@
 const DataStorage = require('../communications/DataStorage');
 const {OFFLINE, SIMULATING} = require('../DeviceStatus');
 const Simulation = require('../simulation');
-const { readJSONFileSync, readJSONFile } = require('../utils');
-
+const { readJSONFile } = require('../utils');
+const modelsPath = `${__dirname}/../../server/data/models/`;
 class TestCase {
   constructor(id, dataStorageConfig) {
     this.id = id;
@@ -10,7 +10,7 @@ class TestCase {
     this.dataStorageConfig = dataStorageConfig;
     this.dataStorage = new DataStorage(dataStorageConfig);
     this.simulations = [];
-    this.modelFilePath = null;
+    this.modelFileName = null;
     this.model = null;
     this.datasetIds = null;
     this.status = OFFLINE;
@@ -27,23 +27,24 @@ class TestCase {
           console.error(`[TestCase] Cannot get the test case by id: ${this.id}`);
           return callback(err);
         }
-        const {datasetIds, name, modelFilePath} = tc;
+        const {datasetIds, name, modelFileName} = tc;
         this.name = name ? name : this.id;
-        this.modelFilePath = modelFilePath;
+        this.modelFileName = modelFileName;
         if (!datasetIds || datasetIds.length === 0) {
           console.error(`[TestCase] No datasetIds: ${this.id}`);
           return callback(`[TestCase] No datasetIds: ${this.id}`);
         }
-        if (!this.modelFilePath) {
-          return callback(`[TestCase] No modelFilePath: ${this.name}`);
+        if (!this.modelFileName) {
+          return callback(`[TestCase] No modelFileName: ${this.name}`);
         }
         this.datasetIds = datasetIds;
-        this.modelFilePath = modelFilePath;
+        this.modelFileName = modelFileName;
         // TODO: load model from file
-        return readJSONFile(this.modelFilePath, (err2, data) => {
+        return readJSONFile(`${modelsPath}${this.modelFileName}`, (err2, data) => {
           if (err2) {
-            console.error(`[TestCase] Cannot read model file ${this.modelFilePath}`);
-            return callback(`Cannot read model file ${this.modelFilePath}`);
+            console.error(`[TestCase] Cannot read model file ${this.modelFileName}`);
+            console.error(err2)
+            return callback(`Cannot read model file ${this.modelFileName}`);
           } else {
             this.model = data;
             return callback(null);

@@ -1,15 +1,14 @@
 // watcher saga -> actions -> worker saga
 import { call, put, takeEvery } from "redux-saga/effects";
 
-import { requestLogs, requestLogFiles, requestDeleteLogFile } from "../api";
-import { requestLogsOK, setNotification, requestLogFilesOK } from "../actions";
+import { sendRequestLogFile, sendRequestAllLogFiles, sendRequestDeleteLogFile } from "../api";
+import { requestLogFileOK, setNotification, requestAllLogFilesOK, requestDeleteLogFileOK } from "../actions";
 
-function* handleRequestLogFiles(action) {
+function* handleRequestAllLogFiles(action) {
   try {
-    const isDG = action.payload;
-    const tool = isDG ? 'data-generator':'simulation';
-    const logFiles = yield call(() => requestLogFiles(tool));
-    yield put(requestLogFilesOK(logFiles));
+    const tool = action.payload;
+    const logFiles = yield call(() => sendRequestAllLogFiles(tool));
+    yield put(requestAllLogFilesOK(logFiles));
     // dispatch data
   } catch (error) {
     // dispatch error
@@ -17,12 +16,11 @@ function* handleRequestLogFiles(action) {
   }
 }
 
-function* handleRequestLogs(action) {
+function* handleRequestLogFile(action) {
   try {
-    const {isDG, logFile} = action.payload;
-    const tool = isDG ? 'data-generator' : 'simulation';
-    const logs = yield call(() => requestLogs(tool, logFile));
-    yield put(requestLogsOK(logs));
+    const {tool, logFile} = action.payload;
+    const logs = yield call(() => sendRequestLogFile(tool, logFile));
+    yield put(requestLogFileOK(logs));
     // dispatch data
   } catch (error) {
     // dispatch error
@@ -32,9 +30,9 @@ function* handleRequestLogs(action) {
 
 function* handleRequestDeleteLogFile(action) {
   try {
-    const {isDG, logFile} = action.payload;
-    const tool = isDG ? 'data-generator' : 'simulation';
-    yield call(() => requestDeleteLogFile(tool, logFile));
+    const {tool, logFile} = action.payload;
+    yield call(() => sendRequestDeleteLogFile(tool, logFile));
+    yield put(requestDeleteLogFileOK(logFile));
     // dispatch data
   } catch (error) {
     // dispatch error
@@ -43,8 +41,8 @@ function* handleRequestDeleteLogFile(action) {
 }
 
 function* watchRequestLogs() {
-  yield takeEvery('REQUEST_LOGS', handleRequestLogs);
-  yield takeEvery("REQUEST_LOGFILES", handleRequestLogFiles);
+  yield takeEvery('REQUEST_LOG_FILE', handleRequestLogFile);
+  yield takeEvery("REQUEST_ALL_LOG_FILES", handleRequestAllLogFiles);
   yield takeEvery("REQUEST_DELETE_LOG_FILE", handleRequestDeleteLogFile);
 }
 

@@ -4,6 +4,7 @@ import FormTextItem from "../FormItems/FormTextItem";
 import FormNumberItem from "../FormItems/FormNumberItem";
 import MongoDBOptions from "./MongoDBOptions";
 import CollapseForm from "../CollapseForm";
+import { FormTextAreaItem } from "../FormItems";
 
 const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
   <CollapseForm title="Connection Configuration" bordered={false} active={true}>
@@ -42,7 +43,7 @@ const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
         />
       </React.Fragment>
     )}
-    <FormTextItem
+    <FormTextAreaItem
       label="Options"
       defaultValue={JSON.stringify(defaultValue.options)}
       onChange={(v) =>

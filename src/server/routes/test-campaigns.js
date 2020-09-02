@@ -65,7 +65,7 @@ router.get("/:testCampaignId", dbConnector, function (req, res, next) {
     testCampaignId
   } = req.params;
 
-  TestCampaignSchema.findById(testCampaignId, (err2, testCampaign) => {
+  TestCampaignSchema.findOne({id: testCampaignId}, (err2, testCampaign) => {
     if (err2) {
       console.error('[SERVER] Failed to get testCampaigns', err2);
       res.send({
@@ -90,7 +90,7 @@ router.post("/:testCampaignId", dbConnector, function (req, res, next) {
     testCampaignId
   } = req.params;
 
-  TestCampaignSchema.findByIdAndUpdate(testCampaignId, testCampaign, (err, ts) => {
+  TestCampaignSchema.findOneAndUpdate({id: testCampaignId}, testCampaign, (err, ts) => {
     if (err) {
       console.error('[SERVER] Failed to save the test campaigns', err);
       res.send({
@@ -112,11 +112,11 @@ router.delete("/:testCampaignId", dbConnector, function (req, res, next) {
     testCampaignId
   } = req.params;
 
-  TestCampaignSchema.findByIdAndDelete(testCampaignId, (err, ret) => {
+  TestCampaignSchema.findOneAndDelete({id: testCampaignId}, (err, ret) => {
     if (err) {
-      console.error('[SERVER] Failed to save the test campaigns', err);
+      console.error('[SERVER] Failed to delete the test campaign', err);
       res.send({
-        error: 'Failed to save the test campaign'
+        error: 'Failed to delete the test campaign'
       });
     } else {
       res.send({

@@ -13,7 +13,8 @@
       "src/client/*",
       "src/public/*",
       "src/server/logs/*",
-      "src/server/models/*"
+      "src/server/models/*",
+      "src/server/data/data-recorders/*"
     ],
     "execMap": {
       "rb": "ruby",
@@ -52,5 +53,12 @@
     "winston": "^3.2.1",
     "ws": "^7.2.1",
     "zlib": "1.0.5"
+  },
+  "devDependencies": {
+    "eslint": "^7.6.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-react": "^7.20.5",
+    "prettier": "^2.0.5"
   }
 }

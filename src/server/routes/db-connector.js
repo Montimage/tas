@@ -2,7 +2,7 @@
 const {
   ENACTDB,
   EventSchema,
-  DataSetSchema,
+  DatasetSchema,
   TestCaseSchema,
   TestCampaignSchema
 } = require("../../core/enact-mongoose");
@@ -41,7 +41,6 @@ const getDBClient = (callback) => {
         console.error('[SERVER] Cannot get the data storage configuration');
         return callback(err);
       } else {
-        console.log('[SERVER] configuration: ', dataStorage);
         const { protocol, connConfig} = dataStorage;
         if(protocol === 'MONGODB') {
           const {
@@ -116,13 +115,12 @@ const updateDataStorage = (dataStorage, callback) => {
   writeToFile(dataStoragePath, JSON.stringify(dataStorage), (err, data) => {
     if (err) {
       console.error("[SERVER] Cannot save the new data storage configuration", err);
-      return callback({error: err});
+      return callback(err);
     } else {
       dataStorageConfig = dataStorage;
-      return callback({
-        error: null,
+      return callback(null,
         dataStorage
-      });
+      );
     }
   }, true);
 };
@@ -146,7 +144,7 @@ module.exports = {
   updateDataStorage,
   dbConnector,
   EventSchema,
-  DataSetSchema,
+  DatasetSchema,
   TestCaseSchema,
   TestCampaignSchema
 }

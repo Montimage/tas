@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
-
+mongoose.set('useFindAndModify', false);
+mongoose.set('useUnifiedTopology', true);
 // Schemas
 const SensorSchema = require('./schemas/SensorSchema');
 const ActuatorSchema = require('./schemas/ActuatorSchema');
 const EventSchema = require('./schemas/EventSchema');
-const DataSetSchema = require('./schemas/DataSetSchema');
+const DatasetSchema = require('./schemas/DatasetSchema');
 const TestCaseSchema = require('./schemas/TestCaseSchema');
 const TestCampaignSchema = require('./schemas/TestCampaignSchema');
 
@@ -59,7 +60,7 @@ module.exports = {
   SensorSchema,
   ActuatorSchema,
   EventSchema,
-  DataSetSchema,
+  DatasetSchema,
   TestCaseSchema,
   TestCampaignSchema
 };

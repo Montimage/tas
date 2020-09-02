@@ -31,7 +31,7 @@ router.get("/:testCaseId", dbConnector, function (req, res, next) {
     testCaseId
   } = req.params;
 
-  TestCaseSchema.findById(testCaseId, (err2, testCase) => {
+  TestCaseSchema.findOne({id: testCaseId}, (err2, testCase) => {
     if (err2) {
       console.error('[SERVER] Failed to get testcases', err2);
       res.send({
@@ -56,7 +56,7 @@ router.post("/", dbConnector, function (req, res, next) {
     tags,
     description,
     datasetIds,
-    modelFilePath
+    modelFileName
   } = testCase;
   const newTestCase = new TestCaseSchema({
     id,
@@ -64,7 +64,7 @@ router.post("/", dbConnector, function (req, res, next) {
     tags,
     description,
     datasetIds,
-    modelFilePath:`${modelsPath}/${modelFilePath}`
+    modelFileName:`${modelsPath}/${modelFileName}`
   });
   newTestCase.save((err, _testCase) => {
     if (err) {
@@ -91,7 +91,7 @@ router.post("/:testCaseId", dbConnector, function (req, res, next) {
     testCaseId
   } = req.params;
 
-  TestCaseSchema.findByIdAndUpdate(testCaseId, testCase, (err, ts) => {
+  TestCaseSchema.findOneAndUpdate({id: testCaseId}, testCase, (err, ts) => {
     if (err) {
       console.error('[SERVER] Failed to save the test cases', err);
       res.send({
@@ -113,7 +113,7 @@ router.delete("/:testCaseId", dbConnector, function (req, res, next) {
     testCaseId
   } = req.params;
 
-  TestCaseSchema.findByIdAndDelete(testCaseId, (err, ret) => {
+  TestCaseSchema.findOneAndDelete({id: testCaseId}, (err, ret) => {
     if (err) {
       console.error('[SERVER] Failed to save the test cases', err);
       res.send({

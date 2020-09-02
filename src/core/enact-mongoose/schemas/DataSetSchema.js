@@ -15,7 +15,7 @@ const Schema = mongoose.Schema;
  * - get Dataset by name/id
  * - get dataset by tags
  */
-const dataSetSchema = new Schema({
+const datasetSchema = new Schema({
   id: {
     type: String,
     required: true
@@ -47,7 +47,7 @@ const dataSetSchema = new Schema({
   }
 });
 
-dataSetSchema.statics.findDataSetsWithPagingOptions = function (options, page, callback) {
+datasetSchema.statics.findDatasetsWithPagingOptions = function (options, page, callback) {
   this.find(options)
     .limit(20)
     .skip(page * 20)
@@ -69,7 +69,7 @@ dataSetSchema.statics.findDataSetsWithPagingOptions = function (options, page, c
     });
 };
 
-dataSetSchema.statics.findDataSetsWithOptions = function (options, callback) {
+datasetSchema.statics.findDatasetsWithOptions = function (options, callback) {
   this.find(options)
     .sort({
       lastModified: 1
@@ -89,4 +89,4 @@ dataSetSchema.statics.findDataSetsWithOptions = function (options, callback) {
     });
 };
 
-module.exports = mongoose.model("DataSet", dataSetSchema);
+module.exports = mongoose.model("Dataset", datasetSchema);

@@ -73,6 +73,7 @@ class Device {
     this.numberOfForwardedData = 0; // Number of message data that this device has received and forward in the digitalTwins option
     this.startedTime = 0;
     this.lastActivity = Date.now();
+    this.startReplayingTime = Date.now(); // Time to start replaying data
   }
 
   /**
@@ -286,15 +287,21 @@ class Device {
           console.error(`[${this.id}] Cannot create a sensor! Failed to get events data`, err);
           return null;
         } else if (!events || events.length === 0) {
-          console.error(`[${this.id}] Cannot create a sensor! No events data`);
+          console.error(`[${this.id}] Cannot create a sensor! No events data ${id}, ${topic}, ${this.datasetId}`);
           return null;
+        }
+        if (startTime === 0) startTime = events[0].timestamp;
+        if (this.startReplayingTime > startTime) {
+          this.startReplayingTime = startTime - 1000; // back 1s
+          // Update for other sensors
+          this.sensors.map(s => s.updateStartReplayingTime(this.startReplayingTime));
         }
         const newSensor = new Sensor(id, {
           ...sensorData,
           topic: topic
         }, null, (topic, message) => {
           this.publishDataToTestBroker(topic, message);
-        }, events);
+        }, events, this.startReplayingTime);
         this.sensors.push(newSensor);
         // HOT reload sensor
         if (this.status === SIMULATING) {
@@ -470,7 +477,8 @@ class Device {
               console.log(`[${this.id}]Connected to data storage`);
               if (this.newDatasetConfig) {
                 // Add the dataset for the current test
-                this.dataStorage.saveDataSet(this.newDatasetConfig);
+                console.log(`[${this.id}]Going to add a new dataset, ${this.newDatasetConfig}`);
+                this.dataStorage.saveDataset(this.newDatasetConfig);
               }
               // Add sensors which have data source from data storage
               this.sensorsConfig.map(sensorData => {

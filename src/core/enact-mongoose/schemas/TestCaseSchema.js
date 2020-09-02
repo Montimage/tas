@@ -36,7 +36,7 @@ const testCaseSchema = new Schema({
     type: Array,
     required: false
   },
-  modelFilePath: {
+  modelFileName: {
     type: String,
     require: true
   }

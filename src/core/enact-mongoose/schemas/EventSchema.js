@@ -40,8 +40,8 @@ const eventSchema = new Schema({
 
 eventSchema.statics.findEventsWithPagingOptions = function (options, page, callback) {
   this.find(options)
-    .limit(20)
-    .skip(page * 20)
+    .limit(1000)
+    .skip(page * 1000)
     .sort({
       timestamp: 1
     })

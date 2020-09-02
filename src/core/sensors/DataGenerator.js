@@ -5,7 +5,7 @@ const DataSource = require("./data-sources/DataSource");
 const DeviceDataSource = require("./DeviceDataSource");
 
 class DataGenerator extends DeviceDataSource {
-  constructor(id, dataHandler, callbackWhenFinish, dataSpecs, objectId) {
+  constructor(id, dataHandler, callbackWhenFinish, dataSpecs, objectId, reportFormat = 0) {
     super(id, dataHandler, callbackWhenFinish);
     const {
       timePeriod,
@@ -18,6 +18,7 @@ class DataGenerator extends DeviceDataSource {
       isIPSOFormat,
     } = dataSpecs;
     this.timePeriod = timePeriod;
+    this.reportFormat = reportFormat;
     this.isIPSOFormat = isIPSOFormat;
     this.objectId = objectId ? objectId : null;
     this.originalTimePeriod = timePeriod;
@@ -62,6 +63,7 @@ class DataGenerator extends DeviceDataSource {
       });
     }
     this.values = null;
+    console.log(`REPORT FORMAT: ${this.reportFormat}`);
   }
 
   getStats() {
@@ -72,6 +74,26 @@ class DataGenerator extends DeviceDataSource {
       sensorBehaviours: this.sensorBehaviours,
       numberOfMeasurements,
     }
+  }
+
+  collectAndReportPlainData() {
+    
+    if (!this.energy && this.sources.length === 1) {
+      this.values = this.sources[0].getValue().value;
+    } else {
+      this.values = [];
+      // get other data
+      for (let index = 0; index < this.sources.length; index++) {
+        const source = this.sources[index];
+        const value = source.getValue();
+        this.values.push(value);
+      }
+      if(this.energy) {
+        this.values.push(this.energy.getValue());
+      }
+    }
+    // console.log(`[DataGenerator] collect and report plain data: ${JSON.stringify(this.values)}`);
+    this.dataHandler(this.values);
   }
 
   collectAndReportData() {
@@ -195,10 +217,12 @@ class DataGenerator extends DeviceDataSource {
         }
       }
       // Collect and handle data
-      if (this.isIPSOFormat) {
+      if (this.reportFormat === 2) {
         this.collectAndReportDataInIPSOFormat();
-      } else {
+      } else if (this.reportFormat === 1) {
         this.collectAndReportData();
+      } else {
+        this.collectAndReportPlainData();
       }
     }, this.timePeriod * 1000);
   }

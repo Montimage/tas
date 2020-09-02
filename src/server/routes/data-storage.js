@@ -34,6 +34,7 @@ router.post("/", function (req, res, next) {
   }
   updateDataStorage(dataStorage, (err, ds) => {
     if (err) {
+      console.error('[data-storage] Failed to update data storage',err);
       res.send({
         error: 'Failed to update data storage'
       });
@@ -47,7 +48,7 @@ router.post("/", function (req, res, next) {
 
 // Test the connection to the default data storage
 router.get('/test', dbConnector, (req, res, next) => {
-  res.send(true);
+  res.send({connectionStatus: true});
 });
 
 

@@ -1,0 +1,82 @@
+{
+  "name": "HomeIO Recorders",
+  "dataRecorders": [{
+    "name": "TV status recorder and Actuator",
+    "id": "homeio-recorder-01",
+    "enable": true,
+    "source": {
+      "protocol": "MQTT",
+      "connConfig": {
+        "host": "192.168.0.27",
+        "port": 1883,
+        "options": null
+      },
+      "upStreams": ["enact/sensors/cec/status"],
+      "downStreams": ["enact/actuators/smartbox/mute"]
+    },
+    "forward": {
+      "protocol": "MQTT",
+      "connConfig": {
+        "host": "192.168.1.21",
+        "port": 1883,
+        "options": null
+      }
+    },
+    "dataStorage": {
+      "protocol": "MONGODB",
+      "connConfig": {
+        "host": "192.168.1.21",
+        "port": 27017,
+        "username": null,
+        "password": null,
+        "dbname": "homeiodb",
+        "options": null
+      },
+      "dataset": {
+        "id": "homeio-dataset-09",
+        "name": "HomeIO Dataset 09",
+        "description": "This is the HomeIO dataset recording from Stéphane's house",
+        "tags": ["recorded", "conflict", "homeio"]
+      }
+    }
+  }, {
+    "name": "Call Status recorder",
+    "id": "call-status-recorder",
+    "enable": true,
+    "source": {
+      "protocol": "MQTT",
+      "connConfig": {
+        "host": "192.168.0.21",
+        "port": 1883,
+        "options": null
+      },
+      "upStreams": ["call/status"],
+      "downStreams": []
+    },
+    "forward": {
+      "protocol": "MQTT",
+      "connConfig": {
+        "host": "192.168.1.21",
+        "port": 1882,
+        "options": null
+      }
+    },
+    "dataStorage": {
+      "protocol": "MONGODB",
+      "connConfig": {
+        "host": "192.168.1.21",
+        "port": 27017,
+        "username": null,
+        "password": null,
+        "dbname": "homeiodb",
+        "options": null
+      },
+      "dataset": {
+        "id": "homeio-dataset-09",
+        "name": "HomeIO Dataset 09",
+        "description": "This is the HomeIO dataset recording from Stéphane's house",
+        "tags": ["recorded", "conflict", "homeio"]
+      }
+    }
+  }]
+}

@@ -6,6 +6,7 @@ const FormSelectItem = ({label, defaultValue, onChange, options, helpText = null
     <Select
       defaultValue={defaultValue ? defaultValue : (options ? options[0] : null) }
       onChange={v => onChange( v)}
+      style={{ minWidth: 300 }} 
     >
       {options.map(tid => (
         <Select.Option value={tid} key={tid}>{tid}</Select.Option>
