@@ -146,7 +146,7 @@ export const requestStopSimulation = createAction('REQUEST_STOP_SIMULATION');
 export const requestSimulationStatus = createAction('REQUEST_SIMULATION_STATUS');
 export const setSimulationStatus = createAction('SET_SIMULATION_STATUS');
 
-// DevOpts
-export const requestDevOpts = createAction('REQUEST_DEV_OPTS');
-export const requestUpdateDevOpts = createAction('REQUEST_UPDATE_DEV_OPTS');
-export const setDevOpts = createAction('SET_DEV_OPTS');
+// Devopts
+export const requestDevopts = createAction('REQUEST_DEV_OPTS');
+export const requestUpdateDevopts = createAction('REQUEST_UPDATE_DEV_OPTS');
+export const setDevopts = createAction('SET_DEV_OPTS');

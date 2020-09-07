@@ -21,7 +21,7 @@ let dbClient = null;
  * Get the db client
  * @param {Function} callback The callback function
  */
-const getDBClient = (callback) => {
+const getDBClient = (callback, reload = false) => {
   if (dbClient) {
     if (!dbClient.isConnected) {
       dbClient.connect((err) => {
@@ -51,6 +51,7 @@ const getDBClient = (callback) => {
             password,
             options
           } = connConfig;
+          console.log(`MongoDB configuration: ${JSON.stringify(connConfig)}`);
           let auth = null;
           if (username && password) {
             auth = {
@@ -72,7 +73,7 @@ const getDBClient = (callback) => {
           return callback(`Protocol is not supported ${protocol}`);
         }
       }
-    });
+    }, reload);
   }
 };
 
@@ -81,7 +82,7 @@ const getDBClient = (callback) => {
 ///////////////
 // Read a specific model by its name:
 
-const getDataStorage = (callback) => {
+const getDataStorage = (callback, reload = false) => {
   if (dataStorageConfig) return callback(null, dataStorageConfig);
   return readJSONFile(dataStoragePath, (err, data) => {
     if (err) {
@@ -118,9 +119,22 @@ const updateDataStorage = (dataStorage, callback) => {
       return callback(err);
     } else {
       dataStorageConfig = dataStorage;
-      return callback(null,
-        dataStorage
-      );
+      if (dbClient) {
+        dbClient.close();
+        dbClient = null;
+      }
+      getDBClient((err2, dbClient) => {
+        if (err) {
+          console.error('[SERVER] Failed to get database client', err);
+          res.send({
+            error: 'Failed to get database client!'
+          });
+        } else {
+          return callback(null,
+            dataStorage
+          );
+        }
+      }, true);
     }
   }, true);
 };

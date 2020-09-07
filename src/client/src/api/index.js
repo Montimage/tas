@@ -379,31 +379,31 @@ export const sendRequestDeleteTestCampaign = async (testCampaignId) => {
 };
 
 
-// DevOpts
-export const sendRequestDevOpts = async () => {
+// Devopts
+export const sendRequestDevopts = async () => {
   const url = `${URL}/api/devopts`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
-  return data.devOpts;
+  return data.devopts;
 };
 
-export const sendRequestUpdateDevOpts = async (devOpts) => {
+export const sendRequestUpdateDevopts = async (devopts) => {
   const url = `${URL}/api/devopts`;
   const response = await fetch(url,{
     method: 'POST',
     headers: {
       'Content-Type':'application/json'
     },
-    body: JSON.stringify({devOpts})
+    body: JSON.stringify({devopts})
   });
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
-  return data.devOpts;
+  return data.devopts;
 };
 
 
