@@ -7,9 +7,9 @@ const {
 const {
   startTestCampaign,
   stopTestCampaign
-} = require('../../core/devOpts-flow');
+} = require('../../core/devopts-flow');
 let router = express.Router();
-const devOptsFilePath = `${__dirname}/../data/devOpts.json`;
+const devoptsFilePath = `${__dirname}/../data/devopts.json`;
 let getLogger = require("../logger");
 const {
   readJSONFile,
@@ -28,18 +28,18 @@ router.get("/status", (req, res, next) => {
   });
 });
 
-let _devOpts = null;
+let _devopts = null;
 
-const getDevOpts = (callback) => {
-  if (_devOpts) return callback(null, _devOpts);
-  readJSONFile(devOptsFilePath, (err, data) => {
+const getDevopts = (callback) => {
+  if (_devopts) return callback(null, _devopts);
+  readJSONFile(devoptsFilePath, (err, data) => {
     if (err) {
-      console.error('[SERVER] Cannot get devOpts.json file', err);
+      console.error('[SERVER] Cannot get devopts.json file', err);
       return callback(
         err
       );
     } else {
-      _devOpts = data;
+      _devopts = data;
       return callback(
         null,
         data
@@ -49,49 +49,49 @@ const getDevOpts = (callback) => {
 };
 
 router.get("/", function (req, res, next) {
-  getDevOpts((err, devO) => {
+  getDevopts((err, devO) => {
     if (err) {
       res.send({
         error: err
       });
     } else {
       res.send({
-        devOpts: devO
+        devopts: devO
       });
     }
   });
 });
 
-// Save the default devOpts
+// Save the default devopts
 router.post("/", function (req, res, next) {
   const {
-    devOpts
+    devopts
   } = req.body;
-  if (!devOpts) {
-    console.error("[SERVER]", "Cannot find devOpts content in body");
+  if (!devopts) {
+    console.error("[SERVER]", "Cannot find devopts content in body");
     return res.send({
-      error: "Cannot find devOpts content in body"
+      error: "Cannot find devopts content in body"
     });
   }
-  writeToFile(devOptsFilePath, JSON.stringify(devOpts), (err, data) => {
+  writeToFile(devoptsFilePath, JSON.stringify(devopts), (err, data) => {
     if (err) {
-      console.error("[SERVER] Cannot save devOpts.json file", err);
+      console.error("[SERVER] Cannot save devopts.json file", err);
       res.send({
-        error: "Cannot save devOpts.json file"
+        error: "Cannot save devopts.json file"
       });
     } else {
-      _devOpts = devOpts;
+      _devopts = devopts;
       res.send({
-        devOpts
+        devopts
       });
     }
   }, true);
 });
 
 router.get('/start', dbConnector, (req, res, next) => {
-  getDevOpts((err, devOpts) => {
+  getDevopts((err, devopts) => {
     if (err) {
-      console.error('[SERVER] Cannot get devOpts configuration');
+      console.error('[SERVER] Cannot get devopts configuration');
       res.send({
         error: err
       });
@@ -100,7 +100,7 @@ router.get('/start', dbConnector, (req, res, next) => {
         webhookURL,
         testCampaignId,
         dataStorage
-      } = devOpts;
+      } = devopts;
       if (!testCampaignId) {
         console.error('Test campaign Id must not be NULL');
         res.send({
@@ -110,7 +110,7 @@ router.get('/start', dbConnector, (req, res, next) => {
         const startedTime = Date.now();
         const logFile = `${testCampaignId}_${startedTime}.log`;
         getLogger("TEST-CAMPAIGN", `${logsPath}${logFile}`);
-        console.log('[devOpts] A test campaign is going to be started ...');
+        console.log('[devopts] A test campaign is going to be started ...');
 
         if (dataStorage) {
           runningStatus = {
@@ -125,13 +125,13 @@ router.get('/start', dbConnector, (req, res, next) => {
           startTestCampaign(testCampaignId, dataStorage, webhookURL);
           res.send({
             error: null,
-            devOpts,
+            devopts,
             runningStatus
           });
         } else {
           getDataStorage((err, ds) => {
             if (err) {
-              console.log('[devOpts] Cannot get data storage');
+              console.log('[devopts] Cannot get data storage');
               res.send({
                 error: 'Cannot get data storage'
               });

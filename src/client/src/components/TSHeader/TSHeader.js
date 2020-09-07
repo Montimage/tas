@@ -49,7 +49,7 @@ class TSHeader extends Component {
             </a>
           </Col>
           <Col span={14} push={6}>
-            <Menu theme="dark" mode="horizontal" style={{ lineHeight: "64px" }} selectedKeys={`${selectedMenu}`}>
+            <Menu theme="light" mode="horizontal" style={{ lineHeight: "64px" }} selectedKeys={`${selectedMenu}`}>
               <Menu.Item key="0">
                 <a href={menuLinks[0]}>
                   <InteractionOutlined />
