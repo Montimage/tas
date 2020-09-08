@@ -10,10 +10,11 @@ const FormTextAreaItem = ({
   <Form.Item label={label} name={label} extra={helpText} rules={rules}>
     <Input.TextArea
       rows={4}
-      defaultValue={defaultValue}
       onChange={(v) => onChange(v.target.value)}
       style={{ minWidth: 300 }} 
-    />
+    >
+      {defaultValue}
+    </Input.TextArea>
   </Form.Item>
 );
 

@@ -10,8 +10,9 @@ const FormEditableTextItem = ({ label, defaultValue, onChange, helpText=null }) 
             onChange(v);
           },
         }}
+        code
       >
-        {defaultValue}
+        {typeof defaultValue === "string" ? defaultValue : JSON.stringify(defaultValue)}
       </Text>
   </Form.Item>
 );

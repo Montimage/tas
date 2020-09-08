@@ -33,7 +33,6 @@ import {
 import {
   FormEditableTextItem,
   FormSelectItem,
-  FormTextItem,
   FormTextAreaItem,
 } from "../components/FormItems";
 import ConnectionConfig from "../components/ConnectionConfig";
@@ -475,7 +474,7 @@ class ModelPage extends Component {
             {tempModel.newDataset ? (
               <Fragment>
                 <p>New Dataset to save the simulated data</p>
-                <FormTextItem
+                <FormEditableTextItem
                   label="Id"
                   placeholder="Dataset Id"
                   helpText="The Id of the dataset to be used in the simulation"
@@ -484,7 +483,7 @@ class ModelPage extends Component {
                     this.onDataChange("newDataset.id", value)
                   }
                 />
-                <FormTextItem
+                <FormEditableTextItem
                   label="Name"
                   placeholder="Name"
                   defaultValue={tempModel.newDataset.name}
@@ -499,7 +498,7 @@ class ModelPage extends Component {
                     this.onDataChange("newDataset.description", value)
                   }
                 />
-                <FormTextItem
+                <FormEditableTextItem
                   label="Tags"
                   placeholder="Tags"
                   defaultValue={JSON.stringify(tempModel.newDataset.tags)}

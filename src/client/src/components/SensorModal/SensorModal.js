@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import TSModal from "../TSModal";
 import { Form, Button } from "antd";
 import {
-  FormTextItem,
   FormSwitchItem,
   FormEditableTextItem,
   FormTextNotEditableItem,
@@ -71,7 +70,7 @@ class SensorModal extends Component {
           }}
         >
           <FormTextNotEditableItem label="Device" value={deviceId} />
-          <FormTextItem
+          <FormEditableTextItem
             label="Id"
             defaultValue={sensorData.id}
             onChange={(v) => this.onDataChange("sensorData.id", v)}
@@ -84,14 +83,14 @@ class SensorModal extends Component {
               },
             ]}
           />
-          <FormTextItem
+          <FormEditableTextItem
             label="Object Id"
             defaultValue={sensorData.objectId}
             onChange={(v) => this.onDataChange("sensorData.objectId", v)}
             placeholder="Identify of the type of device (IPSO Standard)"
             helpText="The identify of the device type based on IPSO format. For example 3313 - for temperature"
           />
-          <FormTextItem
+          <FormEditableTextItem
             label="Name"
             defaultValue={sensorData.name}
             onChange={(v) => this.onDataChange("sensorData.name", v)}

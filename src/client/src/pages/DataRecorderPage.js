@@ -31,7 +31,6 @@ import {
 import {
   FormEditableTextItem,
   FormSelectItem,
-  FormTextItem,
   FormTextAreaItem,
 } from "../components/FormItems";
 import ConnectionConfig from "../components/ConnectionConfig";
@@ -450,13 +449,13 @@ class DataRecorderPage extends Component {
               )}
               <Divider orientation="left">Dataset </Divider>
               <p>Define the Dataset to save the recorded data</p>
-              <FormTextItem
+              <FormEditableTextItem
                 label="Id"
                 placeholder="Dataset Id"
                 defaultValue={tempDataRecorder.dataset.id}
                 onChange={(value) => this.onDataChange("dataset.id", value)}
               />
-              <FormTextItem
+              <FormEditableTextItem
                 label="Name"
                 placeholder="Name"
                 defaultValue={tempDataRecorder.dataset.name}
@@ -470,7 +469,7 @@ class DataRecorderPage extends Component {
                   this.onDataChange("dataset.description", value)
                 }
               />
-              <FormTextItem
+              <FormEditableTextItem
                 label="Tags"
                 placeholder="Tags"
                 defaultValue={JSON.stringify(tempDataRecorder.dataset.tags)}

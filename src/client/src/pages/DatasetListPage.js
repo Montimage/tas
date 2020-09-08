@@ -48,7 +48,7 @@ class DatasetListPage extends Component {
 
   render() {
     const { datasets, deleteDataset } = this.props;
-    const dataSource = datasets.map((ds) => ({ ...ds, key: ds.id }));
+    const dataSource = datasets.map((ds, index) => ({ ...ds, key: index }));
     const columns = [
       {
         title: "Created At",

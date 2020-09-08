@@ -21,6 +21,8 @@ const findDevice = (id, objectId, array) => {
   return -1;
 };
 
+let startReplayingTime = Date.now();
+console.log('startReplayingTime: ', startReplayingTime);
 /**
  * The Device class presents a Device component:
  * - List of sensors
@@ -73,7 +75,6 @@ class Device {
     this.numberOfForwardedData = 0; // Number of message data that this device has received and forward in the digitalTwins option
     this.startedTime = 0;
     this.lastActivity = Date.now();
-    this.startReplayingTime = Date.now(); // Time to start replaying data
   }
 
   /**
@@ -291,17 +292,17 @@ class Device {
           return null;
         }
         if (startTime === 0) startTime = events[0].timestamp;
-        if (this.startReplayingTime > startTime) {
-          this.startReplayingTime = startTime - 1000; // back 1s
+        if (startReplayingTime > startTime) {
+          startReplayingTime = startTime - 1000; // back 1s
           // Update for other sensors
-          this.sensors.map(s => s.updateStartReplayingTime(this.startReplayingTime));
+          this.sensors.map(s => s.updateStartReplayingTime(startReplayingTime));
         }
         const newSensor = new Sensor(id, {
           ...sensorData,
           topic: topic
         }, null, (topic, message) => {
           this.publishDataToTestBroker(topic, message);
-        }, events, this.startReplayingTime);
+        }, events, startReplayingTime);
         this.sensors.push(newSensor);
         // HOT reload sensor
         if (this.status === SIMULATING) {

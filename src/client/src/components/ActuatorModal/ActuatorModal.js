@@ -11,7 +11,6 @@ import {
   updateObjectByPath,
 } from "../../utils";
 import {
-  FormTextItem,
   FormTextNotEditableItem,
   FormNumberItem,
   FormSwitchItem,
@@ -69,7 +68,7 @@ class ActuatorModal extends Component {
           }}
         >
         <FormTextNotEditableItem label="Device" value={deviceId} />
-          <FormTextItem
+          <FormEditableTextItem
             label="Id"
             defaultValue={actuatorData.id}
             onChange={(v) => this.onDataChange("actuatorData.id", v)}
@@ -81,14 +80,14 @@ class ActuatorModal extends Component {
               }
             ]}
           />
-          <FormTextItem
+          <FormEditableTextItem
             label="Object Id"
             defaultValue={actuatorData.objectId}
             onChange={(v) => this.onDataChange("actuatorData.objectId", v)}
             placeholder="Identify of device type (IP Smart Object Format)"
             helpText="The identify of the device type based on IPSO format. For example 3313 - for temperature"
           />
-          <FormTextItem
+          <FormEditableTextItem
             label="Name"
             defaultValue={actuatorData.name}
             onChange={(v) => this.onDataChange("actuatorData.name", v)}

@@ -1,6 +1,6 @@
 import React from "react";
 import DataSourceForm from "./DataSourceForm";
-import { FormSelectItem, FormTextItem } from "../../FormItems";
+import { FormSelectItem, FormEditableTextItem } from "../../FormItems";
 
 const EnumForm = ({ dataPath, defaultValue, onChange }) => (
   <React.Fragment>
@@ -16,7 +16,7 @@ const EnumForm = ({ dataPath, defaultValue, onChange }) => (
         options={defaultValue.values}
         helpText="Initial value!"
       />
-      <FormTextItem
+      <FormEditableTextItem
         label="Value"
         defaultValue={JSON.stringify(defaultValue.values)}
         onChange={(v) => onChange(`${dataPath}.values`, JSON.parse(v))}

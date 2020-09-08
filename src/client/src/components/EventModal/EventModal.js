@@ -9,6 +9,7 @@ import {
   FormTextItem,
   FormSwitchItem,
   FormEditableTextItem,
+  FormTextNotEditableItem,
 } from "../FormItems";
 
 const initEvent = () => ({
@@ -63,7 +64,7 @@ class EventModal extends Component {
             span: 14,
           }}
         >
-          <FormTextItem
+          <FormEditableTextItem
             label="Timestamp"
             defaultValue={timestamp}
             onChange={(v) => this.onDataChange("timestamp", v)}
@@ -83,13 +84,12 @@ class EventModal extends Component {
             unCheckedChildren={"data received by actuator"}
             helpText="True if this is the data sent by sensor"
           />
-          <FormTextItem
+          <FormTextNotEditableItem
             label="Dataset Id"
-            defaultValue={datasetId}
-            onChange={(v) => this.onDataChange("datasetId", v)}
+            value={datasetId}
             helpText="The timestamp of the event"
           />
-          <FormTextItem
+          <FormEditableTextItem
             label="Value"
             defaultValue={JSON.stringify(values)}
             onChange={(v) => this.onDataChange("values", JSON.parse(v))}

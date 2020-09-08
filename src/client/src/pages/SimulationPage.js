@@ -4,7 +4,7 @@ import LayoutPage from "./LayoutPage";
 import { getQuery } from "../utils";
 import {
   FormSelectItem,
-  FormTextItem,
+  FormEditableTextItem,
   FormTextNotEditableItem,
   FormTextAreaItem,
 } from "../components/FormItems";
@@ -187,13 +187,13 @@ class SimulationPage extends Component {
             onChange={(value) => this.onDatasetIdChange(value)}
           />
           <p>Store the generated data to a new dataset</p>
-          <FormTextItem
+          <FormEditableTextItem
             label="Id"
             placeholder="New Dataset Id"
             defaultValue={newDatasetId}
             onChange={(value) => this.onNewDatasetIdChange(value)}
           />
-          <FormTextItem
+          <FormEditableTextItem
             label="Name"
             placeholder="Name"
             defaultValue={datasetName}
@@ -204,7 +204,7 @@ class SimulationPage extends Component {
             defaultValue={datasetDescription}
             onChange={(value) => this.onDatasetDescriptionChange(value)}
           />
-          <FormTextItem
+          <FormEditableTextItem
             label="Tags"
             placeholder="Tags"
             defaultValue={JSON.stringify(datasetTags)}

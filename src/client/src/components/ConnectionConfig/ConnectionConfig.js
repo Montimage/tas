@@ -1,14 +1,12 @@
 import React from "react";
 
-import FormTextItem from "../FormItems/FormTextItem";
-import FormNumberItem from "../FormItems/FormNumberItem";
 import MongoDBOptions from "./MongoDBOptions";
 import CollapseForm from "../CollapseForm";
-import { FormTextAreaItem } from "../FormItems";
+import { FormNumberItem, FormEditableTextItem } from "../FormItems";
 
 const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
   <CollapseForm title="Connection Configuration" bordered={false} active={true}>
-    <FormTextItem
+    <FormEditableTextItem
       label="Host"
       defaultValue={defaultValue.host}
       onChange={(v) => onDataChange(`${dataPath ? `${dataPath}.` : ""}host`, v)}
@@ -43,7 +41,7 @@ const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
         />
       </React.Fragment>
     )}
-    <FormTextAreaItem
+    <FormEditableTextItem
       label="Options"
       defaultValue={JSON.stringify(defaultValue.options)}
       onChange={(v) =>

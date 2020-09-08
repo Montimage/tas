@@ -1,5 +1,5 @@
 import React from "react";
-import { FormTextItem, FormCheckBoxItems } from "../../FormItems";
+import { FormEditableTextItem, FormCheckBoxItems } from "../../FormItems";
 import "./DataSourceForm.css";
 import { Button } from "antd";
 import CollapseForm from "../../CollapseForm";
@@ -18,7 +18,7 @@ const DataSourceForm = ({
   children,
 }) => (
   <CollapseForm title={defaultValue.key}>
-      <FormTextItem
+      <FormEditableTextItem
         label="key"
         defaultValue={defaultValue.key}
         onChange={(v) => onChange(`${dataPath}.key`, v)}
@@ -31,14 +31,14 @@ const DataSourceForm = ({
               }
             ]}
       />
-      <FormTextItem
+      <FormEditableTextItem
         label="Resource Id"
         defaultValue={defaultValue.resourceId}
         onChange={(v) => onChange(`${dataPath}.resourceId`, v)}
         placeholder="Optional"
         helpText="The resource id if the report follows the IPSO standard! For example: 5700 - for sensor value"
       />
-      <FormTextItem
+      <FormEditableTextItem
         label="unit"
         defaultValue={defaultValue.unit}
         onChange={(v) => onChange(`${dataPath}.unit`, v)}
