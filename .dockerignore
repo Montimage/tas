@@ -7,5 +7,4 @@ genes-models/
 node-red-flows/
 light-controller.png
 src/client/
-src/server/logs/simulation/*.log
-src/server/logs/data-generator/*.log
+src/server/logs/

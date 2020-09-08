@@ -20,11 +20,16 @@ import {
   selectActuator,
   deleteSimulationActuator,
   changeStatusActuator,
+  requestDataStorage,
 } from "../actions";
 import JSONView from "../components/JSONView";
 import LayoutPage from "./LayoutPage";
 
-import { SwitcherOutlined, ExportOutlined } from "@ant-design/icons";
+import {
+  SwitcherOutlined,
+  ExportOutlined,
+  CaretRightOutlined,
+} from "@ant-design/icons";
 import {
   FormEditableTextItem,
   FormSelectItem,
@@ -364,6 +369,7 @@ class ModelPage extends Component {
       this.props.requestModel(modelFileName);
       this.setState({ modelFileName, isNewModel: false });
     }
+    this.props.fetchDataStorage();
   }
 
   componentWillReceiveProps(newProps) {
@@ -411,6 +417,25 @@ class ModelPage extends Component {
 
   changeModalId(newId) {
     this.setState({ selectedModalId: newId });
+  }
+
+  addCustomDataStorage() {
+    const { dataStorage } = this.props;
+    if (dataStorage) {
+      this.onDataChange("dataStorage", dataStorage);
+    } else {
+      this.onDataChange("dataStorage", {
+        protocol: "MONGODB",
+        connConfig: {
+          host: "localhost",
+          port: 27017,
+          username: null,
+          password: null,
+          dbname: "my_db_name",
+          options: null,
+        },
+      });
+    }
   }
 
   render() {
@@ -505,32 +530,29 @@ class ModelPage extends Component {
             )}
             <Divider orientation="left">Data Storage </Divider>
             {tempModel.dataStorage ? (
-              <ConnectionConfig
-                defaultValue={tempModel.dataStorage.connConfig}
-                dataPath={"dataStorage.connConfig"}
-                onDataChange={(dataPath, value) =>
-                  this.onDataChange(dataPath, value)
-                }
-                type={tempModel.dataStorage.protocol}
-              />
+              <Fragment>
+                <ConnectionConfig
+                  defaultValue={tempModel.dataStorage.connConfig}
+                  dataPath={"dataStorage.connConfig"}
+                  onDataChange={(dataPath, value) =>
+                    this.onDataChange(dataPath, value)
+                  }
+                  type={tempModel.dataStorage.protocol}
+                />
+                <Button
+                  danger
+                  onClick={() => this.onDataChange("dataStorage", null)}
+                >
+                  Remove Custom Data Storage
+                </Button>
+              </Fragment>
             ) : (
-              <Button
-                onClick={() =>
-                  this.onDataChange("dataStorage", {
-                    protocol: "MONGODB",
-                    connConfig: {
-                      host: "localhost",
-                      port: 27017,
-                      username: null,
-                      password: null,
-                      dbname: "my_db_name",
-                      options: null,
-                    },
-                  })
-                }
-              >
-                Add Data Storage
-              </Button>
+              <Fragment>
+              <p>Use <a href="/data-storage" target="_blank">Default Data Storage</a></p>
+                <Button onClick={() => this.addCustomDataStorage()}>
+                  Add Custom Data Storage
+                </Button>
+              </Fragment>
             )}
           </Form>
           <Divider orientation="left">Devices </Divider>
@@ -595,10 +617,18 @@ class ModelPage extends Component {
             {" "}
             <SwitcherOutlined /> Switch View
           </a>
-          <Button onClick={() => this.exportModel(tempModel)}>
+          <Button
+            onClick={() => this.exportModel(tempModel)}
+            style={{ marginRight: 10 }}
+          >
             <ExportOutlined />
             Export Model
           </Button>
+          <a type="button" href={`/simulation?model=${modelFileName}`}>
+            <Button type="primary">
+              <CaretRightOutlined /> Simulate
+            </Button>
+          </a>
           <p></p>
           {view}
           <Button
@@ -621,12 +651,13 @@ class ModelPage extends Component {
   }
 }
 
-const mapPropsToStates = ({ model, editingForm }) => ({
+const mapPropsToStates = ({ model, dataStorage }) => ({
   model,
-  formID: editingForm.formID,
+  dataStorage: dataStorage.connConfig,
 });
 
 const mapDispatchToProps = (dispatch) => ({
+  fetchDataStorage: () => dispatch(requestDataStorage()),
   requestModel: (modelFileName) => dispatch(requestModel(modelFileName)),
   addNewModel: (newModel) => dispatch(requestAddNewModel(newModel)),
   updateModel: (modelFileName, model) =>

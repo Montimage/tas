@@ -1,9 +1,8 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
 import moment from "moment";
-import { Table, Menu, Dropdown, Button } from "antd";
+import { Table, Button } from "antd";
 import {
-  DownOutlined,
   CaretRightOutlined,
   CopyOutlined,
   DeleteOutlined,

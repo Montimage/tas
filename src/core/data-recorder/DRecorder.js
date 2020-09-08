@@ -1,5 +1,4 @@
 const MQBus = require('../communications/MQBus');
-const DataStorage = require('../communications/DataStorage');
 /**
  * DataRecorder class present a data recorder who have 3 functionalities:
  * - Listen data from a source (broker)
@@ -7,19 +6,19 @@ const DataStorage = require('../communications/DataStorage');
  * - Save the capturing data into a data storage (mongodb)
  */
 class DataRecorder {
-  constructor(drConfig) {
+  constructor(drConfig, dataStorage, dataset) {
     const {
       id,
       name,
       source,
-      forward,
-      dataStorage
+      forward
     } = drConfig;
     this.id = id;
     this.name = name;
     this.source = source;
     this.forwarder = forward;
     this.dataStorage = dataStorage;
+    this.dataset = dataset;
   }
 
   /**
@@ -62,7 +61,7 @@ class DataRecorder {
     
     if (this.dataStorage) {
       this.dataStorage.dsClient.saveEvent({
-        datasetId: this.dataStorage.dataset.id,
+        datasetId: this.dataset.id,
         topic,
         isSensorData,
         timestamp: Date.now(),
@@ -146,51 +145,7 @@ class DataRecorder {
     });
   }
 
-  /**
-   * 
-   * @param {Object} dsConfig the configuration of the data storage
-   * "dataStorage": {
-        "protocol": "MONGODB",
-        "connConfig": {
-            "host": "localhost",
-            "port": 27017,
-            "username": null,
-            "password": null,
-            "dbname": "tasdb",
-            "options": null
-        },
-        "dataset": {
-            "id": "new-data-set",
-            "name": "New Data Set",
-            "description": "Dataset descriptions",
-            "tags": ["recorded","random"]
-        }
-    }
-   */
-  /**
-   * Initialise the Data storage
-   * - Connect to the database
-   * @param {Function} callback The callback function
-   */
-  initDataStorage(callback) {
-    const dsClient = new DataStorage(this.dataStorage);
-    dsClient.connect(error => {
-      if (error) {
-        console.error('Failed to create DataStorage', error);
-        return callback(error);
-      } else {
-        this.dataStorage['dsClient'] = dsClient;
-        if (this.dataStorage.dataset) {
-          dsClient.saveDataset(this.dataStorage.dataset);
-          return callback();
-        } else {
-          console.error('Failed to create DataStorage: dataset missing');
-          dsClient.stop();
-          return callback('Dataset missing');
-        }
-      }
-    });
-  }
+  
 
   /**
    * Initialise the Data Recorder
@@ -198,7 +153,7 @@ class DataRecorder {
    * - Then initialise the Data storage
    * - And finally initialise the Source
    */
-  initDataRecorder() {
+  init() {
     // Check source
     if (!this.source) {
       console.error('[DataRecorder] Source is not found!');
@@ -206,42 +161,17 @@ class DataRecorder {
     }
 
     // Check output
-    if (!this.forwarder && !this.dataStorage) {
-      console.error('[DataRecorder] forward and data storage are not found!');
-      return false;
-    }
-
-    if (this.forwarder) {
+    if (!this.forwarder) {
+      console.warn('[DataRecorder] forward and data storage are not found!');
+      this.initSource();
+    } else {
       // Init the forwarder
       this.initForwarder(() => {
         console.error('[DataRecorder] Forwarder has been created!', this.forwarder);
-        if (this.dataStorage) {
-          // Init the data storage
-          this.initDataStorage((err) => {
-            if (!err) {
-              console.error('[DataRecorder] Data Storage has been created!', this.dataStorage);
-              // Init the source
-              this.initSource();
-            }
-          });
-        } else {
-          // Init the source - without datastorage
-          this.initSource();
-        }
+        this.initSource();
       });
-    } else {
-      // - without forwarder
-      if (this.dataStorage) {
-        // Init the data storage
-        this.initDataStorage((err) => {
-          if (!err) {
-            console.error('[DataRecorder] Data Storage has been created!', this.dataStorage);
-            // Init the source
-            this.initSource();
-          }
-        });
-      }
     }
+    return true;
   }
 
   /**
@@ -256,10 +186,6 @@ class DataRecorder {
     }
     if (this.forwarder && this.forwarder.mqClient) {
       this.forwarder.mqClient.close();
-    }
-
-    if (this.dataStorage && this.dataStorage.dsClient) {
-      this.dataStorage.dsClient.stop();
     }
   }
 }

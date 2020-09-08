@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Table, Menu, Dropdown, Button } from "antd";
-import { DownOutlined, DeleteOutlined, CopyOutlined } from "@ant-design/icons";
+import { Table, Button } from "antd";
+import { DeleteOutlined, CopyOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
   requestAllTestCases,

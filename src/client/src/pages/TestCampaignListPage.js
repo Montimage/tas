@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Table, Menu, Dropdown, Button, Form } from "antd";
-import { DownOutlined, BuildOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Table, Button, Form } from "antd";
+import { BuildOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
   requestAllTestCampaigns,
@@ -16,7 +16,6 @@ import {
 import {
   FormEditableTextItem,
   FormTextNotEditableItem,
-  FormTextAreaItem,
 } from "../components/FormItems";
 import CollapseForm from "../components/CollapseForm";
 

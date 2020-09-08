@@ -8,7 +8,7 @@ import {
 } from "../actions";
 
 const initState = {
-  connConfig: {},
+  connConfig: null,
   connectionStatus: false
 };
 

@@ -1,14 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import moment from 'moment';
-import {
-  Table,
-  Menu,
-  Dropdown,
-  Button,
-  Tooltip,
-  Form
-} from "antd";
+import { Table, Menu, Dropdown, Button, Tooltip, Form } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
@@ -128,10 +120,13 @@ class DatasetPage extends Component {
         lastModified,
         source,
         isChanged: false,
-        events,
         isNew: false,
         activeEventModal: null,
       });
+    }
+
+    if (events) {
+      this.setState({ events });
     }
   }
 
@@ -235,11 +230,11 @@ class DatasetPage extends Component {
       if (event.isSensorData && sensors.indexOf(event.topic) === -1) {
         // this is a new sensor
         sensors.push(event.topic);
-        topicFilters.push({text: event.topic, value: event.topic});
+        topicFilters.push({ text: event.topic, value: event.topic });
       } else if (!event.isSensorData && actuators.indexOf(event.topic) === -1) {
         // This is a new actuator
         actuators.push(event.topic);
-        topicFilters.push({text: event.topic, value: event.topic});
+        topicFilters.push({ text: event.topic, value: event.topic });
       }
     }
     const nbSensors = sensors.length;
@@ -255,7 +250,7 @@ class DatasetPage extends Component {
         key: "timestamp",
         dataIndex: "timestamp",
         sorter: (a, b) => a.timestamp - b.timestamp,
-        render: ts => ts,
+        render: (ts) => ts,
         width: 300,
       },
       {
@@ -274,10 +269,11 @@ class DatasetPage extends Component {
         filters: [
           {
             text: "Sensor's Data",
-            value: true
-          },{
+            value: true,
+          },
+          {
             text: "Actuator's Data",
-            value: false
+            value: false,
           },
         ],
         onFilter: (value, data) => data.isSensorData === value,
@@ -329,7 +325,7 @@ class DatasetPage extends Component {
                       this.props.updateEvent(event._id, newEvent);
                       this.changeActiveEventModal(null);
                     }}
-                  />                  
+                  />
                 </Menu.Item>
               </Menu>
             }
@@ -341,7 +337,7 @@ class DatasetPage extends Component {
               <Button>
                 Select Action <DownOutlined />
               </Button>
-            </a>            
+            </a>
           </Dropdown>
         ),
       },
@@ -356,7 +352,7 @@ class DatasetPage extends Component {
     // - Number of gateway
     // - Started time/ End time
     // - Source: recorded, generated, etc..
-    
+
     // TODO: Make statistic beautiful
     // TODO: implement editting event
     return (
@@ -458,10 +454,7 @@ class DatasetPage extends Component {
             />
           </Button>
         </Tooltip>
-        <Table
-          columns={columns}
-          dataSource={dataSource}
-        />
+        <Table columns={columns} dataSource={dataSource} />
         {isChanged && (
           <Button
             onClick={() => this.savedataset()}

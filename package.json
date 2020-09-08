@@ -10,11 +10,14 @@
     "verbose": true,
     "ignore": [
       "*.test.js",
+      "Articles/*",
+      "models/*",
+      "node-red-flows/*",
       "src/client/*",
       "src/public/*",
+      "src/server/data/*",
       "src/server/logs/*",
-      "src/server/models/*",
-      "src/server/data/data-recorders/*"
+      "src/server/reports/*"
     ],
     "execMap": {
       "rb": "ruby",

@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { List, Button, Menu, Dropdown, Table } from "antd";
+import { Button, Menu, Dropdown, Table } from "antd";
 import {
   ClearOutlined,
   ImportOutlined,

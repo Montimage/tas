@@ -6,7 +6,7 @@ import {
   changeDataRecorderName,
 } from "../actions";
 
-const initState = { name: "New Data Recorder" };
+const initState = null;
 
 export default createReducer(
   {

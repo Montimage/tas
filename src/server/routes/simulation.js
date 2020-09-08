@@ -4,6 +4,7 @@ const { SIMULATING } = require("../../core/DeviceStatus");
 let getLogger = require("../logger");
 const Simulation = require("../../core/simulation");
 const { readJSONFile } = require("../../core/utils");
+const { getDataStorage } = require("./db-connector");
 
 let router = express.Router();
 const logsPath = `${__dirname}/../logs/simulations/`;
@@ -53,20 +54,44 @@ const startSimulation = (model, options, res, modelFileName = null) => {
   const startedTime = Date.now();
   const logFile = `${name}_${Date.now()}.log`;
   getLogger("SIMULATION", `${logsPath}${logFile}`);
-  simulation = new Simulation(model, options);
-  simulation.start();
-  simulationStatus = {
-    model: model.name,
-    startedTime,
-    logFile,
-    datasetId: simulation.datasetId,
-    newDataset: simulation.newDataset,
-    modelFileName
-  };
-  res.send({
-    model: model,
-    simulationStatus,
-  });
+  if (!model.dataStorage && !options.dataStorage) {
+    // Use default data storage
+    getDataStorage((err, ds) => {
+      if (err) {
+        res.send({ error: "No data storage" });
+      } else {
+        simulation = new Simulation({ ...model, dataStorage: ds }, options);
+        simulation.start();
+        simulationStatus = {
+          model: model.name,
+          startedTime,
+          logFile,
+          datasetId: simulation.datasetId,
+          newDataset: simulation.newDataset,
+          modelFileName,
+        };
+        res.send({
+          model: model,
+          simulationStatus,
+        });
+      }
+    });
+  } else {
+    simulation = new Simulation(model, options);
+    simulation.start();
+    simulationStatus = {
+      model: model.name,
+      startedTime,
+      logFile,
+      datasetId: simulation.datasetId,
+      newDataset: simulation.newDataset,
+      modelFileName,
+    };
+    res.send({
+      model: model,
+      simulationStatus,
+    });
+  }
 };
 
 router.post("/start", function (req, res, next) {

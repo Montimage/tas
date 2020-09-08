@@ -17,6 +17,7 @@ import {
   requestStartDataRecorder,
   requestDataRecorderStatus,
   requestStopDataRecorder,
+  requestDataStorage,
 } from "../actions";
 import JSONView from "../components/JSONView";
 import LayoutPage from "./LayoutPage";
@@ -241,76 +242,23 @@ const DataRecorderItem = ({
           Add Forward
         </Button>
       )}
-      <Divider orientation="left">Data Storage </Divider>
-      {data.dataStorage ? (
-        <Fragment>
-          <ConnectionConfig
-            defaultValue={data.dataStorage.connConfig}
-            dataPath={"dataStorage.connConfig"}
-            onDataChange={onChange}
-            type={data.dataStorage.protocol}
-          />
-          <p>Define the Dataset to save the recorded data</p>
-          <FormTextItem
-            label="Id"
-            placeholder="Dataset Id"
-            defaultValue={data.dataStorage.dataset.id}
-            onChange={(value) => onChange("dataStorage.dataset.id", value)}
-          />
-          <FormTextItem
-            label="Name"
-            placeholder="Name"
-            defaultValue={data.dataStorage.dataset.name}
-            onChange={(value) => onChange("dataStorage.dataset.name", value)}
-          />
-          <FormTextAreaItem
-            label="Description"
-            placeholder="Description"
-            defaultValue={data.dataStorage.dataset.description}
-            onChange={(value) =>
-              onChange("dataStorage.dataset.description", value)
-            }
-          />
-          <FormTextItem
-            label="Tags"
-            placeholder="Tags"
-            defaultValue={JSON.stringify(data.dataStorage.dataset.tags)}
-            onChange={(value) =>
-              onChange("dataStorage.dataset.tags", JSON.parse(value))
-            }
-          />
-          <Button onClick={() => onChange("dataStorage", null)} danger>
-            Remove Data Storage
-          </Button>
-        </Fragment>
-      ) : (
-        <Button
-          onClick={() =>
-            onChange("dataStorage", {
-              protocol: "MONGODB",
-              connConfig: {
-                host: "localhost",
-                port: 27017,
-                username: null,
-                password: null,
-                dbname: "my_db_name",
-                options: null,
-              },
-              dataset: {
-                id: `new-data-set-id-${Date.now()}`,
-                name: `New Data Set ${Date.now()}`,
-                description: "Dataset descriptions",
-                tags: ["recorded", "random", "test"],
-              },
-            })
-          }
-        >
-          Add Data Storage
-        </Button>
-      )}
     </Form>
   </CollapseForm>
 );
+
+const newTempDataRecorder = (name) => {
+  const currentTime = Date.now();
+  return {
+    name: name,
+    dataRecorders: [],
+    dataset: {
+      id: `new-data-set-id-${currentTime}`,
+      name: `new-data-set-name-${currentTime}`,
+      description: `new-data-set-description-${currentTime}`,
+      tags: ["generated"],
+    },
+  };
+};
 
 const newDataRecorder = () => {
   const currentTime = Date.now();
@@ -341,9 +289,7 @@ class DataRecorderPage extends Component {
         ? `${dataRecorderFileName}.json`
         : dataRecorderFileName,
       tempDataRecorder: isNewDataRecorder
-        ? {
-            name: dataRecorderFileName,
-          }
+        ? newTempDataRecorder(dataRecorderFileName)
         : {},
       isNewDataRecorder,
       isChanged: false,
@@ -354,26 +300,33 @@ class DataRecorderPage extends Component {
 
   componentDidMount() {
     let dataRecorderFileName = decodeURI(getLastPath());
+    const {
+      requestDataRecorder,
+      fetchDataRecorderStatus,
+      fetchDataStorage,
+    } = this.props;
     if (dataRecorderFileName.indexOf(".json") === -1) {
       // This is a new DataRecorder page
       this.setState({
-        dataRecorderFileName: `${dataRecorderFileName}.json`,
-        tempDataRecorder: {
-          name: dataRecorderFileName,
-        },
+        dataRecorderFileName,
+        tempDataRecorder: newTempDataRecorder(dataRecorderFileName),
         isNewDataRecorder: true,
       });
     } else {
-      this.props.requestDataRecorder(dataRecorderFileName);
+      requestDataRecorder(dataRecorderFileName);
       this.setState({ dataRecorderFileName, isNewDataRecorder: false });
-      this.props.fetchDataRecorderStatus();
+      fetchDataRecorderStatus();
     }
+    fetchDataStorage();
   }
 
   componentWillReceiveProps(newProps) {
-    this.setState({
-      tempDataRecorder: deepCloneObject(newProps.dataRecorder),
-    });
+    const { dataRecorder } = newProps;
+    if (dataRecorder) {
+      this.setState({
+        tempDataRecorder: deepCloneObject(newProps.dataRecorder),
+      });
+    }
   }
 
   onDataRecorderChange(newDataRecorder) {
@@ -416,6 +369,25 @@ class DataRecorderPage extends Component {
     }
   }
 
+  addCustomDataStorage() {
+    const { dataStorage } = this.props;
+    if (dataStorage) {
+      this.onDataChange("dataStorage", dataStorage);
+    } else {
+      this.onDataChange("dataStorage", {
+        protocol: "MONGODB",
+        connConfig: {
+          host: "localhost",
+          port: 27017,
+          username: null,
+          password: null,
+          dbname: "my_db_name",
+          options: null,
+        },
+      });
+    }
+  }
+
   render() {
     const {
       dataRecorderFileName,
@@ -451,6 +423,64 @@ class DataRecorderPage extends Component {
             defaultValue={tempDataRecorder.name}
             onChange={(newName) => this.onDataChange("name", newName)}
           />
+          {tempDataRecorder.dataset && (
+            <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+              <Divider orientation="left">Data Storage </Divider>
+              {tempDataRecorder.dataStorage ? (
+                <Fragment>
+                  <ConnectionConfig
+                    defaultValue={tempDataRecorder.dataStorage.connConfig}
+                    dataPath={"dataStorage.connConfig"}
+                    onDataChange={(dataPath, value) =>
+                      this.onDataChange(dataPath, value)
+                    }
+                    type={tempDataRecorder.dataStorage.protocol}
+                  />
+                  <Button danger onClick={() => this.onDataChange('dataStorage', null)}>
+                    Remove Custom Data Storage
+                  </Button>
+                </Fragment>
+              ) : (
+                <Fragment>
+                  <p>Use <a href="/data-storage" target="_blank">Default Data Storage</a></p>
+                  <Button onClick={() => this.addCustomDataStorage()}>
+                    Add Custom Data Storage
+                  </Button>
+                </Fragment>
+              )}
+              <Divider orientation="left">Dataset </Divider>
+              <p>Define the Dataset to save the recorded data</p>
+              <FormTextItem
+                label="Id"
+                placeholder="Dataset Id"
+                defaultValue={tempDataRecorder.dataset.id}
+                onChange={(value) => this.onDataChange("dataset.id", value)}
+              />
+              <FormTextItem
+                label="Name"
+                placeholder="Name"
+                defaultValue={tempDataRecorder.dataset.name}
+                onChange={(value) => this.onDataChange("dataset.name", value)}
+              />
+              <FormTextAreaItem
+                label="Description"
+                placeholder="Description"
+                defaultValue={tempDataRecorder.dataset.description}
+                onChange={(value) =>
+                  this.onDataChange("dataset.description", value)
+                }
+              />
+              <FormTextItem
+                label="Tags"
+                placeholder="Tags"
+                defaultValue={JSON.stringify(tempDataRecorder.dataset.tags)}
+                onChange={(value) =>
+                  this.onDataChange("dataset.tags", JSON.parse(value))
+                }
+              />
+            </Form>
+          )}
+          <Divider orientation="left">Data Recorders </Divider>
           {tempDataRecorder.dataRecorders ? (
             <Fragment>
               <p>
@@ -512,17 +542,27 @@ class DataRecorderPage extends Component {
             style={{ marginBottom: "15px" }}
             message={
               <div>
-              <p>Model: {dataRecorderStatus.model}.</p>
-              <p>Started time: {new Date(
-                dataRecorderStatus.startedTime
-              ).toLocaleTimeString()}.</p>
-              <p>Log file: <a href={`/logs/data-recorders?logFile=${dataRecorderStatus.logFile}`}>{dataRecorderStatus.logFile}</a>.</p>
-              Dataset: 
-              {tempDataRecorder.dataRecorders.map((dr, index) => (
-                <p key={index}>
-                  <a href={`/data-sets/${dr.dataStorage.dataset.id}`}>{dr.dataStorage.dataset.name}</a>
+                <p>Model: {dataRecorderStatus.model}.</p>
+                <p>
+                  Started time:{" "}
+                  {new Date(
+                    dataRecorderStatus.startedTime
+                  ).toLocaleTimeString()}
+                  .
                 </p>
-              ))}
+                <p>
+                  Log file:{" "}
+                  <a
+                    href={`/logs/data-recorders?logFile=${dataRecorderStatus.logFile}`}
+                  >
+                    {dataRecorderStatus.logFile}
+                  </a>
+                  .
+                </p>
+                Dataset:{" "}
+                <a href={`/data-sets/${tempDataRecorder.dataset.id}`}>
+                  {tempDataRecorder.dataset.name}
+                </a>
               </div>
             }
             type="success"
@@ -543,7 +583,7 @@ class DataRecorderPage extends Component {
           <ExportOutlined />
           Export Model
         </Button>
-        {(dataRecorderStatus && dataRecorderStatus.isRunning) ? (
+        {dataRecorderStatus && dataRecorderStatus.isRunning ? (
           <Button type="danger" onClick={() => stopDataRecorder()}>
             <CloseSquareOutlined /> Stop
           </Button>
@@ -567,10 +607,10 @@ class DataRecorderPage extends Component {
             } else {
               updateDataRecorder(dataRecorderFileName, tempDataRecorder);
             }
-            this.setState({isChanged: false});
+            this.setState({ isChanged: false });
           }}
           style={{ marginTop: "10px" }}
-          disabled={isChanged ? false: true}
+          disabled={isChanged ? false : true}
         >
           Save
         </Button>
@@ -579,12 +619,18 @@ class DataRecorderPage extends Component {
   }
 }
 
-const mapPropsToStates = ({ dataRecorder, dataRecorderStatus }) => ({
+const mapPropsToStates = ({
   dataRecorder,
   dataRecorderStatus,
+  dataStorage,
+}) => ({
+  dataRecorder,
+  dataRecorderStatus,
+  dataStorage: dataStorage.connConfig,
 });
 
 const mapDispatchToProps = (dispatch) => ({
+  fetchDataStorage: () => dispatch(requestDataStorage()),
   requestDataRecorder: (dataRecorderFileName) =>
     dispatch(requestDataRecorder(dataRecorderFileName)),
   fetchDataRecorderStatus: () => dispatch(requestDataRecorderStatus()),
