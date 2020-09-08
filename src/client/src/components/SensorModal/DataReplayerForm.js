@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  FormTextItem,
+  FormEditableTextItem,
   FormTimeRangeItem,
 } from "../FormItems";
 import ConnectionConfig from "../ConnectionConfig";
@@ -13,7 +13,7 @@ const DataReplayerForm = ({dataPath, dataSource, onDataChange}) => (
       onDataChange={(dPath, v) => onDataChange(dPath, v)}
       type="MONGODB"
     />
-    <FormTextItem
+    <FormEditableTextItem
       label="sensor-id"
       defaultValue={dataSource.devId}
       onChange={(v) => onDataChange(`${dataPath}.devId`, v)}

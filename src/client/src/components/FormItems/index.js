@@ -1,4 +1,3 @@
-// import FormTextItem from './FormTextItem';
 import FormTextAreaItem from './FormTextAreaItem';
 import FormSelectItem from './FormSelectItem';
 import FormNumberItem from './FormNumberItem';
@@ -11,7 +10,6 @@ import FormEditableTextItem from './FormEditableTextItem';
 import FormTextNotEditableItem from './FormTextNotEditableItem';
 
 export {
-  // FormTextItem,
   FormTextAreaItem,
   FormSelectItem,
   FormNumberItem,

@@ -5,7 +5,7 @@ import { addThing, deleteThing, showModal, selectDevice } from "../../actions";
 import { Form, Button, Alert } from "antd";
 
 import {
-  FormTextItem,
+  FormEditableTextItem,
   FormSelectItem,
   FormNumberItem,
   FormSwitchItem,
@@ -156,7 +156,7 @@ class ThingModal extends Component {
             span: 14,
           }}
         >
-          <FormTextItem
+          <FormEditableTextItem
             label="Id"
             defaultValue={data.id}
             onChange={(v) => this.onDataChange("id", v)}
@@ -168,7 +168,7 @@ class ThingModal extends Component {
               }
             ]}
           />
-          <FormTextItem
+          <FormEditableTextItem
             label="Name"
             defaultValue={data.name}
             onChange={(v) => this.onDataChange("name", v)}

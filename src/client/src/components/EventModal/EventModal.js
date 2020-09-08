@@ -6,7 +6,6 @@ import {
   deepCloneObject,
 } from "../../utils";
 import {
-  FormTextItem,
   FormSwitchItem,
   FormEditableTextItem,
   FormTextNotEditableItem,
