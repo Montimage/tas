@@ -88,11 +88,11 @@ class DataStorage {
   }
 
   saveReport(report) {
-    ReportSchema.findOne({id: report.id}, (err, rp) => {
+    ReportSchema.findOne({ id: report.id }, (err, rp) => {
       if (rp) {
         console.log("[DataStorage] Going to update a report: ");
         console.log(report);
-        ReportSchema.findOneAndUpdate({id: report.id}, report);
+        ReportSchema.findOneAndUpdate({ id: report.id }, report);
       } else {
         console.log("[DataStorage] Going to add a new report: ");
         console.log(report);
@@ -101,6 +101,28 @@ class DataStorage {
         console.log("[DataStorage] A new report has been created");
       }
     });
+  }
+
+  getFirstEventTimestamp(
+    datasetId,
+    startTime = 0,
+    endTime = Data.now(),
+    callback
+  ) {
+    EventSchema.findEventsBetweenTimes(
+      { datasetId },
+      startTime,
+      endTime,
+      (err, events) => {
+        if (err || !events || events.length === 0) {
+          console.error("[DataStorage] Cannot get events!");
+          console.error(err);
+          return callback(err);
+        } else {
+          return callback(null, events[0].timestamp);
+        }
+      }
+    );
   }
 
   getEvents(topic, datasetId, timeConstraints, callback) {

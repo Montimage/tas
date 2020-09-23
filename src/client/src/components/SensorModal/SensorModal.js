@@ -147,7 +147,7 @@ class SensorModal extends Component {
                     defaultValue={[
                       sensorData.replayOptions.startTime
                         ? sensorData.replayOptions.startTime
-                        : 0,
+                        : Date.now() - 5 * 60 * 1000,,
                       sensorData.replayOptions.endTime
                         ? sensorData.replayOptions.endTime
                         : Date.now(),

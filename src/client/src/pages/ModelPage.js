@@ -481,7 +481,7 @@ class ModelPage extends Component {
                   defaultValue={[
                     tempModel.replayOptions.startTime
                       ? tempModel.replayOptions.startTime
-                      : 0,
+                      : Date.now() - 5 * 60 * 1000,
                     tempModel.replayOptions.endTime
                       ? tempModel.replayOptions.endTime
                       : Date.now(),

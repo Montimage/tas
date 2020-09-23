@@ -30,6 +30,26 @@ class DataReplayer extends DeviceDataSource {
     };
   }
 
+  replayEvent(event, waitingTime, isLastEvent = false) {
+    setTimeout(() => {
+      if (this.status === SIMULATING) {
+        const {
+          values
+        } = event;
+        this.dataHandler(values);
+        if (isLastEvent) {
+          if (!this.repeat) {
+            console.log(`[${this.id}] Finished!`);
+            super.stop();
+          } else {
+            console.log('Go to next repeating!');
+            this.replayData();
+          }
+        }
+      }
+    }, waitingTime);
+  }
+
   replayData() {
     this.nbRepeated++;
     if (!this.events) {
@@ -37,28 +57,11 @@ class DataReplayer extends DeviceDataSource {
       return;
     }
     const startTime = this.startReplayingTime;
-    console.log(`startReplayingTime: ${this.startReplayingTime}`);
     for (let index = 0; index < this.events.length; index++) {
       const event = this.events[index];
       const waitingTime = (event.timestamp - startTime) / this.speedup;
       if (this.status === SIMULATING) {
-        setTimeout(() => {
-          if (this.status === SIMULATING) {
-            const {
-              values
-            } = event;
-            this.dataHandler(values);
-            if (index === this.events.length - 1) {
-              if (!this.repeat) {
-                console.log(`[${this.id}] Finished!`);
-                super.stop();
-              } else {
-                console.log('Go to next repeating!');
-                this.replayData();
-              }
-            }
-          }
-        }, waitingTime);
+        this.replayEvent(event, waitingTime, index === this.events.length - 1);
       }
     }
   }
