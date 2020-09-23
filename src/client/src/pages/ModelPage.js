@@ -424,7 +424,7 @@ class ModelPage extends Component {
   addCustomDataStorage() {
     const { dataStorage } = this.props;
     if (dataStorage) {
-      this.onDataChange("dataStorage", dataStorage);
+      this.onDataChange("dataStorage", deepCloneObject(dataStorage));
     } else {
       this.onDataChange("dataStorage", {
         protocol: "MONGODB",
