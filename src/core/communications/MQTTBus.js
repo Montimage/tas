@@ -9,6 +9,8 @@ class MQTTBus{
       this.connConfig.ca = null;
       this.connConfig.cert = null;
       this.connConfig.key = null;
+    } else {
+      this.connConfig['rejectUnauthorized'] = false;
     }
     this.mqttClient = null;
     this.msgHandlerFct = null;
