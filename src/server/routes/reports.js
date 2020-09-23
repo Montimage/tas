@@ -1,81 +1,94 @@
-/* Working with Data Generator */
-var express = require("express");
-const path = require('path');
-const {
-  readTextFile,
-  readDir,
-  deleteFile,
-} = require("../../core/utils");
+/* Working with report */
+const express = require("express");
+const router = express.Router();
+const { ReportSchema, dbConnector } = require("./db-connector");
 
-const _reportsPath = `${__dirname}/../reports/`;
+// Get all the reports
+router.get("/", dbConnector, function (req, res, next) {
+  let options = {};
+  const { topologyFileName, testCampaignId } = req.query;
+  if (topologyFileName) {
+    options["topologyFileName"] = topologyFileName;
+  }
+  if (testCampaignId) {
+    options["testCampaignId"] = testCampaignId;
+  }
 
-const createRouter = (appLog = true) => {
-  let router = express.Router();
-  let reportsPath = `${_reportsPath}${appLog}/`;
-
-  /////////////
-  // REPORT FILES
-  /////////////
-  // Get all the reports file
-  router.get("/", (req, res, next) => {
-    readDir(reportsPath, (err, files) => {
-      if (err) {
-        console.error("[SERVER]", err);
-        res.send({
-          error: "Cannot read the reports directory"
-        });
-      } else {
-        res.send({
-          error: null,
-          files
-        });
-      }
-    });
+  ReportSchema.findReportsWithOptions(options, (err2, reports) => {
+    if (err2) {
+      console.error("[SERVER] Failed to get reports");
+      console.error(err2);
+      res.send({
+        error: "Failed to get reports",
+      });
+    } else {
+      res.send({
+        reports,
+      });
+    }
   });
+});
 
-  // Read a specific report file
-  router.get("/:fileName", function (req, res, next) {
-    const {
-      fileName
-    } = req.params;
-    const reportFile = `${reportsPath}${fileName}`;
-    readTextFile(reportFile, (err, content) => {
-      if (err) {
-        console.error("[SERVER]", err);
-        res.send({
-          error: "Cannot read the report file"
-        });
-      } else {
-        res.send({
-          error: null,
-          content
-        });
-      }
-    });
+/**
+ * Get a event by id
+ */
+router.get("/:reportId", dbConnector, function (req, res, next) {
+  const { reportId } = req.params;
+
+  ReportSchema.findOne({id: reportId}, (err2, report) => {
+    if (err2) {
+      console.error("[SERVER] Failed to get reports");
+      console.error(err2);
+      res.send({
+        error: "Failed to get report",
+      });
+    } else {
+      res.send({
+        report
+      });
+    }
   });
+});
 
-  // Delete a specific report file
-  router.delete("/:fileName", function (req, res, next) {
-    const {
-      fileName
-    } = req.params;
-    const reportFile = `${reportsPath}${fileName}`;
-    deleteFile(reportFile, (err) => {
-      if (err) {
-        console.error("[SERVER]", err);
-        res.send({
-          error: "Cannot delete the report file"
-        });
-      } else {
-        res.send({
-          error: null,
-          result: true
-        });
-      }
-    });
+/**
+ * Update a report
+ */
+router.post("/:reportId", dbConnector, function (req, res, next) {
+  const { report } = req.body;
+  const { reportId } = req.params;
+
+  ReportSchema.findOneAndUpdate({id: reportId}, report, (err, ts) => {
+    if (err) {
+      console.error("[SERVER] Failed to save a report", err);
+      res.send({
+        error: "Failed to save a report",
+      });
+    } else {
+      res.send({
+        report: ts,
+      });
+    }
   });
+});
 
-  return router;
-};
+/**
+ * Delete a event by id
+ */
+router.delete("/:reportId", dbConnector, function (req, res, next) {
+  const { reportId } = req.params;
 
-module.exports = createRouter;
+  ReportSchema.findOneAndDelete({id: reportId}, (err, ret) => {
+    if (err) {
+      console.error("[SERVER] Failed to delete a report", err);
+      res.send({
+        error: "Failed to delete a report",
+      });
+    } else {
+      res.send({
+        result: ret,
+      });
+    }
+  });
+});
+
+module.exports = router;

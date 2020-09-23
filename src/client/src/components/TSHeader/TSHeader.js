@@ -21,7 +21,8 @@ class TSHeader extends Component {
       '/simulation',
       '/data-recorders',
       '/data-sets',
-      '/data-storage'
+      '/data-storage',
+      '/reports'
     ];
     // Calculate the selected menu
     let selectedMenu = 0;
@@ -90,6 +91,12 @@ class TSHeader extends Component {
                 <a href={menuLinks[6]}>
                   <DatabaseOutlined />
                   Data Storage
+                </a>
+              </Menu.Item>
+              <Menu.Item key="7">
+                <a href={menuLinks[7]}>
+                  <FileTextOutlined />
+                  Report
                 </a>
               </Menu.Item>
             </Menu>

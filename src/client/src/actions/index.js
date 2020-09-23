@@ -150,3 +150,18 @@ export const setSimulationStatus = createAction('SET_SIMULATION_STATUS');
 export const requestDevopts = createAction('REQUEST_DEV_OPTS');
 export const requestUpdateDevopts = createAction('REQUEST_UPDATE_DEV_OPTS');
 export const setDevopts = createAction('SET_DEV_OPTS');
+
+
+// Reports
+export const requestAllReports = createAction('REQUEST_ALL_REPORTS');
+export const requestReport = createAction('REQUEST_REPORT');
+export const setAllReports = createAction('SET_ALL_REPORTS');
+export const setCurrentReport = createAction('SET_CURRENT_REPORT');
+export const requestUpdateReport = createAction('REQUEST_UPDATE_REPORT');
+export const updateReportOK = createAction('UPDATE_REPORT_OK');
+export const requestDeleteReport = createAction('REQUEST_DELETE_REPORT');
+export const deleteReportOK = createAction('DELETE_REPORT_OK');
+export const requestOriginalEvents = createAction('REQUEST_ORIGINAL_EVENTS');
+export const setOriginalEvents = createAction('SET_ORIGINAL_EVENTS');
+export const requestNewEvents = createAction('REQUEST_NEW_EVENTS');
+export const setNewEvents = createAction('SET_NEW_EVENTS');

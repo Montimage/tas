@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button, Switch, Form, List, Typography, Divider } from "antd";
+import { Button, Switch, Form, List, Typography, Divider, Anchor } from "antd";
 // all the edit forms
 import SensorModal from "../components/SensorModal";
 import ActuatorModal from "../components/ActuatorModal";
@@ -32,8 +32,11 @@ import {
 } from "@ant-design/icons";
 import {
   FormEditableTextItem,
+  FormNumberItem,
   FormSelectItem,
+  FormSwitchItem,
   FormTextAreaItem,
+  FormTimeRangeItem,
 } from "../components/FormItems";
 import ConnectionConfig from "../components/ConnectionConfig";
 import CollapseForm from "../components/CollapseForm";
@@ -108,7 +111,7 @@ const ModelDeviceItem = ({
         label="Protocol"
         defaultValue={data.testBroker.protocol}
         onChange={(v) => onChange("testBroker.protocol", v)}
-        options={["MQTT", "MONGODB"]}
+        options={["MQTT", "MQTTS"]}
       />
       <ConnectionConfig
         defaultValue={data.testBroker.connConfig}
@@ -123,7 +126,7 @@ const ModelDeviceItem = ({
             label="Protocol"
             defaultValue={data.productionBroker.protocol}
             onChange={(v) => onChange("productionBroker.protocol", v)}
-            options={["MQTT", "MONGODB"]}
+            options={["MQTT", "MQTTS"]}
           />
           <ConnectionConfig
             defaultValue={data.productionBroker.connConfig}
@@ -462,7 +465,7 @@ class ModelPage extends Component {
               defaultValue={tempModel.name}
               onChange={(newName) => this.onDataChange("name", newName)}
             />
-            <Divider orientation="left">Dataset </Divider>
+            <Divider orientation="left">Replay Options </Divider>
             <p>The Id of data source</p>
             <FormEditableTextItem
               label="Dataset Id"
@@ -471,6 +474,68 @@ class ModelPage extends Component {
                 this.onDataChange("datasetId", newDatasetId)
               }
             />
+            {tempModel.replayOptions ? (
+              <CollapseForm title="Replaying Options">
+                <FormTimeRangeItem
+                  label="Time Range"
+                  defaultValue={[
+                    tempModel.replayOptions.startTime
+                      ? tempModel.replayOptions.startTime
+                      : 0,
+                    tempModel.replayOptions.endTime
+                      ? tempModel.replayOptions.endTime
+                      : Date.now(),
+                  ]}
+                  onChange={(v) => {
+                    this.onDataChange(`replayOptions.startTime`, v[0]);
+                    this.onDataChange(`replayOptions.endTime`, v[1]);
+                  }}
+                  helpText="The time range when the data should be replayed."
+                />
+                <FormNumberItem
+                  label="Speedup"
+                  min={0.01}
+                  max={100}
+                  defaultValue={
+                    tempModel.replayOptions.speedup
+                      ? tempModel.replayOptions.speedup
+                      : 1
+                  }
+                  onChange={(v) =>
+                    this.onDataChange(`replayOptions.speedup`, v)
+                  }
+                  helpText="The replaying speedup (0.01 - 100)!"
+                />
+                <FormSwitchItem
+                  label="Repeat"
+                  onChange={(v) => this.onDataChange(`replayOptions.repeat`, v)}
+                  checked={tempModel.replayOptions.repeat ? true : false}
+                  checkedChildren={"Repeat"}
+                  unCheckedChildren={"No Repeat"}
+                  helpText="Repeatly replaying the data"
+                />
+                <Button
+                  danger
+                  onClick={() => this.onDataChange("replayOptions", null)}
+                >
+                  Delete Replaying Options
+                </Button>
+              </CollapseForm>
+            ) : (
+              <Button
+                onClick={() =>
+                  this.onDataChange("replayOptions", {
+                    startTime: 0,
+                    endTime: Date.now(),
+                    repeat: false,
+                    speedup: 1,
+                  })
+                }
+              >
+                Set Replaying Options
+              </Button>
+            )}
+            <Divider orientation="left">Store simulated data</Divider>
             {tempModel.newDataset ? (
               <Fragment>
                 <p>New Dataset to save the simulated data</p>
@@ -547,7 +612,12 @@ class ModelPage extends Component {
               </Fragment>
             ) : (
               <Fragment>
-              <p>Use <a href="/data-storage" target="_blank">Default Data Storage</a></p>
+                <p>
+                  Use{" "}
+                  <a href="/data-storage" target="_blank">
+                    Default Data Storage
+                  </a>
+                </p>
                 <Button onClick={() => this.addCustomDataStorage()}>
                   Add Custom Data Storage
                 </Button>
@@ -632,14 +702,20 @@ class ModelPage extends Component {
           {view}
           <Button
             type="primary"
+            size="large"
             onClick={() => {
               if (isNewModel) {
                 addNewModel(tempModel);
               } else {
                 updateModel(modelFileName, tempModel);
               }
+              this.setState({ isChanged: false });
             }}
-            style={{ marginTop: "10px" }}
+            style={{
+              position: "fixed",
+              top: 80,
+              right: 20,
+            }}
             disabled={isChanged ? false : true}
           >
             Save

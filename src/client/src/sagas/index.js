@@ -10,6 +10,7 @@ import testCampaignsSaga from './testCampaignsSaga';
 import testCasesSaga from './testCasesSaga';
 import datasetsSaga from './datasetsSaga';
 import eventsSaga from './eventsSaga';
+import reportsSaga from './reportsSaga';
 import devoptsSaga from './devoptsSaga';
 
 function* rootSaga() {
@@ -25,6 +26,7 @@ function* rootSaga() {
     testCasesSaga(),
     datasetsSaga(),
     eventsSaga(),
+    reportsSaga()
   ]);
 }
 

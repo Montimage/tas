@@ -8,7 +8,8 @@ import FormCheckBoxSingleItem from './FormCheckBoxSingleItem';
 import FormRegularNumberItem from './FormRegularNumberItem';
 import FormEditableTextItem from './FormEditableTextItem';
 import FormTextNotEditableItem from './FormTextNotEditableItem';
-
+import FormParagraphItem from './FormParagraphItem';
+import FormFileUploadItem from './FormFileUploadItem';
 export {
   FormTextAreaItem,
   FormSelectItem,
@@ -20,4 +21,6 @@ export {
   FormRegularNumberItem,
   FormEditableTextItem,
   FormTextNotEditableItem,
+  FormParagraphItem,
+  FormFileUploadItem
 }

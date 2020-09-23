@@ -30,13 +30,13 @@ class DataGenerator extends Thing {
       return;
     }
 
-    if (dbConfig.user && dbConfig.password) {
+    if (dbConfig.username && dbConfig.password) {
       this.enactDB = new ENACTDB(
         dbConfig.host,
         dbConfig.port,
         dbConfig.dbname,
         {
-          userName: dbConfig.user,
+          username: dbConfig.username,
           password: dbConfig.password,
         }
       );

@@ -30,7 +30,7 @@ class TestCampaign {
           this.name = name ? name : this.id;
           for (let index = 0; index < testCaseIds.length; index++) {
             const tcaseId = testCaseIds[index];
-            const testCase = new TestCase(tcaseId, this.dataStorageConfig);
+            const testCase = new TestCase(tcaseId, this.dataStorageConfig, this.id);
             this.testCases.push(testCase);
           }
           return callback();

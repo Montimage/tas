@@ -98,7 +98,7 @@ const DataRecorderItem = ({
         label="Protocol"
         defaultValue={data.source.protocol}
         onChange={(v) => onChange("source.protocol", v)}
-        options={["MQTT", "MONGODB"]}
+        options={["MQTT", "MQTTS"]}
       />
       <ConnectionConfig
         defaultValue={data.source.connConfig}
@@ -213,7 +213,7 @@ const DataRecorderItem = ({
             label="Protocol"
             defaultValue={data.forward.protocol}
             onChange={(v) => onChange("forward.protocol", v)}
-            options={["MQTT", "MONGODB"]}
+            options={["MQTT", "MQTTS"]}
           />
           <ConnectionConfig
             defaultValue={data.forward.connConfig}
@@ -435,13 +435,21 @@ class DataRecorderPage extends Component {
                     }
                     type={tempDataRecorder.dataStorage.protocol}
                   />
-                  <Button danger onClick={() => this.onDataChange('dataStorage', null)}>
+                  <Button
+                    danger
+                    onClick={() => this.onDataChange("dataStorage", null)}
+                  >
                     Remove Custom Data Storage
                   </Button>
                 </Fragment>
               ) : (
                 <Fragment>
-                  <p>Use <a href="/data-storage" target="_blank">Default Data Storage</a></p>
+                  <p>
+                    Use{" "}
+                    <a href="/data-storage" target="_blank">
+                      Default Data Storage
+                    </a>
+                  </p>
                   <Button onClick={() => this.addCustomDataStorage()}>
                     Add Custom Data Storage
                   </Button>
@@ -608,7 +616,12 @@ class DataRecorderPage extends Component {
             }
             this.setState({ isChanged: false });
           }}
-          style={{ marginTop: "10px" }}
+          size="large"
+          style={{
+            position: "fixed",
+            top: 80,
+            right: 20,
+          }}
           disabled={isChanged ? false : true}
         >
           Save

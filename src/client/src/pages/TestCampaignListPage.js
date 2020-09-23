@@ -32,6 +32,7 @@ class TestCampaignListPage extends Component {
   componentDidMount() {
     this.props.fetchTestCampaigns();
     this.props.fetchDevopts();
+    this.props.fetchTestCampaignStatus();
   }
 
   componentWillReceiveProps(newProps) {
@@ -180,8 +181,8 @@ class TestCampaignListPage extends Component {
                   this.setState({ isChanged: false });
                 }}
                 disabled={isChanged ? false : true}
+                style={{marginRight: 10}}
                 type="primary"
-                style={{ marginRight: 10 }}
               >
                 Save
               </Button>
@@ -208,6 +209,9 @@ class TestCampaignListPage extends Component {
                     href={`/logs/test-campaigns?logFile=${runningStatus.logFile}`}
                   >
                     <Button type="link">View Log</Button>
+                  </a>
+                  <a href={`/reports/?testCampaignId=${testCampaignId}`}>
+                    <Button type="link">View Report</Button>
                   </a>
                 </Fragment>
               ) : (

@@ -1,13 +1,17 @@
 import React from "react";
 import "antd/dist/antd.css";
 import { Layout } from "antd";
-import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Redirect,
+} from "react-router-dom";
 
 import ErrorBoundary from "antd/lib/alert/ErrorBoundary";
 import TSHeader from "./components/TSHeader";
 import ModelPage from "./pages/ModelPage";
-import DummyPage from './pages/DummyPage';
-import DataStoragePage from './pages/DataStoragePage';
+import DataStoragePage from "./pages/DataStoragePage";
 import TestCampaignListPage from "./pages/TestCampaignListPage";
 import ModelListPage from "./pages/ModelListPage";
 import DataRecorderListPage from "./pages/DataRecorderListPage";
@@ -19,6 +23,8 @@ import DatasetListPage from "./pages/DatasetListPage";
 import DatasetPage from "./pages/DatasetPage";
 import SimulationPage from "./pages/SimulationPage";
 import LogsPage from "./pages/LogsPage";
+import ReportListPage from "./pages/ReportListPage";
+import ReportPage from "./pages/ReportPage";
 
 function App() {
   return (
@@ -27,18 +33,22 @@ function App() {
         <Layout className="layout" style={{ height: "100%" }}>
           <TSHeader />
           <Switch>
-            <Route exact path="/" render={() => <Redirect to="/test-campaigns"/>} />
+            <Route
+              exact
+              path="/"
+              render={() => <Redirect to="/test-campaigns" />}
+            />
             <Route path="/test-campaigns/:testCampaignId">
               <TestCampaignPage />
             </Route>
             <Route path="/logs/:tool">
-              <LogsPage message="This is the log file page"/>
+              <LogsPage message="This is the log file page" />
             </Route>
             <Route path="/test-campaigns">
               <TestCampaignListPage />
             </Route>
             <Route path="/test-cases/:testCaseId">
-              <TestCasePage/>
+              <TestCasePage />
             </Route>
             <Route path="/test-cases">
               <TestCaseListPage />
@@ -66,20 +76,14 @@ function App() {
             </Route>
             <Route path="/simulation">
               <SimulationPage />
-            </Route>            
-            <Route path="/logs/test-campaigns">
-              <DummyPage message="This is the log file list page of test campaigns"/>
             </Route>
-            <Route path="/reports/test-campaigns/:fileName">
-              <DummyPage message="This is the reports file page"/>
+            <Route path="/reports/:reportId">
+              <ReportPage />
             </Route>
-            <Route path="/reports/test-campaigns">
-              <DummyPage message="This is the reports file list page of test campaigns"/>
+            <Route path="/reports">
+              <ReportListPage />
             </Route>
-            <Route path="/devopts/">
-              <DummyPage message="This is the devopts page"/>
-            </Route>
-          </Switch>          
+          </Switch>
         </Layout>
       </ErrorBoundary>
     </Router>

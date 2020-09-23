@@ -1,8 +1,12 @@
-import React from "react";
+import React, { Fragment } from "react";
 
-import MongoDBOptions from "./MongoDBOptions";
 import CollapseForm from "../CollapseForm";
-import { FormNumberItem, FormEditableTextItem } from "../FormItems";
+import {
+  FormNumberItem,
+  FormEditableTextItem,
+  FormParagraphItem,
+  FormFileUploadItem,
+} from "../FormItems";
 
 const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
   <CollapseForm title="Connection Configuration" bordered={false} active={true}>
@@ -11,12 +15,12 @@ const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
       defaultValue={defaultValue.host}
       onChange={(v) => onDataChange(`${dataPath ? `${dataPath}.` : ""}host`, v)}
       helpText="Host name"
-      rules = {[
-              {
-                required: true,
-                message: "Host name is required!"
-              }
-            ]}
+      rules={[
+        {
+          required: true,
+          message: "Host name is required!",
+        },
+      ]}
     />
     <FormNumberItem
       label="Port"
@@ -25,21 +29,71 @@ const ConnectionConfig = ({ defaultValue, dataPath, onDataChange, type }) => (
       defaultValue={defaultValue.port}
       onChange={(v) => onDataChange(`${dataPath ? `${dataPath}.` : ""}port`, v)}
       helpText="Port number"
-      rules = {[
-              {
-                required: true,
-                message: "Port number is required!"
-              }
-            ]}
+      rules={[
+        {
+          required: true,
+          message: "Port number is required!",
+        },
+      ]}
     />
-    {type === "MONGODB" && (
-      <React.Fragment>
-        <MongoDBOptions
-          defaultValue={defaultValue}
-          dataPath={dataPath}
-          onDataChange={onDataChange}
+    <FormEditableTextItem
+      label="User"
+      defaultValue={defaultValue.username}
+      onChange={(v) =>
+        onDataChange(`${dataPath ? `${dataPath}.` : ""}username`, v)
+      }
+      placeholder="Username"
+    />
+    <FormEditableTextItem
+      label="Password"
+      defaultValue={defaultValue.password}
+      onChange={(v) =>
+        onDataChange(`${dataPath ? `${dataPath}.` : ""}password`, v)
+      }
+      placeholder="Password"
+    />
+    {type === "MQTTS" && (
+      <Fragment>
+        <FormParagraphItem label="CA" value={defaultValue.ca} />
+        <FormFileUploadItem
+          label="CA file"
+          onUpload={(v) => {
+            onDataChange(`${dataPath ? `${dataPath}.` : ""}ca`, v);
+          }}
         />
-      </React.Fragment>
+
+        <FormParagraphItem label="Certificate" value={defaultValue.cert} />
+        <FormFileUploadItem
+          label="Certificate file"
+          onUpload={(v) => {
+            onDataChange(`${dataPath ? `${dataPath}.` : ""}cert`, v);
+          }}
+        />
+        <FormParagraphItem label="Key" value={defaultValue.key} />
+        <FormFileUploadItem
+          label="Key file"
+          onUpload={(v) => {
+            onDataChange(`${dataPath ? `${dataPath}.` : ""}key`, v);
+          }}
+        />
+      </Fragment>
+    )}
+    {type === "MONGODB" && (
+      <FormEditableTextItem
+        label="Database"
+        defaultValue={defaultValue.dbname}
+        onChange={(v) =>
+          onDataChange(`${dataPath ? `${dataPath}.` : ""}dbname`, v)
+        }
+        placeholder="Database name"
+        helpText="The database's name to working with"
+        rules={[
+          {
+            required: true,
+            message: "Database's name is required!",
+          },
+        ]}
+      />
     )}
     <FormEditableTextItem
       label="Options"

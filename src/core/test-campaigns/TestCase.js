@@ -4,7 +4,7 @@ const Simulation = require('../simulation');
 const { readJSONFile } = require('../utils');
 const modelsPath = `${__dirname}/../../server/data/models/`;
 class TestCase {
-  constructor(id, dataStorageConfig) {
+  constructor(id, dataStorageConfig, testCampaignId = null) {
     this.id = id;
     this.name = id;
     this.dataStorageConfig = dataStorageConfig;
@@ -14,6 +14,7 @@ class TestCase {
     this.model = null;
     this.datasetIds = null;
     this.status = OFFLINE;
+    this.testCampaignId = testCampaignId;
   }
 
   init(callback) {
@@ -66,7 +67,7 @@ class TestCase {
     }
     for (let index = 0; index < this.datasetIds.length; index++) {
       const datasetId = this.datasetIds[index];
-      const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId} );
+      const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId, testCampaignId: this.testCampaignId} );
       newSimulation.start();
       this.simulations.push(newSimulation);
     }

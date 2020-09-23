@@ -26,7 +26,7 @@ const SelectionModal = ({
         dataSource={options}
         renderItem={(item) => (
           <List.Item>
-            <Checkbox value={item.id}>{item.name}</Checkbox>
+            <Checkbox value={item.id}>{item.id}</Checkbox>
           </List.Item>
         )}
       />

@@ -39,7 +39,7 @@ class Device {
    * @param {String} datasetId The dataset id of the data source
    * @param {Object} newDataset The information of the new dataset which keeps the traces of this simulation
    */
-  constructor(configs, dataStorage, datasetId, newDataset) {
+  constructor(configs, dataStorage, datasetId, replayOptions, newDataset, report, isFirstDevice = false) {
     const {
       id,
       name,
@@ -61,7 +61,10 @@ class Device {
     this.actuatorsConfig = actuators;
     this.dataStorageConfig = dataStorage;
     this.newDatasetConfig = newDataset;
+    this.report = report;
     this.datasetId = datasetId;
+    this.globalReplayOptions = replayOptions;
+    this.isFirstDevice = isFirstDevice;
     this.status = OFFLINE; // OFFLINE | ONLINE | SIMULATING | PAUSE | STOP
     // Instance need to be initialized
     this.sensors = []; // Add/Remove sensor method
@@ -240,9 +243,12 @@ class Device {
       return null;
     }
     let topic = sensorData.topic;
+    let replayOptions = sensorData.replayOptions;
+    if (!replayOptions) {
+      replayOptions = this.globalReplayOptions;
+    }
     const {
-      dataSource,
-      replayOptions
+      dataSource
     } = sensorData;
     if (!topic) {
       topic = `devices/${this.id}/sensors/${id}`;
@@ -299,6 +305,7 @@ class Device {
         }
         const newSensor = new Sensor(id, {
           ...sensorData,
+          replayOptions,
           topic: topic
         }, null, (topic, message) => {
           this.publishDataToTestBroker(topic, message);
@@ -475,10 +482,17 @@ class Device {
             if (err3) {
               console.error('Failed to connect to data storage', err3);
             } else {
-              console.log(`[${this.id}]Connected to data storage`);
-              if (this.newDatasetConfig) {
+              console.log(`[${this.id}] Connected to data storage`);
+              if (this.report && this.isFirstDevice) {
+                // Add the report
+                console.log(`[${this.id}] Going to add a new report`);
+                console.log(this.report);
+                this.dataStorage.saveReport(this.report);
+              }
+              if (this.report && this.isFirstDevice) {
                 // Add the dataset for the current test
-                console.log(`[${this.id}]Going to add a new dataset, ${this.newDatasetConfig}`);
+                console.log(`[${this.id}] Going to add a new dataset`);
+                console.log(this.newDatasetConfig);
                 this.dataStorage.saveDataset(this.newDatasetConfig);
               }
               // Add sensors which have data source from data storage

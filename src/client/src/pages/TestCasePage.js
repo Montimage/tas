@@ -318,15 +318,19 @@ class TestCasePage extends Component {
           />
         </Button>
         <Table columns={columns} dataSource={dataSource} />
-        {isChanged && (
           <Button
             onClick={() => this.saveTestCase()}
             disabled={isChanged ? false : true}
             type="primary"
+            size="large"
+            style={{
+              position: "fixed",
+              top: 80,
+              right: 20,
+            }}
           >
             Save
           </Button>
-        )}
       </LayoutPage>
     );
   }

@@ -18,6 +18,7 @@ import testCampaignsReducer from './testCampaignsReducer';
 import devoptsReducer from './devoptsReducer';
 import testCasesReducer from './testCasesReducer';
 import datasetsReducer from './datasetsReducer';
+import reportsReducer from './reportsReducer';
 
 const rootReducer = combineReducers({
   allDataRecorders: allDataRecordersReducer,
@@ -36,6 +37,7 @@ const rootReducer = combineReducers({
   devopts: devoptsReducer,
   testCases: testCasesReducer,
   datasets: datasetsReducer,
+  reports: reportsReducer
 });
 
 export default rootReducer;

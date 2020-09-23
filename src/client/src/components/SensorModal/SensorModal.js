@@ -1,17 +1,18 @@
-import React, { Component } from "react";
+import React, { Component, Fragment } from "react";
 import TSModal from "../TSModal";
-import { Form, Button } from "antd";
+import { Form, Button, Divider } from "antd";
 import {
   FormSwitchItem,
   FormEditableTextItem,
   FormTextNotEditableItem,
   FormSelectItem,
+  FormTimeRangeItem,
+  FormNumberItem,
 } from "../FormItems";
 
-import {
-  updateObjectByPath,
-} from "../../utils";
+import { updateObjectByPath } from "../../utils";
 import DataGeneratorForm from "./DataGeneratorForm";
+import CollapseForm from "../CollapseForm";
 
 class SensorModal extends Component {
   constructor(props) {
@@ -39,14 +40,14 @@ class SensorModal extends Component {
 
   render() {
     const { sensorData, isChanged } = this.state;
-    const {enable, onClose, deviceId} = this.props;
+    const { enable, onClose, deviceId } = this.props;
     if (!sensorData) return null;
-    const reportFormats = ['PLAIN_DATA','JSON_OBJECT','IPSO_FORMAT'];
-    const reportFormatHelpTexts=[
-      'Report only the value of the sensor. The value will be in array if the sensor has multiple measurements',
-      'Report the value of the sensor in JSON Object format, with the keys are defined in the description of the sensor',
-      'Report the value of the sensor in JSON Object and follow the IPSO format, with the keys are defined in the description of the sensor',
-    ]
+    const reportFormats = ["PLAIN_DATA", "JSON_OBJECT", "IPSO_FORMAT"];
+    const reportFormatHelpTexts = [
+      "Report only the value of the sensor. The value will be in array if the sensor has multiple measurements",
+      "Report the value of the sensor in JSON Object format, with the keys are defined in the description of the sensor",
+      "Report the value of the sensor in JSON Object and follow the IPSO format, with the keys are defined in the description of the sensor",
+    ];
     return (
       <TSModal
         title={`Sensor ${sensorData.name}`}
@@ -56,7 +57,12 @@ class SensorModal extends Component {
           <Button key="cancel" onClick={() => onClose()}>
             Cancel
           </Button>,
-          <Button key="ok" type="primary" onClick={() => this.saveData()} disabled={isChanged ? false: true}>
+          <Button
+            key="ok"
+            type="primary"
+            onClick={() => this.saveData()}
+            disabled={isChanged ? false : true}
+          >
             OK
           </Button>,
         ]}
@@ -115,18 +121,105 @@ class SensorModal extends Component {
             defaultValue={reportFormats[sensorData.reportFormat]}
             helpText={reportFormatHelpTexts[sensorData.reportFormat]}
             options={reportFormats}
-            onChange={v => this.onDataChange('sensorData.reportFormat', reportFormats.indexOf(v))}
+            onChange={(v) =>
+              this.onDataChange(
+                "sensorData.reportFormat",
+                reportFormats.indexOf(v)
+              )
+            }
           />
           <FormSelectItem
             label="Data Source"
             defaultValue={sensorData.dataSource}
-            options={['DATA_SOURCE_DATASET','DATA_SOURCE_GENERATOR','DATA_SOURCE_RECORDER']}
-            onChange={v => this.onDataChange('sensorData.dataSource', v)}
+            options={[
+              "DATA_SOURCE_DATASET",
+              "DATA_SOURCE_GENERATOR",
+              "DATA_SOURCE_RECORDER",
+            ]}
+            onChange={(v) => this.onDataChange("sensorData.dataSource", v)}
           />
+          {sensorData.dataSource === "DATA_SOURCE_DATASET" && (
+            <Fragment>
+              {sensorData.replayOptions ? (
+                <CollapseForm title="Replay Options">
+                  <FormTimeRangeItem
+                    label="Time Range"
+                    defaultValue={[
+                      sensorData.replayOptions.startTime
+                        ? sensorData.replayOptions.startTime
+                        : 0,
+                      sensorData.replayOptions.endTime
+                        ? sensorData.replayOptions.endTime
+                        : Date.now(),
+                    ]}
+                    onChange={(v) => {
+                      this.onDataChange(
+                        `sensorData.replayOptions.startTime`,
+                        v[0]
+                      );
+                      this.onDataChange(
+                        `sensorData.replayOptions.endTime`,
+                        v[1]
+                      );
+                    }}
+                    helpText="The time range when the data should be replayed."
+                  />
+                  <FormNumberItem
+                    label="Speedup"
+                    min={0.01}
+                    max={100}
+                    defaultValue={
+                      sensorData.replayOptions.speedup
+                        ? sensorData.replayOptions.speedup
+                        : 1
+                    }
+                    onChange={(v) =>
+                      this.onDataChange(`sensorData.replayOptions.speedup`, v)
+                    }
+                    helpText="The replaying speedup (0.01 - 100)!"
+                  />
+                  <FormSwitchItem
+                    label="Repeat"
+                    onChange={(v) =>
+                      this.onDataChange(`sensorData.replayOptions.repeat`, v)
+                    }
+                    checked={sensorData.replayOptions.repeat ? true : false}
+                    checkedChildren={"Repeat"}
+                    unCheckedChildren={"No Repeat"}
+                    helpText="Repeatly replaying the data"
+                  />
+                  <Button
+                    danger
+                    onClick={() =>
+                      this.onDataChange("sensorData.replayOptions", null)
+                    }
+                  >
+                    Delete Replaying Options
+                  </Button>
+                </CollapseForm>
+              ) : (
+                <Button
+                style={{marginBottom: 10}}
+                  onClick={() =>
+                    this.onDataChange("sensorData.replayOptions", {
+                      startTime: 0,
+                      endTime: Date.now(),
+                      repeat: false,
+                      speedup: 1,
+                    })
+                  }
+                >
+                  Set Replaying Options
+                </Button>
+              )}
+            </Fragment>
+          )}
           <DataGeneratorForm
             dataPath={"sensorData.dataSpecs"}
             dataSpecs={sensorData.dataSpecs}
-            onDataChange={(dataPath, value) => this.onDataChange(dataPath, value)}
+            onDataChange={(dataPath, value) =>
+              this.onDataChange(dataPath, value)
+            }
           />
         </Form>
       </TSModal>

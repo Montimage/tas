@@ -19,6 +19,7 @@ import {
 } from "../components/FormItems";
 import { getLastPath } from "../utils";
 import EventModal from "../components/EventModal";
+import EventStream from "../components/EventStream/EventStream";
 
 /**
  * - id
@@ -219,129 +220,12 @@ class DatasetPage extends Component {
       newEvent,
       isNew,
     } = this.state;
+    const { deleteEvent, addNewEvent, updateEvent } = this.props;
     const nbEvents = events.length;
     const startTime = events[0] ? events[0].timestamp : 0;
     const endTime = events[nbEvents - 1] ? events[nbEvents - 1].timestamp : 0;
-    let sensors = [];
-    let actuators = [];
-    let topicFilters = [];
-    for (let index = 0; index < events.length; index++) {
-      const event = events[index];
-      if (event.isSensorData && sensors.indexOf(event.topic) === -1) {
-        // this is a new sensor
-        sensors.push(event.topic);
-        topicFilters.push({ text: event.topic, value: event.topic });
-      } else if (!event.isSensorData && actuators.indexOf(event.topic) === -1) {
-        // This is a new actuator
-        actuators.push(event.topic);
-        topicFilters.push({ text: event.topic, value: event.topic });
-      }
-    }
-    const nbSensors = sensors.length;
-    const nbActuators = actuators.length;
-
-    const dataSource = events.map((event, index) => ({
-      ...event,
-      key: index,
-    }));
-    const columns = [
-      {
-        title: "Timestamp",
-        key: "timestamp",
-        dataIndex: "timestamp",
-        sorter: (a, b) => a.timestamp - b.timestamp,
-        render: (ts) => ts,
-        width: 300,
-      },
-      {
-        title: "Topic",
-        key: "topic",
-        dataIndex: "topic",
-        render: (topic) => topic,
-        filters: topicFilters,
-        onFilter: (value, data) => data.topic === value,
-        width: 400,
-      },
-      {
-        title: "Is sensor's data",
-        key: "isSensorData",
-        dataIndex: "isSensorData",
-        filters: [
-          {
-            text: "Sensor's Data",
-            value: true,
-          },
-          {
-            text: "Actuator's Data",
-            value: false,
-          },
-        ],
-        onFilter: (value, data) => data.isSensorData === value,
-        render: (isSensorData) => (isSensorData ? "Yes" : "No"),
-        width: 100,
-      },
-      {
-        title: "Values",
-        key: "values",
-        dataIndex: "values",
-        render: (value) => JSON.stringify(value),
-      },
-      {
-        title: "Action",
-        key: "data",
-        width: 150,
-        render: (event) => (
-          <Dropdown
-            overlay={
-              <Menu>
-                <Menu.Item
-                  key="delete"
-                  onClick={() => this.props.deleteEvent(event._id)}
-                >
-                  Delete
-                </Menu.Item>
-                <Menu.Item
-                  key="duplicate"
-                  onClick={() => this.props.addNewEvent(event)}
-                >
-                  Duplicate
-                </Menu.Item>
-                <Menu.Item
-                  key="mutate"
-                  onClick={() => {
-                    if (this.state.activeEventModal === null) {
-                      this.changeActiveEventModal(event._id);
-                    }
-                  }}
-                >
-                  Modify Value
-                  <EventModal
-                    event={event}
-                    enable={event._id === this.state.activeEventModal}
-                    onCancel={() => {
-                      this.changeActiveEventModal(null);
-                    }}
-                    onOK={(newEvent) => {
-                      this.props.updateEvent(event._id, newEvent);
-                      this.changeActiveEventModal(null);
-                    }}
-                  />
-                </Menu.Item>
-              </Menu>
-            }
-          >
-            <a
-              className="ant-dropdown-link"
-              onClick={(e) => e.preventDefault()}
-            >
-              <Button>
-                Select Action <DownOutlined />
-              </Button>
-            </a>
-          </Dropdown>
-        ),
-      },
-    ];
+    const nbSensors = events.filter((e) => e.isSensorData).length;
+    const nbActuators = events.length - nbSensors;
     // TODO: improve the tags view: https://ant.design/components/tag/
     // - color
     // - action remove/add new tags
@@ -401,11 +285,11 @@ class DatasetPage extends Component {
           />
           <FormTextNotEditableItem label="Number of events" value={nbEvents} />
           <FormTextNotEditableItem
-            label="Number of sensors"
+            label="Number of sensor's events"
             value={nbSensors}
           />
           <FormTextNotEditableItem
-            label="Number of actuators"
+            label="Number of actuator's events"
             value={nbActuators}
           />
           <FormTextNotEditableItem
@@ -454,16 +338,26 @@ class DatasetPage extends Component {
             />
           </Button>
         </Tooltip>
-        <Table columns={columns} dataSource={dataSource} />
-        {isChanged && (
-          <Button
-            onClick={() => this.savedataset()}
-            disabled={isChanged ? false : true}
-            type="primary"
-          >
-            Save
-          </Button>
-        )}
+        <EventStream
+          events={events}
+          deleteEvent={deleteEvent}
+          addNewEvent={addNewEvent}
+          updateEvent={updateEvent}
+        />
+        <Button
+          onClick={() => this.savedataset()}
+          disabled={isChanged ? false : true}
+          type="primary"
+          size="large"
+          style={{
+            position: "fixed",
+            top: 80,
+            right: 20,
+          }}
+          disabled={isChanged ? false : true}
+        >
+          Save
+        </Button>
       </LayoutPage>
     );
   }

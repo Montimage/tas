@@ -3,10 +3,13 @@ const mqtt = require("mqtt");
  * MQTTBus is a wrapper for MQTT client
  */
 class MQTTBus{
-  constructor(host, port, options) {
-    this.host = host;
-    this.port = port;
-    this.options = options;
+  constructor(connConfig, protocol) {
+    this.connConfig = {...connConfig, protocol};
+    if (protocol === 'mqtt') {
+      this.connConfig.ca = null;
+      this.connConfig.cert = null;
+      this.connConfig.key = null;
+    }
     this.mqttClient = null;
     this.msgHandlerFct = null;
   }
@@ -43,17 +46,12 @@ class MQTTBus{
   }
 
   connect(callback) {
-    const mqttBrokerURL = `mqtt://${this.host}:${this.port}`;
     let mqttClient = null;
-    if (this.options) {
-      mqttClient = mqtt.connect(mqttBrokerURL, this.options);
-    } else {
-      mqttClient = mqtt.connect(mqttBrokerURL);
-    }
-
+    mqttClient = mqtt.connect(this.connConfig);
+    
     mqttClient.on("connect", () => {
       console.log(
-        `[MQTTBus] connected to MQTT broker ${mqttBrokerURL}`
+        `[MQTTBus] connected to MQTT broker ${this.connConfig.host}:${this.connConfig.port}`
       );
       this.mqttClient = mqttClient;
       return callback();
@@ -61,13 +59,14 @@ class MQTTBus{
 
     mqttClient.on("error", (err) => {
       console.error(
-        `[MQTTBus] ERROR: cannot connect to MQTT broker`,
-        err
+        `[MQTTBus] ERROR: cannot connect to MQTT broker`
       );
+      console.error(err);
     });
 
     mqttClient.on("offline", (error) => {
-      console.log(`[MQTTBus] gone offline!`, this.host, this.port, error);
+      console.log(`[MQTTBus] gone offline! ${this.connConfig.host}:${this.connConfig.port}`);
+      console.error(error);
     });
 
     mqttClient.on("message", (topic, message, packet) => {

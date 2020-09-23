@@ -7,7 +7,7 @@ import {
   requestTestCampaign,
   requestAddNewTestCampaign,
   requestUpdateTestCampaign,
-  requestAllTestCases,  
+  requestAllTestCases,
 } from "../actions";
 import { FormEditableTextItem } from "../components/FormItems";
 import SelectionModal from "../components/SelectionModal";
@@ -200,7 +200,7 @@ class TestCampaignPage extends Component {
       <LayoutPage
         pageTitle={name}
         pageSubTitle="View and update the test campaign detail"
-      >        
+      >
         <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
           <FormEditableTextItem
             label="Id"
@@ -221,7 +221,7 @@ class TestCampaignPage extends Component {
           />
         </Form>
         <Button
-          style={{ marginBottom: "10px" }}
+          style={{ marginBottom: "10px", marginRight: 10 }}
           onClick={() => {
             if (showTestCaseModal === false) {
               this.setState({ showTestCaseModal: true });
@@ -240,16 +240,23 @@ class TestCampaignPage extends Component {
             onChange={(values) => this.updateTestCaseIds(values)}
           />
         </Button>
+        <a href={`/reports/?testCampaignId=${id}`}>
+          <Button>View All Campaign's Reports</Button>
+        </a>
         <Table columns={columns} dataSource={dataSource} />
-        {isChanged && (
-          <Button
-            onClick={() => this.saveTestCampaign()}
-            disabled={isChanged ? false : true}
-            type="primary"
-          >
-            Save
-          </Button>
-        )}
+        <Button
+          onClick={() => this.saveTestCampaign()}
+          disabled={isChanged ? false : true}
+          type="primary"
+          size="large"
+          style={{
+            position: "fixed",
+            top: 80,
+            right: 20,
+          }}
+        >
+          Save
+        </Button>
       </LayoutPage>
     );
   }
@@ -273,7 +280,7 @@ const mapDispatchToProps = (dispatch) => ({
       })
     ),
   addNewTestCampaign: (testCampaign) =>
-    dispatch(requestAddNewTestCampaign(testCampaign)),  
+    dispatch(requestAddNewTestCampaign(testCampaign)),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(TestCampaignPage);

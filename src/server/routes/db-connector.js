@@ -2,6 +2,7 @@
 const {
   ENACTDB,
   EventSchema,
+  ReportSchema,
   DatasetSchema,
   TestCaseSchema,
   TestCampaignSchema
@@ -55,7 +56,7 @@ const getDBClient = (callback, reload = false) => {
           let auth = null;
           if (username && password) {
             auth = {
-              userName: username,
+              username: username,
               password
             };
           }
@@ -157,6 +158,7 @@ module.exports = {
   getDataStorage,
   updateDataStorage,
   dbConnector,
+  ReportSchema,
   EventSchema,
   DatasetSchema,
   TestCaseSchema,

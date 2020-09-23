@@ -3,8 +3,9 @@ const {
   EventSchema,
   DatasetSchema,
   TestCampaignSchema,
-  TestCaseSchema
-} = require('../enact-mongoose');
+  TestCaseSchema,
+} = require("../enact-mongoose");
+const ReportSchema = require("../enact-mongoose/schemas/ReportSchema");
 
 /**
  * DataStorage class presents the interface of a data base
@@ -16,10 +17,7 @@ const {
  */
 class DataStorage {
   constructor(config) {
-    const {
-      protocol,
-      connConfig
-    } = config;
+    const { protocol, connConfig } = config;
     this.protocol = protocol;
     this.connConfig = connConfig;
     this.dsClient = null;
@@ -30,33 +28,28 @@ class DataStorage {
    * @param {Function} callback The callback function
    */
   connect(callback) {
-    console.log('[DataStorage] Connecting...');
-    if (this.protocol === 'MONGODB') {
+    console.log("[DataStorage] Connecting...");
+    if (this.protocol === "MONGODB") {
       const {
         host,
         port,
-        user,
+        username,
         password,
         dbname,
-        options
+        options,
       } = this.connConfig;
-      if (user && password) {
-        this.dsClient = new ENACTDB(
-          host,
-          port,
-          dbname, {
-            userName: user,
-            password: password,
-          }
-        );
+      if (username && password) {
+        this.dsClient = new ENACTDB(host, port, dbname, {
+          username: username,
+          password: password,
+        });
       } else {
         this.dsClient = new ENACTDB(host, port, dbname);
       }
 
       this.dsClient.connect((error) => {
         if (error) {
-          console.error(
-            `[DataStorage] ERROR: Failed to connect to database:`);
+          console.error(`[DataStorage] ERROR: Failed to connect to database:`);
           console.error(error);
           console.error(this.connConfig);
           return callback(error);
@@ -78,38 +71,75 @@ class DataStorage {
 
   saveDataset(dataset) {
     const currentTime = Date.now();
-    DatasetSchema.findOne({id: dataset.id}, (err, ds) => {
+    DatasetSchema.findOne({ id: dataset.id }, (err, ds) => {
       if (ds) {
         DatasetSchema.findByIdAndUpdate(ds._id, dataset);
       } else {
-        const newDS = new DatasetSchema({...dataset, createdAt: currentTime, lastModified: currentTime, source: dataset.source ? dataset.source: 'RECORDED'});
+        const newDS = new DatasetSchema({
+          ...dataset,
+          createdAt: currentTime,
+          lastModified: currentTime,
+          source: dataset.source ? dataset.source : "RECORDED",
+        });
         newDS.save();
-        console.log('[DataStorage] A new dataset has been created: ', dataset);
+        console.log("[DataStorage] A new dataset has been created: ", dataset);
+      }
+    });
+  }
+
+  saveReport(report) {
+    ReportSchema.findOne({id: report.id}, (err, rp) => {
+      if (rp) {
+        console.log("[DataStorage] Going to update a report: ");
+        console.log(report);
+        ReportSchema.findOneAndUpdate({id: report.id}, report);
+      } else {
+        console.log("[DataStorage] Going to add a new report: ");
+        console.log(report);
+        const newReport = new ReportSchema(report);
+        newReport.save();
+        console.log("[DataStorage] A new report has been created");
       }
     });
   }
 
   getEvents(topic, datasetId, timeConstraints, callback) {
-    let {startTime, endTime } = timeConstraints; 
+    let { startTime, endTime } = timeConstraints;
     if (!startTime) startTime = 0;
     if (!endTime) endTime = Date.now();
-    EventSchema.findEventsBetweenTimes({topic, datasetId}, startTime, endTime, (err, events) => {
-      if (err) {
-        console.error('[DataStorage] Cannot get events!', topic, datasetId, timeConstraints, err);
-        return callback(err);
-      } else {
-        return callback(null, events);
+    EventSchema.findEventsBetweenTimes(
+      { topic, datasetId },
+      startTime,
+      endTime,
+      (err, events) => {
+        if (err) {
+          console.error(
+            "[DataStorage] Cannot get events!",
+            topic,
+            datasetId,
+            timeConstraints,
+            err
+          );
+          return callback(err);
+        } else {
+          return callback(null, events);
+        }
       }
-    });
+    );
   }
 
   getTestCampaignById(testCampaignId, callback) {
-    TestCampaignSchema.findOne({id: testCampaignId}, (err, tc) => {
+    TestCampaignSchema.findOne({ id: testCampaignId }, (err, tc) => {
       if (err) {
-        console.error(`[DataStorage] Cannot get test campaign: ${testCampaignId}`, err);
+        console.error(
+          `[DataStorage] Cannot get test campaign: ${testCampaignId}`,
+          err
+        );
         return callback(err, null);
       } else if (!tc) {
-        console.error(`[DataStorage] Cannot get test campaign: ${testCampaignId}. TestCampaign is null`);
+        console.error(
+          `[DataStorage] Cannot get test campaign: ${testCampaignId}. TestCampaign is null`
+        );
         return callback("Test Campaign is NULL", null);
       } else {
         return callback(null, tc);
@@ -118,12 +148,14 @@ class DataStorage {
   }
 
   getTestCaseById(testCaseId, callback) {
-    TestCaseSchema.findOne({id: testCaseId}, (err, tc) => {
+    TestCaseSchema.findOne({ id: testCaseId }, (err, tc) => {
       if (err) {
         console.error(`[DataStorage] Cannot get test Case: ${testCaseId}`, err);
         return callback(err, null);
       } else if (!tc) {
-        console.error(`[DataStorage] Cannot get test Case: ${testCaseId}. TestCase is null`);
+        console.error(
+          `[DataStorage] Cannot get test Case: ${testCaseId}. TestCase is null`
+        );
         return callback("Test Case is NULL", null);
       } else {
         return callback(null, tc);

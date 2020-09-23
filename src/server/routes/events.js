@@ -1,10 +1,7 @@
 /* Working with event */
 const express = require("express");
 const router = express.Router();
-const {
-  EventSchema,
-  dbConnector
-} = require('./db-connector');
+const { EventSchema, dbConnector } = require("./db-connector");
 
 // Get all the events
 router.get("/", dbConnector, function (req, res, next) {
@@ -13,23 +10,23 @@ router.get("/", dbConnector, function (req, res, next) {
   let filter = null;
   const datasetId = req.query.datasetId;
   if (datasetId) {
-    filter = {datasetId};    
+    filter = { datasetId };
   }
 
   const topic = req.query.topic;
   if (topic) {
-    filter = {...filter, topic};
+    filter = { ...filter, topic };
   }
 
   EventSchema.findEventsWithPagingOptions(filter, page, (err2, events) => {
     if (err2) {
-      console.error('[SERVER] Failed to get events', err2);
+      console.error("[SERVER] Failed to get events", err2);
       res.send({
-        error: 'Failed to get event'
+        error: "Failed to get event",
       });
     } else {
       res.send({
-        events
+        events,
       });
     }
   });
@@ -39,19 +36,17 @@ router.get("/", dbConnector, function (req, res, next) {
  * Get a event by id
  */
 router.get("/:eventId", dbConnector, function (req, res, next) {
-  const {
-    eventId
-  } = req.params;
+  const { eventId } = req.params;
 
   EventSchema.findById(eventId, (err2, event) => {
     if (err2) {
-      console.error('[SERVER] Failed to get events', err2);
+      console.error("[SERVER] Failed to get events", err2);
       res.send({
-        error: 'Failed to get event'
+        error: "Failed to get event",
       });
     } else {
       res.send({
-        event
+        event,
       });
     }
   });
@@ -59,32 +54,24 @@ router.get("/:eventId", dbConnector, function (req, res, next) {
 
 // Add a new event
 router.post("/", dbConnector, function (req, res, next) {
-  const {
-    event
-  } = req.body;
-  const {
-    timestamp,
-    topic,
-    datasetId,
-    isSensorData,
-    values
-  } = event;
+  const { event } = req.body;
+  const { timestamp, topic, datasetId, isSensorData, values } = event;
   const newevent = new EventSchema({
     timestamp,
     topic,
     datasetId,
     isSensorData,
-    values
+    values,
   });
   newevent.save((err, _event) => {
     if (err) {
-      console.error('[SERVER] Failed to save the events', err);
+      console.error("[SERVER] Failed to save the events", err);
       res.send({
-        error: 'Failed to save the event'
+        error: "Failed to save the event",
       });
     } else {
       res.send({
-        event: _event
+        event: _event,
       });
     }
   });
@@ -94,22 +81,18 @@ router.post("/", dbConnector, function (req, res, next) {
  * Update a event
  */
 router.post("/:eventId", dbConnector, function (req, res, next) {
-  const {
-    event
-  } = req.body;
-  const {
-    eventId
-  } = req.params;
+  const { event } = req.body;
+  const { eventId } = req.params;
 
   EventSchema.findByIdAndUpdate(eventId, event, (err, ts) => {
     if (err) {
-      console.error('[SERVER] Failed to save the events', err);
+      console.error("[SERVER] Failed to save the events", err);
       res.send({
-        error: 'Failed to save the event'
+        error: "Failed to save the event",
       });
     } else {
       res.send({
-        event: ts
+        event: ts,
       });
     }
   });
@@ -119,19 +102,17 @@ router.post("/:eventId", dbConnector, function (req, res, next) {
  * Delete a event by id
  */
 router.delete("/:eventId", dbConnector, function (req, res, next) {
-  const {
-    eventId
-  } = req.params;
+  const { eventId } = req.params;
 
   EventSchema.findByIdAndDelete(eventId, (err, ret) => {
     if (err) {
-      console.error('[SERVER] Failed to save the events', err);
+      console.error("[SERVER] Failed to delete a event", err);
       res.send({
-        error: 'Failed to save the event'
+        error: "Failed to delete a event",
       });
     } else {
       res.send({
-        result: ret
+        result: ret,
       });
     }
   });

@@ -5,6 +5,7 @@ mongoose.set('useUnifiedTopology', true);
 const SensorSchema = require('./schemas/SensorSchema');
 const ActuatorSchema = require('./schemas/ActuatorSchema');
 const EventSchema = require('./schemas/EventSchema');
+const ReportSchema = require('./schemas/ReportSchema');
 const DatasetSchema = require('./schemas/DatasetSchema');
 const TestCaseSchema = require('./schemas/TestCaseSchema');
 const TestCampaignSchema = require('./schemas/TestCampaignSchema');
@@ -35,7 +36,7 @@ ENACTDB.prototype.connect = function(callback) {
   };
 
   if (this.auth) {
-    connectOptions['user'] = this.auth.userName;
+    connectOptions['user'] = this.auth.username;
     connectOptions['pass'] = this.auth.password;
   }
 
@@ -57,6 +58,7 @@ ENACTDB.prototype.close = function() {
 
 module.exports = {
   ENACTDB,
+  ReportSchema,
   SensorSchema,
   ActuatorSchema,
   EventSchema,

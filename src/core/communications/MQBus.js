@@ -14,14 +14,11 @@ class MQBus {
       protocol,
       connConfig,
     } = config;
-    const {host, port, options} = connConfig;
     this.protocol = protocol;
-    this.host = host;
-    this.port = port;
-    this.options = options;
+    this.connConfig = connConfig;
     this.mqClient = null;
-    if (this.protocol === 'MQTT') {
-      this.mqClient = new MQTTBus(host,port,options);
+    if (this.protocol === 'MQTT' || this.protocol === 'MQTTS') {
+      this.mqClient = new MQTTBus(connConfig, protocol ? protocol.toLowerCase() : 'mqtt');
     }
   }
 

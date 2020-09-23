@@ -68,6 +68,7 @@ const startSimulation = (model, options, res, modelFileName = null) => {
           logFile,
           datasetId: simulation.datasetId,
           newDataset: simulation.newDataset,
+          report: simulation.report,
           modelFileName,
         };
         res.send({
@@ -85,6 +86,7 @@ const startSimulation = (model, options, res, modelFileName = null) => {
       logFile,
       datasetId: simulation.datasetId,
       newDataset: simulation.newDataset,
+      report: simulation.report,
       modelFileName,
     };
     res.send({

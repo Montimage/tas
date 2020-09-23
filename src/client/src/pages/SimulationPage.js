@@ -85,6 +85,7 @@ class SimulationPage extends Component {
         datasetId,
         newDataset,
         logFile,
+        report,
       } = simulationStatus;
       return (
         <LayoutPage
@@ -141,13 +142,16 @@ class SimulationPage extends Component {
               <a href={`/logs/simulations?logFile=${logFile}`}>
                 <Button type="link">View Log</Button>
               </a>
+              <a href={`/reports/${report.id}`}>
+                <Button type="link">View Report</Button>
+              </a>
               <a href={`/graphview`}>
                 <Button type="link">View Graph</Button>
               </a>
             </Form.Item>
           </Form>
           <p></p>
-          <a href={`/logs/simulations`}>View Logs</a>
+          <a href={`/logs/simulations`} style={{marginRight: 10}}>View Logs</a> <a href={`/reports`}>View Reports</a>
         </LayoutPage>
       );
     }
@@ -243,7 +247,7 @@ class SimulationPage extends Component {
           </Form.Item>
         </Form>
         <p></p>
-        <a href={`/logs/simulations`}>View Logs</a>
+        <a href={`/logs/simulations`} style={{marginRight: 10}}>View Logs</a> <a href={`/reports`}>View Reports</a>
       </LayoutPage>
     );
   }
