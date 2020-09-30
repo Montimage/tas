@@ -1,5 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const mqtt_regex = require("mqtt-regex");
+
+const checkMQTTTopic = (topic, pattern) => {
+  const params = mqtt_regex(pattern).exec(topic);
+  return params !== undefined;
+};
+
 const readDir = (dirPath, callback) => {
   fs.readdir(dirPath, callback);
 };
@@ -50,7 +57,7 @@ const writeToFile = (_filePath, data, callback, isOverwrite = false) => {
       filePath = `${_filePath.replace(extName, '')}-${Date.now()}${extName}`;
     }
   }
-  
+
   try {
     fs.writeFile(filePath, data, (err, result) => {
       if (err) return callback(err);
@@ -255,5 +262,6 @@ module.exports = {
   readTextFile,
   writeToFile,
   readDir,
-  deleteFile
+  deleteFile,
+  checkMQTTTopic
 }

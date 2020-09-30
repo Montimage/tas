@@ -1,4 +1,5 @@
 const MQBus = require('../communications/MQBus');
+const {checkMQTTTopic} = require('../utils');
 /**
  * DataRecorder class present a data recorder who have 3 functionalities:
  * - Listen data from a source (broker)
@@ -33,8 +34,7 @@ class DataRecorder {
     // Check by topic name
     for (let index = 0; index < upStreams.length; index++) {
       const topic = upStreams[index];
-      const reg = new RegExp(topic);
-      if (reg.test(_topic)) return true;
+      if (checkMQTTTopic(_topic, topic)) return true;
     }
     return false;
   }
@@ -58,7 +58,7 @@ class DataRecorder {
     }
 
     // Save data into database
-    
+
     if (this.dataStorage) {
       this.dataStorage.dsClient.saveEvent({
         datasetId: this.dataset.id,
@@ -121,7 +121,7 @@ class DataRecorder {
 
 
   /**
-   * 
+   *
    * @param {Object} fwConfig the configuration of the forwarder
    * "forward": {
         "protocol": "MQTT",
@@ -145,7 +145,7 @@ class DataRecorder {
     });
   }
 
-  
+
 
   /**
    * Initialise the Data Recorder
@@ -162,7 +162,7 @@ class DataRecorder {
 
     // Check output
     if (!this.forwarder) {
-      console.warn('[DataRecorder] forward and data storage are not found!');
+      console.warn('[DataRecorder] forward are not found!');
       this.initSource();
     } else {
       // Init the forwarder

@@ -50,6 +50,7 @@
     "mongoose": "^5.9.4",
     "morgan": "^1.9.1",
     "mqtt": "^3.0.0",
+    "mqtt-regex": "^1.0.5",
     "nodemon": "^2.0.3",
     "path": "~0.12.7",
     "stompit": "^0.26.0",
