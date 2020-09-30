@@ -61,10 +61,10 @@ class ActuatorModal extends Component {
       >
         <Form
           labelCol={{
-            span: 4,
+            span: 6,
           }}
           wrapperCol={{
-            span: 14,
+            span: 12,
           }}
         >
         <FormTextNotEditableItem label="Device" value={deviceId} />

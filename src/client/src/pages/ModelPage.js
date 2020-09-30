@@ -49,6 +49,44 @@ import {
 
 const { Text } = Typography;
 
+const addNewSensor = () => {
+  const currentTime = Date.now();
+  return {
+    id: `sensor-id-${currentTime}`,
+    objectId: null,
+    name: `New sensor ${currentTime}`,
+    enable: false,
+    isFromDatabase: false,
+    topic: `sensors/topic/${currentTime}`,
+    scale: 1,
+    dataSource: "DATA_SOURCE_DATASET",
+    replayOptions: null,
+    dataSpecs: {
+      timePeriod: 5,
+      scale: 1,
+      dosAttackSpeedUpRate: 5,
+      timeBeforeFailed: 20,
+      sensorBehaviours: [],
+      withEnergy: false,
+      isIPSOFormat: false,
+      energy: null,
+      sources: [],
+    },
+  };
+};
+
+const addNewActuator = () => {
+  const currentTime = Date.now();
+  return {
+    id: `actuator-id-${currentTime}`,
+    objectId: null,
+    name: `New actuator ${currentTime}`,
+    enable: false,
+    topic: `actuators/topic/${currentTime}`,
+    scale: 1,
+  };
+};
+
 const ModelDeviceItem = ({
   data,
   onChange,
@@ -158,7 +196,17 @@ const ModelDeviceItem = ({
       <List
         header={<strong>Sensors ({data.sensors.length})</strong>}
         footer={
-          <Button onClick={() => showModal("SENSOR-FORM")}>
+          <Button
+            onClick={() => {
+              const newSensor = addNewSensor();
+              if (data.sensors.length === 0) {
+                onChange("sensors", [newSensor]);
+              } else {
+                // const newSensors = [...data.sensors, newSensor];
+                onChange(`sensors[${data.sensors.length}]`, newSensor);
+              }
+            }}
+          >
             Add New Sensor
           </Button>
         }
@@ -236,7 +284,17 @@ const ModelDeviceItem = ({
       <List
         header={<strong>Actuators ({data.actuators.length})</strong>}
         footer={
-          <Button onClick={() => showModal("ACTUATOR-FORM")}>
+          <Button
+            onClick={() => {
+              const newActuator = addNewActuator();
+              if (data.actuators.length === 0) {
+                onChange("actuators", [newActuator]);
+              } else {
+                // const newActuators = [...data.actuators, newActuator];
+                onChange(`actuators[${data.actuators.length}]`, newActuator);
+              }
+            }}
+          >
             Add New Actuator
           </Button>
         }
@@ -325,7 +383,7 @@ const newDevice = () => {
     testBroker: {
       protocol: "MQTT",
       connConfig: {
-        host: "192.168.1.21",
+        host: "localhost",
         port: 1883,
         options: null,
       },
@@ -405,16 +463,6 @@ class ModelPage extends Component {
       link.href = url;
       link.click();
     }
-  }
-
-  addNewDevice() {
-    this.setState((prevState) => ({
-      tempModel: {
-        ...prevState.tempModel,
-        devices: [...prevState.tempModel.devices, newDevice()],
-      },
-      isChanged: true,
-    }));
   }
 
   changeModalId(newId) {
@@ -628,7 +676,13 @@ class ModelPage extends Component {
           {tempModel.devices ? (
             <Fragment>
               <p>Number of devices: {tempModel.devices.length}</p>
-              <Button onClick={() => showModal("THING-FORM")}>
+              <Button
+                onClick={() => {
+                  const newDev = newDevice();
+                  let newDevices = [...tempModel.devices, newDev];
+                  this.onDataChange("devices", newDevices);
+                }}
+              >
                 Add New Device
               </Button>
               {tempModel.devices.map((device, index) => (
@@ -664,12 +718,16 @@ class ModelPage extends Component {
               ))}
             </Fragment>
           ) : (
-            <Button onClick={() => showModal("THING-FORM")}>
+            <Button
+              onClick={() => {
+                const newDev = newDevice();
+                this.onDataChange("devices", [newDev]);
+              }}
+            >
               Add New Device
             </Button>
           )}
           <p></p>
-          <ActuatorModal />
         </Fragment>
       );
     }
