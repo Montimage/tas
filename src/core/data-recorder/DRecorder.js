@@ -47,7 +47,7 @@ class DataRecorder {
    */
   messageHandler(topic, message, packet) {
     console.log(`[DataRecorder] Received a message on topic: ${topic}`);
-    console.log(message);
+    // console.log(message);
     let isSensorData = false;
     if (this.isSensorData(topic, packet)) {
       isSensorData = true;
