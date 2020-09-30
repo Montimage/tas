@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import { Table, Menu, Dropdown, Button, Typography } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import EventModal from "../EventModal";
+import { FormParagraphItem } from "../FormItems";
 const { Text } = Typography;
 class EventStream extends Component {
   constructor(props) {
@@ -87,14 +88,30 @@ class EventStream extends Component {
             key: "sensorTopic",
             filters: sensorTopicFilters,
             onFilter: (value, data) => data.sensorTopic === value,
-            render: (data) => data.sensorTopic,
+            render: (data) => (
+              <FormParagraphItem
+                value={data.sensorTopic}
+                rows={1}
+                expandable={true}
+              />
+            ),
             width: 350,
           },
           {
             title: "Values",
             key: "sensorValues",
             dataIndex: "sensorValues",
-            render: (value) => JSON.stringify(value),
+            render: (value) => {
+              let showValue =
+                typeof value === "string" ? value : JSON.stringify(value);
+              return (
+                <FormParagraphItem
+                  value={showValue}
+                  rows={1}
+                  expandable={true}
+                />
+              );
+            },
           },
         ],
       },
@@ -109,7 +126,13 @@ class EventStream extends Component {
             width: 350,
             render: (data) => {
               if (data.actuatorTopic) {
-                return <Text mark>{data.actuatorTopic}</Text>;
+                return (
+                  <FormParagraphItem
+                    value={data.actuatorTopic}
+                    rows={1}
+                    expandable={true}
+                  />
+                );
               }
               return null;
             },
@@ -119,10 +142,15 @@ class EventStream extends Component {
             key: "actuatorValues",
             dataIndex: "actuatorValues",
             render: (value) => {
-              if (value) {
-                return <Text mark>{JSON.stringify(value)}</Text>;
-              }
-              return null;
+              let showValue =
+                typeof value === "string" ? value : JSON.stringify(value);
+              return (
+                <FormParagraphItem
+                  value={showValue}
+                  rows={1}
+                  expandable={true}
+                />
+              );
             },
           },
         ],
