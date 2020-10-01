@@ -1,7 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Table, Menu, Dropdown, Button, Tooltip, Form } from "antd";
-import { DownOutlined } from "@ant-design/icons";
+import { Button, Tooltip, Form } from "antd";
 import LayoutPage from "./LayoutPage";
 import {
   requestDataset,
@@ -354,7 +353,6 @@ class DatasetPage extends Component {
             top: 80,
             right: 20,
           }}
-          disabled={isChanged ? false : true}
         >
           Save
         </Button>

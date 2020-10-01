@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button, Switch, Form, List, Typography, Divider, Anchor } from "antd";
+import { Button, Switch, Form, List, Typography, Divider } from "antd";
 // all the edit forms
 import SensorModal from "../components/SensorModal";
 import ActuatorModal from "../components/ActuatorModal";
@@ -617,7 +617,7 @@ class ModelPage extends Component {
       selectedModalId,
       isChanged,
     } = this.state;
-    const { addNewModel, updateModel, showModal } = this.props;
+    const { addNewModel, updateModel } = this.props;
 
     let viewType = getQuery("view");
     if (!viewType) viewType = "form";

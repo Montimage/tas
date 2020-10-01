@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import TSModal from "../TSModal";
-import { Form, Button, Divider } from "antd";
+import { Form, Button } from "antd";
 import {
   FormSwitchItem,
   FormEditableTextItem,

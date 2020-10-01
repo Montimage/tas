@@ -1,6 +1,6 @@
-import React, { Component, Fragment } from "react";
+import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Table, Menu, Dropdown, Button, Tooltip, Form } from "antd";
+import {  Button, Form } from "antd";
 import moment from "moment";
 import LayoutPage from "./LayoutPage";
 import {

@@ -1,10 +1,9 @@
 import React, { Component } from "react";
 
-import { Table, Menu, Dropdown, Button, Typography } from "antd";
+import { Table, Menu, Dropdown, Button } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import EventModal from "../EventModal";
 import { FormParagraphItem } from "../FormItems";
-const { Text } = Typography;
 class EventStream extends Component {
   constructor(props) {
     super(props);

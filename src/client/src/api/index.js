@@ -538,6 +538,68 @@ export const sendRequestDeleteDataset = async (datasetId) => {
   return data.result;
 };
 
+// Reports
+export const sendRequestReport = async (rpId) => {
+  const url = `${URL}/api/reports/${rpId}`;
+  const response = await fetch(url);
+  const status = await response.json();
+  if (status.error) {
+    throw status.error;
+  }
+  return status.report;
+};
+
+export const sendRequestAllReports = async (options) => {
+  const {topologyFileName, testCampaignId} = options;
+  let query = '';
+  if (topologyFileName) {
+    query=`?topologyFileName=${topologyFileName}`;
+    if (testCampaignId) {
+      query=`&testCampaignId=${testCampaignId}`;
+    }
+  } else {
+    if (testCampaignId) {
+      query=`?testCampaignId=${testCampaignId}`;
+    }
+  }
+
+  const url = `${URL}/api/reports${query}`;
+  const response = await fetch(url);
+  const status = await response.json();
+  if (status.error) {
+    throw status.error;
+  }
+  return status.reports;
+};
+
+export const sendRequestDeleteReport = async (reportId) => {
+  const url = `${URL}/api/reports/${reportId}`;
+  const response = await fetch(url,{
+    method: 'DELETE',
+  });
+  const data = await response.json();
+  if (data.error) {
+    throw data.error;
+  }
+  return data.result;
+};
+
+export const sendRequestUpdateReport = async (id, report) => {
+  const url = `${URL}/api/reports/${id}`;
+  const response = await fetch(url,{
+    method: 'POST',
+    headers: {
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify({report})
+  });
+  const data = await response.json();
+  if (data.error) {
+    throw data.error;
+  }
+  return data.report;
+};
+
 // Event
 export const sendRequestEvent = async (tcId) => {
   const url = `${URL}/api/events/${tcId}`;
@@ -565,8 +627,8 @@ export const sendRequestUpdateEvent = async (id, event) => {
   return data.event;
 };
 
-export const sendRequestEventsByDatasetId = async (dsId) => {
-  const url = `${URL}/api/events?datasetId=${dsId}`;
+export const sendRequestEventsByDatasetId = async (dsId, startTime, endTime) => {
+  const url = `${URL}/api/events?datasetId=${dsId}&startTime=${startTime ? startTime : 0}&endTime=${endTime ? endTime : Date.now()}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
