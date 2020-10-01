@@ -1,1 +1,154 @@
-{"name":"HomeIO Testing","dataStorage":{"protocol":"MONGODB","connConfig":{"host":"localhost","port":27017,"dbname":"homeiodb"}},"datasetId":"homeio-dataset-09","newDataset":null,"devices":[{"id":"tv-smartbox-status","name":"TV status and Smartbox Mute Status","enable":true,"scale":1,"behaviours":[],"timeToDown":0,"testBroker":{"protocol":"MQTT","connConfig":{"host":"localhost","port":1883,"options":null}},"productionBroker":null,"sensors":[{"id":"tv-status","objectId":null,"name":"TV Status","enable":true,"isFromDatabase":false,"topic":"enact/sensors/cec/status","dataSource":"DATA_SOURCE_DATASET","replayOptions":{"repeat":false,"startedTime":null,"endTime":null,"speedUp":2},"dataSpecs":{"timePeriod":5,"scale":1,"dosAttackSpeedUpRate":5,"timeBeforeFailed":20,"sensorBehaviours":[],"withEnergy":false,"isIPSOFormat":false,"energy":null,"sources":[{"type":"DATA_SOURCE_ENUM","key":"status","resourceId":"","initValue":"STANDBY","unit":"","behaviours":[],"values":["ON","STANDBY"]}]}}],"actuators":[{"id":"smartbox-mute-status","objectId":null,"name":"Smartbox Mute","topic":"enact/actuators/smartbox/mute","enable":true,"scale":1}]},{"id":"call-status","name":"Call Status","enable":true,"scale":1,"behaviours":[],"timeToDown":0,"testBroker":{"protocol":"MQTT","connConfig":{"host":"localhost","port":1882,"options":null}},"productionBroker":null,"sensors":[{"id":"call-status","objectId":null,"name":"Call Status","enable":true,"isFromDatabase":false,"topic":"call/status","dataSource":"DATA_SOURCE_DATASET","replayOptions":{"repeat":false,"startedTime":null,"endTime":null,"speedUp":2},"dataSpecs":{"timePeriod":5,"scale":1,"dosAttackSpeedUpRate":5,"timeBeforeFailed":20,"sensorBehaviours":[],"withEnergy":false,"isIPSOFormat":false,"energy":null,"sources":[{"type":"DATA_SOURCE_ENUM","key":"status","resourceId":"","initValue":"hangup","unit":"","behaviours":[],"values":["answer","declined","hangup"]}]}}],"actuators":[]}]}
+{
+    "name": "HomeIO Testing",
+    "dataStorage": {
+        "protocol": "MONGODB",
+        "connConfig": {
+            "host": "localhost",
+            "port": 27017,
+            "username": "",
+            "password": "",
+            "dbname": "homeiodb",
+            "options": null
+        }
+    },
+    "datasetId": "homeio-data-generator-01",
+    "replayOptions": {
+        "startTime": 1600864260000,
+        "endTime": 1600864320000,
+        "repeat": true,
+        "speedup": 1
+    },
+    "newDataset": {
+        "id": "homeio-data-replayed-05",
+        "name": "this is the new data set",
+        "description": "Dataset descriptions",
+        "tags": [
+            "recorded",
+            "random",
+            "test"
+        ]
+    },
+    "devices": [
+        {
+            "id": "tv-smartbox-status",
+            "name": "TV status and Smartbox Mute Status",
+            "enable": true,
+            "scale": 1,
+            "behaviours": [],
+            "timeToDown": 0,
+            "testBroker": {
+                "protocol": "MQTT",
+                "connConfig": {
+                    "host": "localhost",
+                    "port": 1883,
+                    "options": null
+                }
+            },
+            "productionBroker": null,
+            "upStreams":[],
+            "downStreams": [],
+            "sensors": [
+                {
+                    "id": "tv-status",
+                    "objectId": null,
+                    "name": "TV Status",
+                    "enable": true,
+                    "isFromDatabase": false,
+                    "topic": "enact/sensors/cec/status",
+                    "dataSource": "DATA_SOURCE_DATASET",
+                    "replayOptions": null,
+                    "dataSpecs": {
+                        "timePeriod": 5,
+                        "scale": 1,
+                        "dosAttackSpeedUpRate": 5,
+                        "timeBeforeFailed": 20,
+                        "sensorBehaviours": [],
+                        "withEnergy": false,
+                        "isIPSOFormat": false,
+                        "energy": null,
+                        "sources": [
+                            {
+                                "type": "DATA_SOURCE_ENUM",
+                                "key": "status",
+                                "resourceId": "",
+                                "initValue": "STANDBY",
+                                "unit": "",
+                                "behaviours": [],
+                                "values": [
+                                    "ON",
+                                    "STANDBY"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "actuators": [
+                {
+                    "id": "smartbox-mute-status",
+                    "objectId": null,
+                    "name": "Smartbox Mute",
+                    "topic": "enact/actuators/smartbox/mute",
+                    "enable": true,
+                    "scale": 1
+                }
+            ]
+        },
+        {
+            "id": "call-status",
+            "name": "Call Status",
+            "enable": true,
+            "scale": 1,
+            "behaviours": [],
+            "timeToDown": 0,
+            "testBroker": {
+                "protocol": "MQTT",
+                "connConfig": {
+                    "host": "localhost",
+                    "port": 1883,
+                    "options": null
+                }
+            },
+            "productionBroker": null,
+            "upStreams":[],
+            "downStreams": [],
+            "sensors": [
+                {
+                    "id": "call-status",
+                    "objectId": null,
+                    "name": "Call Status",
+                    "enable": true,
+                    "isFromDatabase": false,
+                    "topic": "call/status",
+                    "dataSource": "DATA_SOURCE_DATASET",
+                    "dataSpecs": {
+                        "timePeriod": 5,
+                        "scale": 1,
+                        "dosAttackSpeedUpRate": 5,
+                        "timeBeforeFailed": 20,
+                        "sensorBehaviours": [],
+                        "withEnergy": false,
+                        "isIPSOFormat": false,
+                        "energy": null,
+                        "sources": [
+                            {
+                                "type": "DATA_SOURCE_ENUM",
+                                "key": "status",
+                                "resourceId": "",
+                                "initValue": "hangup",
+                                "unit": "",
+                                "behaviours": [],
+                                "values": [
+                                    "answer",
+                                    "declined",
+                                    "hangup"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "actuators": []
+        }
+    ]
+}
