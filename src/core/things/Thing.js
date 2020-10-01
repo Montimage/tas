@@ -8,6 +8,7 @@ const {
   DS_DATASET,
   DS_DATA_GENERATOR,
 } = require("../DataSourceType");
+const { checkMQTTTopic } = require("../utils");
 
 const findDevice = (id, objectId, array) => {
   for (let index = 0; index < array.length; index++) {
@@ -51,8 +52,11 @@ class Device {
       timeToFailed,
       testBroker,
       productionBroker,
+      isReplayingStreams,
       sensors,
       actuators,
+      upStreams,
+      downStreams,
     } = configs;
     // Configuration to create a Device
     this.id = id;
@@ -65,6 +69,10 @@ class Device {
     this.actuatorsConfig = actuators;
     this.dataStorageConfig = dataStorage;
     this.newDatasetConfig = newDataset;
+    this.isReplayingStreams =
+      isReplayingStreams !== undefined ? isReplayingStreams : false;
+    this.upStreams = upStreams ? upStreams : [];
+    this.downStreams = downStreams ? downStreams : [];
     this.report = report;
     this.datasetId = datasetId;
     this.globalReplayOptions = replayOptions;
@@ -132,29 +140,48 @@ class Device {
    */
   publishDataToTestBroker(topic, data) {
     const currentTime = Date.now();
-    for (let index = 0; index < this.sensors.length; index++) {
-      const sensor = this.sensors[index];
-      if (sensor.topic === topic) {
-        // publish data to the test broker
-        this.testBroker.publish(topic, data);
-        // store data into the data storage
-        if (this.dataStorage) {
-          const event = {
-            timestamp: currentTime,
-            topic,
-            datasetId: this.newDatasetConfig.id,
-            isSensorData: true,
-            values: data,
-          };
-          this.dataStorage.saveEvent(event);
-        }
-        // Update statistics
-        this.lastActivity = currentTime;
-        this.numberOfSentData++;
-        return;
+    if (this.isReplayingStreams) {
+      this.testBroker.publish(topic, data);
+      // store data into the data storage
+      if (this.dataStorage) {
+        const event = {
+          timestamp: currentTime,
+          topic,
+          datasetId: this.newDatasetConfig.id,
+          isSensorData: true,
+          values: data,
+        };
+        this.dataStorage.saveEvent(event);
       }
+      // Update statistics
+      this.lastActivity = currentTime;
+      this.numberOfSentData++;
+    } else {
+      for (let index = 0; index < this.sensors.length; index++) {
+        const sensor = this.sensors[index];
+        if (checkMQTTTopic(topic, sensor.topic)) {
+          // publish data to the test broker
+          this.testBroker.publish(topic, data);
+          // store data into the data storage
+          if (this.dataStorage) {
+            const event = {
+              timestamp: currentTime,
+              topic,
+              datasetId: this.newDatasetConfig.id,
+              isSensorData: true,
+              values: data,
+            };
+            this.dataStorage.saveEvent(event);
+          }
+          // Update statistics
+          this.lastActivity = currentTime;
+          this.numberOfSentData++;
+          return;
+        }
+      }
+      console.error("Cannot find the sensor with the topic: ", topic);
     }
-    console.error("Cannot find the sensor with the topic: ", topic);
+
   }
 
   /**
@@ -207,7 +234,7 @@ class Device {
     // find the sensor by topic - publisher
     for (let index = 0; index < this.sensors.length; index++) {
       const sensor = this.sensors[index];
-      if (sensor.topic === topic) {
+      if (checkMQTTTopic(topic, sensor.topic)) {
         this.publishDataToTestBroker(topic, message);
         // Update the statistics
         this.numberOfForwardedData++;
@@ -241,7 +268,7 @@ class Device {
    * @param {Object} sensorData Sensor data
    * @param {String} objectId The object id of the sensor follow IP Smart Object Standard
    */
-  addSensor(id, sensorData, objectId = null) {
+  addSensor(id, sensorData, objectId = null, events = null) {
     if (findDevice(id, objectId, this.sensors) > -1) {
       console.error(
         `[${this.id}] Sensor ID ${id} ${objectId} has already existed!`
@@ -288,75 +315,28 @@ class Device {
         );
         return null;
       }
-    } else if (dataSource === DS_DATASET) {
-      // Data source from a database
-      if (!this.datasetId) {
-        console.error(`[${this.id}] Cannot create a sensor! Missing datasetId`);
-        return null;
-      }
-      let startTime = 0;
-      let endTime = Date.now();
-      if (replayOptions) {
-        if (replayOptions.startTime) startTime = replayOptions.startTime;
-        if (replayOptions.endTime) endTime = replayOptions.endTime;
-      }
-
-      this.dataStorage.getEvents(
-        topic,
-        this.datasetId,
+    } else if (dataSource === DS_DATASET && events) {
+      const newSensor = new Sensor(
+        id,
         {
-          startTime,
-          endTime,
+          ...sensorData,
+          replayOptions,
+          topic: topic,
         },
-        (err, events) => {
-          if (err) {
-            console.error(
-              `[${this.id}] Cannot create a sensor! Failed to get events data`,
-              err
-            );
-            return null;
-          } else if (!events || events.length === 0) {
-            console.error(
-              `[${this.id}] Cannot create a sensor! No events data ${id}, ${topic}, ${this.datasetId}`
-            );
-            return null;
-          }
-          // startTime = events[0].timestamp - 1000;
-          // if (startReplayingTime > startTime) {
-          //   startReplayingTime = startTime; // back 1s
-          //   // Update for other sensors
-          //   console.log(`New startReplayingTime: ${startReplayingTime}`);
-          //   console.log(`Timestamp - 0: ${events[0].timestamp}`);
-          //   console.log(
-          //     `Timestamp - n: ${events[events.length - 1].timestamp}`
-          //   );
-          //   this.sensors.map((s) =>
-          //     s.updateStartReplayingTime(startReplayingTime)
-          //   );
-          // }
-          const newSensor = new Sensor(
-            id,
-            {
-              ...sensorData,
-              replayOptions,
-              topic: topic,
-            },
-            null,
-            (topic, message) => {
-              this.publishDataToTestBroker(topic, message);
-            },
-            events,
-            startReplayingTime
-          );
-          this.sensors.push(newSensor);
-          // HOT reload sensor
-          if (this.status === SIMULATING) {
-            this.sensors[this.sensors.length - 1].start();
-          }
-          console.log(
-            `[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`
-          );
-        }
+        null,
+        (topic, message) => {
+          this.publishDataToTestBroker(topic, message);
+        },
+        events,
+        startReplayingTime
+      );
+      this.sensors.push(newSensor);
+      // HOT reload sensor
+      if (this.status === SIMULATING) {
+        this.sensors[this.sensors.length - 1].start();
+      }
+      console.log(
+        `[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`
       );
     } else {
       // Data will be generated in run time
@@ -558,80 +538,143 @@ class Device {
               // Mark the startPlayingtime
               let startTime = 0;
               let endTime = Date.now();
-              if(this.replayOptions) {
-                if (this.replayOptions.startTime) startTime = this.replayOptions.startTime;
-                if (this.replayOptions.endTime) endTime = this.replayOptions.endTime;
+              if (this.globalReplayOptions) {
+                if (this.globalReplayOptions.startTime)
+                  startTime = this.globalReplayOptions.startTime;
+                if (this.globalReplayOptions.endTime)
+                  endTime = this.globalReplayOptions.endTime;
               }
-
-              this.dataStorage.getFirstEventTimestamp(this.datasetId, startTime, endTime, (err4, ts) => {
-                if (err4) {
-                  console.error(`[${this.id}] Failed to get the first event timestamp`);
-                  console.error(err4);
-                } else {
-                  if (startReplayingTime > ts) startReplayingTime = ts;
-                  // Add sensors which have data source from data storage
-                  this.sensorsConfig.map((sensorData) => {
-                    const { id, scale, enable, objectId, dataSource } = sensorData;
-                    if (enable && dataSource === DS_DATASET) {
-                      console.log("Going to add a DATASET sensor");
-                      let nbSensors = scale ? scale : 1;
-                      if (nbSensors === 1) {
-                        this.addSensor(id, sensorData, objectId);
-                      } else {
-                        for (
-                          let sensorIndex = 0;
-                          sensorIndex < nbSensors;
-                          sensorIndex++
-                        ) {
-                          const sID = `${id}-${sensorIndex}`;
-                          this.addSensor(sID, sensorData, objectId);
+              this.dataStorage.getAllEvents(this.datasetId, startTime, endTime, (err4, events) => {
+                if (!err4 && events && events.length > 0) {
+                  const firstEventTimestamp = events[0].timestamp;
+                  if (startReplayingTime > firstEventTimestamp) startReplayingTime = firstEventTimestamp;
+                  console.log(`[${this.id}]firstEventTimestamp: ${startReplayingTime}`);
+                  console.log(`[${this.id}]startReplayingTime: ${startReplayingTime}`);
+                  if (this.isReplayingStreams) {
+                    // REPLAY STREAM DATA
+                    // Only select the event that has the topic matches with the list of upStreams
+                    const matchedEvents = [];
+                    for (let eventIndex = 0; eventIndex < events.length; eventIndex++) {
+                      const event = events[eventIndex];
+                      for (let usIndex = 0; usIndex < this.upStreams.length; usIndex++) {
+                        const topicPattern = this.upStreams[usIndex];
+                        if (checkMQTTTopic(event.topic, topicPattern)) {
+                          matchedEvents.push(event);
+                          break;
                         }
                       }
                     }
-                  });
+                    const singleSensorId = `sensor-id-${Date.now()}`;
+                    const singleSensorData = {
+                      id: singleSensorId,
+                      scale: 1,
+                      enable: true,
+                      objectId: null,
+                      dataSource: DS_DATASET
+                    };
+
+                    this.addSensor(singleSensorId, singleSensorData, null, matchedEvents);
+                    // Create a single sensor with the dataSource === DS_DATASET
+                  } else {
+                    // Add sensors which have data source from data storage
+                    this.sensorsConfig.map((sensorData) => {
+                      const {
+                        id,
+                        topic,
+                        scale,
+                        enable,
+                        objectId,
+                        dataSource,
+                      } = sensorData;
+                      if (enable && dataSource === DS_DATASET && topic) {
+                        console.log("Going to add a DATASET sensor");
+                        // filter the events match the sensor's topics
+                        const matchedEvents = [];
+                        for (let eventIndex = 0; eventIndex < events.length; eventIndex++) {
+                          const event = events[eventIndex];
+                          if (checkMQTTTopic(event.topic, topic)) {
+                            matchedEvents.push(event);
+                          }
+                        }
+                        let nbSensors = scale ? scale : 1;
+                        if (nbSensors === 1) {
+                          this.addSensor(id, sensorData, objectId, matchedEvents);
+                        } else {
+                          for (
+                            let sensorIndex = 0;
+                            sensorIndex < nbSensors;
+                            sensorIndex++
+                          ) {
+                            const sID = `${id}-${sensorIndex}`;
+                            this.addSensor(sID, sensorData, objectId, matchedEvents);
+                          }
+                        }
+                      }
+                    });
+                  }
                 }
-              });              
+              });
             }
           });
         } else {
           console.log(`[${this.id}] NO DATA STORAGE`);
         }
         this.status = ONLINE;
-        // Add sensors
-        for (
-          let sensorIndex = 0;
-          sensorIndex < this.sensorsConfig.length;
-          sensorIndex++
-        ) {
-          const sensorData = this.sensorsConfig[sensorIndex];
-          const { id, scale, enable, objectId, dataSource } = sensorData;
-          if (enable === false || dataSource !== DS_DATA_GENERATOR) continue;
-          let nbSensors = scale ? scale : 1;
-          if (nbSensors === 1) {
-            this.addSensor(id, sensorData, objectId);
-          } else {
-            for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
-              const sID = `${id}-${sensorIndex}`;
-              this.addSensor(sID, sensorData, objectId);
+        if (this.isReplayingStreams) {
+          // Add the downStreams by creating FAKE actuators
+          for (let dsIndex = 0; dsIndex < this.downStreams.length; dsIndex++) {
+            const dsTopic = this.downStreams[dsIndex];
+            const actuatorId = `actuator-${dsIndex}`;
+            const actuatorData = {
+              id: actuatorId,
+              scale: 1,
+              enable: true,
+              objectId: null,
+              topic: dsTopic,
+            };
+            this.addActuator(actuatorId, actuatorData, null);
+          }
+        } else {
+          // Add sensors
+          for (
+            let sensorIndex = 0;
+            sensorIndex < this.sensorsConfig.length;
+            sensorIndex++
+          ) {
+            const sensorData = this.sensorsConfig[sensorIndex];
+            const { id, scale, enable, objectId, dataSource } = sensorData;
+            if (enable === false || dataSource !== DS_DATA_GENERATOR) continue;
+            let nbSensors = scale ? scale : 1;
+            if (nbSensors === 1) {
+              this.addSensor(id, sensorData, objectId);
+            } else {
+              for (
+                let sensorIndex = 0;
+                sensorIndex < nbSensors;
+                sensorIndex++
+              ) {
+                const sID = `${id}-${sensorIndex}`;
+                this.addSensor(sID, sensorData, objectId);
+              }
             }
           }
-        }
-        // Add actuators
-        for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
-          const actuatorData = this.actuators[aIndex];
-          const { id, scale, enable, objectId } = actuatorData;
-          if (enable === false) continue;
-          let nbActuators = scale ? scale : 1;
-          if (nbActuators === 1) {
-            this.addActuator(id, actuatorData, objectId);
-          } else {
-            for (
-              let actuatorIndex = 0;
-              actuatorIndex < nbActuators;
-              actuatorIndex++
-            ) {
-              const actID = `${id}-${actuatorIndex}`;
-              this.addActuator(actID, actuatorData, objectId);
+          // Add actuators
+          for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
+            const actuatorData = this.actuators[aIndex];
+            const { id, scale, enable, objectId } = actuatorData;
+            if (enable === false) continue;
+            let nbActuators = scale ? scale : 1;
+            if (nbActuators === 1) {
+              this.addActuator(id, actuatorData, objectId);
+            } else {
+              for (
+                let actuatorIndex = 0;
+                actuatorIndex < nbActuators;
+                actuatorIndex++
+              ) {
+                const actID = `${id}-${actuatorIndex}`;
+                this.addActuator(actID, actuatorData, objectId);
+              }
             }
           }
         }
@@ -650,7 +693,6 @@ class Device {
       case ONLINE:
         this.startedTime = Date.now();
         // Check for the gateway behaviour
-        this.sensors.map((sensor) => sensor.start());
         this.setStatus(SIMULATING);
         if (
           this.behaviours.indexOf("GATEWAY_DOWN") > -1 &&
@@ -660,6 +702,7 @@ class Device {
             this.stop();
           }, this.timeToFailed * 1000);
         }
+        this.sensors.map((sensor) => sensor.start());
         this.actuators.map((actuator) => actuator.start());
         break;
       case OFFLINE:

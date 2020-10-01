@@ -17,7 +17,7 @@ import { getLastPath, updateObjectByPath } from "../utils";
 import EventStream from "../components/EventStream/EventStream";
 
 /**
- * 
+ *
 - id
 - createdAt
 - topologyFileName
@@ -85,7 +85,7 @@ class ReportPage extends Component {
         testCampaignId,
       } = report;
       if (!this.state.fetchedOriginalEvents) {
-        this.props.fetchOriginalEvents(originalDatasetId);
+        this.props.fetchOriginalEvents(originalDatasetId, startTime ? startTime: 0, endTime ? endTime : Date.now());
         this.setState({ fetchedOriginalEvents: true });
       }
 
@@ -180,7 +180,7 @@ class ReportPage extends Component {
     }
     return (
       <LayoutPage pageTitle={`Report ${_id}`} pageSubTitle="Report detail">
-        <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+        <Form labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
           <FormTextNotEditableItem label="Id" value={_id} />
           <FormTextNotEditableItem
             label="Created At"
@@ -261,8 +261,8 @@ const mapPropsToStates = ({ reports }) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  fetchOriginalEvents: (datasetId) =>
-    dispatch(requestOriginalEvents(datasetId)),
+  fetchOriginalEvents: (datasetId, startTime, endTime) =>
+    dispatch(requestOriginalEvents({datasetId, startTime, endTime})),
   fetchNewEvents: (datasetId) => dispatch(requestNewEvents(datasetId)),
   fetchReport: (reportId) => dispatch(requestReport(reportId)),
   updateReport: (originalId, updatedReport) =>

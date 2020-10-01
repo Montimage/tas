@@ -34,9 +34,9 @@ class DataReplayer extends DeviceDataSource {
     setTimeout(() => {
       if (this.status === SIMULATING) {
         const {
-          values
+          values, topic
         } = event;
-        this.dataHandler(values);
+        this.dataHandler(values, topic);
         if (isLastEvent) {
           if (!this.repeat) {
             console.log(`[${this.id}] Finished!`);
@@ -60,6 +60,7 @@ class DataReplayer extends DeviceDataSource {
     for (let index = 0; index < this.events.length; index++) {
       const event = this.events[index];
       const waitingTime = (event.timestamp - startTime) / this.speedup;
+      if (index === 0) console.log(`First event timestamp: ${event.timestamp}, waiting time ${waitingTime}`);
       if (this.status === SIMULATING) {
         this.replayEvent(event, waitingTime, index === this.events.length - 1);
       }

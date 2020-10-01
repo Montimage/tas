@@ -40,8 +40,8 @@ const eventSchema = new Schema({
 
 eventSchema.statics.findEventsWithPagingOptions = function (options, page, callback) {
   this.find(options)
-    .limit(1000)
-    .skip(page * 1000)
+    .limit(200)
+    .skip(page * 200)
     .sort({
       timestamp: 1
     })
@@ -87,7 +87,7 @@ eventSchema.statics.findEventsBetweenTimes = function (
   callback
 ) {
 
-  const options = {
+  const options = {...filter,
     $and: [{
         timestamp: {
           $gte: Number(startTime)
@@ -100,10 +100,7 @@ eventSchema.statics.findEventsBetweenTimes = function (
       }
     ]
   };
-
-  if (filter) {
-    options['$and'].push(filter);
-  }
+  // console.log(JSON.stringify(filter));
   return this.findEventsWithOptions(options, callback);
 };
 

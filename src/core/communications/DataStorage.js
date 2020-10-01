@@ -125,6 +125,24 @@ class DataStorage {
     );
   }
 
+  getAllEvents(datasetId, startTime, endTime, callback) {
+    EventSchema.findEventsBetweenTimes(
+      { datasetId },
+      startTime ? startTime: 0,
+      endTime ? endTime: Date.now(),
+      (err, events) => {
+        if (err) {
+          console.error("[DataStorage] Cannot get events!");
+          console.error(datasetId);
+          console.error(err);
+          return callback(err);
+        } else {
+          return callback(null, events);
+        }
+      }
+    );
+  }
+
   getEvents(topic, datasetId, timeConstraints, callback) {
     let { startTime, endTime } = timeConstraints;
     if (!startTime) startTime = 0;

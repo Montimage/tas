@@ -7,12 +7,34 @@ const { EventSchema, dbConnector } = require("./db-connector");
 router.get("/", dbConnector, function (req, res, next) {
   let page = req.query.page;
   if (!page) page = 0;
-  let filter = null;
+  let filter = {};
+  let startTime = req.query.startTime;
+  if (!startTime) {
+    startTime = 0;
+  }
+  let endTime = req.query.endTime;
+  if (!endTime) {
+    endTime = Date.now();
+  }
+  filter = {
+    ...filter,
+    $and: [
+      {
+        timestamp: {
+          $gte: Number(startTime),
+        },
+      },
+      {
+        timestamp: {
+          $lte: Number(endTime),
+        },
+      },
+    ],
+  };
   const datasetId = req.query.datasetId;
   if (datasetId) {
-    filter = { datasetId };
+    filter = { ...filter, datasetId };
   }
-
   const topic = req.query.topic;
   if (topic) {
     filter = { ...filter, topic };

@@ -49,6 +49,32 @@ import {
 
 const { Text } = Typography;
 
+const addNewDevice = () => {
+  const currentTime = Date.now();
+  return {
+    id: `id-new-device-${currentTime}`,
+    name: `name-new-device-${currentTime}`,
+    enable: false,
+    scale: 1,
+    behaviours: [],
+    timeToDown: 0,
+    testBroker: {
+      protocol: "MQTT",
+      connConfig: {
+        host: "localhost",
+        port: 1883,
+        options: null,
+      },
+    },
+    productionBroker: null,
+    isReplayingStreams: false,
+    sensors: [],
+    actuators: [],
+    upStreams: [],
+    downStreams: [],
+  };
+};
+
 const addNewSensor = () => {
   const currentTime = Date.now();
   return {
@@ -192,207 +218,302 @@ const ModelDeviceItem = ({
           Add Production Broker
         </Button>
       )}
-      <Divider orientation="left">Sensors</Divider>
-      <List
-        header={<strong>Sensors ({data.sensors.length})</strong>}
-        footer={
-          <Button
-            onClick={() => {
-              const newSensor = addNewSensor();
-              if (data.sensors.length === 0) {
-                onChange("sensors", [newSensor]);
-              } else {
-                // const newSensors = [...data.sensors, newSensor];
-                onChange(`sensors[${data.sensors.length}]`, newSensor);
-              }
-            }}
-          >
-            Add New Sensor
-          </Button>
-        }
-        size="small"
-        bordered
-        dataSource={data.sensors}
-        renderItem={(item, index) => (
-          <List.Item
-            actions={[
-              <Switch
-                checkedChildren="Enable"
-                unCheckedChildren="Disable"
-                defaultChecked={item.enable ? true : false}
-                onChange={() =>
-                  onChange(`sensors[${index}].enable`, !item.enable)
-                }
-              />,
+
+      <FormSwitchItem
+        label="Is Replaying Streams"
+        checked={data.isReplayingStreams}
+        onChange={(v) => onChange("isReplayingStreams", v)}
+        checkedChildren="Replaying Streams"
+        unCheckedChildren="Sensor simulation"
+      />
+      {data.isReplayingStreams ? (
+        <Fragment>
+          <List
+            header={<strong>Upstreams ({data.upStreams.length})</strong>}
+            footer={
               <Button
-                size="small"
-                key="edit"
-                onClick={() => changeModalId(item.id)}
-              >
-                Edit
-              </Button>,
-              <Button
-                size="small"
-                key="duplicate"
                 onClick={() => {
-                  const newSensor = {
-                    ...item,
-                    id: `${item.id}-duplicated`,
-                    name: `${item.name} [duplicaed]`,
-                  };
-                  let newSensors = [...data.sensors, newSensor];
-                  onChange("sensors", newSensors);
+                  const newUpStreams = [
+                    ...data.upStreams,
+                    `new-up-stream-${Date.now()}`,
+                  ];
+                  onChange("upStreams", newUpStreams);
                 }}
               >
-                Duplicate
-              </Button>,
+                Add New UpStream
+              </Button>
+            }
+            size="small"
+            bordered
+            dataSource={data.upStreams}
+            renderItem={(item, index) => (
+              <List.Item
+                actions={[
+                  <Button
+                    size="small"
+                    danger
+                    key="delete"
+                    onClick={() => {
+                      if (data.upStreams.length === 1) {
+                        onChange("upStreams", []);
+                      } else {
+                        let newUpStreams = [...data.upStreams];
+                        newUpStreams.splice(index, 1);
+                        onChange("upStreams", newUpStreams);
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>,
+                ]}
+              >
+                <Text
+                  editable={{
+                    onChange: (v) => onChange(`upStreams[${index}]`, v),
+                  }}
+                >
+                  {item}
+                </Text>
+              </List.Item>
+            )}
+          />
+          <p></p>
+          <List
+            header={<strong>Downstreams ({data.downStreams.length})</strong>}
+            footer={
               <Button
-                size="small"
-                danger
-                key="delete"
                 onClick={() => {
-                  if (data.sensors.length === 1) {
-                    onChange("sensors", []);
+                  const newDownStreams = [
+                    ...data.downStreams,
+                    `new-down-stream-${Date.now()}`,
+                  ];
+                  onChange("downStreams", newDownStreams);
+                }}
+              >
+                Add New DownStream
+              </Button>
+            }
+            size="small"
+            bordered
+            dataSource={data.downStreams}
+            renderItem={(item, index) => (
+              <List.Item
+                actions={[
+                  <Button
+                    size="small"
+                    danger
+                    key="delete"
+                    onClick={() => {
+                      if (data.downStreams.length === 1) {
+                        onChange("downStreams", []);
+                      } else {
+                        let newDownstreams = [...data.downStreams];
+                        newDownstreams.splice(index, 1);
+                        onChange("downStreams", newDownstreams);
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>,
+                ]}
+              >
+                <Text
+                  value={item}
+                  editable={{
+                    onChange: (v) => onChange(`downStreams[${index}]`, v),
+                  }}
+                >
+                  {item}
+                </Text>
+              </List.Item>
+            )}
+          />
+        </Fragment>
+      ) : (
+        <Fragment>
+          <Divider orientation="left">Sensors</Divider>
+          <List
+            header={<strong>Sensors ({data.sensors.length})</strong>}
+            footer={
+              <Button
+                onClick={() => {
+                  const newSensor = addNewSensor();
+                  if (data.sensors.length === 0) {
+                    onChange("sensors", [newSensor]);
                   } else {
-                    let newSensors = [...data.sensors];
-                    newSensors.splice(index, 1);
-                    onChange("sensors", newSensors);
+                    // const newSensors = [...data.sensors, newSensor];
+                    onChange(`sensors[${data.sensors.length}]`, newSensor);
                   }
                 }}
               >
-                Delete
-              </Button>,
-            ]}
-          >
-            <Text>{item.name}</Text>
-            <SensorModal
-              enable={selectedModalId === item.id}
-              sensorData={item}
-              deviceId={data.id}
-              onOK={(dataPath, value) =>
-                onChange(`sensors[${index}].${dataPath}`, value)
-              }
-              onClose={() => {
-                changeModalId(null);
-              }}
-            />
-          </List.Item>
-        )}
-      />
-      <p></p>
-      <Divider orientation="left">Actuator </Divider>
-      <List
-        header={<strong>Actuators ({data.actuators.length})</strong>}
-        footer={
-          <Button
-            onClick={() => {
-              const newActuator = addNewActuator();
-              if (data.actuators.length === 0) {
-                onChange("actuators", [newActuator]);
-              } else {
-                // const newActuators = [...data.actuators, newActuator];
-                onChange(`actuators[${data.actuators.length}]`, newActuator);
-              }
-            }}
-          >
-            Add New Actuator
-          </Button>
-        }
-        size="small"
-        bordered
-        dataSource={data.actuators}
-        renderItem={(item, index) => (
-          <List.Item
-            actions={[
-              <Switch
-                checkedChildren="Enable"
-                unCheckedChildren="Disable"
-                defaultChecked={item.enable ? true : false}
-                onChange={() =>
-                  onChange(`actuators[${index}].enable`, !item.enable)
-                }
-              />,
-              <Button
-                size="small"
-                key="edit"
-                onClick={() => changeModalId(item.id)}
+                Add New Sensor
+              </Button>
+            }
+            size="small"
+            bordered
+            dataSource={data.sensors}
+            renderItem={(item, index) => (
+              <List.Item
+                actions={[
+                  <Switch
+                    checkedChildren="Enable"
+                    unCheckedChildren="Disable"
+                    defaultChecked={item.enable ? true : false}
+                    onChange={() =>
+                      onChange(`sensors[${index}].enable`, !item.enable)
+                    }
+                  />,
+                  <Button
+                    size="small"
+                    key="edit"
+                    onClick={() => changeModalId(item.id)}
+                  >
+                    Edit
+                  </Button>,
+                  <Button
+                    size="small"
+                    key="duplicate"
+                    onClick={() => {
+                      const newSensor = {
+                        ...item,
+                        id: `${item.id}-duplicated`,
+                        name: `${item.name} [duplicaed]`,
+                      };
+                      let newSensors = [...data.sensors, newSensor];
+                      onChange("sensors", newSensors);
+                    }}
+                  >
+                    Duplicate
+                  </Button>,
+                  <Button
+                    size="small"
+                    danger
+                    key="delete"
+                    onClick={() => {
+                      if (data.sensors.length === 1) {
+                        onChange("sensors", []);
+                      } else {
+                        let newSensors = [...data.sensors];
+                        newSensors.splice(index, 1);
+                        onChange("sensors", newSensors);
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>,
+                ]}
               >
-                Edit
-              </Button>,
+                <Text>{item.name}</Text>
+                <SensorModal
+                  enable={selectedModalId === item.id}
+                  sensorData={item}
+                  deviceId={data.id}
+                  onOK={(dataPath, value) =>
+                    onChange(`sensors[${index}].${dataPath}`, value)
+                  }
+                  onClose={() => {
+                    changeModalId(null);
+                  }}
+                />
+              </List.Item>
+            )}
+          />
+          <p></p>
+          <Divider orientation="left">Actuator </Divider>
+          <List
+            header={<strong>Actuators ({data.actuators.length})</strong>}
+            footer={
               <Button
-                size="small"
-                key="duplicate"
                 onClick={() => {
-                  const newActuator = {
-                    ...item,
-                    id: `${item.id}-duplicated`,
-                    name: `${item.name} [duplicaed]`,
-                  };
-                  let newActuators = [...data.actuators, newActuator];
-                  onChange("actuators", newActuators);
-                }}
-              >
-                Duplicate
-              </Button>,
-              <Button
-                size="small"
-                danger
-                key="delete"
-                onClick={() => {
-                  if (data.actuators.length === 1) {
-                    onChange("actuators", []);
+                  const newActuator = addNewActuator();
+                  if (data.actuators.length === 0) {
+                    onChange("actuators", [newActuator]);
                   } else {
-                    let newActuators = [...data.actuators];
-                    newActuators.splice(index, 1);
-                    onChange("actuators", newActuators);
+                    // const newActuators = [...data.actuators, newActuator];
+                    onChange(
+                      `actuators[${data.actuators.length}]`,
+                      newActuator
+                    );
                   }
                 }}
               >
-                Delete
-              </Button>,
-            ]}
-          >
-            <Text>{item.name}</Text>
-            <ActuatorModal
-              enable={selectedModalId === item.id}
-              actuatorData={item}
-              deviceId={data.id}
-              onOK={(dataPath, value) =>
-                onChange(`actuators[${index}].${dataPath}`, value)
-              }
-              onClose={() => {
-                changeModalId(null);
-              }}
-            />
-          </List.Item>
-        )}
-      />
+                Add New Actuator
+              </Button>
+            }
+            size="small"
+            bordered
+            dataSource={data.actuators}
+            renderItem={(item, index) => (
+              <List.Item
+                actions={[
+                  <Switch
+                    checkedChildren="Enable"
+                    unCheckedChildren="Disable"
+                    defaultChecked={item.enable ? true : false}
+                    onChange={() =>
+                      onChange(`actuators[${index}].enable`, !item.enable)
+                    }
+                  />,
+                  <Button
+                    size="small"
+                    key="edit"
+                    onClick={() => changeModalId(item.id)}
+                  >
+                    Edit
+                  </Button>,
+                  <Button
+                    size="small"
+                    key="duplicate"
+                    onClick={() => {
+                      const newActuator = {
+                        ...item,
+                        id: `${item.id}-duplicated`,
+                        name: `${item.name} [duplicaed]`,
+                      };
+                      let newActuators = [...data.actuators, newActuator];
+                      onChange("actuators", newActuators);
+                    }}
+                  >
+                    Duplicate
+                  </Button>,
+                  <Button
+                    size="small"
+                    danger
+                    key="delete"
+                    onClick={() => {
+                      if (data.actuators.length === 1) {
+                        onChange("actuators", []);
+                      } else {
+                        let newActuators = [...data.actuators];
+                        newActuators.splice(index, 1);
+                        onChange("actuators", newActuators);
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>,
+                ]}
+              >
+                <Text>{item.name}</Text>
+                <ActuatorModal
+                  enable={selectedModalId === item.id}
+                  actuatorData={item}
+                  deviceId={data.id}
+                  onOK={(dataPath, value) =>
+                    onChange(`actuators[${index}].${dataPath}`, value)
+                  }
+                  onClose={() => {
+                    changeModalId(null);
+                  }}
+                />
+              </List.Item>
+            )}
+          />
+        </Fragment>
+      )}
     </Form>
   </CollapseForm>
 );
-
-const newDevice = () => {
-  const currentTime = Date.now();
-  return {
-    id: `id-new-device-${currentTime}`,
-    name: `name-new-device-${currentTime}`,
-    enable: false,
-    scale: 1,
-    behaviours: [],
-    timeToDown: 0,
-    testBroker: {
-      protocol: "MQTT",
-      connConfig: {
-        host: "localhost",
-        port: 1883,
-        options: null,
-      },
-    },
-    productionBroker: null,
-    sensors: [],
-    actuators: [],
-  };
-};
 
 class ModelPage extends Component {
   constructor(props) {
@@ -678,7 +799,7 @@ class ModelPage extends Component {
               <p>Number of devices: {tempModel.devices.length}</p>
               <Button
                 onClick={() => {
-                  const newDev = newDevice();
+                  const newDev = addNewDevice();
                   let newDevices = [...tempModel.devices, newDev];
                   this.onDataChange("devices", newDevices);
                 }}
@@ -720,7 +841,7 @@ class ModelPage extends Component {
           ) : (
             <Button
               onClick={() => {
-                const newDev = newDevice();
+                const newDev = addNewDevice();
                 this.onDataChange("devices", [newDev]);
               }}
             >

@@ -27,7 +27,7 @@ import EventStream from "../components/EventStream/EventStream";
 - tags
 - description
 - createdAt/ lastModified
-- source:  
+- source:
    + GENERATED
    + MUTATED
    + RECORDED
@@ -244,7 +244,7 @@ class DatasetPage extends Component {
         pageTitle={name}
         pageSubTitle="View and update the test case detail"
       >
-        <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+        <Form labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
           {isNew ? (
             <Fragment>
               <FormEditableTextItem

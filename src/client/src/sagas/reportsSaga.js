@@ -20,8 +20,8 @@ import {
 
 function* handleRequestOriginalEvents(action) {
   try {
-    const datasetId = action.payload;
-    const events = yield call(() => sendRequestEventsByDatasetId(datasetId));
+    const {datasetId, startTime, endTime} = action.payload;
+    const events = yield call(() => sendRequestEventsByDatasetId(datasetId, startTime, endTime));
     yield put(setOriginalEvents(events));
     // dispatch data
   } catch (error) {

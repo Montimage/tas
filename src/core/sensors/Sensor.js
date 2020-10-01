@@ -77,7 +77,7 @@ class Sensor {
     };
   }
 
-  dataHandler(values) {
+  dataHandler(values, topic = null) {
     if (typeof values === 'object') {
       values["timestamp"] = Date.now();
       values["instanceId"] = this.id;
@@ -88,8 +88,8 @@ class Sensor {
         values["objectId"] = this.objectId;
       }
     }
-    console.log(`Sensor ${this.id} published data: ${typeof values ==="object" ? JSON.stringify(values): values}`);
-    this.publishDataFct(this.topic, values);
+    console.log(`Sensor ${this.id} published data on topic: ${topic ? topic: this.topic}`);
+    this.publishDataFct(topic ? topic : this.topic, values);
     // Statistics
     this.lastActivity = Date.now();
     this.lastSentData = values;
@@ -115,7 +115,7 @@ class Sensor {
           console.log(`[SENSOR] ${this.id} Number of events to be replayed: ${this.events.length} with replayOptions: ${JSON.stringify(this.replayOptions)}`);
           this.dataSource = new DataReplayer(
             this.id,
-            (values) => this.dataHandler(values),
+            (values, topic = null) => this.dataHandler(values, topic),
             null,
             this.replayOptions,
             this.events,
@@ -125,7 +125,7 @@ class Sensor {
         } else {
           this.dataSource = new DataGenerator(
             this.id,
-            (values) => this.dataHandler(values),
+            (values, topic = null) => this.dataHandler(values, topic),
             null,
             this.dataSpecs,
             this.objectId,
