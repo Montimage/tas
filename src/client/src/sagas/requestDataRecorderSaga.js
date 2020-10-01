@@ -19,9 +19,9 @@ import {
 import {
   setDataRecorder,
   setNotification,
-  setAllDataRecorders,  
-  deleteDataRecorderOK,  
-  duplicateDataRecorderOK,  
+  setAllDataRecorders,
+  deleteDataRecorderOK,
+  duplicateDataRecorderOK,
   addNewDataRecorderOK,
   updateDataRecorderOK,
   setDataRecorderStatus
@@ -39,7 +39,7 @@ function* handleRequestDataRecorder(action) {
   }
 }
 
-function* handleRequestDeleteDataRecorder(action) {  
+function* handleRequestDeleteDataRecorder(action) {
   try {
     const dataRecorderFileName = action.payload;
     yield call(() => requestDeleteDataRecorder(dataRecorderFileName));
@@ -52,7 +52,7 @@ function* handleRequestDeleteDataRecorder(action) {
   }
 }
 
-function* handleRequestDuplicateDataRecorder(action) {  
+function* handleRequestDuplicateDataRecorder(action) {
   try {
     const dataRecorderFileName = action.payload;
     const duplicatedDataRecorder = yield call(() => requestDuplicateDataRecorder(dataRecorderFileName));
@@ -65,7 +65,7 @@ function* handleRequestDuplicateDataRecorder(action) {
   }
 }
 
-function* handleRequestAddNewDataRecorder(action) {  
+function* handleRequestAddNewDataRecorder(action) {
   try {
     const dataRecorder = action.payload;
     const dataRecorderFileName = yield call(() => uploadDataRecorder(dataRecorder));
@@ -78,7 +78,7 @@ function* handleRequestAddNewDataRecorder(action) {
   }
 }
 
-function* handleRequestUpdateDataRecorder(action) {  
+function* handleRequestUpdateDataRecorder(action) {
   try {
     const {dataRecorderFileName, dataRecorder} = action.payload;
     yield call(() => updateDataRecorder(dataRecorderFileName, dataRecorder));
@@ -91,7 +91,7 @@ function* handleRequestUpdateDataRecorder(action) {
   }
 }
 
-function* handleRequestStartDataRecorder(action) {  
+function* handleRequestStartDataRecorder(action) {
   try {
     const dataRecorderFileName = action.payload;
     const status = yield call(() => sendRequestStartDataRecorder(dataRecorderFileName));
@@ -104,10 +104,11 @@ function* handleRequestStartDataRecorder(action) {
   }
 }
 
-function* handleRequestStopDataRecorder() {  
+function* handleRequestStopDataRecorder(action) {
   try {
-    yield call(() => sendRequestStopDataRecorder());
-    yield put(setDataRecorderStatus(null));
+    const dataRecorderFileName = action.payload;
+    const status = yield call(() => sendRequestStopDataRecorder(dataRecorderFileName));
+    yield put(setDataRecorderStatus(status));
     yield put(setNotification({type: 'success', message: `DataRecorder has been stopped!`}));
     // dispatch data
   } catch (error) {
@@ -116,7 +117,7 @@ function* handleRequestStopDataRecorder() {
   }
 }
 
-function* handleRequestDataRecorderStatus() {  
+function* handleRequestDataRecorderStatus() {
   try {
     const status = yield call(() => sendRequestDataRecorderStatus());
     yield put(setDataRecorderStatus(status));

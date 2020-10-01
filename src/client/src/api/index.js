@@ -184,8 +184,8 @@ export const sendRequestStartDataRecorder = async (dataRecorderFileName) => {
   return data.status;
 }
 
-export const sendRequestStopDataRecorder = async () => {
-  const url = `${URL}/api/data-recorders/stop`;
+export const sendRequestStopDataRecorder = async (fileName) => {
+  const url = `${URL}/api/data-recorders/stop/${fileName}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
@@ -292,8 +292,8 @@ export const requestStartDeploy = async (tool, model) => {
   return data.simulationStatus;
 };
 
-export const sendRequestStopSimulation = async () => {
-  const url = `${URL}/api/simulation/stop`;
+export const sendRequestStopSimulation = async (fileName) => {
+  const url = `${URL}/api/simulation/stop/${fileName}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {

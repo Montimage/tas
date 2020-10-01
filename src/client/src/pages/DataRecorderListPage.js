@@ -8,6 +8,7 @@ import {
   CopyOutlined,
   DeleteOutlined,
   CaretRightOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
@@ -16,7 +17,10 @@ import {
   requestDuplicateDataRecorder,
   requestAddNewDataRecorder,
   requestStartDataRecorder,
+  requestDataRecorderStatus,
+  requestStopDataRecorder,
 } from "../actions";
+import { getObjectId } from "../utils";
 
 class DataRecorderListPage extends Component {
   onUpload(files) {
@@ -34,6 +38,7 @@ class DataRecorderListPage extends Component {
 
   componentDidMount() {
     this.props.fetchAllDataRecorders();
+    this.props.fetchDataRecorderStatus();
   }
 
   render() {
@@ -42,11 +47,26 @@ class DataRecorderListPage extends Component {
       deleteDataRecorder,
       duplicateDataRecorder,
       startDataRecorder,
+      dataRecorderStatus,
+      stopDataRecorder,
     } = this.props;
-    const dataSource = allDataRecorders.map((model, index) => ({
-      name: model,
-      key: index,
-    }));
+    const dataSource = allDataRecorders.map((model, index) => {
+      let recorderId = null;
+      if (model) {
+        recorderId = getObjectId(model.replace(".json", ""));
+      }
+      let isRunning = false;
+      if (dataRecorderStatus) {
+        if (dataRecorderStatus[recorderId]) {
+          if (dataRecorderStatus[recorderId].isRunning) isRunning = true;
+        }
+      }
+      return {
+        name: model,
+        key: index,
+        isRunning,
+      };
+    });
     const columns = [
       {
         title: "Name",
@@ -63,16 +83,26 @@ class DataRecorderListPage extends Component {
         width: 350,
         render: (item) => (
           <Fragment>
-            <a type="button" href={`/data-recorders/${item.name}`}>
+            {item.isRunning ? (
+              <Button
+                style={{ marginRight: 10, paddingRight: 10 }}
+                size="small"
+                type="primary"
+                danger
+                onClick={() => stopDataRecorder(item.name)}
+              >
+                <StopOutlined /> Stop
+              </Button>
+            ) : (
               <Button
                 style={{ marginRight: 10 }}
                 size="small"
                 type="dashed"
                 onClick={() => startDataRecorder(item.name)}
               >
-                <CaretRightOutlined /> Launch
+                <CaretRightOutlined /> Start
               </Button>
-            </a>
+            )}
             <Button
               style={{ marginRight: 10 }}
               size="small"
@@ -143,14 +173,18 @@ class DataRecorderListPage extends Component {
   }
 }
 
-const mapPropsToStates = ({ allDataRecorders }) => ({
+const mapPropsToStates = ({ allDataRecorders, dataRecorderStatus }) => ({
   allDataRecorders,
+  dataRecorderStatus,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   fetchAllDataRecorders: () => dispatch(requestAllDataRecorders()),
+  fetchDataRecorderStatus: () => dispatch(requestDataRecorderStatus()),
   startDataRecorder: (dataRecorderFileName) =>
     dispatch(requestStartDataRecorder(dataRecorderFileName)),
+  stopDataRecorder: (dataRecorderFileName) =>
+    dispatch(requestStopDataRecorder(dataRecorderFileName)),
   deleteDataRecorder: (dataRecorderFileName) =>
     dispatch(requestDeleteDataRecorder(dataRecorderFileName)),
 

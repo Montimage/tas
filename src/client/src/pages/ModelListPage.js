@@ -8,6 +8,7 @@ import {
   CaretRightOutlined,
   CopyOutlined,
   DeleteOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
@@ -17,8 +18,9 @@ import {
   requestAddNewModel,
   requestStartSimulation,
   requestSimulationStatus,
+  requestStopSimulation,
 } from "../actions";
-import SimulationStatus from "../components/SimulationStatus/SimulationStatus";
+import { getObjectId } from "../utils";
 
 class ModelListPage extends Component {
   onUpload(files) {
@@ -36,14 +38,32 @@ class ModelListPage extends Component {
 
   componentDidMount() {
     this.props.fetchAllModels();
+    this.props.fetchSimulationStatus();
   }
 
   render() {
-    const { allModels, deleteModel, duplicateModel, simulationStatus, startSimulation } = this.props;
-    const dataSource = allModels.map((model, index) => ({
-      name: model,
-      key: index,
-    }));
+    const {
+      allModels,
+      deleteModel,
+      duplicateModel,
+      simulationStatus,
+      startSimulation,
+      stopSimulation,
+    } = this.props;
+    const dataSource = allModels.map((model, index) => {
+      const simId = getObjectId(model.replace(".json", ""));
+      // console.log(simId);
+      let isRunning = false;
+      if (simulationStatus) {
+        if (simulationStatus[simId])
+          isRunning = simulationStatus[simId].isRunning;
+      }
+      return {
+        name: model,
+        key: index,
+        isRunning,
+      };
+    });
     const columns = [
       {
         title: "Name",
@@ -58,26 +78,39 @@ class ModelListPage extends Component {
         title: "Action",
         key: "action",
         width: 350,
-        render: item => (
+        render: (item) => (
           <Fragment>
-            <a type="button" href={`/simulation?model=${item.name}`}>
+            {item.isRunning ? (
               <Button
-                style={{marginRight: 10}} size="small" type="dashed" onClick={() => startSimulation(item.name)}>
-                <CaretRightOutlined /> Simulate
+                style={{ marginRight: 10, paddingRight: 34 }}
+                size="small"
+                type="primary"
+                danger
+                onClick={() => stopSimulation(item.name)}
+              >
+                <StopOutlined /> Stop
               </Button>
-            </a>
+            ) : (
+              <a type="button" href={`/simulation?model=${item.name}`}>
+                <Button
+                  style={{ marginRight: 10 }}
+                  size="small"
+                  type="dashed"
+                  onClick={() => startSimulation(item.name)}
+                >
+                  <CaretRightOutlined /> Simulate
+                </Button>
+              </a>
+            )}
+
             <Button
-              style={{marginRight: 10}}
+              style={{ marginRight: 10 }}
               size="small"
               onClick={() => duplicateModel(item.name)}
             >
               <CopyOutlined /> Duplicate
             </Button>
-            <Button
-              size="small"
-              onClick={() => deleteModel(item.name)}
-              danger
-            >
+            <Button size="small" onClick={() => deleteModel(item.name)} danger>
               <DeleteOutlined />
               Delete
             </Button>
@@ -91,10 +124,6 @@ class ModelListPage extends Component {
         pageTitle="Topology"
         pageSubTitle="Defines the topology and the specification of the sensors, actuators and the gateways"
       >
-        {simulationStatus &&
-        <SimulationStatus
-          data={simulationStatus}
-        />}
         <Dropdown
           overlay={
             <Menu>
@@ -149,7 +178,10 @@ const mapDispatchToProps = (dispatch) => ({
   duplicateModel: (modelFileName) =>
     dispatch(requestDuplicateModel(modelFileName)),
   importNewModel: (model) => dispatch(requestAddNewModel(model)),
-  startSimulation: (modelFileName) => dispatch(requestStartSimulation({modelFileName})),
+  startSimulation: (modelFileName) =>
+    dispatch(requestStartSimulation({ modelFileName })),
+  stopSimulation: (modelFileName) =>
+    dispatch(requestStopSimulation(modelFileName)),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(ModelListPage);

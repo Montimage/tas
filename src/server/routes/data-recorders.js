@@ -8,6 +8,7 @@ const {
   writeToFile,
   readDir,
   deleteFile,
+  getObjectId,
 } = require("../../core/utils");
 const dataRecordersPath = `${__dirname}/../data/data-recorders/`;
 let router = express.Router();
@@ -28,31 +29,42 @@ let logsPath = `${__dirname}/../logs/data-recorders/`;
  *    logFile: String
  * }
  */
-let runningStatus = null;
-let stats = null;
-let dataRecorder = null;
+let allRunningStatus = {};
+let allDataRecorders = {};
 
 /**
  * Get the running status of data recorder
  */
 router.get("/status", (req, res, next) => {
   res.send({
-    status: runningStatus,
+    status: allRunningStatus,
   });
 });
 
 // Stop the running data recorder
-router.get("/stop", function (req, res, next) {
-  const copiedStatus = runningStatus;
-  if (dataRecorder) dataRecorder.stop();
-  if (runningStatus) {
-    runningStatus = null;
-    copiedStatus.isRunning = false;
+router.get("/stop/:fileName", function (req, res, next) {
+  const { fileName } = req.params;
+  if (!fileName) {
+    console.error(`[data-recorders] Missing data recorder's name`);
+    res.send({
+      error: 'Missing data recorder name',
+      runningStatus: allRunningStatus,
+    });
+  } else {
+    const recorderId = getObjectId(fileName.replace('.json',''));
+    if (allDataRecorders[recorderId]) {
+      allDataRecorders[recorderId].stop();
+      allDataRecorders[recorderId] = null;
+    }
+    if (allRunningStatus[recorderId]) {
+      allRunningStatus[recorderId].isRunning = false;
+      allRunningStatus[recorderId].endTime = Date.now();
+    }
+    res.send({
+      error: null,
+      status: allRunningStatus,
+    });
   }
-  res.send({
-    error: null,
-    runningStatus: copiedStatus,
-  });
 });
 
 const startRecorder = (model, res) => {
@@ -69,50 +81,64 @@ const startRecorder = (model, res) => {
         error: " Invalid data recorder model",
       });
     } else {
-      const startedTime = Date.now();
-      const logFile = `${name}_${startedTime}.log`;
-      getLogger("DATA-RECORDER", `${logsPath}${logFile}`);
-      if (!dataStorage) {
-        // use default data storage
-        getDataStorage((err, ds) => {
-          if (err) {
-            res.send({
-              error: "No data storage",
-            });
-          } else {
-            dataRecorder = new DataRecorder({ ...model, dataStorage: ds });
-            dataRecorder.start();
-            console.log(
-              "[data-recorders] A data recorder has been started ..."
-            );
-            runningStatus = {
-              isRunning: true,
-              model: name,
-              startedTime,
-              endTime: null,
-              logFile,
-            };
-            res.send({
-              model,
-              status: runningStatus,
-            });
-          }
+      const recorderId = getObjectId(name);
+      if (allDataRecorders[recorderId]) {
+        console.error("[data-recorders] Recorder has already started");
+        console.error(name);
+        res.send({
+          error: `Recorder has already started ${name}`,
         });
       } else {
-        dataRecorder = new DataRecorder(model);
-        dataRecorder.start();
-        console.log("[data-recorders] A data recorder has been started ...");
-        runningStatus = {
-          isRunning: true,
-          model: name,
-          startedTime,
-          endTime: null,
-          logFile,
-        };
-        res.send({
-          model,
-          status: runningStatus,
-        });
+        const startedTime = Date.now();
+        const logFile = `${name}_${startedTime}.log`;
+        getLogger("DATA-RECORDER", `${logsPath}${logFile}`);
+        if (!dataStorage) {
+          // use default data storage
+          getDataStorage((err, ds) => {
+            if (err) {
+              res.send({
+                error: "No data storage",
+              });
+            } else {
+              const dataRecorder = new DataRecorder({
+                ...model,
+                dataStorage: ds,
+              });
+              dataRecorder.start();
+              console.log(
+                "[data-recorders] A data recorder has been started ..."
+              );
+              allDataRecorders[`${recorderId}`] = dataRecorder;
+              allRunningStatus[`${recorderId}`] = {
+                isRunning: true,
+                model: name,
+                startedTime,
+                endTime: null,
+                logFile,
+              };
+              res.send({
+                model,
+                status: allRunningStatus,
+              });
+            }
+          });
+        } else {
+          const dataRecorder = new DataRecorder(model);
+          dataRecorder.start();
+          console.log("[data-recorders] A data recorder has been started ...");
+          allDataRecorders[`${recorderId}`] = dataRecorder;
+          allRunningStatus[`${recorderId}`] = {
+            isRunning: true,
+            model: name,
+            startedTime,
+            endTime: null,
+            logFile,
+          };
+          res.send({
+            model,
+            status: allRunningStatus,
+          });
+        }
       }
     }
   }
@@ -120,33 +146,25 @@ const startRecorder = (model, res) => {
 
 // Start a data recorder
 router.post("/start", (req, res, next) => {
-  if (runningStatus && runningStatus.isRunning) {
-    res.send({
-      error: "A data recorder is running. Only one can be run at the time",
+  const { model, dataRecorderFileName } = req.body;
+  if (dataRecorderFileName) {
+    // start recorder by file name
+    const dataRecorderFile = `${dataRecordersPath}${dataRecorderFileName}`;
+    readJSONFile(dataRecorderFile, (err, data) => {
+      if (err) {
+        console.error(
+          `[data-recorders] Cannot find data recorder ${dataRecorderFileName}`
+        );
+        res.send({
+          error: `[data-recorders] Cannot find data recorder ${dataRecorderFileName}`,
+        });
+      } else {
+        startRecorder(data, res);
+      }
     });
   } else {
-    runningStatus = null;
-    stats = null;
-    const { model, dataRecorderFileName } = req.body;
-    if (dataRecorderFileName) {
-      // start recorder by file name
-      const dataRecorderFile = `${dataRecordersPath}${dataRecorderFileName}`;
-      readJSONFile(dataRecorderFile, (err, data) => {
-        if (err) {
-          console.error(
-            `[data-recorders] Cannot find data recorder ${dataRecorderFileName}`
-          );
-          res.send({
-            error: `[data-recorders] Cannot find data recorder ${dataRecorderFileName}`,
-          });
-        } else {
-          startRecorder(data, res);
-        }
-      });
-    } else {
-      // Start recorder by model
-      startRecorder(model, res);
-    }
+    // Start recorder by model
+    startRecorder(model, res);
   }
 });
 

@@ -14,8 +14,8 @@ import {
 function* handleRequestStartSimulation(action) {
   try {
     const {modelFileName, datasetId, newDataset} = action.payload;
-    const SimulationStatus = yield call(() => sendRequestStartSimulation(modelFileName, datasetId, newDataset));
-    yield put(setSimulationStatus(SimulationStatus));
+    const status = yield call(() => sendRequestStartSimulation(modelFileName, datasetId, newDataset));
+    yield put(setSimulationStatus(status));
     yield put(
       setNotification({
         type: "success",
@@ -29,10 +29,11 @@ function* handleRequestStartSimulation(action) {
   }
 }
 
-function* handleRequestStopSimulation() {
+function* handleRequestStopSimulation(action) {
   try {
-    yield call(() => sendRequestStopSimulation());
-    yield put(setSimulationStatus(null));
+    const fileName = action.payload;
+    const status = yield call(() => sendRequestStopSimulation(fileName));
+    yield put(setSimulationStatus(status));
     yield put(
       setNotification({
         type: "success",

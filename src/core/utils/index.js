@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const mqtt_regex = require("mqtt-regex");
+const crypto = require('crypto');
 
 const checkMQTTTopic = (topic, pattern) => {
   const params = mqtt_regex(pattern).exec(topic);
@@ -246,7 +247,11 @@ const getMax = (array) => {
     max = max > array[index] ? max : array[index];
   }
   return max;
-}
+};
+
+const getObjectId = (str) => {
+  return crypto.createHash('md5').update(str).digest('hex');
+};
 
 module.exports = {
   randomDoubleValue,
@@ -263,5 +268,6 @@ module.exports = {
   writeToFile,
   readDir,
   deleteFile,
-  checkMQTTTopic
+  checkMQTTTopic,
+  getObjectId,
 }

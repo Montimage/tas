@@ -5,6 +5,7 @@ let getLogger = require("../logger");
 const Simulation = require("../../core/simulation");
 const { readJSONFile } = require("../../core/utils");
 const { getDataStorage } = require("./db-connector");
+const { getObjectId } = require('../../core/utils');
 
 let router = express.Router();
 const logsPath = `${__dirname}/../logs/simulations/`;
@@ -31,8 +32,8 @@ null
 }
 ```
  */
-let simulationStatus = null;
-let simulation = null;
+let allSimulationStatus = {};
+let allSimulations = {};
 // Start simulating a model
 
 const startSimulation = (model, options, res, modelFileName = null) => {
@@ -51,48 +52,68 @@ const startSimulation = (model, options, res, modelFileName = null) => {
     });
   }
 
-  const startedTime = Date.now();
-  const logFile = `${name}_${Date.now()}.log`;
-  getLogger("SIMULATION", `${logsPath}${logFile}`);
-  if (!model.dataStorage && !options.dataStorage) {
-    // Use default data storage
-    getDataStorage((err, ds) => {
-      if (err) {
-        res.send({ error: "No data storage" });
-      } else {
-        simulation = new Simulation({ ...model, dataStorage: ds }, options);
-        simulation.start();
-        simulationStatus = {
-          model: model.name,
-          startedTime,
-          logFile,
-          datasetId: simulation.datasetId,
-          newDataset: simulation.newDataset,
-          report: simulation.report,
-          modelFileName,
-        };
-        res.send({
-          model: model,
-          simulationStatus,
-        });
-      }
+  const simId = getObjectId(name);
+  if (allSimulations[simId] && allSimulations[simId].isRunning) {
+    console.error(
+      `[simulation] A running simulation is using this topology (${name}). A topology can be used only in one running simulation`
+    );
+    res.send({
+      error:
+        "A running simulation is using this topology. A topology can be used only in one running simulation",
     });
   } else {
-    simulation = new Simulation(model, options);
-    simulation.start();
-    simulationStatus = {
-      model: model.name,
-      startedTime,
-      logFile,
-      datasetId: simulation.datasetId,
-      newDataset: simulation.newDataset,
-      report: simulation.report,
-      modelFileName,
-    };
-    res.send({
-      model: model,
-      simulationStatus,
-    });
+    const startedTime = Date.now();
+    const logFile = `${name}_${Date.now()}.log`;
+    getLogger("SIMULATION", `${logsPath}${logFile}`);
+    if (!model.dataStorage && !options.dataStorage) {
+      // Use default data storage
+      getDataStorage((err, ds) => {
+        if (err) {
+          res.send({ error: "No data storage" });
+        } else {
+          const simulation = new Simulation(
+            { ...model, dataStorage: ds },
+            options
+          );
+          simulation.start();
+          allSimulations[simId] = simulation;
+          allSimulationStatus[simId] = {
+            model: model.name,
+            startedTime,
+            logFile,
+            datasetId: simulation.datasetId,
+            newDataset: simulation.newDataset,
+            report: simulation.report,
+            modelFileName,
+            isRunning: true
+          };
+
+          res.send({
+            model: model,
+            simulationStatus: allSimulationStatus,
+          });
+        }
+      });
+    } else {
+      const simulation = new Simulation(model, options);
+      simulation.start();
+      allSimulations[simId] = simulation;
+      allSimulationStatus[simId] = {
+        model: model.name,
+        startedTime,
+        logFile,
+        datasetId: simulation.datasetId,
+        newDataset: simulation.newDataset,
+        report: simulation.report,
+        modelFileName,
+        isRunning: true,
+      };
+
+      res.send({
+        model: model,
+        simulationStatus: allSimulationStatus,
+      });
+    }
   }
 };
 
@@ -100,57 +121,66 @@ router.post("/start", function (req, res, next) {
   stats = null;
   simulationStatus = null;
   const { model, modelFileName, options } = req.body;
-  // Check if the simulation is running
-  if (simulationStatus) {
-    res.send({
-      error: "A simulation is running. Only one simulation can be running",
+  if (modelFileName) {
+    const modelFilePath = `${modelsPath}${modelFileName}`;
+    readJSONFile(modelFilePath, (err, myModel) => {
+      if (err) {
+        console.error(`Cannot read model ${modelFileName}`, err);
+        res.send({ error: `Cannot read model ${modelFileName}` });
+      } else {
+        startSimulation(myModel, options, res, modelFileName);
+      }
     });
   } else {
-    if (modelFileName) {
-      const modelFilePath = `${modelsPath}${modelFileName}`;
-      readJSONFile(modelFilePath, (err, myModel) => {
-        if (err) {
-          console.error(`Cannot read model ${modelFileName}`, err);
-          res.send({ error: `Cannot read model ${modelFileName}` });
-        } else {
-          startSimulation(myModel, options, res, modelFileName);
-        }
-      });
-    } else {
-      startSimulation(model, options, res);
-    }
+    startSimulation(model, options, res);
   }
 });
 
-router.get("/stop", function (req, res, next) {
-  const copiedStatus = simulationStatus;
-  if (simulationStatus && simulation) {
-    simulation.stop();
-    simulationStatus = null;
+router.get("/stop/:fileName", function (req, res, next) {
+  const { fileName } = req.params;
+  if (!fileName) {
+    console.error(`[simulation] Missing topology's name`);
+    res.send({
+      error: "Missing topology's name",
+      simulationStatus: allSimulationStatus,
+    });
+  } else {
+    const simId = getObjectId(fileName.replace(".json", ""));
+    if (allSimulations[simId]) {
+      allSimulations[simId].stop();
+      allSimulations[simId] = null;
+    }
+    if (allSimulationStatus[simId]) {
+      allSimulationStatus[simId].isRunning = false;
+      allSimulationStatus[simId].endTime = Date.now();
+    }
+    res.send({
+      error: null,
+      simulationStatus: allSimulationStatus,
+    });
   }
-  res.send({
-    error: null,
-    simulationStatus: copiedStatus,
-  });
 });
 
 router.get("/status", (req, res, next) => {
-  if (!simulation) return res.send({ error: null, simulationStatus: null });
-  stats = simulation.getStats();
-  let isOffline = true;
-  if (stats) {
-    for (let index = 0; index < stats.length; index++) {
-      const thing = stats[index];
-      if (thing.status === SIMULATING) {
-        isOffline = false;
-        break;
-      }
-    }
-  }
   res.send({
-    error: null,
-    simulationStatus: isOffline ? null : simulationStatus,
+    simulationStatus: allSimulationStatus
   });
+  // if (!simulation) return res.send({ error: null, simulationStatus: null });
+  // stats = simulation.getStats();
+  // let isOffline = true;
+  // if (stats) {
+  //   for (let index = 0; index < stats.length; index++) {
+  //     const thing = stats[index];
+  //     if (thing.status === SIMULATING) {
+  //       isOffline = false;
+  //       break;
+  //     }
+  //   }
+  // }
+  // res.send({
+  //   error: null,
+  //   simulationStatus: isOffline ? null : simulationStatus,
+  // });
 });
 
 router.get("/stats", (req, res, next) => {
