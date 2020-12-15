@@ -57,6 +57,8 @@ class DataStorage {
         console.log("[DataStorage] Connected to database");
         return callback();
       });
+    } else {
+      console.log(`Unsupported protocol: ${this.protocol}`);
     }
   }
 
@@ -101,28 +103,6 @@ class DataStorage {
         console.log("[DataStorage] A new report has been created");
       }
     });
-  }
-
-  getFirstEventTimestamp(
-    datasetId,
-    startTime = 0,
-    endTime = Data.now(),
-    callback
-  ) {
-    EventSchema.findEventsBetweenTimes(
-      { datasetId },
-      startTime,
-      endTime,
-      (err, events) => {
-        if (err || !events || events.length === 0) {
-          console.error("[DataStorage] Cannot get events!");
-          console.error(err);
-          return callback(err);
-        } else {
-          return callback(null, events[0].timestamp);
-        }
-      }
-    );
   }
 
   getAllEvents(datasetId, startTime, endTime, callback) {
