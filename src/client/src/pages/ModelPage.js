@@ -123,7 +123,7 @@ const ModelDeviceItem = ({
   onEnable,
 }) => (
   <CollapseForm
-    title={`${data.name}`}
+    title={`${data.name} ${data.scale > 1 ? `(${data.scale} instances)`: ''}`}
     extra={
       <Fragment>
         <Switch
@@ -169,6 +169,13 @@ const ModelDeviceItem = ({
         label="Id"
         defaultValue={data.id}
         onChange={(newId) => onChange("id", newId)}
+      />
+      <FormNumberItem
+        label="Scale"
+        defaultValue={data.scale}
+        min={1}
+        max={1000}
+        onChange={(newScale) => onChange("scale", newScale)}
       />
       <Divider orientation="left">Test Broker </Divider>
       <FormSelectItem
@@ -636,6 +643,12 @@ class ModelPage extends Component {
     let viewType = getQuery("view");
     if (!viewType) viewType = "form";
     let view = null;
+    let nbDevices = 0;
+    if (tempModel.devices) {
+      for (let index = 0; index < tempModel.devices.length; index++) {
+        nbDevices += tempModel.devices[index].scale ? tempModel.devices[index].scale : 1;
+      }
+    }
     if (viewType === "json") {
       view = <JSONView value={tempModel} onChange={this.onModelChange} />;
     } else {
@@ -810,7 +823,7 @@ class ModelPage extends Component {
           <Divider orientation="left">Devices </Divider>
           {tempModel.devices ? (
             <Fragment>
-              <p>Number of devices: {tempModel.devices.length}</p>
+              <p>Number of devices: {nbDevices}</p>
               <Button
                 onClick={() => {
                   const newDev = addNewDevice();
