@@ -7,3 +7,5 @@ node_modules/
 docs/
 Articles
 *.pem
+certs/
+ssh-remote-montimage
