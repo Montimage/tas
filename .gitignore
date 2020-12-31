@@ -9,3 +9,4 @@ Articles
 *.pem
 certs/
 ssh-remote-montimage
+.env
