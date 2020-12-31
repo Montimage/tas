@@ -25,7 +25,6 @@ const reportSchema = new Schema({
   },
   originalDatasetId: {
     type: String,
-    required: true,
   },
   newDatasetId: {
     type: String,

@@ -16,12 +16,15 @@ import {
   deleteReportOK,
   setOriginalEvents,
   setNewEvents,
+  setReportScore
 } from "../actions";
 
 function* handleRequestOriginalEvents(action) {
   try {
-    const {datasetId, startTime, endTime} = action.payload;
-    const events = yield call(() => sendRequestEventsByDatasetId(datasetId, startTime, endTime));
+    const { datasetId, startTime, endTime, page } = action.payload;
+    const { events } = yield call(() =>
+      sendRequestEventsByDatasetId(datasetId, startTime, endTime, page)
+    );
     yield put(setOriginalEvents(events));
     // dispatch data
   } catch (error) {
@@ -37,8 +40,10 @@ function* handleRequestOriginalEvents(action) {
 
 function* handleRequestNewEvents(action) {
   try {
-    const datasetId = action.payload;
-    const events = yield call(() => sendRequestEventsByDatasetId(datasetId));
+    const { datasetId, page } = action.payload;
+    const { events } = yield call(() =>
+      sendRequestEventsByDatasetId(datasetId, 0, Date.now(), page)
+    );
     yield put(setNewEvents(events));
     // dispatch data
   } catch (error) {
@@ -55,8 +60,9 @@ function* handleRequestNewEvents(action) {
 function* handleRequestReport(action) {
   try {
     const rpId = action.payload;
-    const report = yield call(() => sendRequestReport(rpId));
+    const {report, score} = yield call(() => sendRequestReport(rpId));
     yield put(setCurrentReport(report));
+    yield put(setReportScore(score));
     // dispatch data
   } catch (error) {
     // dispatch error

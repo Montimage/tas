@@ -10,7 +10,8 @@ import {
   setEvents,
   addNewEventOK,
   deleteEventOK,
-  updateEventOK
+  updateEventOK,
+  setTotalNumberEvents
 } from "../actions";
 
 import { addNewElementToArray, removeElementFromArray } from "../utils";
@@ -19,7 +20,8 @@ const initState = {
   allDatasets: [],
   currentDataset: {
     dataset: null,
-    events:[]
+    events:[],
+    totalNbEvents: 0,
   }
 };
 
@@ -44,13 +46,18 @@ export default createReducer({
       draft.currentDataset.dataset = dataset;
     }),
     [setEvents]: produce((draft, events) => {
-      draft.currentDataset.events = events;
+      draft.currentDataset.events = [...draft.currentDataset.events, ...events];
+    }),
+    [setTotalNumberEvents]: produce((draft, totalNbEvents) => {
+      draft.currentDataset.totalNbEvents = totalNbEvents;
     }),
     [addNewEventOK]: produce((draft, newEvent) => {
       if (draft) {
         draft.currentDataset.events.push(newEvent);
+        draft.currentDataset.totalNbEvents += 1;
       } else {
-        draft = [newEvent];
+        draft.currentDataset.events = [newEvent];
+        draft.currentDataset.totalNbEvents = 1;
       }
     }),
     [deleteEventOK]: produce((draft, eventId) => {
@@ -59,6 +66,8 @@ export default createReducer({
         const event = draft.currentDataset.events[index];
         if (event._id !== eventId) {
           newEvents.push(event);
+        } else {
+          draft.currentDataset.totalNbEvents -= 1;
         }
       }
       draft.currentDataset.events = [...newEvents];

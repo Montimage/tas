@@ -1,6 +1,6 @@
 /* Working with Data Generator */
 var express = require("express");
-const { SIMULATING } = require("../../core/DeviceStatus");
+const { SIMULATING, OFFLINE } = require("../../core/DeviceStatus");
 let getLogger = require("../logger");
 const Simulation = require("../../core/simulation");
 const { readJSONFile } = require("../../core/utils");
@@ -162,25 +162,16 @@ router.get("/stop/:fileName", function (req, res, next) {
 });
 
 router.get("/status", (req, res, next) => {
+  const keys = Object.keys(allSimulationStatus);
+  for (let index = 0; index < keys.length; index++) {
+    const key = keys[index];
+    if (allSimulations[key]) {
+      allSimulationStatus[key].isRunning = allSimulations[key].status !== OFFLINE;
+    }
+  }
   res.send({
     simulationStatus: allSimulationStatus
   });
-  // if (!simulation) return res.send({ error: null, simulationStatus: null });
-  // stats = simulation.getStats();
-  // let isOffline = true;
-  // if (stats) {
-  //   for (let index = 0; index < stats.length; index++) {
-  //     const thing = stats[index];
-  //     if (thing.status === SIMULATING) {
-  //       isOffline = false;
-  //       break;
-  //     }
-  //   }
-  // }
-  // res.send({
-  //   error: null,
-  //   simulationStatus: isOffline ? null : simulationStatus,
-  // });
 });
 
 router.get("/stats", (req, res, next) => {

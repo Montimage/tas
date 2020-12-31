@@ -21,7 +21,7 @@ class Sensor {
    * @param {Object} dataSource The data source of the sensor
    * -
    */
-  constructor(id, data, productionBroker, publishDataFct, events, startReplayingTime) {
+  constructor(id, data, productionBroker, publishDataFct, events, startReplayingTime, callbackWhenFinish = null) {
     const {
       objectId,
       name,
@@ -40,6 +40,7 @@ class Sensor {
     this.dataSpecs = dataSpecs;
     this.replayOptions = replayOptions;
     this.events = events;
+    this.callbackWhenFinish = callbackWhenFinish;
     // Optional attributes
     this.name = name ? name : `sensor-${id}`;
     this.objectId = objectId;
@@ -111,12 +112,15 @@ class Sensor {
     } else {
       if (!this.dataSource) {
         // Init
+        const stopSensor = () => this.stop();
         if (this.dataSourceType === DS_DATASET) {
           console.log(`[SENSOR] ${this.id} Number of events to be replayed: ${this.events.length} with replayOptions: ${JSON.stringify(this.replayOptions)}`);
           this.dataSource = new DataReplayer(
             this.id,
             (values, topic = null) => this.dataHandler(values, topic),
-            null,
+            () => {
+              stopSensor();
+            },
             this.replayOptions,
             this.events,
             this.objectId,
@@ -126,7 +130,9 @@ class Sensor {
           this.dataSource = new DataGenerator(
             this.id,
             (values, topic = null) => this.dataHandler(values, topic),
-            null,
+            () => {
+              stopSensor();
+            },
             this.dataSpecs,
             this.objectId,
             this.reportFormat
@@ -182,6 +188,7 @@ class Sensor {
       }
     }
     this.status = OFFLINE;
+    if (this.callbackWhenFinish) this.callbackWhenFinish();
   }
 }
 

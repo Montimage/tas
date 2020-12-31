@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import {  Button, Form } from "antd";
+import { Button, Form } from "antd";
 import moment from "moment";
 import LayoutPage from "./LayoutPage";
 import {
@@ -43,7 +43,6 @@ class ReportPage extends Component {
         newDatasetId,
         startTime,
         endTime,
-        score,
         testCampaignId,
       } = report;
       this.state = {
@@ -54,14 +53,16 @@ class ReportPage extends Component {
         newDatasetId,
         startTime,
         endTime,
-        score,
         testCampaignId,
         originalEvents,
         newEvents,
         isChanged: false,
+        page: 0,
       };
     } else {
-      this.state = {};
+      this.state = {
+        page: 0,
+      };
     }
   }
 
@@ -81,18 +82,17 @@ class ReportPage extends Component {
         newDatasetId,
         startTime,
         endTime,
-        score,
         testCampaignId,
       } = report;
-      if (!this.state.fetchedOriginalEvents) {
-        this.props.fetchOriginalEvents(originalDatasetId, startTime ? startTime: 0, endTime ? endTime : Date.now());
-        this.setState({ fetchedOriginalEvents: true });
-      }
+      // if (!this.state.fetchedOriginalEvents) {
+      //   this.props.fetchOriginalEvents(originalDatasetId, startTime ? startTime: 0, endTime ? endTime : Date.now(), this.state.page);
+      //   this.setState({ fetchedOriginalEvents: true, page: (page +1) });
+      // }
 
-      if (!this.state.fetchedNewEvents) {
-        this.props.fetchNewEvents(newDatasetId);
-        this.setState({ fetchedNewEvents: true });
-      }
+      // if (!this.state.fetchedNewEvents) {
+      //   this.props.fetchNewEvents(newDatasetId, page );
+      //   this.setState({ fetchedNewEvents: true , page: (page +1) });
+      // }
 
       this.setState({
         _id,
@@ -102,7 +102,6 @@ class ReportPage extends Component {
         newDatasetId,
         startTime,
         endTime,
-        score,
         testCampaignId,
         isChanged: false,
       });
@@ -136,7 +135,6 @@ class ReportPage extends Component {
       newDatasetId,
       startTime,
       endTime,
-      score,
       testCampaignId,
     } = this.state;
     this.props.updateReport(_id, {
@@ -146,10 +144,28 @@ class ReportPage extends Component {
       newDatasetId,
       startTime,
       endTime,
-      score,
       testCampaignId,
     });
     this.setState({ isChanged: false });
+  }
+
+  loadEvents() {
+    const {
+      page,
+      originalDatasetId,
+      newDatasetId,
+      startTime,
+      endTime,
+    } = this.state;
+    const { fetchOriginalEvents, fetchNewEvents } = this.props;
+    fetchOriginalEvents(
+      originalDatasetId,
+      startTime ? startTime : 0,
+      endTime ? endTime : Date.now(),
+      this.state.page
+    );
+    fetchNewEvents(newDatasetId, page);
+    this.setState({ page: page + 1 });
   }
 
   render() {
@@ -165,12 +181,11 @@ class ReportPage extends Component {
       newDatasetId,
       startTime,
       endTime,
-      score,
       testCampaignId,
       isChanged,
-      originalEvents,
-      newEvents,
+      page,
     } = this.state;
+    const { originalEvents, newEvents, score } = this.props;
     let sourceEvents = [];
     if (originalEvents) {
       sourceEvents = originalEvents.filter(
@@ -237,13 +252,22 @@ class ReportPage extends Component {
         >
           Save
         </Button>
-        {sourceEvents && (
+        <Button
+          onClick={() => this.loadEvents()}
+          size="large"
+          style={{
+            marginBottom: 10,
+          }}
+        >
+          {page ? "Load More Events" : "Show Events"}
+        </Button>
+        {sourceEvents && page > 0 && (
           <EventStream
             events={sourceEvents}
             title={`Dataset: ${originalDatasetId} (${sourceEvents.length})`}
           />
         )}
-        {newEvents && (
+        {newEvents && page > 0 && (
           <EventStream
             events={newEvents}
             title={`Dataset: ${newDatasetId} (${newEvents.length})`}
@@ -258,13 +282,15 @@ const mapPropsToStates = ({ reports }) => ({
   report: reports.currentReport.report,
   originalEvents: reports.currentReport.originalEvents,
   newEvents: reports.currentReport.newEvents,
+  score: reports.currentReport.score,
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  fetchOriginalEvents: (datasetId, startTime, endTime) =>
-    dispatch(requestOriginalEvents({datasetId, startTime, endTime})),
-  fetchNewEvents: (datasetId) => dispatch(requestNewEvents(datasetId)),
   fetchReport: (reportId) => dispatch(requestReport(reportId)),
+  fetchOriginalEvents: (datasetId, startTime, endTime, page) =>
+    dispatch(requestOriginalEvents({ datasetId, startTime, endTime, page })),
+  fetchNewEvents: (datasetId, page) =>
+    dispatch(requestNewEvents({datasetId, page})),
   updateReport: (originalId, updatedReport) =>
     dispatch(
       requestUpdateReport({

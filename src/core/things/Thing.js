@@ -43,7 +43,8 @@ class Device {
     replayOptions,
     newDataset,
     report,
-    isFirstDevice = false
+    isFirstDevice = false,
+    deviceCallbackWhenFinish = null
   ) {
     const {
       id,
@@ -90,6 +91,7 @@ class Device {
     this.numberOfForwardedData = 0; // Number of message data that this device has received and forward in the digitalTwins option
     this.startedTime = 0;
     this.lastActivity = Date.now();
+    this.deviceCallbackWhenFinish = deviceCallbackWhenFinish; // Callback when finish with this device
   }
 
   /**
@@ -208,7 +210,7 @@ class Device {
             devId: actuator.id,
             datasetId: this.newDatasetConfig.id,
             isSensorData: false,
-            values: data,
+            values: message,
           };
           this.dataStorage.saveEvent(event);
         }
@@ -259,6 +261,16 @@ class Device {
     this.status = newStatus;
   }
 
+  sensorCallbackWhenFinish(sensorId) {
+    for (let index = 0; index < this.sensors.length; index++) {
+      const sensor = this.sensors[index];
+      if (sensor.status !== OFFLINE) {
+        return;
+      }
+    }
+    setTimeout(() => this.stop(),3000); // Wait 3 seconds for the actuated data comming;
+
+  }
   /**
    * Add a new Sensor into the current Device
    * The sensor collect the data (generate randomly or from database) and publish the data to the gateway via mqtt broker
@@ -269,6 +281,7 @@ class Device {
    * @param {String} objectId The object id of the sensor follow IP Smart Object Standard
    */
   addSensor(id, sensorData, objectId = null, events = null) {
+    console.log('Going to add a new sensor: ', id);
     if (findDevice(id, objectId, this.sensors) > -1) {
       console.error(
         `[${this.id}] Sensor ID ${id} ${objectId} has already existed!`
@@ -328,7 +341,8 @@ class Device {
           this.publishDataToTestBroker(topic, message);
         },
         events,
-        startReplayingTime
+        startReplayingTime,
+        () => this.sensorCallbackWhenFinish(id)
       );
       this.sensors.push(newSensor);
       // HOT reload sensor
@@ -400,6 +414,7 @@ class Device {
    * @param {String} id The actuator's ID
    */
   addActuator(id, actuatorData, objectId = null) {
+    console.log('Going to add a new actuator: ', id);
     if (findDevice(id, objectId, this.actuators) > -1) {
       console.error(
         `[${this.id}] Actuator ID ${id} ${objectId} has already existed!`
@@ -419,7 +434,7 @@ class Device {
     const newActuator = new Actuator(id, {
       ...actuatorData,
       topic: topic,
-    });
+    }, this.testBroker, objectId);
     this.actuators.push(newActuator);
     console.log(`[${this.id}] added new actuator ${id} ${objectId}`);
 
@@ -548,8 +563,8 @@ class Device {
                 if (!err4 && events && events.length > 0) {
                   const firstEventTimestamp = events[0].timestamp;
                   if (startReplayingTime > firstEventTimestamp) startReplayingTime = firstEventTimestamp;
-                  console.log(`[${this.id}]firstEventTimestamp: ${startReplayingTime}`);
-                  console.log(`[${this.id}]startReplayingTime: ${startReplayingTime}`);
+                  console.log(`[${this.id}] firstEventTimestamp: ${startReplayingTime}`);
+                  console.log(`[${this.id}] startReplayingTime: ${startReplayingTime}`);
                   if (this.isReplayingStreams) {
                     // REPLAY STREAM DATA
                     // Only select the event that has the topic matches with the list of upStreams
@@ -659,8 +674,8 @@ class Device {
             }
           }
           // Add actuators
-          for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
-            const actuatorData = this.actuators[aIndex];
+          for (let aIndex = 0; aIndex < this.actuatorsConfig.length; aIndex++) {
+            const actuatorData = this.actuatorsConfig[aIndex];
             const { id, scale, enable, objectId } = actuatorData;
             if (enable === false) continue;
             let nbActuators = scale ? scale : 1;
@@ -728,19 +743,20 @@ class Device {
   stop() {
     switch (this.getStatus()) {
       case OFFLINE:
-        console.error(`[${this.id}] ERROR: offline!`);
-        break;
+        console.log(`[${this.id}] is already offline!`);
+        return;
       case ONLINE:
         this.setStatus(OFFLINE);
-        break;
+        return;
       case SIMULATING:
         console.log(`[${this.id}] going to stop the simulation!`);
         this.sensors.map((sensor) => sensor.stop());
         this.actuators.map((actuator) => actuator.stop());
         this.setStatus(OFFLINE);
-        break;
+        if (this.deviceCallbackWhenFinish) this.deviceCallbackWhenFinish();
+        return;
       default:
-        break;
+        return;
     }
   }
 }

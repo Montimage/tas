@@ -132,6 +132,7 @@ export const updateDatasetOK = createAction('UPDATE_DATA_SET_OK');
 // Event
 export const requestEventsByDatasetId = createAction('REQUEST_EVENTS_BY_DATASET_ID');
 export const setEvents = createAction('SET_EVENTS');
+export const setTotalNumberEvents = createAction('SET_TOTAL_NUMBER_EVENTS');
 export const requestDeleteEvent = createAction('REQUEST_DELETE_EVENT');
 export const deleteEventOK = createAction('DELETE_EVENT_OK');
 export const requestAddNewEvent = createAction('REQUEST_ADD_NEW_EVENT');
@@ -165,3 +166,4 @@ export const requestOriginalEvents = createAction('REQUEST_ORIGINAL_EVENTS');
 export const setOriginalEvents = createAction('SET_ORIGINAL_EVENTS');
 export const requestNewEvents = createAction('REQUEST_NEW_EVENTS');
 export const setNewEvents = createAction('SET_NEW_EVENTS');
+export const setReportScore = createAction('SET_REPORT_SCORE');

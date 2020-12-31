@@ -6,7 +6,8 @@ const {
 } = require('./db-connector');
 const {
   startTestCampaign,
-  stopTestCampaign
+  stopTestCampaign,
+  getTestCampainStatus
 } = require('../../core/devopts-flow');
 let router = express.Router();
 const devoptsFilePath = `${__dirname}/../data/devopts.json`;
@@ -15,6 +16,7 @@ const {
   readJSONFile,
   writeToFile
 } = require("../../core/utils");
+const { OFFLINE } = require("../../core/DeviceStatus");
 let logsPath = `${__dirname}/../logs/test-campaigns/`;
 
 let runningStatus = null;
@@ -23,6 +25,7 @@ let runningStatus = null;
  * Get the running status of test campaign
  */
 router.get("/status", (req, res, next) => {
+  if (runningStatus) runningStatus.isRunning = getTestCampainStatus() !== OFFLINE;
   res.send({
     runningStatus
   });

@@ -2,6 +2,12 @@ const { readJSONFile } = require("../utils");
 const TestCampaign = require("../test-campaigns/TestCampaign");
 
 let testCampaign = null;
+
+const getTestCampainStatus = () => {
+  if (testCampaign) return testCampaign.status;
+  else return null;
+}
+
 /**
  * Stop the test campaign
  */
@@ -56,4 +62,5 @@ if (process.argv[2] === "test") {
 module.exports = {
   startTestCampaign,
   stopTestCampaign,
+  getTestCampainStatus
 };

@@ -1,16 +1,24 @@
+const { OFFLINE, SIMULATING } = require("../DeviceStatus");
+const { EventSchema, ReportSchema } = require("../enact-mongoose");
+const {
+  evalulate,
+  ALL_EVENT_ORDERING_WITH_TIMESTAMP,
+} = require("../evaluation");
 const Thing = require("../things/Thing");
 
 /**
  * Simulation class presents a simulation
  */
 class Simulation {
-  constructor(model, options = null) {
+  constructor(model, options = null, simulationCallbackWhenFinish = null) {
     this.model = model;
     this.newDataset = model.newDataset;
     this.dataStorage = model.dataStorage;
     this.datasetId = model.datasetId;
     this.replayOptions = model.replayOptions;
     this.testCampaignId = model.testCampaignId;
+    this.simulationCallbackWhenFinish = simulationCallbackWhenFinish;
+    this.status = OFFLINE;
     if (options) {
       // Overwrite the value of datastorage, datasetid and new dataset
       if (options.dataStorage) this.dataStorage = options.dataStorage;
@@ -41,12 +49,13 @@ class Simulation {
 
     // Generate the report
     const currenTime = Date.now();
-    let startTime  = 0;
+    let startTime = 0;
     let endTime = currenTime;
     if (this.replayOptions) {
-      if (this.replayOptions.startTime) startTime = this.replayOptions.startTime;
+      if (this.replayOptions.startTime)
+        startTime = this.replayOptions.startTime;
       if (this.replayOptions.endTime) endTime = this.replayOptions.endTime;
-    };
+    }
     const reportId = `${this.datasetId}-${this.newDataset.id}-${currentTime}`;
     this.report = {
       id: reportId,
@@ -57,10 +66,74 @@ class Simulation {
       createdAt: currenTime,
       startTime: startTime,
       endTime: endTime,
-      score: 0,
+      score: -1,
     };
 
     this.allThings = [];
+  }
+
+  deviceCallbackWhenFinish() {
+    console.log("A device is going to finish his job");
+    for (let index = 0; index < this.allThings.length; index++) {
+      const dev = this.allThings[index];
+      if (dev.status !== OFFLINE) {
+        return;
+      }
+    }
+    const stopSimulation = (score) => this.stop(score);
+    // Going to evaluate the report here
+    const {
+      id,
+      originalDatasetId,
+      newDatasetId,
+      startTime,
+      endTime,
+    } = this.report;
+    EventSchema.findEventsBetweenTimes(
+      { datasetId: originalDatasetId },
+      startTime,
+      endTime,
+      (err3, originalEvents) => {
+        if (err3) {
+          console.error(
+            `Cannot get original events of dataset ${originalDatasetId}`
+          );
+          stopSimulation();
+        } else {
+          EventSchema.findEventsWithOptions(
+            { datasetId: newDatasetId },
+            (err4, newEvents) => {
+              if (err4) {
+                console.error(
+                  `Cannot get new events of dataset ${newDatasetId}`
+                );
+                stopSimulation();
+              } else {
+                const score = evalulate(
+                  originalEvents,
+                  newEvents,
+                  ALL_EVENT_ORDERING_WITH_TIMESTAMP
+                );
+                // Going to save the score into the report
+                ReportSchema.findOneAndUpdate(
+                  { id },
+                  { score },
+                  (err5, ret) => {
+                    if (err5) {
+                      console.error(`Cannot update the score for report ${id}`);
+                      stopSimulation();
+                    } else {
+                      console.log(`Report ${id} has score of ${score}`);
+                      stopSimulation(score);
+                    }
+                  }
+                );
+              }
+            }
+          );
+        }
+      }
+    );
   }
 
   createDevice(devConfig, isFirstDevice = false) {
@@ -71,7 +144,8 @@ class Simulation {
       this.replayOptions,
       this.newDataset,
       this.report,
-      isFirstDevice
+      isFirstDevice,
+      () => this.deviceCallbackWhenFinish()
     );
 
     newThing.initDevice(() => {
@@ -82,6 +156,7 @@ class Simulation {
 
   start() {
     console.log("Start simulating for the model: ", this.model.name);
+    this.status = SIMULATING;
     while (this.allThings.length > 0) {
       this.allThings.pop();
     }
@@ -98,11 +173,14 @@ class Simulation {
         for (let tIndex = 0; tIndex < nbDevices; tIndex++) {
           const tID = `${id}-${tIndex}`;
           const tName = `${name}-${tIndex}`;
-          this.createDevice({
-            ...dev,
-            id: tID,
-            name: tName,
-          }, index === 0 && tIndex === 0);
+          this.createDevice(
+            {
+              ...dev,
+              id: tID,
+              name: tName,
+            },
+            index === 0 && tIndex === 0
+          );
         }
       }
     }
@@ -111,10 +189,18 @@ class Simulation {
   /**
    * Stop the simulation
    */
-  stop() {
-    for (let index = 0; index < this.allThings.length; index++) {
-      const th = this.allThings[index];
-      th.stop();
+  stop(score) {
+    if (this.status === OFFLINE) {
+      console.log("Simulation has been stopped already");
+    } else {
+      this.status = OFFLINE;
+      for (let index = 0; index < this.allThings.length; index++) {
+        const th = this.allThings[index];
+        if (th.status !== OFFLINE) th.stop();
+      }
+
+      if (this.simulationCallbackWhenFinish)
+        this.simulationCallbackWhenFinish(score);
     }
   }
 

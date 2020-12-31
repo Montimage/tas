@@ -17,7 +17,8 @@ import {
   setEvents,
   addNewEventOK,
   deleteEventOK,
-  updateEventOK
+  updateEventOK,
+  setTotalNumberEvents
 } from '../actions';
 
 function* handleRequestEvent(action) {
@@ -36,8 +37,9 @@ function* handleRequestEvent(action) {
 
 function* handleRequestEventsByDatasetId(action) {
   try {
-    const dsId = action.payload;
-    const events = yield call(() => sendRequestEventsByDatasetId(dsId));
+    const {datasetId, startTime, endTime, page} = action.payload;
+    const {totalNbEvents, events} = yield call(() => sendRequestEventsByDatasetId(datasetId, startTime, endTime, page));
+    if (totalNbEvents) yield put(setTotalNumberEvents(totalNbEvents));
     yield put(setEvents(events));
     // dispatch data
   } catch (error) {

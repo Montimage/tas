@@ -8,7 +8,8 @@ import {
   deleteReportOK,
   updateReportOK,
   setOriginalEvents,
-  setNewEvents
+  setNewEvents,
+  setReportScore,
 } from "../actions";
 
 const initState = {
@@ -16,7 +17,8 @@ const initState = {
   currentReport: {
     report: null,
     originalEvents: [],
-    newEvents: []
+    newEvents: [],
+    score: 0,
   }
 };
 
@@ -32,10 +34,13 @@ export default createReducer({
       draft.currentReport.report = report;
     }),
     [setOriginalEvents]: produce((draft, events) => {
-      draft.currentReport.originalEvents = events;
+      draft.currentReport.originalEvents = [...draft.currentReport.originalEvents, ...events];
     }),
     [setNewEvents]: produce((draft, events) => {
-      draft.currentReport.newEvents = events;
+      draft.currentReport.newEvents = [...draft.currentReport.newEvents,...events];
+    }),
+    [setReportScore]: produce((draft, score) => {
+      draft.currentReport.score = score;
     }),
     [updateReportOK]: produce((draft, newReport) => {
       for (let index = 0; index < draft.allReports.length; index++) {

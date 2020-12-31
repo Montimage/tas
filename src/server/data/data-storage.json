@@ -1,1 +1,1 @@
-{"protocol":"MONGODB","connConfig":{"host":"localhost","port":27017,"username":"","password":"","dbname":"itsdb","options":null}}
+{"protocol":"MONGODB","connConfig":{"host":"localhost","port":27017,"username":"","password":"","dbname":"simpledb","options":null}}

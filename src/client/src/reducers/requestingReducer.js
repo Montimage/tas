@@ -82,7 +82,9 @@ import {
   updateEventOK,
   requestStartSimulation,
   requestStopSimulation,
-  requestSimulationStatus,
+
+
+
   setSimulationStatus,
   requestDevopts,
   setDevopts,
@@ -186,7 +188,7 @@ export default createReducer(
     [updateEventOK]: state => false,
     [requestStartSimulation]: state => true,
     [requestStopSimulation]: state => true,
-    [requestSimulationStatus]: state => true,
+    // [requestSimulationStatus]: state => true,
     [setSimulationStatus]: state => false,
     [requestDevopts]: state => true,
     [requestUpdateDevopts]: state => true,
