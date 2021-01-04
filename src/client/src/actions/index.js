@@ -98,7 +98,7 @@ export const addNewTestCampaignOK = createAction('ADD_NEW_TEST_CAMPAIGN_OK');
 export const requestTestCampaign = createAction('REQUEST_TEST_CAMPAIGN');
 export const requestUpdateTestCampaign = createAction('REQUEST_UPDATE_TEST_CAMPAIGN');
 export const updateTestCampaignOK = createAction('UPDATE_TEST_CAMPAIGN_OK');
-// Manage devopts
+// Manage devops
 export const requestLaunchTestCampaign = createAction('REQUEST_LAUNCH_TEST_CAMPAIGN');
 export const requestStopTestCampaign = createAction('REQUEST_STOP_TEST_CAMPAIGN');
 export const requestTestCampaignStatus = createAction('REQUEST_TEST_CAMPAIGN_STATUS');
@@ -147,10 +147,10 @@ export const requestStopSimulation = createAction('REQUEST_STOP_SIMULATION');
 export const requestSimulationStatus = createAction('REQUEST_SIMULATION_STATUS');
 export const setSimulationStatus = createAction('SET_SIMULATION_STATUS');
 
-// Devopts
-export const requestDevopts = createAction('REQUEST_DEV_OPTS');
-export const requestUpdateDevopts = createAction('REQUEST_UPDATE_DEV_OPTS');
-export const setDevopts = createAction('SET_DEV_OPTS');
+// Devops
+export const requestDevops = createAction('REQUEST_DEVOPS');
+export const requestUpdateDevops = createAction('REQUEST_UPDATE_DEVOPS');
+export const setDevops = createAction('SET_DEVOPS');
 
 
 // Reports

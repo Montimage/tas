@@ -2,10 +2,6 @@
 const express = require("express");
 const {
   evalulate,
-  ALL_EVENT_ORDERING,
-  ACTUATOR_EVENTS_ORDERING,
-  ACTUATOR_EVENTS_ORDERING_WITH_TIMESTAMP,
-  ALL_EVENT_ORDERING_WITH_TIMESTAMP,
 } = require("../../core/evaluation");
 const router = express.Router();
 const { EventSchema, ReportSchema, dbConnector } = require("./db-connector");
@@ -84,8 +80,7 @@ router.get("/:reportId", dbConnector, function (req, res, next) {
                   } else {
                     const score = evalulate(
                       originalEvents,
-                      newEvents,
-                      ALL_EVENT_ORDERING_WITH_TIMESTAMP
+                      newEvents
                     );
                     // Going to save the score into the report
                     ReportSchema.findOneAndUpdate(

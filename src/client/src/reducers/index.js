@@ -15,7 +15,7 @@ import dataRecorderReducer from './dataRecorderReducer';
 import dataRecorderStatusReducer from './dataRecorderStatusReducer';
 import dataStorageReducer from './dataStorageReducer';
 import testCampaignsReducer from './testCampaignsReducer';
-import devoptsReducer from './devoptsReducer';
+import devopsReducer from './devopsReducer';
 import testCasesReducer from './testCasesReducer';
 import datasetsReducer from './datasetsReducer';
 import reportsReducer from './reportsReducer';
@@ -34,7 +34,7 @@ const rootReducer = combineReducers({
   editingForm: editingFormReducer,
   simulationStatus: simulationStatusReducer,
   testCampaigns: testCampaignsReducer,
-  devopts: devoptsReducer,
+  devops: devopsReducer,
   testCases: testCasesReducer,
   datasets: datasetsReducer,
   reports: reportsReducer

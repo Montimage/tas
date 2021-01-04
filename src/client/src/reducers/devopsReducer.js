@@ -2,13 +2,13 @@ import {
   createReducer
 } from "redux-act";
 import {
-  setDevopts,
+  setDevops,
 } from "../actions";
 
 const initState = null;
 
 export default createReducer({
-    [setDevopts]: (state, devopts) => devopts,
+    [setDevops]: (state, devops) => devops,
   },
   initState
 );

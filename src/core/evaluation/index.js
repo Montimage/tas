@@ -5,13 +5,20 @@
  * - 1: compare events order
  */
 
-const ALL_EVENT_ORDERING = "ALL_EVENT_ORDERING"; //all the events
-const ALL_EVENT_ORDERING_WITH_TIMESTAMP = "ALL_EVENT_ORDERING_WITH_TIMESTAMP"; //all the events with respecting of timestamp
-const ACTUATOR_EVENTS_ORDERING = "ACTUATOR_EVENTS_ORDERING"; //only actuator event
-const ACTUATOR_EVENTS_ORDERING_WITH_TIMESTAMP =
-  "ACTUATOR_EVENTS_ORDERING_WITH_TIMESTAMP"; //only actuator event with repsecting of timestamp
-const METRIC_VALUE = "METRIC_VALUE";
-const METRIC_VALUE_TIMESTAMP = "METRIC_VALUE_TIMESTAMP";
+// Threshold values
+const THRESHOLD_FLEXIBLE = 0.5;
+const THRESHOLD_NORMAL = 0.75;
+const THRESHOLD_STRICT = 1.0;
+
+// Event types
+const ALL_EVENTS = 'ALL_EVENTS';
+const SENSOR_EVENTS = 'SENSOR_EVENTS';
+const ACTUATOR_EVENTS = 'ACTUATOR_EVENTS';
+
+// Metrics types
+const METRIC_VALUE = 'METRIC_VALUE';
+const METRIC_TIMESTAMP = 'METRIC_TIMESTAMP';
+const METRIC_VALUE_TIMESTAMP = 'METRIC_VALUE_TIMESTAMP';
 
 const simpleCompare = (v1, v2) => {
   return JSON.stringify(v1) === JSON.stringify(v2);
@@ -67,6 +74,10 @@ const compareArray = (
   }
 };
 
+const compareDelayTimestamp = (t1, t2) => {
+  return Math.abs(t2-t1)/t1 < 0.01; // 1% threshold
+}
+
 const evalEventValue = (data) => {
   const { originalEvents, newEvents } = data;
   const originalValues = originalEvents.values;
@@ -74,9 +85,17 @@ const evalEventValue = (data) => {
   return compareArray(originalValues, newValues);
 };
 
-const compareDelayTimestamp = (t1, t2) => {
-  return Math.abs(t2-t1)/t1 < 0.01; // 1% threashold
-}
+const evalEventTimestamp = (data) => {
+  const { originalEvents, newEvents } = data;
+  const originalTimestamps = originalEvents.timestamps.map(
+    (t) => t - originalEvents.timestamps[0]
+  );
+  const newTimestamps = newEvents.timestamps.map(
+    (t) => t - newEvents.timestamps[0]
+  );
+
+  return compareArray(originalTimestamps, newTimestamps, compareDelayTimestamp);
+};
 
 const evalEventValueTimestamp = (data) => {
   const { originalEvents, newEvents } = data;
@@ -93,7 +112,7 @@ const evalEventValueTimestamp = (data) => {
   return valueCompare * timestampCompare;
 };
 
-const evaluateEvents = (originalEvents, newEvents, metrics = "VALUE", threashold = 0.5) => {
+const evaluateEvents = (originalEvents, newEvents, metricType, threshold) => {
   // console.log(originalEvents, newEvents);
   if (originalEvents.length === 0 && newEvents.length === 0) return 1;
   let topics = {};
@@ -144,49 +163,32 @@ const evaluateEvents = (originalEvents, newEvents, metrics = "VALUE", threashold
 
   let ret = [];
   console.log(JSON.stringify(topics));
+  let _evalMetric = null;
+  switch (metricType) {
+    case METRIC_VALUE:
+      _evalMetric = (data) => evalEventValue(data);
+      break;
+    case METRIC_TIMESTAMP:
+      _evalMetric = (data) => evalEventTimestamp(data);
+      break;
+      case METRIC_VALUE_TIMESTAMP:
+        _evalMetric = (data) => evalEventValueTimestamp(data);
+      break;
+    default:
+      console.error(`[Evaluation] Unsupported metric type: ${metricType}`);
+      return -1;
+  }
+
   for (let index = 0; index < topicValues.length; index++) {
     const topic = topicValues[index];
-    if (metrics === METRIC_VALUE) {
-      const evalTopic = evalEventValue(topics[topic]);
-      ret.push(evalTopic);
-    } else {
-      const evalTopic = evalEventValueTimestamp(topics[topic]);
-      ret.push(evalTopic);
-    }
+    const evalTopic = _evalMetric(topics[topic]);
+    ret.push(evalTopic);
   }
-  const retOK = ret.filter(r => r >=threashold);
 
+  const retOK = ret.filter(r => r >=threshold);
   console.log('ret: ', ret);
   console.log('retOK: ', retOK);
   return retOK.length / ret.length;
-};
-
-const evalAllEventByValue = (originalEvents, newEvents) => {
-  return evaluateEvents(originalEvents, newEvents, METRIC_VALUE);
-};
-
-const evalAllEventByValueWithTimestamp = (originalEvents, newEvents) => {
-  return evaluateEvents(originalEvents, newEvents, METRIC_VALUE_TIMESTAMP);
-};
-
-const evalActuatorEventOrdering = (originalEvents, newEvents) => {
-  const originalActuatorEvents = originalEvents.filter((e) => !e.isSensorData);
-  const newActuatorEvents = newEvents.filter((e) => !e.isSensorData);
-  return evaluateEvents(
-    originalActuatorEvents,
-    newActuatorEvents,
-    METRIC_VALUE
-  );
-};
-
-const evalActuatorEventOrderingWithTimestamp = (originalEvents, newEvents) => {
-  const originalActuatorEvents = originalEvents.filter((e) => !e.isSensorData);
-  const newActuatorEvents = newEvents.filter((e) => !e.isSensorData);
-  return evaluateEvents(
-    originalActuatorEvents,
-    newActuatorEvents,
-    METRIC_VALUE_TIMESTAMP
-  );
 };
 
 /**
@@ -207,27 +209,42 @@ const evalActuatorEventOrderingWithTimestamp = (originalEvents, newEvents) => {
 const evalulate = (
   originalEvents,
   newEvents,
-  method = "ACTUATOR_EVENTS_ORDERING"
+  eventType = ALL_EVENTS,
+  metricType = METRIC_VALUE_TIMESTAMP,
+  threshold = THRESHOLD_FLEXIBLE
 ) => {
-  switch (method) {
-    case ALL_EVENT_ORDERING:
-      return evalAllEventByValue(originalEvents, newEvents);
-    case ALL_EVENT_ORDERING_WITH_TIMESTAMP:
-      return evalAllEventByValueWithTimestamp(originalEvents, newEvents);
-    case ACTUATOR_EVENTS_ORDERING:
-      return evalActuatorEventOrdering(originalEvents, newEvents);
-    case ACTUATOR_EVENTS_ORDERING_WITH_TIMESTAMP:
-      return evalActuatorEventOrderingWithTimestamp(originalEvents, newEvents);
+  switch (eventType) {
+    case ALL_EVENTS:
+      return evaluateEvents(originalEvents, newEvents, metricType, threshold);
+    case SENSOR_EVENTS:
+      return evaluateEvents(
+        originalEvents.filter((e) => e.isSensorData),
+        newEvents.filter((e) => e.isSensorData),
+        metricType,
+        threshold
+      );
+    case ACTUATOR_EVENTS:
+      return evaluateEvents(
+        originalEvents.filter((e) => !e.isSensorData),
+        newEvents.filter((e) => !e.isSensorData),
+        metricType,
+        threshold
+      );
     default:
-      console.error(`[EVALUATION] Unsupported method: ${method}`);
+      console.error(`[EVALUATION] Unsupported event type: ${eventType}`);
       return null;
   }
 };
 
 module.exports = {
-  ALL_EVENT_ORDERING,
-  ALL_EVENT_ORDERING_WITH_TIMESTAMP,
-  ACTUATOR_EVENTS_ORDERING,
-  ACTUATOR_EVENTS_ORDERING_WITH_TIMESTAMP,
+  THRESHOLD_FLEXIBLE,
+  THRESHOLD_NORMAL,
+  THRESHOLD_STRICT,
+  ALL_EVENTS,
+  SENSOR_EVENTS,
+  ACTUATOR_EVENTS,
+  METRIC_VALUE,
+  METRIC_TIMESTAMP,
+  METRIC_VALUE_TIMESTAMP,
   evalulate,
 };

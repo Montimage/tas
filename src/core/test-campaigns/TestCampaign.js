@@ -4,12 +4,13 @@ const { OFFLINE, SIMULATING } = require("../DeviceStatus");
 const TestCase = require("./TestCase");
 
 class TestCampaign {
-  constructor(id, dataStorageConfig, webhookURL) {
+  constructor(id, dataStorageConfig, webhookURL, evaluationParameters) {
     this.id = id;
     this.name = id;
     this.dataStorageConfig = dataStorageConfig;
     this.dataStorage = new DataStorage(dataStorageConfig);
     this.webhookURL = webhookURL;
+    this.evaluationParameters = evaluationParameters;
     //
     this.testCases = [];
     this.status = OFFLINE;
@@ -30,10 +31,12 @@ class TestCampaign {
               tcaseId,
               this.dataStorageConfig,
               this.id,
+              this.evaluationParameters,
               (scores = null) => {
                 if (scores) {
                   // TODO: do something with scores
                   this.results.push({
+                    testCampaignId: this.id,
                     testCaseId: testCase.id,
                     scores,
                   });

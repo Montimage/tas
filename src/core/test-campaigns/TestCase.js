@@ -4,7 +4,7 @@ const Simulation = require('../simulation');
 const { readJSONFile } = require('../utils');
 const modelsPath = `${__dirname}/../../server/data/models/`;
 class TestCase {
-  constructor(id, dataStorageConfig, testCampaignId = null, callbackWhenFinish = null) {
+  constructor(id, dataStorageConfig, testCampaignId = null, evaluationParameters = null,callbackWhenFinish = null) {
     this.id = id;
     this.name = id;
     this.dataStorageConfig = dataStorageConfig;
@@ -17,6 +17,7 @@ class TestCase {
     this.testCampaignId = testCampaignId;
     this.scores = [];
     this.callbackWhenFinish = callbackWhenFinish;
+    this.evaluationParameters = evaluationParameters;
   }
 
   init(callback) {
@@ -74,7 +75,7 @@ class TestCase {
     for (let index = 0; index < this.datasetIds.length; index++) {
       const datasetId = this.datasetIds[index];
       const stopTestCase = () => this.stop();
-      const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId, testCampaignId: this.testCampaignId}, (score = null) => {
+      const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId, testCampaignId: this.testCampaignId, evaluationParameters: this.evaluationParameters}, (score = null) => {
         if (score !== null && score !== undefined) {
           // Do something if the score === 0
           this.scores.push({

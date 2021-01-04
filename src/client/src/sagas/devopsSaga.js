@@ -6,17 +6,17 @@ import {
 } from 'redux-saga/effects';
 
 import {
-  sendRequestDevopts, sendRequestUpdateDevopts
+  sendRequestDevops, sendRequestUpdateDevops
 } from '../api';
 import {
   setNotification,
-  setDevopts,
+  setDevops,
 } from '../actions';
 
-function* handleRequestDevopts() {
+function* handleRequestDevops() {
   try {
-    const devopts = yield call(() => sendRequestDevopts());
-    yield put(setDevopts(devopts));
+    const devops = yield call(() => sendRequestDevops());
+    yield put(setDevops(devops));
     // dispatch data
   } catch (error) {
     // dispatch error
@@ -24,11 +24,11 @@ function* handleRequestDevopts() {
   }
 }
 
-function* handleRequestUpdateDevopts(action) {
+function* handleRequestUpdateDevops(action) {
   try {
-    const newDevopts = action.payload;
-    yield call(() => sendRequestUpdateDevopts(newDevopts));
-    yield put(setDevopts(newDevopts));
+    const newDevops = action.payload;
+    yield call(() => sendRequestUpdateDevops(newDevops));
+    yield put(setDevops(newDevops));
     yield put(setNotification({type: 'success', message: `The dev Opts flow has been updated`}));
     // dispatch data
   } catch (error) {
@@ -37,9 +37,9 @@ function* handleRequestUpdateDevopts(action) {
   }
 }
 
-function* watchDevopts() {
-  yield takeEvery('REQUEST_DEV_OPTS', handleRequestDevopts);
-  yield takeEvery('REQUEST_UPDATE_DEV_OPTS', handleRequestUpdateDevopts);
+function* watchDevops() {
+  yield takeEvery('REQUEST_DEVOPS', handleRequestDevops);
+  yield takeEvery('REQUEST_UPDATE_DEVOPS', handleRequestUpdateDevops);
 }
 
-export default watchDevopts;
+export default watchDevops;

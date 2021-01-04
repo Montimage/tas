@@ -377,31 +377,31 @@ export const sendRequestDeleteTestCampaign = async (testCampaignId) => {
   return data.result;
 };
 
-// Devopts
-export const sendRequestDevopts = async () => {
-  const url = `${URL}/api/devopts`;
+// Devops
+export const sendRequestDevops = async () => {
+  const url = `${URL}/api/devops`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
-  return data.devopts;
+  return data.devops;
 };
 
-export const sendRequestUpdateDevopts = async (devopts) => {
-  const url = `${URL}/api/devopts`;
+export const sendRequestUpdateDevops = async (devops) => {
+  const url = `${URL}/api/devops`;
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ devopts }),
+    body: JSON.stringify({ devops }),
   });
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
-  return data.devopts;
+  return data.devops;
 };
 
 // Test cases
@@ -696,7 +696,7 @@ export const sendRequestStartSimulation = async (
 
 // Test campaign
 export const sendRequestLaunchTestCampaign = async () => {
-  const url = `${URL}/api/devopts/start`;
+  const url = `${URL}/api/devops/start`;
   const response = await fetch(url);
   const status = await response.json();
   if (status.error) {
@@ -706,7 +706,7 @@ export const sendRequestLaunchTestCampaign = async () => {
 };
 
 export const sendRequestStopTestCampaign = async () => {
-  const url = `${URL}/api/devopts/stop`;
+  const url = `${URL}/api/devops/stop`;
   const response = await fetch(url);
   const status = await response.json();
   if (status.error) {
@@ -716,7 +716,7 @@ export const sendRequestStopTestCampaign = async () => {
 };
 
 export const sendRequestTestCampaignStatus = async () => {
-  const url = `${URL}/api/devopts/status`;
+  const url = `${URL}/api/devops/status`;
   const response = await fetch(url);
   const status = await response.json();
   if (status.error) {

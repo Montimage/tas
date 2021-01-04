@@ -17,7 +17,7 @@ const testCaseRouter = require('./routes/test-cases');
 const testCampaignRouter = require('./routes/test-campaigns');
 const dataSetRouter = require('./routes/data-sets');
 const eventRouter = require('./routes/events');
-const devoptsRouter = require('./routes/devopts');
+const devopsRouter = require('./routes/devops');
 
 var app = express();
 var compression = require('compression');
@@ -71,7 +71,7 @@ app.use('/api/test-campaigns', testCampaignRouter);
 app.use('/api/events', eventRouter);
 app.use('/api/reports', reportRouter);
 app.use('/api/simulation', simulationRouter);
-app.use('/api/devopts', devoptsRouter);
+app.use('/api/devops', devopsRouter);
 app.get('/*', function (req, res) {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });

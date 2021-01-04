@@ -7,8 +7,8 @@ import {
   requestAllTestCampaigns,
   requestAddNewTestCampaign,
   requestDeleteTestCampaign,
-  requestDevopts,
-  requestUpdateDevopts,
+  requestDevops,
+  requestUpdateDevops,
   requestLaunchTestCampaign,
   requestStopTestCampaign,
   requestTestCampaignStatus,
@@ -31,7 +31,7 @@ class TestCampaignListPage extends Component {
 
   componentDidMount() {
     this.props.fetchTestCampaigns();
-    this.props.fetchDevopts();
+    this.props.fetchDevops();
     this.props.fetchTestCampaignStatus();
     this.testCampaignStatusTimer = setInterval(() => {
       this.props.fetchTestCampaignStatus();
@@ -43,8 +43,8 @@ class TestCampaignListPage extends Component {
   }
 
   componentWillReceiveProps(newProps) {
-    if (newProps.devopts) {
-      this.setState(newProps.devopts);
+    if (newProps.devops) {
+      this.setState(newProps.devops);
     }
   }
 
@@ -76,7 +76,7 @@ class TestCampaignListPage extends Component {
     const {
       testCampaigns,
       deleteTestCampaign,
-      updateDevopts,
+      updateDevops,
       launchTestCampaign,
       stopTestCampaign,
       runningStatus,
@@ -181,7 +181,7 @@ class TestCampaignListPage extends Component {
             >
               <Button
                 onClick={() => {
-                  updateDevopts({
+                  updateDevops({
                     webhookURL,
                     testCampaignId,
                   });
@@ -244,17 +244,17 @@ class TestCampaignListPage extends Component {
   }
 }
 
-const mapPropsToStates = ({ testCampaigns, devopts }) => ({
+const mapPropsToStates = ({ testCampaigns, devops }) => ({
   testCampaigns: testCampaigns.allTestCampaigns,
   runningStatus: testCampaigns.runningStatus,
-  devopts,
+  devops,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   fetchTestCampaigns: () => dispatch(requestAllTestCampaigns()),
-  fetchDevopts: () => dispatch(requestDevopts()),
+  fetchDevops: () => dispatch(requestDevops()),
   fetchTestCampaignStatus: () => dispatch(requestTestCampaignStatus()),
-  updateDevopts: (newDevopts) => dispatch(requestUpdateDevopts(newDevopts)),
+  updateDevops: (newDevops) => dispatch(requestUpdateDevops(newDevops)),
   deleteTestCampaign: (testCampaignId) =>
     dispatch(requestDeleteTestCampaign(testCampaignId)),
   addNewTestCampaign: (testCampaign) =>

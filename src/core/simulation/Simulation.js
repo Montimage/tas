@@ -1,8 +1,7 @@
 const { OFFLINE, SIMULATING } = require("../DeviceStatus");
 const { EventSchema, ReportSchema } = require("../enact-mongoose");
 const {
-  evalulate,
-  ALL_EVENT_ORDERING_WITH_TIMESTAMP,
+  evalulate, THRESHOLD_FLEXIBLE, ALL_EVENTS, METRIC_VALUE_TIMESTAMP,
 } = require("../evaluation");
 const Thing = require("../things/Thing");
 
@@ -17,6 +16,7 @@ class Simulation {
     this.datasetId = model.datasetId;
     this.replayOptions = model.replayOptions;
     this.testCampaignId = model.testCampaignId;
+    this.evaluationParameters = model.evaluationParameters;
     this.simulationCallbackWhenFinish = simulationCallbackWhenFinish;
     this.status = OFFLINE;
     if (options) {
@@ -26,6 +26,15 @@ class Simulation {
       if (options.replayOptions) this.replayOptions = options.replayOptions;
       if (options.newDataset) this.newDataset = options.newDataset;
       if (options.testCampaignId) this.testCampaignId = options.testCampaignId;
+      if (options.evaluationParameters) this.evaluationParameters = options.evaluationParameters;
+    }
+    if (!this.evaluationParameters) {
+      console.log(`[SIMULATION] Use default evaluation parameters`);
+      this.evaluationParameters = {
+        threshold: THRESHOLD_FLEXIBLE,
+        eventType: ALL_EVENTS,
+        metricType: METRIC_VALUE_TIMESTAMP
+      }
     }
 
     // Create the dataset if needed
@@ -67,6 +76,7 @@ class Simulation {
       startTime: startTime,
       endTime: endTime,
       score: -1,
+      evaluationParameters: this.evaluationParameters,
     };
 
     this.allThings = [];
@@ -109,10 +119,13 @@ class Simulation {
                 );
                 stopSimulation();
               } else {
+                const {threshold, eventType, metricType} = this.evaluationParameters;
                 const score = evalulate(
                   originalEvents,
                   newEvents,
-                  ALL_EVENT_ORDERING_WITH_TIMESTAMP
+                  eventType,
+                  metricType,
+                  threshold
                 );
                 // Going to save the score into the report
                 ReportSchema.findOneAndUpdate(
