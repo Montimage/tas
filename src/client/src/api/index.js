@@ -580,14 +580,15 @@ export const sendRequestDeleteReport = async (reportId) => {
   return data.result;
 };
 
-export const sendRequestUpdateReport = async (id, report) => {
+export const sendRequestUpdateReport = async (id, report, newScore) => {
+  console.log('Update report: ', id, report, newScore);
   const url = `${URL}/api/reports/${id}`;
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ report }),
+    body: JSON.stringify({ report, newScore }),
   });
   const data = await response.json();
   if (data.error) {
