@@ -166,4 +166,3 @@ export const requestOriginalEvents = createAction('REQUEST_ORIGINAL_EVENTS');
 export const setOriginalEvents = createAction('SET_ORIGINAL_EVENTS');
 export const requestNewEvents = createAction('REQUEST_NEW_EVENTS');
 export const setNewEvents = createAction('SET_NEW_EVENTS');
-export const setReportScore = createAction('SET_REPORT_SCORE');
