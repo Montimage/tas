@@ -5,7 +5,7 @@ import {
   SwitcherOutlined,
   ExportOutlined,
   CaretRightOutlined,
-  CloseSquareOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 
 import {
@@ -27,6 +27,7 @@ import {
   getLastPath,
   updateObjectByPath,
   deepCloneObject,
+  getObjectId
 } from "../utils";
 import {
   FormEditableTextItem,
@@ -401,7 +402,16 @@ class DataRecorderPage extends Component {
       dataRecorderStatus,
       stopDataRecorder,
     } = this.props;
-
+    const recorderId = getObjectId(
+      dataRecorderFileName.indexOf(".json")
+        ? dataRecorderFileName.replace(".json", "")
+        : dataRecorderFileName
+    );
+    console.log(recorderId);
+    let recorderStatus = null;
+    if (dataRecorderStatus && dataRecorderStatus[recorderId]) {
+      recorderStatus = dataRecorderStatus[recorderId];
+    }
     let viewType = getQuery("view");
     if (!viewType) viewType = "form";
     let view = null;
@@ -544,25 +554,29 @@ class DataRecorderPage extends Component {
 
     return (
       <LayoutPage>
-        {dataRecorderStatus && (
+        {recorderStatus && (
           <Alert
             style={{ marginBottom: "15px" }}
             message={
               <div>
-                <p>Model: {dataRecorderStatus.model}.</p>
+                <p>Model: {recorderStatus.model}</p>
+                <p>Status: {recorderStatus.isRunning ? 'Recording' : 'Stopped'}</p>
                 <p>
                   Started time:{" "}
-                  {new Date(
-                    dataRecorderStatus.startedTime
-                  ).toLocaleTimeString()}
-                  .
+                  {new Date(recorderStatus.startedTime).toLocaleTimeString()}
                 </p>
+                {recorderStatus.endTime && (
+                  <p>
+                    End time:{" "}
+                    {new Date(recorderStatus.endTime).toLocaleTimeString()}
+                  </p>
+                )}
                 <p>
                   Log file:{" "}
                   <a
-                    href={`/logs/data-recorders?logFile=${dataRecorderStatus.logFile}`}
+                    href={`/logs/data-recorders?logFile=${recorderStatus.logFile}`}
                   >
-                    {dataRecorderStatus.logFile}
+                    {recorderStatus.logFile}
                   </a>
                   .
                 </p>
@@ -572,7 +586,7 @@ class DataRecorderPage extends Component {
                 </a>
               </div>
             }
-            type="success"
+            type={recorderStatus.isRunning ? "success" : "warning"}
           />
         )}
         <a
@@ -590,16 +604,23 @@ class DataRecorderPage extends Component {
           <ExportOutlined />
           Export Model
         </Button>
-        {dataRecorderStatus && dataRecorderStatus.isRunning ? (
-          <Button type="danger" onClick={() => stopDataRecorder()}>
-            <CloseSquareOutlined /> Stop
+        {recorderStatus && recorderStatus.isRunning ? (
+          <Button
+            type="danger"
+            onClick={() => stopDataRecorder(dataRecorderFileName)}
+          >
+            <StopOutlined /> Stop
           </Button>
         ) : (
           <Button
             type="primary"
             key="item-start"
             onClick={() => startDataRecorder(dataRecorderFileName)}
-            disabled={dataRecorderStatus || isChanged ? true : false}
+            disabled={
+              (recorderStatus && recorderStatus.isRunning) || isChanged
+                ? true
+                : false
+            }
           >
             <CaretRightOutlined /> Start
           </Button>
@@ -655,7 +676,7 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(changeDataRecorderName(newName)),
   startDataRecorder: (dataRecorderFileName) =>
     dispatch(requestStartDataRecorder(dataRecorderFileName)),
-  stopDataRecorder: () => dispatch(requestStopDataRecorder()),
+  stopDataRecorder: (fileName) => dispatch(requestStopDataRecorder(fileName)),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(DataRecorderPage);

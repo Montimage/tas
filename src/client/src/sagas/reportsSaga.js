@@ -20,8 +20,10 @@ import {
 
 function* handleRequestOriginalEvents(action) {
   try {
-    const {datasetId, startTime, endTime} = action.payload;
-    const events = yield call(() => sendRequestEventsByDatasetId(datasetId, startTime, endTime));
+    const { datasetId, startTime, endTime, page } = action.payload;
+    const { events } = yield call(() =>
+      sendRequestEventsByDatasetId(datasetId, startTime, endTime, page)
+    );
     yield put(setOriginalEvents(events));
     // dispatch data
   } catch (error) {
@@ -37,8 +39,10 @@ function* handleRequestOriginalEvents(action) {
 
 function* handleRequestNewEvents(action) {
   try {
-    const datasetId = action.payload;
-    const events = yield call(() => sendRequestEventsByDatasetId(datasetId));
+    const { datasetId, page } = action.payload;
+    const { events } = yield call(() =>
+      sendRequestEventsByDatasetId(datasetId, 0, Date.now(), page)
+    );
     yield put(setNewEvents(events));
     // dispatch data
   } catch (error) {
@@ -55,7 +59,7 @@ function* handleRequestNewEvents(action) {
 function* handleRequestReport(action) {
   try {
     const rpId = action.payload;
-    const report = yield call(() => sendRequestReport(rpId));
+    const {report} = yield call(() => sendRequestReport(rpId));
     yield put(setCurrentReport(report));
     // dispatch data
   } catch (error) {
@@ -71,9 +75,11 @@ function* handleRequestReport(action) {
 
 function* handleRequestUpdateReport(action) {
   try {
-    const { id, report } = action.payload;
-    yield call(() => sendRequestUpdateReport(id, report));
-    yield put(updateReportOK(report));
+    const { id, report, newScore } = action.payload;
+    console.log('Update report: ', id, report, newScore);
+    const newReport = yield call(() => sendRequestUpdateReport(id, report, newScore));
+    yield put(updateReportOK(newReport));
+    yield put(setCurrentReport(newReport));
     yield put(
       setNotification({
         type: "success",

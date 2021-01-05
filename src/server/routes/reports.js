@@ -1,7 +1,8 @@
 /* Working with report */
 const express = require("express");
+const { evalulate } = require("../../core/evaluation");
 const router = express.Router();
-const { ReportSchema, dbConnector } = require("./db-connector");
+const { EventSchema, ReportSchema, dbConnector } = require("./db-connector");
 
 // Get all the reports
 router.get("/", dbConnector, function (req, res, next) {
@@ -29,24 +30,103 @@ router.get("/", dbConnector, function (req, res, next) {
   });
 });
 
+const updateReportScore = (report, res) => {
+  const {
+    originalDatasetId,
+    newDatasetId,
+    startTime,
+    endTime,
+    score,
+    _id,
+    evaluationParameters,
+  } = report;
+  EventSchema.findEventsBetweenTimes(
+    { datasetId: originalDatasetId },
+    startTime,
+    endTime,
+    (err3, originalEvents) => {
+      if (err3) {
+        res.send({
+          error: `Cannot get original events of dataset ${originalDatasetId}`,
+        });
+      } else {
+        EventSchema.findEventsWithOptions(
+          { datasetId: newDatasetId },
+          (err4, newEvents) => {
+            if (err4) {
+              res.send({
+                error: `Cannot get new events of dataset ${newDatasetId}`,
+              });
+            } else {
+              let newScore = score;
+              if (evaluationParameters) {
+                const {
+                  threshold,
+                  eventType,
+                  metricType,
+                } = evaluationParameters;
+                newScore = evalulate(
+                  originalEvents,
+                  newEvents,
+                  eventType,
+                  metricType,
+                  threshold
+                );
+              } else {
+                newScore = evalulate(originalEvents, newEvents);
+              }
+              // Going to save the score into the report
+              ReportSchema.findByIdAndUpdate(
+                _id,
+                { score: newScore },
+                {new: true},
+                (err5, ret) => {
+                  if (err5) {
+                    console.error(
+                      `Cannot update the score for report ${report._id}`
+                    );
+                    res.send({
+                      error: `Cannot update the score for report ${report._id}`,
+                    });
+                  } else {
+                    console.log(
+                      `Report ${report._id} has score of ${newScore}`
+                    );
+                    res.send({
+                      report: ret,
+                    });
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
+    }
+  );
+};
+
 /**
  * Get a event by id
  */
 router.get("/:reportId", dbConnector, function (req, res, next) {
   const { reportId } = req.params;
 
-  ReportSchema.findOne({id: reportId}, (err2, report) => {
-    if (err2) {
+  ReportSchema.findOne({ id: reportId }, (err2, report) => {
+    if (err2 || !report) {
       console.error("[SERVER] Failed to get reports");
       console.error(err2);
-      res.send({
+      return res.send({
         error: "Failed to get report",
       });
-    } else {
-      res.send({
-        report
+    }
+    const { score } = report;
+    if (score > -1) {
+      return res.send({
+        report,
       });
     }
+    return updateReportScore(report, res);
   });
 });
 
@@ -54,20 +134,21 @@ router.get("/:reportId", dbConnector, function (req, res, next) {
  * Update a report
  */
 router.post("/:reportId", dbConnector, function (req, res, next) {
-  const { report } = req.body;
+  const { report, newScore } = req.body;
   const { reportId } = req.params;
-
-  ReportSchema.findOneAndUpdate({id: reportId}, report, (err, ts) => {
+  ReportSchema.findByIdAndUpdate(reportId, report, {new: true},(err, ts) => {
     if (err) {
       console.error("[SERVER] Failed to save a report", err);
-      res.send({
+      return res.send({
         error: "Failed to save a report",
       });
-    } else {
-      res.send({
+    }
+    if (!newScore) {
+      return res.send({
         report: ts,
       });
     }
+    return updateReportScore(ts, res);
   });
 });
 
@@ -77,7 +158,7 @@ router.post("/:reportId", dbConnector, function (req, res, next) {
 router.delete("/:reportId", dbConnector, function (req, res, next) {
   const { reportId } = req.params;
 
-  ReportSchema.findOneAndDelete({id: reportId}, (err, ret) => {
+  ReportSchema.findByIdAndDelete(reportId, (err, ret) => {
     if (err) {
       console.error("[SERVER] Failed to delete a report", err);
       res.send({

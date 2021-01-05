@@ -34,7 +34,7 @@ class LayoutPage extends Component {
             {pageTitle && <Title level={2}>{pageTitle}</Title>}
             {pageSubTitle && <Text type="secondary">{pageSubTitle}</Text>}
             <div style={{ paddingTop: "30px" }} className="site-layout-content">
-              {requesting ? <Spin tip="Loading..." /> : this.props.children}
+              {requesting ? <div style={{textAlign: "center", marginTop: 30}}><Spin tip="Loading..." /></div> : this.props.children}
               <TSFooter />
             </div>
           </Content>

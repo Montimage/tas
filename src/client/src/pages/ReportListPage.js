@@ -16,7 +16,7 @@ class ReportListPage extends Component {
 
   render() {
     const { reports, deleteReport } = this.props;
-    let pageSubTitle = 'All reports';
+    let pageSubTitle = "All reports";
     const topologyFileName = getQuery("topologyFileName");
     if (topologyFileName) {
       pageSubTitle = `${pageSubTitle} of topology: ${topologyFileName}. `;
@@ -43,12 +43,34 @@ class ReportListPage extends Component {
       {
         title: "Test Campaign Id",
         key: "data",
-        render: (ds) => <a href={`/test-campaigns/${ds.testCampaignId}`}> {ds.testCampaignId} </a>,
+        render: (ds) => (
+          <a href={`/test-campaigns/${ds.testCampaignId}`}>
+            {" "}
+            {ds.testCampaignId}{" "}
+          </a>
+        ),
       },
       {
         title: "Topology",
         key: "data",
-        render: (ds) => <a href={`/models/${ds.topologyFileName}`}> {ds.topologyFileName} </a>,
+        render: (ds) => (
+          <a href={`/models/${ds.topologyFileName}`}> {ds.topologyFileName} </a>
+        ),
+      },
+      {
+        title: "Score",
+        key: "data",
+        render: (ds) => (
+          <div>
+            {ds.score > -1 ? (
+              <div>
+                {ds.score === 0 ? <p>{ds.score}</p> : <p>{ds.score}</p>}
+              </div>
+            ) : (
+              <p>NA</p>
+            )}
+          </div>
+        ),
       },
       {
         title: "Action",

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import LayoutPage from "./LayoutPage";
-import { getQuery } from "../utils";
+import { getObjectId, getQuery } from "../utils";
 import {
   FormSelectItem,
   FormEditableTextItem,
@@ -76,87 +76,8 @@ class SimulationPage extends Component {
   }
 
   render() {
-    const { simulationStatus } = this.props;
-    if (simulationStatus) {
-      // Simulating mode
-      const {
-        model,
-        modelFileName,
-        datasetId,
-        newDataset,
-        logFile,
-        report,
-      } = simulationStatus;
-      return (
-        <LayoutPage
-          pageTitle="Simulation Page"
-          pageSubTitle="Manually perform a simulation"
-        >
-          <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
-            {modelFileName ? (
-              <FormTextNotEditableItem
-                label={"Model File Name"}
-                value={
-                  <a href={`/api/models/${modelFileName}`}>{modelFileName}</a>
-                }
-              />
-            ) : (
-              <FormTextNotEditableItem label={"Model"} value={model.name} />
-            )}
-
-            {datasetId && (
-              <FormTextNotEditableItem
-                label={"Dataset Source"}
-                helpText="The source of the data input for the simulation"
-                value={datasetId}
-              />
-            )}
-            <p>The data generated are stored in the dataset</p>
-            <FormTextNotEditableItem
-              label="Dataset Id"
-              value={
-                <a href={`/data-sets/${newDataset.id}`}>{newDataset.id}</a>
-              }
-            />
-            <Form.Item
-              wrapperCol={{
-                xs: {
-                  span: 24,
-                  offset: 0,
-                },
-                sm: {
-                  span: 16,
-                  offset: 4,
-                },
-              }}
-            >
-              <Button
-                type="primary"
-                onClick={() => {
-                  this.props.stopSimulation();
-                }}
-                danger
-              >
-                Stop
-              </Button>
-              <a href={`/logs/simulations?logFile=${logFile}`}>
-                <Button type="link">View Log</Button>
-              </a>
-              <a href={`/reports/${report.id}`}>
-                <Button type="link">View Report</Button>
-              </a>
-              <a href={`/graphview`}>
-                <Button type="link">View Graph</Button>
-              </a>
-            </Form.Item>
-          </Form>
-          <p></p>
-          <a href={`/logs/simulations`} style={{marginRight: 10}}>View Logs</a> <a href={`/reports`}>View Reports</a>
-        </LayoutPage>
-      );
-    }
+    const { modelFileName } = this.state;
     const {
-      modelFileName,
       datasetId,
       newDatasetId,
       datasetName,
@@ -164,6 +85,98 @@ class SimulationPage extends Component {
       datasetTags,
     } = this.state;
     const { allModels, allDatasets } = this.props;
+
+    if (modelFileName) {
+      const simId = getObjectId(modelFileName.replace(".json", ""));
+      const { simulationStatus } = this.props;
+      if (simulationStatus[simId] && simulationStatus[simId].isRunning) {
+        // Simulating mode
+        const {
+          model,
+          modelFileName,
+          datasetId,
+          newDataset,
+          logFile,
+          report,
+        } = simulationStatus[simId];
+        return (
+          <LayoutPage
+            pageTitle="Simulation Page"
+            pageSubTitle="Manually perform a simulation"
+          >
+            <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+              <FormSelectItem
+                label={"Model File Name"}
+                defaultValue={modelFileName}
+                options={allModels}
+                onChange={(value) => this.onModelFileNameChange(value)}
+              />
+              {modelFileName ? (
+                <FormTextNotEditableItem
+                  label={"Model"}
+                  value={
+                    <a href={`/api/models/${modelFileName}`}>{modelFileName}</a>
+                  }
+                />
+              ) : (
+                <FormTextNotEditableItem label={"Model"} value={model.name} />
+              )}
+
+              {datasetId && (
+                <FormTextNotEditableItem
+                  label={"Dataset Source"}
+                  helpText="The source of the data input for the simulation"
+                  value={datasetId}
+                />
+              )}
+              <p>The data generated are stored in the dataset</p>
+              <FormTextNotEditableItem
+                label="Dataset Id"
+                value={
+                  <a href={`/data-sets/${newDataset.id}`}>{newDataset.id}</a>
+                }
+              />
+              <Form.Item
+                wrapperCol={{
+                  xs: {
+                    span: 24,
+                    offset: 0,
+                  },
+                  sm: {
+                    span: 16,
+                    offset: 4,
+                  },
+                }}
+              >
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    this.props.stopSimulation(modelFileName);
+                  }}
+                  danger
+                >
+                  Stop
+                </Button>
+                <a href={`/logs/simulations?logFile=${logFile}`}>
+                  <Button type="link">View Log</Button>
+                </a>
+                <a href={`/reports/${report.id}`}>
+                  <Button type="link">View Report</Button>
+                </a>
+                <a href={`/graphview`}>
+                  <Button type="link">View Graph</Button>
+                </a>
+              </Form.Item>
+            </Form>
+            <p></p>
+            <a href={`/logs/simulations`} style={{ marginRight: 10 }}>
+              View Logs
+            </a>{" "}
+            <a href={`/reports`}>View Reports</a>
+          </LayoutPage>
+        );
+      }
+    }
     const datasetOptions = allDatasets.map((ds) => ds.id);
     return (
       <LayoutPage
@@ -247,7 +260,10 @@ class SimulationPage extends Component {
           </Form.Item>
         </Form>
         <p></p>
-        <a href={`/logs/simulations`} style={{marginRight: 10}}>View Logs</a> <a href={`/reports`}>View Reports</a>
+        <a href={`/logs/simulations`} style={{ marginRight: 10 }}>
+          View Logs
+        </a>{" "}
+        <a href={`/reports`}>View Reports</a>
       </LayoutPage>
     );
   }
@@ -271,7 +287,8 @@ const mapDispatchToProps = (dispatch) => ({
         newDataset,
       })
     ),
-  stopSimulation: () => dispatch(requestStopSimulation()),
+  stopSimulation: (modelFileName) =>
+    dispatch(requestStopSimulation(modelFileName)),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(SimulationPage);

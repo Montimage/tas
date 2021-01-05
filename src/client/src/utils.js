@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 /**
  *
  * @param {Object} obj Object to be updated
@@ -151,6 +153,10 @@ const getLastPath = () => {
   return lastPath;
 }
 
+const getObjectId = (str) => {
+  return crypto.createHash('md5').update(str).digest('hex');
+};
+
 export {
   getQuery,
   isDataGenerator,
@@ -160,5 +166,6 @@ export {
   removeElementFromArray,
   getCreatedTimeFromFileName,
   deepCloneObject,
-  getLastPath
+  getLastPath,
+  getObjectId
 };

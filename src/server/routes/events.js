@@ -5,7 +5,7 @@ const { EventSchema, dbConnector } = require("./db-connector");
 
 // Get all the events
 router.get("/", dbConnector, function (req, res, next) {
-  let page = req.query.page;
+  let page = Number(req.query.page);
   if (!page) page = 0;
   let filter = {};
   let startTime = req.query.startTime;
@@ -39,19 +39,43 @@ router.get("/", dbConnector, function (req, res, next) {
   if (topic) {
     filter = { ...filter, topic };
   }
-
-  EventSchema.findEventsWithPagingOptions(filter, page, (err2, events) => {
-    if (err2) {
-      console.error("[SERVER] Failed to get events", err2);
-      res.send({
-        error: "Failed to get event",
-      });
-    } else {
-      res.send({
-        events,
+  if (page === 0) {
+    EventSchema.countDocuments(filter, (err3, totalNbEvents) => {
+      if (err3) {
+        console.error("[SERVER] Failed to count number of event", err3);
+        res.send({
+          error: "Failed to count number of event",
+        });
+      } else {
+        EventSchema.findEventsWithPagingOptions(filter, page, (err2, events) => {
+          if (err2) {
+            console.error("[SERVER] Failed to get events", err2);
+            res.send({
+              error: "Failed to get event",
+            });
+          } else {
+            res.send({
+              totalNbEvents,
+              events,
+            });
+          }
       });
     }
   });
+  } else {
+    EventSchema.findEventsWithPagingOptions(filter, page, (err2, events) => {
+      if (err2) {
+        console.error("[SERVER] Failed to get events", err2);
+        res.send({
+          error: "Failed to get event",
+        });
+      } else {
+        res.send({
+          events,
+        });
+      }
+    });
+  }
 });
 
 /**

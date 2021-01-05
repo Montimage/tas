@@ -1,0 +1,1 @@
+{"webhookURL":"http://localhost:3333/webhook","testCampaignId":"simple-test-campaign-01","evaluationParameters":{"eventType":"ALL_EVENTS","metricType":"METRIC_VALUE_TIMESTAMP","threshold":0.5}}

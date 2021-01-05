@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import {  Button, Form } from "antd";
+import { Button, Form } from "antd";
 import moment from "moment";
 import LayoutPage from "./LayoutPage";
 import {
@@ -11,10 +11,13 @@ import {
 } from "../actions";
 import {
   FormEditableTextItem,
+  FormNumberItem,
+  FormSelectItem,
   FormTextNotEditableItem,
 } from "../components/FormItems";
-import { getLastPath, updateObjectByPath } from "../utils";
+import { deepCloneObject, getLastPath, updateObjectByPath } from "../utils";
 import EventStream from "../components/EventStream/EventStream";
+import CollapseForm from "../components/CollapseForm";
 
 /**
  *
@@ -43,8 +46,9 @@ class ReportPage extends Component {
         newDatasetId,
         startTime,
         endTime,
-        score,
         testCampaignId,
+        score,
+        evaluationParameters,
       } = report;
       this.state = {
         _id,
@@ -54,14 +58,19 @@ class ReportPage extends Component {
         newDatasetId,
         startTime,
         endTime,
-        score,
         testCampaignId,
+        score,
+        evaluationParameters: deepCloneObject(evaluationParameters),
+        isChanged: false,
+        page: 0,
         originalEvents,
         newEvents,
-        isChanged: false,
+        calculateScore: false
       };
     } else {
-      this.state = {};
+      this.state = {
+        page: 0,
+      };
     }
   }
 
@@ -81,18 +90,19 @@ class ReportPage extends Component {
         newDatasetId,
         startTime,
         endTime,
-        score,
         testCampaignId,
+        score,
+        evaluationParameters,
       } = report;
-      if (!this.state.fetchedOriginalEvents) {
-        this.props.fetchOriginalEvents(originalDatasetId, startTime ? startTime: 0, endTime ? endTime : Date.now());
-        this.setState({ fetchedOriginalEvents: true });
-      }
+      // if (!this.state.fetchedOriginalEvents) {
+      //   this.props.fetchOriginalEvents(originalDatasetId, startTime ? startTime: 0, endTime ? endTime : Date.now(), this.state.page);
+      //   this.setState({ fetchedOriginalEvents: true, page: (page +1) });
+      // }
 
-      if (!this.state.fetchedNewEvents) {
-        this.props.fetchNewEvents(newDatasetId);
-        this.setState({ fetchedNewEvents: true });
-      }
+      // if (!this.state.fetchedNewEvents) {
+      //   this.props.fetchNewEvents(newDatasetId, page );
+      //   this.setState({ fetchedNewEvents: true , page: (page +1) });
+      // }
 
       this.setState({
         _id,
@@ -102,9 +112,10 @@ class ReportPage extends Component {
         newDatasetId,
         startTime,
         endTime,
-        score,
         testCampaignId,
+        score,
         isChanged: false,
+        evaluationParameters: deepCloneObject(evaluationParameters),
       });
     }
     if (originalEvents) {
@@ -123,6 +134,9 @@ class ReportPage extends Component {
     this.setState((prevState) => {
       const newData = { ...prevState };
       updateObjectByPath(newData, dataPath, value);
+      if (dataPath.indexOf('evaluationParameters') > -1) {
+        return { ...newData, isChanged: true, calculateScore: true };
+      }
       return { ...newData, isChanged: true };
     });
   }
@@ -136,8 +150,10 @@ class ReportPage extends Component {
       newDatasetId,
       startTime,
       endTime,
-      score,
       testCampaignId,
+      evaluationParameters,
+      calculateScore,
+      score
     } = this.state;
     this.props.updateReport(_id, {
       createdAt,
@@ -146,10 +162,30 @@ class ReportPage extends Component {
       newDatasetId,
       startTime,
       endTime,
-      score,
       testCampaignId,
-    });
-    this.setState({ isChanged: false });
+      score,
+      evaluationParameters,
+    }, calculateScore);
+    this.setState({ isChanged: false, calculateScore: false });
+  }
+
+  loadEvents() {
+    const {
+      page,
+      originalDatasetId,
+      newDatasetId,
+      startTime,
+      endTime,
+    } = this.state;
+    const { fetchOriginalEvents, fetchNewEvents } = this.props;
+    fetchOriginalEvents(
+      originalDatasetId,
+      startTime ? startTime : 0,
+      endTime ? endTime : Date.now(),
+      this.state.page
+    );
+    fetchNewEvents(newDatasetId, page);
+    this.setState({ page: page + 1 });
   }
 
   render() {
@@ -165,12 +201,13 @@ class ReportPage extends Component {
       newDatasetId,
       startTime,
       endTime,
-      score,
       testCampaignId,
       isChanged,
-      originalEvents,
-      newEvents,
+      evaluationParameters,
+      page,
+      score,
     } = this.state;
+    const { originalEvents, newEvents } = this.props;
     let sourceEvents = [];
     if (originalEvents) {
       sourceEvents = originalEvents.filter(
@@ -223,6 +260,35 @@ class ReportPage extends Component {
             value={moment(endTime).format("MMMM Do YYYY, h:mm:ss a")}
           />
           <FormTextNotEditableItem label="Score" value={score} />
+          {evaluationParameters && (
+            <CollapseForm
+              title="Evaluation Parameters"
+            >
+              <FormSelectItem
+                label="Event Type"
+                helpText="Select the type of event to take into the evaluation"
+                defaultValue={evaluationParameters.eventType}
+                options={["ALL_EVENTS","SENSOR_EVENTS", "ACTUATOR_EVENTS"]}
+                onChange={(eventType) => this.onDataChange('evaluationParameters.eventType', eventType)}
+              />
+              <FormSelectItem
+                label="Metric Type"
+                helpText="Select the type of metric to take into the evaluation"
+                defaultValue={evaluationParameters.metricType}
+                options={["METRIC_VALUE","METRIC_VALUE_TIMESTAMP", "METRIC_TIMESTAMP"]}
+                onChange={(metricType) => this.onDataChange('evaluationParameters.metricType', metricType)}
+              />
+              <FormNumberItem
+                label="Threshold"
+                helpText="Set the threshold of the similarity to be evaluated as PASSED or FAILED"
+                defaultValue={evaluationParameters.threshold}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={(threshold) => this.onDataChange('evaluationParameters.threshold', threshold)}
+              />
+            </CollapseForm>
+          )}
         </Form>
         <Button
           onClick={() => this.saveReport()}
@@ -237,13 +303,22 @@ class ReportPage extends Component {
         >
           Save
         </Button>
-        {sourceEvents && (
+        <Button
+          onClick={() => this.loadEvents()}
+          size="large"
+          style={{
+            marginBottom: 10,
+          }}
+        >
+          {page ? "Load More Events" : "Show Events"}
+        </Button>
+        {sourceEvents && page > 0 && (
           <EventStream
             events={sourceEvents}
             title={`Dataset: ${originalDatasetId} (${sourceEvents.length})`}
           />
         )}
-        {newEvents && (
+        {newEvents && page > 0 && (
           <EventStream
             events={newEvents}
             title={`Dataset: ${newDatasetId} (${newEvents.length})`}
@@ -261,15 +336,17 @@ const mapPropsToStates = ({ reports }) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  fetchOriginalEvents: (datasetId, startTime, endTime) =>
-    dispatch(requestOriginalEvents({datasetId, startTime, endTime})),
-  fetchNewEvents: (datasetId) => dispatch(requestNewEvents(datasetId)),
   fetchReport: (reportId) => dispatch(requestReport(reportId)),
-  updateReport: (originalId, updatedReport) =>
+  fetchOriginalEvents: (datasetId, startTime, endTime, page) =>
+    dispatch(requestOriginalEvents({ datasetId, startTime, endTime, page })),
+  fetchNewEvents: (datasetId, page) =>
+    dispatch(requestNewEvents({datasetId, page})),
+  updateReport: (originalId, updatedReport, newScore) =>
     dispatch(
       requestUpdateReport({
         id: originalId,
         report: updatedReport,
+        newScore
       })
     ),
 });

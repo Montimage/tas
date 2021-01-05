@@ -20,7 +20,7 @@ import {
   selectActuator,
   deleteSimulationActuator,
   changeStatusActuator,
-  requestDataStorage,
+  requestDataStorage, requestSimulationStatus, requestStopSimulation
 } from "../actions";
 import JSONView from "../components/JSONView";
 import LayoutPage from "./LayoutPage";
@@ -28,7 +28,7 @@ import LayoutPage from "./LayoutPage";
 import {
   SwitcherOutlined,
   ExportOutlined,
-  CaretRightOutlined,
+  CaretRightOutlined, StopOutlined
 } from "@ant-design/icons";
 import {
   FormEditableTextItem,
@@ -44,7 +44,7 @@ import {
   getQuery,
   getLastPath,
   updateObjectByPath,
-  deepCloneObject,
+  deepCloneObject,getObjectId
 } from "../utils";
 
 const { Text } = Typography;
@@ -123,7 +123,7 @@ const ModelDeviceItem = ({
   onEnable,
 }) => (
   <CollapseForm
-    title={`${data.name}`}
+    title={`${data.name} ${data.scale > 1 ? `(${data.scale} instances)`: ''}`}
     extra={
       <Fragment>
         <Switch
@@ -169,6 +169,13 @@ const ModelDeviceItem = ({
         label="Id"
         defaultValue={data.id}
         onChange={(newId) => onChange("id", newId)}
+      />
+      <FormNumberItem
+        label="Scale"
+        defaultValue={data.scale}
+        min={1}
+        max={1000}
+        onChange={(newScale) => onChange("scale", newScale)}
       />
       <Divider orientation="left">Test Broker </Divider>
       <FormSelectItem
@@ -551,6 +558,7 @@ class ModelPage extends Component {
       this.setState({ modelFileName, isNewModel: false });
     }
     this.props.fetchDataStorage();
+    this.props.fetchSimulationStatus();
   }
 
   componentWillReceiveProps(newProps) {
@@ -617,11 +625,30 @@ class ModelPage extends Component {
       selectedModalId,
       isChanged,
     } = this.state;
+    const {simulationStatus, stopSimulation } = this.props;
+    let simId = null;
+    if (tempModel) {
+      if (tempModel.name) {
+        simId = getObjectId(tempModel.name);
+        // console.log(tempModel.name, simId);
+      }
+    }
+    let isRunning = false;
+    if (simulationStatus ) {
+      if (simulationStatus[simId]) isRunning = simulationStatus[simId].isRunning;
+    }
+    // console.log(isRunning);
     const { addNewModel, updateModel } = this.props;
 
     let viewType = getQuery("view");
     if (!viewType) viewType = "form";
     let view = null;
+    let nbDevices = 0;
+    if (tempModel.devices) {
+      for (let index = 0; index < tempModel.devices.length; index++) {
+        nbDevices += tempModel.devices[index].scale ? tempModel.devices[index].scale : 1;
+      }
+    }
     if (viewType === "json") {
       view = <JSONView value={tempModel} onChange={this.onModelChange} />;
     } else {
@@ -796,7 +823,7 @@ class ModelPage extends Component {
           <Divider orientation="left">Devices </Divider>
           {tempModel.devices ? (
             <Fragment>
-              <p>Number of devices: {tempModel.devices.length}</p>
+              <p>Number of devices: {nbDevices}</p>
               <Button
                 onClick={() => {
                   const newDev = addNewDevice();
@@ -872,11 +899,17 @@ class ModelPage extends Component {
             <ExportOutlined />
             Export Model
           </Button>
-          <a type="button" href={`/simulation?model=${modelFileName}`}>
-            <Button type="primary">
-              <CaretRightOutlined /> Simulate
+          {isRunning ? (
+            <Button type="primary" danger onClick={() => stopSimulation(modelFileName)}>
+              <StopOutlined /> Stop
             </Button>
-          </a>
+          ) : (
+            <a type="button" href={`/simulation?model=${modelFileName}`}>
+              <Button type="primary">
+                <CaretRightOutlined /> Simulate
+              </Button>
+            </a>
+          )}
           <p></p>
           {view}
           <Button
@@ -905,13 +938,15 @@ class ModelPage extends Component {
   }
 }
 
-const mapPropsToStates = ({ model, dataStorage }) => ({
+const mapPropsToStates = ({ model, dataStorage, simulationStatus }) => ({
   model,
   dataStorage: dataStorage.connConfig,
+  simulationStatus
 });
 
 const mapDispatchToProps = (dispatch) => ({
   fetchDataStorage: () => dispatch(requestDataStorage()),
+  fetchSimulationStatus: () => dispatch(requestSimulationStatus()),
   requestModel: (modelFileName) => dispatch(requestModel(modelFileName)),
   addNewModel: (newModel) => dispatch(requestAddNewModel(newModel)),
   updateModel: (modelFileName, model) =>
@@ -931,6 +966,8 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(deleteSimulationActuator({ actuatorID, thingID })),
   changeStatusActuator: (actuatorID, thingID) =>
     dispatch(changeStatusActuator({ actuatorID, thingID })),
+  stopSimulation: (modelFileName) =>
+    dispatch(requestStopSimulation(modelFileName)),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(ModelPage);

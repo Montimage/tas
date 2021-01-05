@@ -25,7 +25,6 @@ const reportSchema = new Schema({
   },
   originalDatasetId: {
     type: String,
-    required: true,
   },
   newDatasetId: {
     type: String,
@@ -51,6 +50,9 @@ const reportSchema = new Schema({
     type: String,
     required: false,
   },
+  evaluationParameters:{
+    type: Object
+  }
 });
 reportSchema.statics.findReportsWithOptions = function (options, callback) {
   this.find(options)

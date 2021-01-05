@@ -11,7 +11,7 @@ import testCasesSaga from './testCasesSaga';
 import datasetsSaga from './datasetsSaga';
 import eventsSaga from './eventsSaga';
 import reportsSaga from './reportsSaga';
-import devoptsSaga from './devoptsSaga';
+import devopsSaga from './devopsSaga';
 
 function* rootSaga() {
   yield all([
@@ -22,7 +22,7 @@ function* rootSaga() {
     requestLogsSaga(),
     dataStorageSaga(),
     testCampaignsSaga(),
-    devoptsSaga(),
+    devopsSaga(),
     testCasesSaga(),
     datasetsSaga(),
     eventsSaga(),

@@ -70,6 +70,7 @@ class DatasetPage extends Component {
         isNew: false,
         newEvent: initEvent(id),
         activeEventModal: null,
+        eventPage: 0,
       };
     } else {
       const currentTime = Date.now();
@@ -88,14 +89,24 @@ class DatasetPage extends Component {
         events: [],
         newEvent: initEvent(dsId),
         activeEventModal: null,
+        eventPage: 0
       };
     }
+  }
+
+  requestEvents() {
+    const dsId = getLastPath();
+    const {page} = this.state;
+    let startTime = 0;
+    let endTime = Date.now();
+    this.props.fetchEvents(dsId, startTime, endTime, page);
+    this.setState({page: (page + 1)});
   }
 
   componentDidMount() {
     const dsId = getLastPath();
     this.props.fetchDataset(dsId);
-    this.props.fetchEvents(dsId);
+    this.requestEvents();
   }
 
   componentWillReceiveProps(newProps) {
@@ -219,7 +230,7 @@ class DatasetPage extends Component {
       newEvent,
       isNew,
     } = this.state;
-    const { deleteEvent, addNewEvent, updateEvent } = this.props;
+    const { deleteEvent, addNewEvent, updateEvent, totalNbEvents } = this.props;
     const nbEvents = events.length;
     const startTime = events[0] ? events[0].timestamp : 0;
     const endTime = events[nbEvents - 1] ? events[nbEvents - 1].timestamp : 0;
@@ -241,7 +252,7 @@ class DatasetPage extends Component {
     return (
       <LayoutPage
         pageTitle={name}
-        pageSubTitle="View and update the test case detail"
+        pageSubTitle="View and update a dataset"
       >
         <Form labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
           {isNew ? (
@@ -282,7 +293,8 @@ class DatasetPage extends Component {
             defaultValue={JSON.stringify(tags)}
             onChange={(newTags) => this.updateTags(newTags)}
           />
-          <FormTextNotEditableItem label="Number of events" value={nbEvents} />
+          <FormTextNotEditableItem label="Total number of events" value={totalNbEvents} />
+          <FormTextNotEditableItem label="Number of presented events" value={nbEvents} />
           <FormTextNotEditableItem
             label="Number of sensor's events"
             value={nbSensors}
@@ -300,6 +312,16 @@ class DatasetPage extends Component {
             value={new Date(endTime).toLocaleString()}
           />
         </Form>
+        {nbEvents < totalNbEvents ?
+          <Button
+          style={{ marginBottom: "10px", marginRight: 10 }}
+          onClick={() => {
+            this.requestEvents();
+          }}
+          disabled={isNew ? true : false}>
+            Get more events ({nbEvents}/{totalNbEvents})
+          </Button>: null
+        }
         <Tooltip title="The dataset need to be created before adding event">
           <Button
             style={{ marginBottom: "10px" }}
@@ -364,10 +386,11 @@ class DatasetPage extends Component {
 const mapPropsToStates = ({ datasets }) => ({
   dataset: datasets.currentDataset.dataset,
   events: datasets.currentDataset.events,
+  totalNbEvents: datasets.currentDataset.totalNbEvents,
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  fetchEvents: (datasetId) => dispatch(requestEventsByDatasetId(datasetId)),
+  fetchEvents: (datasetId, startTime, endTime, page) => dispatch(requestEventsByDatasetId({datasetId, startTime, endTime, page})),
   fetchDataset: (datasetId) => dispatch(requestDataset(datasetId)),
   updatedataset: (originalId, updateddataset) =>
     dispatch(

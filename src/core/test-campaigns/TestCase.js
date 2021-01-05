@@ -4,7 +4,7 @@ const Simulation = require('../simulation');
 const { readJSONFile } = require('../utils');
 const modelsPath = `${__dirname}/../../server/data/models/`;
 class TestCase {
-  constructor(id, dataStorageConfig, testCampaignId = null) {
+  constructor(id, dataStorageConfig, testCampaignId = null, evaluationParameters = null,callbackWhenFinish = null) {
     this.id = id;
     this.name = id;
     this.dataStorageConfig = dataStorageConfig;
@@ -15,6 +15,9 @@ class TestCase {
     this.datasetIds = null;
     this.status = OFFLINE;
     this.testCampaignId = testCampaignId;
+    this.scores = [];
+    this.callbackWhenFinish = callbackWhenFinish;
+    this.evaluationParameters = evaluationParameters;
   }
 
   init(callback) {
@@ -40,7 +43,6 @@ class TestCase {
         }
         this.datasetIds = datasetIds;
         this.modelFileName = modelFileName;
-        // TODO: load model from file
         return readJSONFile(`${modelsPath}${this.modelFileName}`, (err2, data) => {
           if (err2) {
             console.error(`[TestCase] Cannot read model file ${this.modelFileName}`);
@@ -55,19 +57,43 @@ class TestCase {
     });
   }
 
-  start(callbackWhenFinish) {
+  start() {
     if (this.status === SIMULATING) {
-      return callbackWhenFinish('[TestCase] Test case is in simulating');
+      console.log('[TestCase] Test case is in simulating');
+      return;
     }
     if (!this.datasetIds || this.datasetIds.length === 0) {
-      return callbackWhenFinish('[TestCase] No datasetIds');
+      console.log('[TestCase] No datasetIds');
+      this.stop();
+      return;
     }
     if (!this.model) {
-      return callbackWhenFinish('[TestCase] No model');
+      console.log('[TestCase] No model');
+      this.stop();
+      return;
     }
     for (let index = 0; index < this.datasetIds.length; index++) {
       const datasetId = this.datasetIds[index];
-      const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId, testCampaignId: this.testCampaignId} );
+      const stopTestCase = () => this.stop();
+      const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId, testCampaignId: this.testCampaignId, evaluationParameters: this.evaluationParameters}, (score = null) => {
+        if (score !== null && score !== undefined) {
+          // Do something if the score === 0
+          this.scores.push({
+            simulationIndex: index,
+            datasetId,
+            score
+          });
+        }
+        for (let simuIndex = 0; simuIndex < this.simulations.length; simuIndex++) {
+          const sim = this.simulations[simuIndex];
+          if (sim.status !== OFFLINE) {
+            return;
+          }
+          // All the simulations have been finished
+          stopTestCase();
+          return;
+        }
+      });
       newSimulation.start();
       this.simulations.push(newSimulation);
     }
@@ -82,6 +108,8 @@ class TestCase {
         const simulation = this.simulations[index];
         simulation.stop();
       }
+      this.status = OFFLINE;
+      if (this.callbackWhenFinish) this.callbackWhenFinish(this.scores);
     }
   }
 

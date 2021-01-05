@@ -1,6 +1,6 @@
 // read and pass the environment variables into reactjs application
-// const URL = `http://localhost:31057`;
-const URL = "";
+// export const URL = `http://localhost:31057`;
+export const URL = "";
 
 // MODELS
 export const requestAllModels = async () => {
@@ -11,37 +11,37 @@ export const requestAllModels = async () => {
     throw data.error;
   }
   return data.models;
-}
+};
 
 export const requestDeleteModel = async (modelFileName) => {
   const url = `${URL}/api/models/${modelFileName}`;
-  const response = await fetch(url,{
-    method: 'DELETE',
+  const response = await fetch(url, {
+    method: "DELETE",
   });
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
   return data.result;
-}
+};
 
 export const requestDuplicateModel = async (modelFileName) => {
   const url = `${URL}/api/models/${modelFileName}`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      isDuplicated: true
-    })
+      isDuplicated: true,
+    }),
   });
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
   return data.modelFileName;
-}
+};
 
 export const requestModel = async (modelFileName) => {
   const url = `${URL}/api/models/${modelFileName}`;
@@ -55,12 +55,12 @@ export const requestModel = async (modelFileName) => {
 
 export const uploadModel = async (model) => {
   const url = `${URL}/api/models`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({model})
+    body: JSON.stringify({ model }),
   });
   const data = await response.json();
   if (data.error) {
@@ -71,12 +71,12 @@ export const uploadModel = async (model) => {
 
 export const updateModel = async (modelFileName, model) => {
   const url = `${URL}/api/models/${modelFileName}`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({model})
+    body: JSON.stringify({ model }),
   });
   const data = await response.json();
   if (data.error) {
@@ -94,37 +94,37 @@ export const requestAllDataRecorders = async () => {
     throw data.error;
   }
   return data.dataRecorders;
-}
+};
 
 export const requestDeleteDataRecorder = async (dataRecorderFileName) => {
   const url = `${URL}/api/data-recorders/models/${dataRecorderFileName}`;
-  const response = await fetch(url,{
-    method: 'DELETE',
+  const response = await fetch(url, {
+    method: "DELETE",
   });
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
   return data.result;
-}
+};
 
 export const requestDuplicateDataRecorder = async (dataRecorderFileName) => {
   const url = `${URL}/api/data-recorders/models/${dataRecorderFileName}`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      isDuplicated: true
-    })
+      isDuplicated: true,
+    }),
   });
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
   return data.dataRecorderFileName;
-}
+};
 
 export const requestDataRecorder = async (dataRecorderFileName) => {
   const url = `${URL}/api/data-recorders/models/${dataRecorderFileName}`;
@@ -138,12 +138,12 @@ export const requestDataRecorder = async (dataRecorderFileName) => {
 
 export const uploadDataRecorder = async (dataRecorder) => {
   const url = `${URL}/api/data-recorders/models`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({dataRecorder})
+    body: JSON.stringify({ dataRecorder }),
   });
   const data = await response.json();
   if (data.error) {
@@ -152,14 +152,17 @@ export const uploadDataRecorder = async (dataRecorder) => {
   return data.dataRecorderFileName;
 };
 
-export const updateDataRecorder = async (dataRecorderFileName, dataRecorder) => {
+export const updateDataRecorder = async (
+  dataRecorderFileName,
+  dataRecorder
+) => {
   const url = `${URL}/api/data-recorders/models/${dataRecorderFileName}`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({dataRecorder})
+    body: JSON.stringify({ dataRecorder }),
   });
   const data = await response.json();
   if (data.error) {
@@ -170,29 +173,29 @@ export const updateDataRecorder = async (dataRecorderFileName, dataRecorder) => 
 
 export const sendRequestStartDataRecorder = async (dataRecorderFileName) => {
   const url = `${URL}/api/data-recorders/start`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({dataRecorderFileName})
+    body: JSON.stringify({ dataRecorderFileName }),
   });
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
   return data.status;
-}
+};
 
-export const sendRequestStopDataRecorder = async () => {
-  const url = `${URL}/api/data-recorders/stop`;
+export const sendRequestStopDataRecorder = async (fileName) => {
+  const url = `${URL}/api/data-recorders/stop/${fileName}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
   return data.status;
-}
+};
 
 export const sendRequestDataRecorderStatus = async () => {
   const url = `${URL}/api/data-recorders/status`;
@@ -217,12 +220,12 @@ export const sendRequestDataStorage = async () => {
 
 export const sendRequestUpdateDataStorage = async (dataStorage) => {
   const url = `${URL}/api/data-storage`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({dataStorage})
+    body: JSON.stringify({ dataStorage }),
   });
   const data = await response.json();
   if (data.error) {
@@ -241,8 +244,6 @@ export const sendRequestTestDataStorageConnection = async (dataStorage) => {
   return data.connectionStatus;
 };
 
-
-
 export const sendRequestLogFile = async (tool, logFile) => {
   const url = `${URL}/api/logs/${tool}/${logFile}`;
   const response = await fetch(url);
@@ -256,7 +257,7 @@ export const sendRequestLogFile = async (tool, logFile) => {
 export const sendRequestDeleteLogFile = async (tool, logFile) => {
   const url = `${URL}/api/logs/${tool}/${logFile}`;
   const response = await fetch(url, {
-    method: 'DELETE'
+    method: "DELETE",
   });
   const data = await response.json();
   if (data.error) {
@@ -264,7 +265,6 @@ export const sendRequestDeleteLogFile = async (tool, logFile) => {
   }
   return data.result;
 };
-
 
 export const sendRequestAllLogFiles = async (tool) => {
   const url = `${URL}/api/logs/${tool}`;
@@ -278,12 +278,12 @@ export const sendRequestAllLogFiles = async (tool) => {
 
 export const requestStartDeploy = async (tool, model) => {
   const url = `${URL}/api/${tool}/deploy`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({model})
+    body: JSON.stringify({ model }),
   });
   const data = await response.json();
   if (data.error) {
@@ -292,8 +292,8 @@ export const requestStartDeploy = async (tool, model) => {
   return data.simulationStatus;
 };
 
-export const sendRequestStopSimulation = async () => {
-  const url = `${URL}/api/simulation/stop`;
+export const sendRequestStopSimulation = async (fileName) => {
+  const url = `${URL}/api/simulation/stop/${fileName}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
@@ -312,7 +312,6 @@ export const sendRequestSimulationStatus = async () => {
   return data.simulationStatus;
 };
 
-
 // Test campaigns
 export const sendRequestTestCampaign = async (tcId) => {
   const url = `${URL}/api/test-campaigns/${tcId}`;
@@ -326,12 +325,12 @@ export const sendRequestTestCampaign = async (tcId) => {
 
 export const sendRequestUpdateTestCampaign = async (id, testCampaign) => {
   const url = `${URL}/api/test-campaigns/${id}`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({testCampaign})
+    body: JSON.stringify({ testCampaign }),
   });
   const data = await response.json();
   if (data.error) {
@@ -352,12 +351,12 @@ export const sendRequestAllTestCampaigns = async () => {
 
 export const sendRequestAddNewTestCampaign = async (testCampaign) => {
   const url = `${URL}/api/test-campaigns`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({testCampaign})
+    body: JSON.stringify({ testCampaign }),
   });
   const data = await response.json();
   if (data.error) {
@@ -368,8 +367,8 @@ export const sendRequestAddNewTestCampaign = async (testCampaign) => {
 
 export const sendRequestDeleteTestCampaign = async (testCampaignId) => {
   const url = `${URL}/api/test-campaigns/${testCampaignId}`;
-  const response = await fetch(url,{
-    method: 'DELETE',
+  const response = await fetch(url, {
+    method: "DELETE",
   });
   const data = await response.json();
   if (data.error) {
@@ -378,34 +377,32 @@ export const sendRequestDeleteTestCampaign = async (testCampaignId) => {
   return data.result;
 };
 
-
-// Devopts
-export const sendRequestDevopts = async () => {
-  const url = `${URL}/api/devopts`;
+// Devops
+export const sendRequestDevops = async () => {
+  const url = `${URL}/api/devops`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
-  return data.devopts;
+  return data.devops;
 };
 
-export const sendRequestUpdateDevopts = async (devopts) => {
-  const url = `${URL}/api/devopts`;
-  const response = await fetch(url,{
-    method: 'POST',
+export const sendRequestUpdateDevops = async (devops) => {
+  const url = `${URL}/api/devops`;
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({devopts})
+    body: JSON.stringify({ devops }),
   });
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
-  return data.devopts;
+  return data.devops;
 };
-
 
 // Test cases
 export const sendRequestTestCase = async (tcId) => {
@@ -420,12 +417,12 @@ export const sendRequestTestCase = async (tcId) => {
 
 export const sendRequestUpdateTestCase = async (id, testCase) => {
   const url = `${URL}/api/test-cases/${id}`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({testCase})
+    body: JSON.stringify({ testCase }),
   });
   const data = await response.json();
   if (data.error) {
@@ -446,12 +443,12 @@ export const sendRequestAllTestCases = async () => {
 
 export const sendRequestAddNewTestCase = async (testCase) => {
   const url = `${URL}/api/test-cases`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({testCase})
+    body: JSON.stringify({ testCase }),
   });
   const data = await response.json();
   if (data.error) {
@@ -462,8 +459,8 @@ export const sendRequestAddNewTestCase = async (testCase) => {
 
 export const sendRequestDeleteTestCase = async (testCaseId) => {
   const url = `${URL}/api/test-cases/${testCaseId}`;
-  const response = await fetch(url,{
-    method: 'DELETE',
+  const response = await fetch(url, {
+    method: "DELETE",
   });
   const data = await response.json();
   if (data.error) {
@@ -471,7 +468,6 @@ export const sendRequestDeleteTestCase = async (testCaseId) => {
   }
   return data.result;
 };
-
 
 // Dataset
 export const sendRequestDataset = async (tcId) => {
@@ -486,12 +482,12 @@ export const sendRequestDataset = async (tcId) => {
 
 export const sendRequestUpdateDataset = async (id, dataset) => {
   const url = `${URL}/api/data-sets/${id}`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({dataset})
+    body: JSON.stringify({ dataset }),
   });
   const data = await response.json();
   if (data.error) {
@@ -512,12 +508,12 @@ export const sendRequestAllDatasets = async () => {
 
 export const sendRequestAddNewDataset = async (dataset) => {
   const url = `${URL}/api/data-sets`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({dataset})
+    body: JSON.stringify({ dataset }),
   });
   const data = await response.json();
   if (data.error) {
@@ -528,8 +524,8 @@ export const sendRequestAddNewDataset = async (dataset) => {
 
 export const sendRequestDeleteDataset = async (datasetId) => {
   const url = `${URL}/api/data-sets/${datasetId}`;
-  const response = await fetch(url,{
-    method: 'DELETE',
+  const response = await fetch(url, {
+    method: "DELETE",
   });
   const data = await response.json();
   if (data.error) {
@@ -546,20 +542,20 @@ export const sendRequestReport = async (rpId) => {
   if (status.error) {
     throw status.error;
   }
-  return status.report;
+  return status;
 };
 
 export const sendRequestAllReports = async (options) => {
-  const {topologyFileName, testCampaignId} = options;
-  let query = '';
+  const { topologyFileName, testCampaignId } = options;
+  let query = "";
   if (topologyFileName) {
-    query=`?topologyFileName=${topologyFileName}`;
+    query = `?topologyFileName=${topologyFileName}`;
     if (testCampaignId) {
-      query=`&testCampaignId=${testCampaignId}`;
+      query = `&testCampaignId=${testCampaignId}`;
     }
   } else {
     if (testCampaignId) {
-      query=`?testCampaignId=${testCampaignId}`;
+      query = `?testCampaignId=${testCampaignId}`;
     }
   }
 
@@ -574,8 +570,8 @@ export const sendRequestAllReports = async (options) => {
 
 export const sendRequestDeleteReport = async (reportId) => {
   const url = `${URL}/api/reports/${reportId}`;
-  const response = await fetch(url,{
-    method: 'DELETE',
+  const response = await fetch(url, {
+    method: "DELETE",
   });
   const data = await response.json();
   if (data.error) {
@@ -584,14 +580,15 @@ export const sendRequestDeleteReport = async (reportId) => {
   return data.result;
 };
 
-export const sendRequestUpdateReport = async (id, report) => {
+export const sendRequestUpdateReport = async (id, report, newScore) => {
+  console.log('Update report: ', id, report, newScore);
   const url = `${URL}/api/reports/${id}`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({report})
+    body: JSON.stringify({ report, newScore }),
   });
   const data = await response.json();
   if (data.error) {
@@ -613,12 +610,12 @@ export const sendRequestEvent = async (tcId) => {
 
 export const sendRequestUpdateEvent = async (id, event) => {
   const url = `${URL}/api/events/${id}`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({event})
+    body: JSON.stringify({ event }),
   });
   const data = await response.json();
   if (data.error) {
@@ -627,24 +624,31 @@ export const sendRequestUpdateEvent = async (id, event) => {
   return data.event;
 };
 
-export const sendRequestEventsByDatasetId = async (dsId, startTime, endTime) => {
-  const url = `${URL}/api/events?datasetId=${dsId}&startTime=${startTime ? startTime : 0}&endTime=${endTime ? endTime : Date.now()}`;
+export const sendRequestEventsByDatasetId = async (
+  datasetId,
+  startTime,
+  endTime,
+  page = 0
+) => {
+  const url = `${URL}/api/events?datasetId=${datasetId}&startTime=${
+    startTime ? startTime : 0
+  }&endTime=${endTime ? endTime : Date.now()}&page=${page}`;
   const response = await fetch(url);
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
-  return data.events;
+  return {totalNbEvents: data.totalNbEvents, events: data.events};
 };
 
 export const sendRequestAddNewEvent = async (event) => {
   const url = `${URL}/api/events`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({event})
+    body: JSON.stringify({ event }),
   });
   const data = await response.json();
   if (data.error) {
@@ -655,8 +659,8 @@ export const sendRequestAddNewEvent = async (event) => {
 
 export const sendRequestDeleteEvent = async (eventId) => {
   const url = `${URL}/api/events/${eventId}`;
-  const response = await fetch(url,{
-    method: 'DELETE',
+  const response = await fetch(url, {
+    method: "DELETE",
   });
   const data = await response.json();
   if (data.error) {
@@ -665,32 +669,35 @@ export const sendRequestDeleteEvent = async (eventId) => {
   return data.result;
 };
 
-
-export const sendRequestStartSimulation = async (modelFileName, datasetId, newDataset) => {
+export const sendRequestStartSimulation = async (
+  modelFileName,
+  datasetId,
+  newDataset
+) => {
   const url = `${URL}/api/simulation/start`;
-  const response = await fetch(url,{
-    method: 'POST',
+  const response = await fetch(url, {
+    method: "POST",
     headers: {
-      'Content-Type':'application/json'
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       modelFileName,
       options: {
         datasetId,
-        newDataset
-      }
-    })
+        newDataset,
+      },
+    }),
   });
   const data = await response.json();
   if (data.error) {
     throw data.error;
   }
   return data.simulationStatus;
-}
+};
 
 // Test campaign
 export const sendRequestLaunchTestCampaign = async () => {
-  const url = `${URL}/api/devopts/start`;
+  const url = `${URL}/api/devops/start`;
   const response = await fetch(url);
   const status = await response.json();
   if (status.error) {
@@ -700,7 +707,7 @@ export const sendRequestLaunchTestCampaign = async () => {
 };
 
 export const sendRequestStopTestCampaign = async () => {
-  const url = `${URL}/api/devopts/stop`;
+  const url = `${URL}/api/devops/stop`;
   const response = await fetch(url);
   const status = await response.json();
   if (status.error) {
@@ -710,7 +717,7 @@ export const sendRequestStopTestCampaign = async () => {
 };
 
 export const sendRequestTestCampaignStatus = async () => {
-  const url = `${URL}/api/devopts/status`;
+  const url = `${URL}/api/devops/status`;
   const response = await fetch(url);
   const status = await response.json();
   if (status.error) {
@@ -718,4 +725,3 @@ export const sendRequestTestCampaignStatus = async () => {
   }
   return status.runningStatus;
 };
-
