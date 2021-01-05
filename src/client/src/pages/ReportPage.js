@@ -60,7 +60,7 @@ class ReportPage extends Component {
         endTime,
         testCampaignId,
         score,
-        evaluationParameters: deepCloneObject(evaluationParameters),
+        evaluationParameters: evaluationParameters ? deepCloneObject(evaluationParameters) : null,
         isChanged: false,
         page: 0,
         originalEvents,
@@ -115,7 +115,7 @@ class ReportPage extends Component {
         testCampaignId,
         score,
         isChanged: false,
-        evaluationParameters: deepCloneObject(evaluationParameters),
+        evaluationParameters: evaluationParameters ? deepCloneObject(evaluationParameters) : null,
       });
     }
     if (originalEvents) {
@@ -260,7 +260,7 @@ class ReportPage extends Component {
             value={moment(endTime).format("MMMM Do YYYY, h:mm:ss a")}
           />
           <FormTextNotEditableItem label="Score" value={score} />
-          {evaluationParameters && (
+          {evaluationParameters ? (
             <CollapseForm
               title="Evaluation Parameters"
             >
@@ -288,6 +288,17 @@ class ReportPage extends Component {
                 onChange={(threshold) => this.onDataChange('evaluationParameters.threshold', threshold)}
               />
             </CollapseForm>
+          ) : (
+            <Button
+              style={{marginBottom: 10}}
+              onClick={() => this.onDataChange('evaluationParameters', {
+                threshold: 0.5,
+                eventType: "ALL_EVENTS",
+                metricType: "METRIC_VALUE_TIMESTAMP"
+              })}
+            >
+              Set Evaluation Parameters
+            </Button>
           )}
         </Form>
         <Button

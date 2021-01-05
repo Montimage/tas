@@ -1,6 +1,6 @@
 /* Working with report */
 const express = require("express");
-const { evalulate } = require("../../core/evaluation");
+const { evalulate, ALL_EVENTS, METRIC_VALUE_TIMESTAMP, THRESHOLD_FLEXIBLE } = require("../../core/evaluation");
 const router = express.Router();
 const { EventSchema, ReportSchema, dbConnector } = require("./db-connector");
 
@@ -78,7 +78,8 @@ const updateReportScore = (report, res) => {
               // Going to save the score into the report
               ReportSchema.findByIdAndUpdate(
                 _id,
-                { score: newScore },
+                { score: newScore,
+                evaluationParameters: evaluationParameters ? evaluationParameters : {eventType: ALL_EVENTS, metricType: METRIC_VALUE_TIMESTAMP, threshold: THRESHOLD_FLEXIBLE} },
                 {new: true},
                 (err5, ret) => {
                   if (err5) {
