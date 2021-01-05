@@ -102,7 +102,8 @@ router.get('/start', dbConnector, (req, res, next) => {
       const {
         webhookURL,
         testCampaignId,
-        dataStorage
+        dataStorage,
+        evaluationParameters,
       } = devops;
       if (!testCampaignId) {
         console.error('Test campaign Id must not be NULL');
@@ -125,7 +126,7 @@ router.get('/start', dbConnector, (req, res, next) => {
             endTime: null,
             logFile
           };
-          startTestCampaign(testCampaignId, dataStorage, webhookURL);
+          startTestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters);
           res.send({
             error: null,
             devops,
@@ -148,7 +149,7 @@ router.get('/start', dbConnector, (req, res, next) => {
                 endTime: null,
                 logFile
               };
-              startTestCampaign(testCampaignId, ds, webhookURL);
+              startTestCampaign(testCampaignId, ds, webhookURL, evaluationParameters);
               res.send({
                 error: null,
                 runningStatus

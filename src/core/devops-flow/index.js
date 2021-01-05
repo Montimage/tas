@@ -6,7 +6,7 @@ let testCampaign = null;
 const getTestCampainStatus = () => {
   if (testCampaign) return testCampaign.status;
   else return null;
-}
+};
 
 /**
  * Stop the test campaign
@@ -19,15 +19,33 @@ const stopTestCampaign = () => {
  * Start the test campaign
  * @param {Object} model The model to be simulated
  */
-const startTestCampaign = (testCampaignId, dataStorage, webhookURL, evaluationParameters) => {
-  console.log('Start test campaign: ', testCampaignId, dataStorage, webhookURL, evaluationParameters);
-  testCampaign = new TestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters);
+const startTestCampaign = (
+  testCampaignId,
+  dataStorage,
+  webhookURL,
+  evaluationParameters
+) => {
+  // console.log("Start test campaign: ");
+  // console.log(testCampaignId);
+  // console.log(JSON.stringify(dataStorage));
+  // console.log(webhookURL);
+  // console.log(JSON.stringify(evaluationParameters));
+  testCampaign = new TestCampaign(
+    testCampaignId,
+    dataStorage,
+    webhookURL,
+    evaluationParameters
+  );
   testCampaign.init((err) => {
     if (err) {
-      console.log(`[devops-flow] Failed to start a Test Campaign ${testCampaignId}`);
+      console.log(
+        `[devops-flow] Failed to start a Test Campaign ${testCampaignId}`
+      );
     } else {
       testCampaign.start(() => {
-        console.log(`[devops-flow] Test campaign ${testCampaignId} has been finished`);
+        console.log(
+          `[devops-flow] Test campaign ${testCampaignId} has been finished`
+        );
       });
     }
   });
@@ -48,11 +66,25 @@ if (process.argv[2] === "test") {
           process.argv[3]
         );
       } else {
-        const {testCampaignId, dataStorage, webhookURL, evaluationParameters} = devops;
+        const {
+          testCampaignId,
+          dataStorage,
+          webhookURL,
+          evaluationParameters,
+        } = devops;
         if (!testCampaignId || !dataStorage) {
-          console.error('[devops-flow] Cannot start test campaign: ', testCampaignId, dataStorage);
+          console.error(
+            "[devops-flow] Cannot start test campaign: ",
+            testCampaignId,
+            dataStorage
+          );
         } else {
-          startTestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters);
+          startTestCampaign(
+            testCampaignId,
+            dataStorage,
+            webhookURL,
+            evaluationParameters
+          );
         }
       }
     }
@@ -62,5 +94,5 @@ if (process.argv[2] === "test") {
 module.exports = {
   startTestCampaign,
   stopTestCampaign,
-  getTestCampainStatus
+  getTestCampainStatus,
 };

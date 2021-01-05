@@ -162,7 +162,7 @@ const evaluateEvents = (originalEvents, newEvents, metricType, threshold) => {
   }
 
   let ret = [];
-  console.log(JSON.stringify(topics));
+  // console.log(JSON.stringify(topics));
   let _evalMetric = null;
   switch (metricType) {
     case METRIC_VALUE:

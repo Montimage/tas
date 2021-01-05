@@ -540,14 +540,14 @@ class Device {
               if (this.report && this.isFirstDevice) {
                 // Add the report
                 console.log(`[${this.id}] Going to add a new report`);
-                console.log(this.report);
+                console.log(JSON.stringify(this.report));
                 this.dataStorage.saveReport(this.report);
               }
               // Create Dataset
               if (this.newDatasetConfig) {
                 // Add the dataset for the current test
                 console.log(`[${this.id}] Going to add a new dataset`);
-                console.log(this.newDatasetConfig);
+                console.log(JSON.stringify(this.newDatasetConfig));
                 this.dataStorage.saveDataset(this.newDatasetConfig);
               }
               // Mark the startPlayingtime

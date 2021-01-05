@@ -1,8 +1,6 @@
 /* Working with report */
 const express = require("express");
-const {
-  evalulate,
-} = require("../../core/evaluation");
+const { evalulate } = require("../../core/evaluation");
 const router = express.Router();
 const { EventSchema, ReportSchema, dbConnector } = require("./db-connector");
 
@@ -32,6 +30,82 @@ router.get("/", dbConnector, function (req, res, next) {
   });
 });
 
+const updateReportScore = (report, res) => {
+  const {
+    originalDatasetId,
+    newDatasetId,
+    startTime,
+    endTime,
+    score,
+    _id,
+    evaluationParameters,
+  } = report;
+  EventSchema.findEventsBetweenTimes(
+    { datasetId: originalDatasetId },
+    startTime,
+    endTime,
+    (err3, originalEvents) => {
+      if (err3) {
+        res.send({
+          error: `Cannot get original events of dataset ${originalDatasetId}`,
+        });
+      } else {
+        EventSchema.findEventsWithOptions(
+          { datasetId: newDatasetId },
+          (err4, newEvents) => {
+            if (err4) {
+              res.send({
+                error: `Cannot get new events of dataset ${newDatasetId}`,
+              });
+            } else {
+              let newScore = score;
+              if (evaluationParameters) {
+                const {
+                  threshold,
+                  eventType,
+                  metricType,
+                } = evaluationParameters;
+                newScore = evalulate(
+                  originalEvents,
+                  newEvents,
+                  eventType,
+                  metricType,
+                  threshold
+                );
+              } else {
+                newScore = evalulate(originalEvents, newEvents);
+              }
+              // Going to save the score into the report
+              ReportSchema.findByIdAndUpdate(
+                _id,
+                { score: newScore },
+                {new: true},
+                (err5, ret) => {
+                  if (err5) {
+                    console.error(
+                      `Cannot update the score for report ${report._id}`
+                    );
+                    res.send({
+                      error: `Cannot update the score for report ${report._id}`,
+                    });
+                  } else {
+                    console.log(
+                      `Report ${report._id} has score of ${newScore}`
+                    );
+                    res.send({
+                      report: ret,
+                    });
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
+    }
+  );
+};
+
 /**
  * Get a event by id
  */
@@ -42,75 +116,17 @@ router.get("/:reportId", dbConnector, function (req, res, next) {
     if (err2 || !report) {
       console.error("[SERVER] Failed to get reports");
       console.error(err2);
-      res.send({
+      return res.send({
         error: "Failed to get report",
       });
-    } else {
-      const {
-        originalDatasetId,
-        newDatasetId,
-        startTime,
-        endTime,
-        score,
-        id,
-      } = report;
-      if (score > -1) {
-        res.send({
-          report,
-          score,
-        });
-      } else {
-        EventSchema.findEventsBetweenTimes(
-          { datasetId: originalDatasetId },
-          startTime,
-          endTime,
-          (err3, originalEvents) => {
-            if (err3) {
-              res.send({
-                error: `Cannot get original events of dataset ${originalDatasetId}`,
-              });
-            } else {
-              EventSchema.findEventsWithOptions(
-                { datasetId: newDatasetId },
-                (err4, newEvents) => {
-                  if (err4) {
-                    res.send({
-                      error: `Cannot get new events of dataset ${newDatasetId}`,
-                    });
-                  } else {
-                    const score = evalulate(
-                      originalEvents,
-                      newEvents
-                    );
-                    // Going to save the score into the report
-                    ReportSchema.findOneAndUpdate(
-                      { id },
-                      { score },
-                      (err5, ret) => {
-                        if (err5) {
-                          console.error(
-                            `Cannot update the score for report ${id}`
-                          );
-                          res.send({
-                            error: `Cannot update the score for report ${id}`,
-                          });
-                        } else {
-                          console.log(`Report ${id} has score of ${score}`);
-                          res.send({
-                            report,
-                            score,
-                          });
-                        }
-                      }
-                    );
-                  }
-                }
-              );
-            }
-          }
-        );
-      }
     }
+    const { score } = report;
+    if (score > -1) {
+      return res.send({
+        report,
+      });
+    }
+    return updateReportScore(report, res);
   });
 });
 
@@ -118,20 +134,21 @@ router.get("/:reportId", dbConnector, function (req, res, next) {
  * Update a report
  */
 router.post("/:reportId", dbConnector, function (req, res, next) {
-  const { report } = req.body;
+  const { report, newScore } = req.body;
   const { reportId } = req.params;
-
-  ReportSchema.findOneAndUpdate({ id: reportId }, report, (err, ts) => {
+  ReportSchema.findByIdAndUpdate(reportId, report, {new: true},(err, ts) => {
     if (err) {
       console.error("[SERVER] Failed to save a report", err);
-      res.send({
+      return res.send({
         error: "Failed to save a report",
       });
-    } else {
-      res.send({
+    }
+    if (!newScore) {
+      return res.send({
         report: ts,
       });
     }
+    return updateReportScore(ts, res);
   });
 });
 

@@ -16,7 +16,6 @@ import {
   deleteReportOK,
   setOriginalEvents,
   setNewEvents,
-  setReportScore
 } from "../actions";
 
 function* handleRequestOriginalEvents(action) {
@@ -60,9 +59,8 @@ function* handleRequestNewEvents(action) {
 function* handleRequestReport(action) {
   try {
     const rpId = action.payload;
-    const {report, score} = yield call(() => sendRequestReport(rpId));
+    const {report} = yield call(() => sendRequestReport(rpId));
     yield put(setCurrentReport(report));
-    yield put(setReportScore(score));
     // dispatch data
   } catch (error) {
     // dispatch error
@@ -77,9 +75,11 @@ function* handleRequestReport(action) {
 
 function* handleRequestUpdateReport(action) {
   try {
-    const { id, report } = action.payload;
-    yield call(() => sendRequestUpdateReport(id, report));
-    yield put(updateReportOK(report));
+    const { id, report, newScore } = action.payload;
+    console.log('Update report: ', id, report, newScore);
+    const newReport = yield call(() => sendRequestUpdateReport(id, report, newScore));
+    yield put(updateReportOK(newReport));
+    yield put(setCurrentReport(newReport));
     yield put(
       setNotification({
         type: "success",

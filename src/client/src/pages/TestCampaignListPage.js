@@ -15,9 +15,12 @@ import {
 } from "../actions";
 import {
   FormEditableTextItem,
+  FormNumberItem,
+  FormSelectItem,
   FormTextNotEditableItem,
 } from "../components/FormItems";
 import CollapseForm from "../components/CollapseForm";
+import { updateObjectByPath } from "../utils";
 
 class TestCampaignListPage extends Component {
   constructor(props) {
@@ -26,6 +29,7 @@ class TestCampaignListPage extends Component {
       webhookURL: undefined,
       testCampaignId: "Select the test Campaign for next build",
       isChanged: false,
+      evaluationParameters: null,
     };
   }
 
@@ -58,17 +62,11 @@ class TestCampaignListPage extends Component {
     this.props.addNewTestCampaign(newTc);
   }
 
-  updateWebhookURL(wb) {
-    this.setState({
-      webhookURL: wb,
-      isChanged: true,
-    });
-  }
-
-  updateTestCampaignId(tcId) {
-    this.setState({
-      testCampaignId: tcId,
-      isChanged: true,
+  onDataChange(dataPath, value) {
+    this.setState((prevState) => {
+      const newData = { ...prevState };
+      updateObjectByPath(newData, dataPath, value);
+      return { ...newData, isChanged: true };
     });
   }
 
@@ -81,7 +79,7 @@ class TestCampaignListPage extends Component {
       stopTestCampaign,
       runningStatus,
     } = this.props;
-    const { webhookURL, testCampaignId, isChanged } = this.state;
+    const { webhookURL, testCampaignId, isChanged, evaluationParameters } = this.state;
     const dataSource = testCampaigns.map((tc) => ({ ...tc, key: tc.id }));
     const columns = [
       {
@@ -107,7 +105,7 @@ class TestCampaignListPage extends Component {
           <Fragment>
             <Button
               size="small"
-              onClick={() => this.updateTestCampaignId(tc.id)}
+              onClick={() => this.onDataChange('testCampaignId',tc.id)}
               style={{ marginRight: 10 }}
             >
               <BuildOutlined /> Select for next Build
@@ -157,7 +155,7 @@ class TestCampaignListPage extends Component {
             <FormEditableTextItem
               label="WebhookURL"
               defaultValue={webhookURL}
-              onChange={(wb) => this.updateWebhookURL(wb)}
+              onChange={(wb) => this.onDataChange('webhookURL',wb)}
             />
             <FormTextNotEditableItem
               label="Next build"
@@ -167,6 +165,46 @@ class TestCampaignListPage extends Component {
                 </a>
               }
             />
+            {evaluationParameters ? (
+              <CollapseForm
+                title="Evaluation Parameters"
+              >
+                <FormSelectItem
+                  label="Event Type"
+                  helpText="Select the type of event to take into the evaluation"
+                  defaultValue={evaluationParameters.eventType}
+                  options={["ALL_EVENTS","SENSOR_EVENTS", "ACTUATOR_EVENTS"]}
+                  onChange={(eventType) => this.onDataChange('evaluationParameters.eventType', eventType)}
+                />
+                <FormSelectItem
+                  label="Metric Type"
+                  helpText="Select the type of metric to take into the evaluation"
+                  defaultValue={evaluationParameters.metricType}
+                  options={["METRIC_VALUE","METRIC_VALUE_TIMESTAMP", "METRIC_TIMESTAMP"]}
+                  onChange={(metricType) => this.onDataChange('evaluationParameters.metricType', metricType)}
+                />
+                <FormNumberItem
+                  label="Threshold"
+                  helpText="Set the threshold of the similarity to be evaluated as PASSED or FAILED"
+                  defaultValue={evaluationParameters.threshold}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  onChange={(threshold) => this.onDataChange('evaluationParameters.threshold', threshold)}
+                />
+              </CollapseForm>
+            ):(
+              <Button
+                onClick={() => this.onDataChange('evaluationParameters', {
+                  eventType: "ALL_EVENTS",
+                  metricType: "METRIC_VALUE_TIMESTAMP",
+                  threshold: 0.5
+                })}
+                style={{marginBottom: 10}}
+              >
+                Set Evaluation Parameters
+              </Button>
+            )}
             <Form.Item
               wrapperCol={{
                 xs: {
@@ -184,6 +222,7 @@ class TestCampaignListPage extends Component {
                   updateDevops({
                     webhookURL,
                     testCampaignId,
+                    evaluationParameters
                   });
                   this.setState({ isChanged: false });
                 }}

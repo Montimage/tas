@@ -11,10 +11,13 @@ import {
 } from "../actions";
 import {
   FormEditableTextItem,
+  FormNumberItem,
+  FormSelectItem,
   FormTextNotEditableItem,
 } from "../components/FormItems";
-import { getLastPath, updateObjectByPath } from "../utils";
+import { deepCloneObject, getLastPath, updateObjectByPath } from "../utils";
 import EventStream from "../components/EventStream/EventStream";
+import CollapseForm from "../components/CollapseForm";
 
 /**
  *
@@ -44,6 +47,8 @@ class ReportPage extends Component {
         startTime,
         endTime,
         testCampaignId,
+        score,
+        evaluationParameters,
       } = report;
       this.state = {
         _id,
@@ -54,10 +59,13 @@ class ReportPage extends Component {
         startTime,
         endTime,
         testCampaignId,
-        originalEvents,
-        newEvents,
+        score,
+        evaluationParameters: deepCloneObject(evaluationParameters),
         isChanged: false,
         page: 0,
+        originalEvents,
+        newEvents,
+        calculateScore: false
       };
     } else {
       this.state = {
@@ -83,6 +91,8 @@ class ReportPage extends Component {
         startTime,
         endTime,
         testCampaignId,
+        score,
+        evaluationParameters,
       } = report;
       // if (!this.state.fetchedOriginalEvents) {
       //   this.props.fetchOriginalEvents(originalDatasetId, startTime ? startTime: 0, endTime ? endTime : Date.now(), this.state.page);
@@ -103,7 +113,9 @@ class ReportPage extends Component {
         startTime,
         endTime,
         testCampaignId,
+        score,
         isChanged: false,
+        evaluationParameters: deepCloneObject(evaluationParameters),
       });
     }
     if (originalEvents) {
@@ -122,6 +134,9 @@ class ReportPage extends Component {
     this.setState((prevState) => {
       const newData = { ...prevState };
       updateObjectByPath(newData, dataPath, value);
+      if (dataPath.indexOf('evaluationParameters') > -1) {
+        return { ...newData, isChanged: true, calculateScore: true };
+      }
       return { ...newData, isChanged: true };
     });
   }
@@ -136,6 +151,9 @@ class ReportPage extends Component {
       startTime,
       endTime,
       testCampaignId,
+      evaluationParameters,
+      calculateScore,
+      score
     } = this.state;
     this.props.updateReport(_id, {
       createdAt,
@@ -145,8 +163,10 @@ class ReportPage extends Component {
       startTime,
       endTime,
       testCampaignId,
-    });
-    this.setState({ isChanged: false });
+      score,
+      evaluationParameters,
+    }, calculateScore);
+    this.setState({ isChanged: false, calculateScore: false });
   }
 
   loadEvents() {
@@ -183,9 +203,11 @@ class ReportPage extends Component {
       endTime,
       testCampaignId,
       isChanged,
+      evaluationParameters,
       page,
+      score,
     } = this.state;
-    const { originalEvents, newEvents, score } = this.props;
+    const { originalEvents, newEvents } = this.props;
     let sourceEvents = [];
     if (originalEvents) {
       sourceEvents = originalEvents.filter(
@@ -238,6 +260,35 @@ class ReportPage extends Component {
             value={moment(endTime).format("MMMM Do YYYY, h:mm:ss a")}
           />
           <FormTextNotEditableItem label="Score" value={score} />
+          {evaluationParameters && (
+            <CollapseForm
+              title="Evaluation Parameters"
+            >
+              <FormSelectItem
+                label="Event Type"
+                helpText="Select the type of event to take into the evaluation"
+                defaultValue={evaluationParameters.eventType}
+                options={["ALL_EVENTS","SENSOR_EVENTS", "ACTUATOR_EVENTS"]}
+                onChange={(eventType) => this.onDataChange('evaluationParameters.eventType', eventType)}
+              />
+              <FormSelectItem
+                label="Metric Type"
+                helpText="Select the type of metric to take into the evaluation"
+                defaultValue={evaluationParameters.metricType}
+                options={["METRIC_VALUE","METRIC_VALUE_TIMESTAMP", "METRIC_TIMESTAMP"]}
+                onChange={(metricType) => this.onDataChange('evaluationParameters.metricType', metricType)}
+              />
+              <FormNumberItem
+                label="Threshold"
+                helpText="Set the threshold of the similarity to be evaluated as PASSED or FAILED"
+                defaultValue={evaluationParameters.threshold}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={(threshold) => this.onDataChange('evaluationParameters.threshold', threshold)}
+              />
+            </CollapseForm>
+          )}
         </Form>
         <Button
           onClick={() => this.saveReport()}
@@ -282,7 +333,6 @@ const mapPropsToStates = ({ reports }) => ({
   report: reports.currentReport.report,
   originalEvents: reports.currentReport.originalEvents,
   newEvents: reports.currentReport.newEvents,
-  score: reports.currentReport.score,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -291,11 +341,12 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(requestOriginalEvents({ datasetId, startTime, endTime, page })),
   fetchNewEvents: (datasetId, page) =>
     dispatch(requestNewEvents({datasetId, page})),
-  updateReport: (originalId, updatedReport) =>
+  updateReport: (originalId, updatedReport, newScore) =>
     dispatch(
       requestUpdateReport({
         id: originalId,
         report: updatedReport,
+        newScore
       })
     ),
 });
