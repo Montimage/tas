@@ -6,7 +6,9 @@ WORKDIR /usr/src/app
 # where available (npm@5+)
 COPY package*.json ./
 
+RUN npm install -g nodemon
 RUN npm install --only=production
+RUN mv /usr/src/app/node_modules /node_modules
 # If you are building your code for production
 # RUN npm ci --only=production
 # Bundle app source
