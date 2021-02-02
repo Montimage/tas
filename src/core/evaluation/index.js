@@ -75,6 +75,7 @@ const compareArray = (
 };
 
 const compareDelayTimestamp = (t1, t2) => {
+  if (Math.abs(t2-t1) < 10) return true; // if the different is less than 10ms
   return Math.abs(t2-t1)/t1 < 0.01; // 1% threshold
 }
 
@@ -109,6 +110,7 @@ const evalEventValueTimestamp = (data) => {
   );
   const valueCompare = compareArray(originalValues, newValues);
   const timestampCompare = compareArray(originalTimestamps, newTimestamps, compareDelayTimestamp);
+  console.log(valueCompare, timestampCompare);
   return valueCompare * timestampCompare;
 };
 
@@ -187,7 +189,9 @@ const evaluateEvents = (originalEvents, newEvents, metricType, threshold) => {
 
   const retOK = ret.filter(r => r >=threshold);
   console.log('ret: ', ret);
+  console.log(ret);
   console.log('retOK: ', retOK);
+  console.log(retOK);
   return retOK.length / ret.length;
 };
 
