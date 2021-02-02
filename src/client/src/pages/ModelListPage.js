@@ -122,7 +122,7 @@ class ModelListPage extends Component {
     return (
       <LayoutPage
         pageTitle="Topology"
-        pageSubTitle="Defines the topology and the specification of the sensors, actuators and the gateways"
+        pageSubTitle="Defines the network topology and the specification of the sensors, actuators and the devices"
       >
         <Dropdown
           overlay={

@@ -1,0 +1,160 @@
+{
+    "name": "SmartHome Replayer",
+    "dataStorage": {
+        "protocol": "MONGODB",
+        "connConfig": {
+            "host": "localhost",
+            "port": 27017,
+            "username": "",
+            "password": "",
+            "dbname": "simpledb",
+            "options": null
+        }
+    },
+    "devices": [
+        {
+            "id": "com-centre-app",
+            "name": "Comfort Centre App",
+            "enable": true,
+            "scale": 1,
+            "behaviours": [],
+            "timeToDown": 0,
+            "testBroker": {
+                "protocol": "MQTT",
+                "connConfig": {
+                    "host": "localhost",
+                    "port": 1883,
+                    "options": null
+                }
+            },
+            "productionBroker": null,
+            "isReplayingStreams": false,
+            "sensors": [
+                {
+                    "id": "freebox-phone-ringing",
+                    "objectId": null,
+                    "name": "Freebox Phone Ringing",
+                    "enable": true,
+                    "isFromDatabase": false,
+                    "topic": "enact/sensors/freeboxphone/ringing",
+                    "dataSource": "DATA_SOURCE_DATASET",
+                    "replayOptions": null,
+                    "dataSpecs": {
+                        "timePeriod": 5,
+                        "scale": 1,
+                        "dosAttackSpeedUpRate": 5,
+                        "timeBeforeFailed": 20,
+                        "sensorBehaviours": [],
+                        "withEnergy": false,
+                        "isIPSOFormat": false,
+                        "energy": null,
+                        "sources": [
+                            {
+                                "type": "DATA_SOURCE_ENUM",
+                                "key": "ringing",
+                                "resourceId": "enum-measure-id",
+                                "initValue": "OFF",
+                                "unit": "",
+                                "behaviours": [],
+                                "values": [
+                                    "ON",
+                                    "OFF"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "smartphone-status",
+                    "objectId": null,
+                    "name": "SmartPhone Status",
+                    "enable": true,
+                    "isFromDatabase": false,
+                    "topic": "enact/sensors/smartphone/status",
+                    "dataSource": "DATA_SOURCE_DATASET",
+                    "replayOptions": null,
+                    "dataSpecs": {
+                        "timePeriod": 5,
+                        "scale": 1,
+                        "dosAttackSpeedUpRate": 5,
+                        "timeBeforeFailed": 20,
+                        "sensorBehaviours": [],
+                        "withEnergy": false,
+                        "isIPSOFormat": false,
+                        "energy": null,
+                        "sources": [
+                            {
+                                "type": "DATA_SOURCE_ENUM",
+                                "key": "status",
+                                "resourceId": "enum-measure-id",
+                                "initValue": "hangup",
+                                "unit": "",
+                                "behaviours": [],
+                                "values": [
+                                    "answer",
+                                    "decline",
+                                    "hangup"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "tv-power",
+                    "objectId": null,
+                    "name": "TV Power",
+                    "enable": true,
+                    "isFromDatabase": false,
+                    "topic": "enact/sensors/tv/power",
+                    "scale": 1,
+                    "dataSource": "DATA_SOURCE_DATASET",
+                    "replayOptions": null,
+                    "dataSpecs": {
+                        "timePeriod": 5,
+                        "scale": 1,
+                        "dosAttackSpeedUpRate": 5,
+                        "timeBeforeFailed": 20,
+                        "sensorBehaviours": [],
+                        "withEnergy": false,
+                        "isIPSOFormat": false,
+                        "energy": null,
+                        "sources": [
+                            {
+                                "type": "DATA_SOURCE_ENUM",
+                                "key": "power",
+                                "resourceId": "enum-measure-id",
+                                "initValue": "value1",
+                                "unit": "",
+                                "behaviours": [],
+                                "values": [
+                                    "ON",
+                                    "OFF"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "actuators": [
+                {
+                    "id": "tv-mute",
+                    "objectId": null,
+                    "name": "TV Mute",
+                    "enable": true,
+                    "topic": "enact/actuators/tv/mute",
+                    "scale": 1
+                }
+            ],
+            "upStreams": [
+                "enact/sensors/freeboxphone/ringing",
+                "enact/sensors/smartphone/status",
+                "enact/sensors/tv/power"
+            ],
+            "downStreams": [
+                "enact/actuators/tv/mute"
+            ]
+        }
+    ],
+    "replayOptions": null,
+    "datasetId": ""
+}

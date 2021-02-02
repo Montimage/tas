@@ -90,7 +90,7 @@ class TestCampaignListPage extends Component {
           <a href={`/test-campaigns/${tc.id}`}>
             {tc.id === testCampaignId ? (
               <strong>
-                {tc.id} <span style={{ color: "green" }}>**Next Build**</span>
+                {tc.id} <span style={{ color: "green" }}>**selected**</span>
               </strong>
             ) : (
               tc.id
@@ -101,15 +101,16 @@ class TestCampaignListPage extends Component {
       {
         title: "Action",
         key: "data",
-        width: 500,
+        width: 400,
         render: (tc) => (
           <Fragment>
             <Button
               size="small"
               onClick={() => this.onDataChange('testCampaignId',tc.id)}
               style={{ marginRight: 10 }}
+              disabled={tc.id === testCampaignId ? true: false}
             >
-              <BuildOutlined /> Select for next Build
+              <BuildOutlined /> Select
             </Button>
             <Button
               size="small"
@@ -149,28 +150,29 @@ class TestCampaignListPage extends Component {
     return (
       <LayoutPage
         pageTitle="Test Campaign"
-        pageSubTitle="All the test campaigns"
+        pageSubTitle="Setup automation testing"
       >
-        <CollapseForm title="Configuration for next build" active={true}>
+        <CollapseForm title="Configuration for automation testing" active={true}>
           <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
             <FormTextNotEditableItem
               label={"Trigger URL"}
               value={(<Alert message={`${URL}/api/devops/start`}/>)}
-              helpText={`From anywhere, send a GET request to trigger the test campaign`}
+              helpText={`The end point to launch the test campaign`}
             />
             <FormEditableTextItem
-              label="WebhookURL"
+              label="Webhook URL"
               defaultValue={webhookURL}
               onChange={(wb) => this.onDataChange('webhookURL',wb)}
-              helpText={`The test and simulation result will be sent to the WebhookURL when the process ends`}
+              helpText={`The end point to send the result of the test to`}
             />
             <FormTextNotEditableItem
-              label="Next build"
+              label="Selected Test Campaign"
               value={
                 <a href={`/test-campaigns/${testCampaignId}`}>
                   <strong>{testCampaignId}</strong>
                 </a>
               }
+              helpText={"The test campaign that will be executed in automation testing"}
             />
             {evaluationParameters ? (
               <CollapseForm
@@ -284,7 +286,7 @@ class TestCampaignListPage extends Component {
         </a>
         <Table columns={columns} dataSource={dataSource} />
         <p></p>
-        <a href={`/logs/test-campaigns`}>View All Campaign Logs</a>
+        <a href={`/logs/test-campaigns`}>View All Test Campaign Logs</a>
       </LayoutPage>
     );
   }

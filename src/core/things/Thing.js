@@ -505,7 +505,9 @@ class Device {
               );
               // Add the sensors which have the data source from the production broker
               this.sensorsConfig.map((sensorData) => {
-                const { id, scale, enable, objectId, dataSource } = sensorData;
+                const { id, dataSpecs, enable, objectId, dataSource } = sensorData;
+                let scale = 1;
+                if (dataSpecs) scale = dataSpecs.scale ? dataSpecs.scale : 1;
                 if (enable && dataSource === DS_RECORDER) {
                   console.log("Going to add a RECORDER sensor");
                   let nbSensors = scale ? scale : 1;

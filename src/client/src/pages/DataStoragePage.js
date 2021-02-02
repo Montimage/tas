@@ -85,7 +85,10 @@ class DataStoragePage extends Component {
       );
     }
     return (
-      <LayoutPage>
+      <LayoutPage
+        pageTitle="DataStorage"
+        pageSubTitle="Setup the database to store the data"
+      >
         Connection Status:{" "}
         <strong>
           {" "}

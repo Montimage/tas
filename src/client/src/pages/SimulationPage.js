@@ -163,9 +163,6 @@ class SimulationPage extends Component {
                 <a href={`/reports/${report.id}`}>
                   <Button type="link">View Report</Button>
                 </a>
-                <a href={`/graphview`}>
-                  <Button type="link">View Graph</Button>
-                </a>
               </Form.Item>
             </Form>
             <p></p>

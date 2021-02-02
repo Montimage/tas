@@ -7,7 +7,7 @@ const { DatasetSchema, dbConnector } = require("./db-connector");
 router.get("/", dbConnector, function (req, res, next) {
   let page = req.query.page;
   if (!page) page = 0;
-  DatasetSchema.findDatasetsWithPagingOptions(null, page, (err2, datasets) => {
+  DatasetSchema.find({}, (err2, datasets) => {
     if (err2) {
       console.error("[SERVER] Failed to get datasets", err2);
       res.send({

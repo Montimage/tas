@@ -340,7 +340,9 @@ const ModelDeviceItem = ({
         <Fragment>
           <Divider orientation="left">Sensors</Divider>
           <List
-            header={<strong>Sensors ({data.sensors.length})</strong>}
+            header={<strong>Sensors ({data.sensors.reduce(((nbSensor,s) => {
+              return s.dataSpecs.scale ? (nbSensor + Number(s.dataSpecs.scale)) : (nbSensor++);
+            }), 0)})</strong>}
             footer={
               <Button
                 onClick={() => {
@@ -410,7 +412,7 @@ const ModelDeviceItem = ({
                   </Button>,
                 ]}
               >
-                <Text>{item.name}</Text>
+                <Text>{item.name} ({item.dataSpecs.scale ? item.dataSpecs.scale : 1})</Text>
                 <SensorModal
                   enable={selectedModalId === item.id}
                   sensorData={item}
@@ -428,7 +430,7 @@ const ModelDeviceItem = ({
           <p></p>
           <Divider orientation="left">Actuator </Divider>
           <List
-            header={<strong>Actuators ({data.actuators.length})</strong>}
+            header={<strong>Actuators ({data.actuators.reduce((nbA, a) => a.scale ? (nbA + Number(a.scale)) : nbA++, 0)})</strong>}
             footer={
               <Button
                 onClick={() => {
@@ -501,7 +503,7 @@ const ModelDeviceItem = ({
                   </Button>,
                 ]}
               >
-                <Text>{item.name}</Text>
+              <Text>{item.name} ({item.scale ? item.scale : 1})</Text>
                 <ActuatorModal
                   enable={selectedModalId === item.id}
                   actuatorData={item}
@@ -882,7 +884,10 @@ class ModelPage extends Component {
 
     return (
       <Fragment>
-        <LayoutPage>
+        <LayoutPage
+          pageTitle={window.decodeURI(modelFileName)}
+          pageSubTitle="Create/Update a network topology"
+        >
           <a
             href={`${window.location.pathname}?view=${
               viewType === "json" ? "form" : "json"

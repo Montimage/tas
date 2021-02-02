@@ -14,7 +14,6 @@ import {
 import { FormEditableTextItem, FormSelectItem } from "../components/FormItems";
 import { getLastPath } from "../utils";
 import SelectionModal from "../components/SelectionModal";
-// TODO: add dataset
 class TestCasePage extends Component {
   constructor(props) {
     super(props);
@@ -263,7 +262,7 @@ class TestCasePage extends Component {
     return (
       <LayoutPage
         pageTitle={name}
-        pageSubTitle="View and update the test case detail"
+        pageSubTitle="View and update a test case"
       >
         <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
           <FormEditableTextItem
