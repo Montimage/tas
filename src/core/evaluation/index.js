@@ -110,7 +110,6 @@ const evalEventValueTimestamp = (data) => {
   );
   const valueCompare = compareArray(originalValues, newValues);
   const timestampCompare = compareArray(originalTimestamps, newTimestamps, compareDelayTimestamp);
-  console.log(valueCompare, timestampCompare);
   return valueCompare * timestampCompare;
 };
 
@@ -188,9 +187,9 @@ const evaluateEvents = (originalEvents, newEvents, metricType, threshold) => {
   }
 
   const retOK = ret.filter(r => r >=threshold);
-  console.log('ret: ', ret);
+  console.log('ret: ');
   console.log(ret);
-  console.log('retOK: ', retOK);
+  console.log('retOK: ');
   console.log(retOK);
   return retOK.length / ret.length;
 };

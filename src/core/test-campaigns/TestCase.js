@@ -72,6 +72,7 @@ class TestCase {
       this.stop();
       return;
     }
+    console.log(`[TestCase-${this.id}] is starting...`);
     for (let index = 0; index < this.datasetIds.length; index++) {
       const datasetId = this.datasetIds[index];
       const stopTestCase = () => this.stop();
@@ -84,6 +85,7 @@ class TestCase {
             score
           });
         }
+
         for (let simuIndex = 0; simuIndex < this.simulations.length; simuIndex++) {
           const sim = this.simulations[simuIndex];
           if (sim.status !== OFFLINE) {
@@ -101,12 +103,13 @@ class TestCase {
   }
 
   stop() {
+    console.log(`[TestCase-${this.id}] is stopping...`);
     if (this.status === OFFLINE) {
       console.log(`[TestCase] Test case ${this.name} is offline`);
     } else {
       for (let index = 0; index < this.simulations.length; index++) {
         const simulation = this.simulations[index];
-        simulation.stop();
+        if (simulation.status !== OFFLINE) simulation.stop();
       }
       this.status = OFFLINE;
       if (this.callbackWhenFinish) this.callbackWhenFinish(this.scores);

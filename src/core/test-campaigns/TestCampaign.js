@@ -95,6 +95,7 @@ class TestCampaign {
       console.error(`[TestCampaign] No test case ${this.name}`);
       return this.stop();
     }
+    console.log(`[TestCampaign-${this.id}] is starting...`);
     for (let index = 0; index < this.testCases.length; index++) {
       const testCase = this.testCases[index];
       testCase.init(() => {
@@ -105,6 +106,7 @@ class TestCampaign {
   }
 
   stop() {
+    console.log(`[TestCampaign-${this.id}] is stopping...`);
     if (this.status === OFFLINE) {
       console.log(`[TestCampaign] Test Campaign is offline`);
       return;

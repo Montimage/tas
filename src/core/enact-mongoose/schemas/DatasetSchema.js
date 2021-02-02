@@ -11,7 +11,7 @@ const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 /**
- * TODO: 
+ * TODO:
  * - get Dataset by name/id
  * - get dataset by tags
  */
@@ -52,7 +52,7 @@ datasetSchema.statics.findDatasetsWithPagingOptions = function (options, page, c
     .limit(20)
     .skip(page * 20)
     .sort({
-      lastModified: 1
+      lastModified: -1
     })
     .exec((err, data) => {
       if (err) {

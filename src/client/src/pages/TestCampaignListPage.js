@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Table, Button, Form } from "antd";
+import { Table, Button, Form, Alert } from "antd";
 import { BuildOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
@@ -21,6 +21,7 @@ import {
 } from "../components/FormItems";
 import CollapseForm from "../components/CollapseForm";
 import { updateObjectByPath } from "../utils";
+import {URL} from '../api';
 
 class TestCampaignListPage extends Component {
   constructor(props) {
@@ -152,10 +153,16 @@ class TestCampaignListPage extends Component {
       >
         <CollapseForm title="Configuration for next build" active={true}>
           <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+            <FormTextNotEditableItem
+              label={"Trigger URL"}
+              value={(<Alert message={`${URL}/api/devops/start`}/>)}
+              helpText={`From anywhere, send a GET request to trigger the test campaign`}
+            />
             <FormEditableTextItem
               label="WebhookURL"
               defaultValue={webhookURL}
               onChange={(wb) => this.onDataChange('webhookURL',wb)}
+              helpText={`The test and simulation result will be sent to the WebhookURL when the process ends`}
             />
             <FormTextNotEditableItem
               label="Next build"

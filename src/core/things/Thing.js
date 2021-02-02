@@ -563,7 +563,8 @@ class Device {
                 if (!err4 && events && events.length > 0) {
                   const firstEventTimestamp = events[0].timestamp;
                   if (startReplayingTime > firstEventTimestamp) startReplayingTime = firstEventTimestamp;
-                  console.log(`[${this.id}] firstEventTimestamp: ${startReplayingTime}`);
+                  console.log(`[${this.id}] firstEventTimestamp: ${firstEventTimestamp}`);
+                  console.log(`[${this.id}] Dataset: ${this.datasetId}`)
                   console.log(`[${this.id}] startReplayingTime: ${startReplayingTime}`);
                   if (this.isReplayingStreams) {
                     // REPLAY STREAM DATA

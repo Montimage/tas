@@ -57,7 +57,7 @@ const reportSchema = new Schema({
 reportSchema.statics.findReportsWithOptions = function (options, callback) {
   this.find(options)
     .sort({
-      createdAt: 1,
+      createdAt: -1,
     })
     .exec((err, data) => {
       if (err) {
