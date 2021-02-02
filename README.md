@@ -125,7 +125,7 @@ The services can be provided as docker containers.
 ```shell
 sudo npm install -g --unsafe-perm node-red
 ```
-Additional packets: `node-red-mongodb`, `node-red-contrib-web-worldmap`, `node-red-dashboard`
+Additional packets: `node-red-mongodb`, `node-red-contrib-message-counter`, `node-red-dashboard`
 
 ### MongoDB server
 

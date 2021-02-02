@@ -65,6 +65,8 @@ class Simulation {
         startTime = this.replayOptions.startTime;
       if (this.replayOptions.endTime) endTime = this.replayOptions.endTime;
     }
+    // NEVER REPEAT REPLAYING IN A TESTCAMPAIN
+    if (this.testCampaignId && this.replayOptions) this.replayOptions.repeat = false;
     const reportId = `${this.datasetId}-${this.newDataset.id}-${currentTime}`;
     this.report = {
       id: reportId,

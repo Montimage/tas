@@ -89,7 +89,7 @@ class Sensor {
         values["objectId"] = this.objectId;
       }
     }
-    console.log(`Sensor ${this.id} published data on topic: ${topic ? topic: this.topic}`);
+    console.log(`[${this.id}] published data on topic: ${topic ? topic: this.topic}`);
     this.publishDataFct(topic ? topic : this.topic, values);
     // Statistics
     this.lastActivity = Date.now();
@@ -103,7 +103,7 @@ class Sensor {
    */
   start() {
     if (this.status === SIMULATING) {
-      console.log(`[SENSOR]Sensor ${this.id} has already started!`);
+      console.log(`[${this.id}] has already started!`);
       return;
     }
     if (this.dataSourceType === DS_RECORDER) {
@@ -114,7 +114,7 @@ class Sensor {
         // Init
         const stopSensor = () => this.stop();
         if (this.dataSourceType === DS_DATASET) {
-          console.log(`[SENSOR] ${this.id} Number of events to be replayed: ${this.events.length} with replayOptions: ${JSON.stringify(this.replayOptions)}`);
+          console.log(`[${this.id}] Number of events to be replayed: ${this.events.length} with replayOptions: ${JSON.stringify(this.replayOptions)}`);
           this.dataSource = new DataReplayer(
             this.id,
             (values, topic = null) => this.dataHandler(values, topic),
@@ -163,7 +163,7 @@ class Sensor {
    */
   stop() {
     if (this.status === OFFLINE) {
-      console.log(`[SENSOR]Sensor ${this.id} is already offline!`);
+      console.log(`[${this.id}] is already offline!`);
       return;
     }
     if (this.dataSourceType === DS_RECORDER) {

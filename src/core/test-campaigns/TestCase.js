@@ -73,10 +73,12 @@ class TestCase {
       return;
     }
     console.log(`[TestCase-${this.id}] is starting...`);
-    for (let index = 0; index < this.datasetIds.length; index++) {
+    const totalNumberDatasets = this.datasetIds.length;
+    for (let index = 0; index < totalNumberDatasets; index++) {
       const datasetId = this.datasetIds[index];
       const stopTestCase = () => this.stop();
       const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId, testCampaignId: this.testCampaignId, evaluationParameters: this.evaluationParameters}, (score = null) => {
+        console.log(`A simulation ${index} is going to finished ... ${datasetId}`);
         if (score !== null && score !== undefined) {
           // Do something if the score === 0
           this.scores.push({
@@ -86,19 +88,30 @@ class TestCase {
           });
         }
 
-        for (let simuIndex = 0; simuIndex < this.simulations.length; simuIndex++) {
-          const sim = this.simulations[simuIndex];
-          if (sim.status !== OFFLINE) {
-            return;
-          }
+        // Check if this is the last simulation of the test case
+        if (index === totalNumberDatasets - 1) {
+          // This is the last simulation
           // All the simulations have been finished
           stopTestCase();
-          return;
+        } else {
+          // Start the next simulation
+          const nextSimulation = this.simulations[index+1];
+          nextSimulation.start();
         }
+        // for (let simuIndex = 0; simuIndex < this.simulations.length; simuIndex++) {
+        //   const sim = this.simulations[simuIndex];
+        //   if (sim.status !== OFFLINE) {
+        //     return;
+        //   }
+        //   // All the simulations have been finished
+        //   stopTestCase();
+        //   return;
+        // }
       });
-      newSimulation.start();
+      // newSimulation.start();
       this.simulations.push(newSimulation);
     }
+    if (this.simulations.length > 0) this.simulations[0].start();
     this.status = SIMULATING;
   }
 

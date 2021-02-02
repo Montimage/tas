@@ -540,14 +540,14 @@ class Device {
               if (this.report && this.isFirstDevice) {
                 // Add the report
                 console.log(`[${this.id}] Going to add a new report`);
-                console.log(JSON.stringify(this.report));
+                // console.log(JSON.stringify(this.report));
                 this.dataStorage.saveReport(this.report);
               }
               // Create Dataset
               if (this.newDatasetConfig) {
                 // Add the dataset for the current test
                 console.log(`[${this.id}] Going to add a new dataset`);
-                console.log(JSON.stringify(this.newDatasetConfig));
+                // console.log(JSON.stringify(this.newDatasetConfig));
                 this.dataStorage.saveDataset(this.newDatasetConfig);
               }
               // Mark the startPlayingtime
@@ -562,7 +562,8 @@ class Device {
               this.dataStorage.getAllEvents(this.datasetId, startTime, endTime, (err4, events) => {
                 if (!err4 && events && events.length > 0) {
                   const firstEventTimestamp = events[0].timestamp;
-                  if (startReplayingTime > firstEventTimestamp) startReplayingTime = firstEventTimestamp;
+                  startReplayingTime = firstEventTimestamp;
+                  // if (startReplayingTime > firstEventTimestamp) startReplayingTime = firstEventTimestamp;
                   console.log(`[${this.id}] firstEventTimestamp: ${firstEventTimestamp}`);
                   console.log(`[${this.id}] Dataset: ${this.datasetId}`)
                   console.log(`[${this.id}] startReplayingTime: ${startReplayingTime}`);

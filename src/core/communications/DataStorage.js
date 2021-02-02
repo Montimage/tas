@@ -93,11 +93,11 @@ class DataStorage {
     ReportSchema.findOne({ id: report.id }, (err, rp) => {
       if (rp) {
         console.log("[DataStorage] Going to update a report: ");
-        console.log(report);
+        // console.log(report);
         ReportSchema.findOneAndUpdate({ id: report.id }, report);
       } else {
         console.log("[DataStorage] Going to add a new report: ");
-        console.log(JSON.stringify(report));
+        // console.log(JSON.stringify(report));
         const newReport = new ReportSchema(report);
         newReport.save();
         console.log("[DataStorage] A new report has been created");

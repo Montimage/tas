@@ -25,6 +25,7 @@ class TestCampaign {
         } else {
           const { testCaseIds, name } = testCampaign;
           this.name = name ? name : this.id;
+          const totalNumberTestCases = testCaseIds.length;
           for (let index = 0; index < testCaseIds.length; index++) {
             const tcaseId = testCaseIds[index];
             const testCase = new TestCase(
@@ -33,27 +34,34 @@ class TestCampaign {
               this.id,
               this.evaluationParameters,
               (scores = null) => {
+                // When a test case finish - check if this is the last test case
                 if (scores) {
-                  // TODO: do something with scores
                   this.results.push({
                     testCampaignId: this.id,
                     testCaseId: testCase.id,
                     scores,
                   });
                 }
-
-                for (
-                  let tcIndex = 0;
-                  tcIndex < this.testCases.length;
-                  tcIndex++
-                ) {
-                  const tc = this.testCases[tcIndex];
-                  if (tc.getStatus() !== OFFLINE) {
-                    return;
-                  }
+                if (index === totalNumberTestCases - 1) {
+                  // This is the last test case
+                  console.log("All test case have been finished");
+                  return this.stop();
+                } else {
+                  const nextTestCase = this.testCases[index+1];
+                  nextTestCase.start();
                 }
-                console.log("All test case have been finished");
-                return this.stop();
+                // for (
+                //   let tcIndex = 0;
+                //   tcIndex < this.testCases.length;
+                //   tcIndex++
+                // ) {
+                //   const tc = this.testCases[tcIndex];
+                //   if (tc.getStatus() !== OFFLINE) {
+                //     return;
+                //   }
+                // }
+                // console.log("All test case have been finished");
+                // return this.stop();
               }
             );
             this.testCases.push(testCase);
@@ -99,9 +107,11 @@ class TestCampaign {
     for (let index = 0; index < this.testCases.length; index++) {
       const testCase = this.testCases[index];
       testCase.init(() => {
-        testCase.start();
+        console.log(`[TestCase-${testCase.id}] is ready!!!`);
+        if (index === 0) testCase.start();
       });
     }
+    // if(this.testCases.length > 0) this.testCases[0].start();
     this.status = SIMULATING;
   }
 
