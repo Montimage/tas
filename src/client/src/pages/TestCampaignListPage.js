@@ -156,7 +156,7 @@ class TestCampaignListPage extends Component {
           <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
             <FormTextNotEditableItem
               label={"Trigger URL"}
-              value={(<Alert message={`${URL}/api/devops/start`}/>)}
+              value={(<Alert message={`http://${window.location.host}/api/devops/start`}/>)}
               helpText={`The end point to launch the test campaign`}
             />
             <FormEditableTextItem
