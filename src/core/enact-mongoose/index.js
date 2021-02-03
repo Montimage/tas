@@ -27,7 +27,7 @@ ENACTDB.prototype.connect = function(callback) {
 
   const connString = `mongodb://${this.host}:${this.port}`;
 
-  console.log("[ENACTDB] Connection string: ", connString);
+  console.log(`[ENACTDB] Connection string: ${connString}`);
 
   const connectOptions = {
     dbName: this.dbName,

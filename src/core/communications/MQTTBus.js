@@ -17,22 +17,22 @@ class MQTTBus{
   }
 
   setupMessageHandler(msgHandlerFct) {
-    console.log('[MQTTBus] Going to setup message handler', msgHandlerFct);
+    // console.log('[MQTTBus] Going to setup message handler', msgHandlerFct);
     this.msgHandlerFct = msgHandlerFct;
   }
 
   subscribe(topic) {
     if (this.mqttClient) {
-      console.log('[MQTTBus] Subscribed to topic: ', topic);
+      console.log(`[MQTTBus] Subscribed to topic: ${topic}`);
       this.mqttClient.subscribe(topic);
     } else {
       console.error('[MQTTBus] ERROR: The MQTT Client has not been connected!');
     }
   }
-  
+
   unsubscribe(topic) {
     if (this.mqttClient) {
-      console.log('[MQTTBus] Unsubscribed to topic: ', topic);
+      console.log(`[MQTTBus] Unsubscribed to topic: ${topic}`);
       this.mqttClient.unsubscribe(topic);
     } else {
       console.error('[MQTTBus] ERROR: The MQTT Client has not been connected!');
@@ -50,7 +50,7 @@ class MQTTBus{
   connect(callback) {
     let mqttClient = null;
     mqttClient = mqtt.connect(this.connConfig);
-    
+
     mqttClient.on("connect", () => {
       console.log(
         `[MQTTBus] connected to MQTT broker ${this.connConfig.host}:${this.connConfig.port}`
@@ -61,9 +61,8 @@ class MQTTBus{
 
     mqttClient.on("error", (err) => {
       console.error(
-        `[MQTTBus] ERROR: cannot connect to MQTT broker`
+        `[MQTTBus] ERROR: cannot connect to MQTT broker ${JSON.stringify(err)}`
       );
-      console.error(err);
     });
 
     mqttClient.on("offline", (error) => {

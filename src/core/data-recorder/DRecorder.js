@@ -46,7 +46,7 @@ class DataRecorder {
    * @param {Object} packet Full attributes of the packets
    */
   messageHandler(topic, message, packet) {
-    console.log(`[DataRecorder] Received a message on topic: ${topic}`);
+    // console.log(`[DataRecorder] Received a message on topic: ${topic}`);
     // console.log(message);
     let isSensorData = false;
     if (this.isSensorData(topic, packet)) {
@@ -167,7 +167,7 @@ class DataRecorder {
     } else {
       // Init the forwarder
       this.initForwarder(() => {
-        console.error('[DataRecorder] Forwarder has been created!', this.forwarder);
+        console.log(`[DataRecorder] Forwarder has been created: ${JSON.stringify(this.forwarder)}`);
         this.initSource();
       });
     }

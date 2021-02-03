@@ -28,7 +28,7 @@ class DataStorage {
    * @param {Function} callback The callback function
    */
   connect(callback) {
-    console.log("[DataStorage] Connecting...");
+    console.log("[DataStorage] Connecting to database...");
     if (this.protocol === "MONGODB") {
       const {
         host,

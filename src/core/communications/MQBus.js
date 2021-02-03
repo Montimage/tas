@@ -23,7 +23,7 @@ class MQBus {
   }
 
   /**
-   * Connect to the MQ broker 
+   * Connect to the MQ broker
    * @param {Function} callback The callback function
    */
   connect(callback) {
@@ -35,7 +35,7 @@ class MQBus {
    * @param {Function} msgHandlerFct The function to handle the received messages
    */
   setupMessageHandler(msgHandlerFct) {
-    console.log('[MQBus]Going to setup message handler', msgHandlerFct);
+    // console.log('[MQBus] Going to setup message handler', msgHandlerFct);
     this.mqClient.setupMessageHandler(msgHandlerFct);
   }
 
@@ -44,7 +44,7 @@ class MQBus {
    * @param {Array|String} topics The topics to be listening on
    */
   subscribe(topics) {
-    console.log('[MQBus]Going to subscribe to topics: ',topics);
+    console.log(`[MQBus] Going to subscribe to topics: ${JSON.stringify(topics)}`);
     if (typeof topics === 'string') {
       // single topic
       this.mqClient.subscribe(topics);
@@ -61,7 +61,7 @@ class MQBus {
    * @param {Array|String} topics the topics to be unsubscribed
    */
   unsubscribe(topics) {
-    console.log('[MQBus]Going to subscribe to topics: ',topics);
+    console.log(`[MQBus] Going to unsubscribe to topics: ${JSON.stringify(topics)}`);
     if (typeof topics === 'string') {
       // single topic
       this.mqClient.unsubscribe(topics);
@@ -74,7 +74,7 @@ class MQBus {
     }
   }
   /**
-   * Publish a data to a topic  
+   * Publish a data to a topic
    * @param {String} topic The topic to be published to
    * @param {Object} data The data to be published
    */
