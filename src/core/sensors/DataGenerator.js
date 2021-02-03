@@ -63,7 +63,7 @@ class DataGenerator extends DeviceDataSource {
       });
     }
     this.values = null;
-    console.log(`REPORT FORMAT: ${this.reportFormat}`);
+    // console.log(`REPORT FORMAT: ${this.reportFormat}`);
   }
 
   getStats() {
@@ -77,7 +77,7 @@ class DataGenerator extends DeviceDataSource {
   }
 
   collectAndReportPlainData() {
-    
+
     if (!this.energy && this.sources.length === 1) {
       this.values = this.sources[0].getValue().value;
     } else {

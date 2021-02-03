@@ -71,7 +71,7 @@ class MQTTBus{
     });
 
     mqttClient.on("message", (topic, message, packet) => {
-      console.log(`[MQTTBus] received message on topic: ${topic}`);
+      // console.log(`[MQTTBus] received message on topic: ${topic}`);
       if(this.msgHandlerFct) {
         this.msgHandlerFct(topic, message.toString(), packet);
       }

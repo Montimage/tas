@@ -29,12 +29,13 @@ class Simulation {
       if (options.evaluationParameters) this.evaluationParameters = options.evaluationParameters;
     }
     if (!this.evaluationParameters) {
-      console.log(`[SIMULATION] Use default evaluation parameters`);
       this.evaluationParameters = {
         threshold: THRESHOLD_FLEXIBLE,
         eventType: ALL_EVENTS,
         metricType: METRIC_VALUE_TIMESTAMP
       }
+
+      console.log(`[SIMULATION] Use default evaluation parameters ${JSON.stringify(this.evaluationParameters)}`);
     }
 
     // Create the dataset if needed
@@ -170,7 +171,7 @@ class Simulation {
   }
 
   start() {
-    console.log("Start simulating for the model: ", this.model.name);
+    console.log(`Start simulating for the model: ${this.model.name}`);
     this.status = SIMULATING;
     while (this.allThings.length > 0) {
       this.allThings.pop();

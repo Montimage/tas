@@ -27,10 +27,10 @@ class ThingMQTT extends Thing {
   handleMQTTMessage(topic, message, packet) {
     this.lastActivity = Date.now();
     this.numberOfReceivedData++;
-    console.log(
-      `[${this.thingId}] received: ${this.mqttClient.options.href} ${topic}`,
-      message
-    );
+    // console.log(
+    //   `[${this.thingId}] received: ${this.mqttClient.options.href} ${topic}`,
+    //   message
+    // );
     if (this.mqttTopics[topic]) {
       // Check for the custom topic first
       const actuators = this.mqttTopics[topic];
@@ -149,7 +149,7 @@ class ThingMQTT extends Thing {
         publishTopic = sensor.topic;
     } else {
       publishTopic = `things/${this.thingId}/sensors/${sensor.topicEnd}`;
-    }    
+    }
     this.mqttClient.publish(publishTopic, typeof data === "object" ? JSON.stringify(data): data);
   }
 

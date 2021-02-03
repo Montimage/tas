@@ -281,7 +281,7 @@ class Device {
    * @param {String} objectId The object id of the sensor follow IP Smart Object Standard
    */
   addSensor(id, sensorData, objectId = null, events = null) {
-    console.log('Going to add a new sensor: ', id);
+    // console.log('Going to add a new sensor: ', id);
     if (findDevice(id, objectId, this.sensors) > -1) {
       console.error(
         `[${this.id}] Sensor ID ${id} ${objectId} has already existed!`
@@ -320,7 +320,7 @@ class Device {
           this.sensors[this.sensors.length - 1].start();
         }
         console.log(
-          `[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`
+          `[${this.id}] added new sensor ${id} with data source ${dataSource}`
         );
       } else {
         console.error(
@@ -350,7 +350,7 @@ class Device {
         this.sensors[this.sensors.length - 1].start();
       }
       console.log(
-        `[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`
+        `[${this.id}] added new sensor ${id} with data source (${dataSource})`
       );
     } else {
       // Data will be generated in run time
@@ -372,7 +372,7 @@ class Device {
         this.sensors[this.sensors.length - 1].start();
       }
       console.log(
-        `[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`
+        `[${this.id}] added new sensor ${id} with data source (${dataSource})`
       );
     }
   }
@@ -389,7 +389,7 @@ class Device {
   removeSensor(id, objectId = null) {
     const sensorIndex = findDevice(id, objectId, this.sensors);
     if (sensorIndex === -1) {
-      console.error(`[${this.id}] Sensor ID ${id} ${objectId} does not exist!`);
+      console.error(`[${this.id}] Sensor ID ${id} does not exist!`);
       return null;
     }
     const sensor = this.sensors[sensorIndex];
@@ -402,7 +402,7 @@ class Device {
       }
     }
     this.sensors.splice(sensorIndex, 1);
-    console.log(`[${this.id}] Sensor ID ${id} ${objectId} has been removed!`);
+    console.log(`[${this.id}] Sensor ID ${id} has been removed!`);
   }
 
   /**
@@ -414,10 +414,10 @@ class Device {
    * @param {String} id The actuator's ID
    */
   addActuator(id, actuatorData, objectId = null) {
-    console.log('Going to add a new actuator: ', id);
+    // console.log('Going to add a new actuator: ', id);
     if (findDevice(id, objectId, this.actuators) > -1) {
       console.error(
-        `[${this.id}] Actuator ID ${id} ${objectId} has already existed!`
+        `[${this.id}] Actuator ID ${id} has already existed!`
       );
       return null;
     }
@@ -436,7 +436,7 @@ class Device {
       topic: topic,
     }, this.testBroker, objectId);
     this.actuators.push(newActuator);
-    console.log(`[${this.id}] added new actuator ${id} ${objectId}`);
+    console.log(`[${this.id}] added new actuator ${id}`);
 
     return newActuator;
   }
@@ -454,7 +454,7 @@ class Device {
     const actuatorIndex = findDevice(id, objectId, this.actuators);
     if (actuatorIndex === -1) {
       console.error(
-        `[${this.id}] Actuator ID ${id} ${objectId} does not exist!`
+        `[${this.id}] Actuator ID ${id} does not exist!`
       );
       return null;
     }
@@ -465,7 +465,7 @@ class Device {
       actuator.stop();
     }
     this.actuators.splice(actuatorIndex, 1);
-    console.log(`[${this.id}] Actuator ID ${id} ${objectId} has been removed!`);
+    console.log(`[${this.id}] Actuator ID ${id} has been removed!`);
   }
 
   /**
@@ -528,7 +528,7 @@ class Device {
             }
           });
         } else {
-          console.log(`[${this.id}] NO RECORDING DATA`);
+          console.log(`[${this.id}] NOT REAL-TIME DATA TESTING MODE`);
         }
 
         if (this.dataStorageConfig) {
@@ -541,14 +541,14 @@ class Device {
               // Create report
               if (this.report && this.isFirstDevice) {
                 // Add the report
-                console.log(`[${this.id}] Going to add a new report`);
+                // console.log(`[${this.id}] Going to add a new report`);
                 // console.log(JSON.stringify(this.report));
                 this.dataStorage.saveReport(this.report);
               }
               // Create Dataset
               if (this.newDatasetConfig) {
                 // Add the dataset for the current test
-                console.log(`[${this.id}] Going to add a new dataset`);
+                // console.log(`[${this.id}] Going to add a new dataset`);
                 // console.log(JSON.stringify(this.newDatasetConfig));
                 this.dataStorage.saveDataset(this.newDatasetConfig);
               }

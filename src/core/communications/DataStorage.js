@@ -84,7 +84,7 @@ class DataStorage {
           source: dataset.source ? dataset.source : "RECORDED",
         });
         newDS.save();
-        console.log("[DataStorage] A new dataset has been created: ", dataset);
+        console.log(`[DataStorage] A new dataset has been created: ${JSON.strinify(dataset)}`);
       }
     });
   }
@@ -96,11 +96,11 @@ class DataStorage {
         // console.log(report);
         ReportSchema.findOneAndUpdate({ id: report.id }, report);
       } else {
-        console.log("[DataStorage] Going to add a new report: ");
+        // console.log("[DataStorage] Going to add a new report: ");
         // console.log(JSON.stringify(report));
         const newReport = new ReportSchema(report);
         newReport.save();
-        console.log("[DataStorage] A new report has been created");
+        console.log(`[DataStorage] A new report has been created ${JSON.stringify(report)}`);
       }
     });
   }
