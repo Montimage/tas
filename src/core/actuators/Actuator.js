@@ -38,7 +38,7 @@ class Actuator {
    * @param {Number} timestamp The timestamp of the new data
    */
   updateActuatedData(newData, timestamp = Date.now()) {
-    console.log(`[${this.id}] received a message on topic ${this.topic}`);
+    // console.log(`[${this.id}] received a message on topic ${this.topic}`);
     this.actuatedData = newData;
     this.timestamp = timestamp;
     this.lastActivity = Date.now();

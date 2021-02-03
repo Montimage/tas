@@ -167,7 +167,7 @@ class DataRecorder {
     } else {
       // Init the forwarder
       this.initForwarder(() => {
-        console.log(`[DataRecorder] Forwarder has been created: ${JSON.stringify(this.forwarder)}`);
+        console.log(`[DataRecorder] Forwarder has been created`);
         this.initSource();
       });
     }

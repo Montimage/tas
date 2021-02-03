@@ -84,7 +84,7 @@ class DataStorage {
           source: dataset.source ? dataset.source : "RECORDED",
         });
         newDS.save();
-        console.log(`[DataStorage] A new dataset has been created: ${JSON.strinify(dataset)}`);
+        console.log(`[DataStorage] A new dataset has been created: ${JSON.stringify(dataset)}`);
       }
     });
   }
