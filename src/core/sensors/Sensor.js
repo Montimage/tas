@@ -115,17 +115,22 @@ class Sensor {
         const stopSensor = () => this.stop();
         if (this.dataSourceType === DS_DATASET) {
           console.log(`[${this.id}] Number of events to be replayed: ${this.events.length} with replayOptions: ${JSON.stringify(this.replayOptions)}`);
-          this.dataSource = new DataReplayer(
-            this.id,
-            (values, topic = null) => this.dataHandler(values, topic),
-            () => {
-              stopSensor();
-            },
-            this.replayOptions,
-            this.events,
-            this.objectId,
-            this.startReplayingTime
-          );
+          if (this.events.length === 0) {
+            console.log(`[${this.id}] Going to stop -> no data to replay`);
+            this.stop();
+          } else {
+            this.dataSource = new DataReplayer(
+              this.id,
+              (values, topic = null) => this.dataHandler(values, topic),
+              () => {
+                stopSensor();
+              },
+              this.replayOptions,
+              this.events,
+              this.objectId,
+              this.startReplayingTime
+            );
+          }
         } else {
           this.dataSource = new DataGenerator(
             this.id,
@@ -139,7 +144,7 @@ class Sensor {
           );
         }
       }
-      if (this.dataSource.getStatus() !== SIMULATING) {
+      if (this.dataSource && this.dataSource.getStatus() !== SIMULATING) {
         this.startedTime = Date.now();
         console.log(
           `[${this.objectId ? this.objectId : "sensor"}-${

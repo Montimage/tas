@@ -7,12 +7,15 @@ const { EventSchema, ReportSchema, dbConnector } = require("./db-connector");
 // Get all the reports
 router.get("/", dbConnector, function (req, res, next) {
   let options = {};
-  const { topologyFileName, testCampaignId } = req.query;
+  const { topologyFileName, testCampaignId, reportToken } = req.query;
   if (topologyFileName) {
     options["topologyFileName"] = topologyFileName;
   }
   if (testCampaignId) {
     options["testCampaignId"] = testCampaignId;
+  }
+  if (reportToken) {
+    options["reportToken"] = reportToken;
   }
 
   ReportSchema.findReportsWithOptions(options, (err2, reports) => {

@@ -12,7 +12,7 @@ class DataRecorder {
   }
 
   /**
-   * 
+   *
    * @param {Object} dsConfig the configuration of the data storage
    * "dataStorage": {
         "protocol": "MONGODB",
@@ -50,7 +50,8 @@ class DataRecorder {
           return callback();
         } else {
           console.error("Failed to create DataStorage: dataset missing");
-          dsClient.stop();
+          // TODO: check if there is resource leak
+          // dsClient.stop();
           return callback("Dataset missing");
         }
       }
@@ -84,9 +85,10 @@ class DataRecorder {
 
   stop() {
     console.log(`[DataRecorder] Going to stop ...`);
-    if (this.dataStorage && this.dataStorage.dsClient) {
-      this.dataStorage.dsClient.stop();
-    }
+    // TODO: check if there is resource leak
+    // if (this.dataStorage && this.dataStorage.dsClient) {
+    //   this.dataStorage.dsClient.stop();
+    // }
 
     while(this.allDataRecorders.length > 0) {
       const dRecorder = this.allDataRecorders.pop();

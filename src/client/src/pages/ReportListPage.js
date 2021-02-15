@@ -1,8 +1,8 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
 import moment from "moment";
-import { Table, Button } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { Table, Button, Tag, Menu, Dropdown } from "antd";
+import { DeleteOutlined, EyeOutlined, DownOutlined, CaretRightOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import { requestAllReports, requestDeleteReport } from "../actions";
 import { getQuery } from "../utils";
@@ -11,7 +11,8 @@ class ReportListPage extends Component {
   componentDidMount() {
     const topologyFileName = getQuery("topologyFileName");
     const testCampaignId = getQuery("testCampaignId");
-    this.props.fetchReports({ topologyFileName, testCampaignId });
+    const reportToken = getQuery("reportToken");
+    this.props.fetchReports({ topologyFileName, testCampaignId, reportToken });
   }
 
   render() {
@@ -32,21 +33,13 @@ class ReportListPage extends Component {
         key: "data",
         sorter: (a, b) => a.createdAt - b.createdAt,
         render: (ds) => moment(ds.createdAt).format("MMMM Do YYYY, h:mm:ss a"),
-        width: 270,
       },
       {
-        title: "Id",
-        key: "data",
-        render: (ds) => <a href={`/reports/${ds.id}`}> {ds.id} </a>,
-        width: 200,
-      },
-      {
-        title: "Test Campaign Id",
+        title: "DatasetId",
         key: "data",
         render: (ds) => (
-          <a href={`/test-campaigns/${ds.testCampaignId}`}>
-            {" "}
-            {ds.testCampaignId}{" "}
+          <a href={`/data-sets/${ds.originalDatasetId}`}>
+            {ds.originalDatasetId}
           </a>
         ),
       },
@@ -64,10 +57,14 @@ class ReportListPage extends Component {
           <div>
             {ds.score > -1 ? (
               <div>
-                {ds.score === 0 ? <p>{ds.score}</p> : <p>{ds.score}</p>}
+                {ds.score < 0.5 ? (
+                  <Tag color={"red"}>Failed ({Math.round(ds.score * 100)/100})</Tag>
+                ) : (
+                  <Tag color={"green"}> Passed ({Math.round(ds.score * 100)/100})</Tag>
+                )}
               </div>
             ) : (
-              <p>NA</p>
+              <Tag>Unknown</Tag>
             )}
           </div>
         ),
@@ -75,13 +72,40 @@ class ReportListPage extends Component {
       {
         title: "Action",
         key: "data",
-        width: 100,
         render: (ds) => (
-          <Fragment>
-            <Button size="small" danger onClick={() => deleteReport(ds._id)}>
-              <DeleteOutlined /> Delete
-            </Button>
-          </Fragment>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item
+                  key="delete"
+                  danger
+                  onClick={() => deleteReport(ds._id)}
+                  title={"Delete this report"}
+                >
+                  <DeleteOutlined /> Delete
+                </Menu.Item>
+                <Menu.Item key="view-detail" title={"Show detail of this report"}>
+                  <a href={`/reports/${ds.id}`}>
+                    <EyeOutlined /> View Detail
+                  </a>
+                </Menu.Item>
+                <Menu.Item key="simulation" title={"Re-do the test of this report"}>
+                  <a href={`/simulation?model=${ds.topologyFileName}&datasetId=${ds.originalDatasetId}`}>
+                    <CaretRightOutlined /> Simulate
+                  </a>
+                </Menu.Item>
+              </Menu>
+            }
+          >
+            <a
+              className="ant-dropdown-link"
+              onClick={(e) => e.preventDefault()}
+            >
+              <Button>
+                Select Action <DownOutlined />
+              </Button>
+            </a>
+          </Dropdown>
         ),
       },
     ];

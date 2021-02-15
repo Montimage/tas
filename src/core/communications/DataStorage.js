@@ -99,8 +99,13 @@ class DataStorage {
         // console.log("[DataStorage] Going to add a new report: ");
         // console.log(JSON.stringify(report));
         const newReport = new ReportSchema(report);
-        newReport.save();
-        console.log(`[DataStorage] A new report has been created ${JSON.stringify(report)}`);
+        newReport.save((err) => {
+          if (err) {
+            console.error(`[DataStorage] cannot save a new report - ${JSON.stringify(err)}`);
+          } else {
+            console.log(`[DataStorage] A new report has been created ${JSON.stringify(report)}`);
+          }
+        });
       }
     });
   }

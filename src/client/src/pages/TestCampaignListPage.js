@@ -265,7 +265,7 @@ class TestCampaignListPage extends Component {
                   >
                     <Button type="link">View Log</Button>
                   </a>
-                  <a href={`/reports/?testCampaignId=${testCampaignId}`}>
+                  <a href={`/reports/?testCampaignId=${testCampaignId}&reportToken=${runningStatus.reportToken}`}>
                     <Button type="link">View Report</Button>
                   </a>
                 </Fragment>

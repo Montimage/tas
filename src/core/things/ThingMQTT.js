@@ -90,8 +90,7 @@ class ThingMQTT extends Thing {
 
     mqttClient.on("error", (err) => {
       console.error(
-        `[${this.thingId}] ERROR: cannot connect to MQTT broker`,
-        err
+        `[${this.thingId}] ERROR: cannot connect to MQTT broker ${JSON.stringify(err)}`
       );
     });
 

@@ -52,6 +52,10 @@ const reportSchema = new Schema({
   },
   evaluationParameters:{
     type: Object
+  },
+  reportToken:{
+    type: Number,
+    required: false,
   }
 });
 reportSchema.statics.findReportsWithOptions = function (options, callback) {

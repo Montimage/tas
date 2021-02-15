@@ -85,6 +85,7 @@ class Device {
     this.testBroker = null; // The communication to publish the sensors data and receive the actuators data - cannot be null
     this.productionBroker = null; // The communication to collecting data in digitalTwins option - can be null
     this.dataStorage = null; // The connection with Data Storage to get the dataset or save the new dataset - can be null, in this case the simulated data will not be stored in the data storage, and the option simulate from a dataset will be disable
+    this.nbReplayingSensor = 0; // Number of replaying sensor
     // Statstics
     this.numberOfSentData = 0; // Number sensors data sent by this device
     this.numberOfReceivedData = 0; // Number of actuators data received by this device
@@ -183,7 +184,6 @@ class Device {
       }
       console.error("Cannot find the sensor with the topic: ", topic);
     }
-
   }
 
   /**
@@ -268,8 +268,7 @@ class Device {
         return;
       }
     }
-    setTimeout(() => this.stop(),3000); // Wait 3 seconds for the actuated data comming;
-
+    setTimeout(() => this.stop(), 3000); // Wait 3 seconds for the actuated data comming;
   }
   /**
    * Add a new Sensor into the current Device
@@ -329,29 +328,39 @@ class Device {
         return null;
       }
     } else if (dataSource === DS_DATASET && events) {
-      const newSensor = new Sensor(
-        id,
-        {
-          ...sensorData,
-          replayOptions,
-          topic: topic,
-        },
-        null,
-        (topic, message) => {
-          this.publishDataToTestBroker(topic, message);
-        },
-        events,
-        startReplayingTime,
-        () => this.sensorCallbackWhenFinish(id)
-      );
-      this.sensors.push(newSensor);
-      // HOT reload sensor
-      if (this.status === SIMULATING) {
-        this.sensors[this.sensors.length - 1].start();
+      this.nbReplayingSensor++;
+      // console.log(
+      //   `[${this.id}] this.nbReplayingSensor: ${this.nbReplayingSensor}`
+      // );
+      if (events.length > 0) {
+        const newSensor = new Sensor(
+          id,
+          {
+            ...sensorData,
+            replayOptions,
+            topic: topic,
+          },
+          null,
+          (topic, message) => {
+            this.publishDataToTestBroker(topic, message);
+          },
+          events,
+          startReplayingTime,
+          () => this.sensorCallbackWhenFinish(id)
+        );
+        this.sensors.push(newSensor);
+        // HOT reload sensor
+        if (this.status === SIMULATING) {
+          this.sensors[this.sensors.length - 1].start();
+        }
+        console.log(
+          `[${this.id}] added new sensor ${id} with data source (${dataSource})`
+        );
+      } else {
+        console.log(
+          `[${this.id}] Skipped sensor ${id} with data source (${dataSource}) - no event`
+        );
       }
-      console.log(
-        `[${this.id}] added new sensor ${id} with data source (${dataSource})`
-      );
     } else {
       // Data will be generated in run time
       const newSensor = new Sensor(
@@ -416,9 +425,7 @@ class Device {
   addActuator(id, actuatorData, objectId = null) {
     // console.log('Going to add a new actuator: ', id);
     if (findDevice(id, objectId, this.actuators) > -1) {
-      console.error(
-        `[${this.id}] Actuator ID ${id} has already existed!`
-      );
+      console.error(`[${this.id}] Actuator ID ${id} has already existed!`);
       return null;
     }
     let topic = actuatorData.topic;
@@ -431,10 +438,15 @@ class Device {
     }
     // subscribe to testBroker
     // this.testBroker.subscribe(topic);
-    const newActuator = new Actuator(id, {
-      ...actuatorData,
-      topic: topic,
-    }, this.testBroker, objectId);
+    const newActuator = new Actuator(
+      id,
+      {
+        ...actuatorData,
+        topic: topic,
+      },
+      this.testBroker,
+      objectId
+    );
     this.actuators.push(newActuator);
     console.log(`[${this.id}] added new actuator ${id}`);
 
@@ -453,9 +465,7 @@ class Device {
   removeActuator(id, objectId = null) {
     const actuatorIndex = findDevice(id, objectId, this.actuators);
     if (actuatorIndex === -1) {
-      console.error(
-        `[${this.id}] Actuator ID ${id} does not exist!`
-      );
+      console.error(`[${this.id}] Actuator ID ${id} does not exist!`);
       return null;
     }
     const actuator = this.actuators[actuatorIndex];
@@ -505,7 +515,13 @@ class Device {
               );
               // Add the sensors which have the data source from the production broker
               this.sensorsConfig.map((sensorData) => {
-                const { id, dataSpecs, enable, objectId, dataSource } = sensorData;
+                const {
+                  id,
+                  dataSpecs,
+                  enable,
+                  objectId,
+                  dataSource,
+                } = sensorData;
                 let scale = 1;
                 if (dataSpecs) scale = dataSpecs.scale ? dataSpecs.scale : 1;
                 if (enable && dataSource === DS_RECORDER) {
@@ -561,78 +577,114 @@ class Device {
                 if (this.globalReplayOptions.endTime)
                   endTime = this.globalReplayOptions.endTime;
               }
-              this.dataStorage.getAllEvents(this.datasetId, startTime, endTime, (err4, events) => {
-                if (!err4 && events && events.length > 0) {
-                  const firstEventTimestamp = events[0].timestamp;
-                  startReplayingTime = firstEventTimestamp;
-                  // if (startReplayingTime > firstEventTimestamp) startReplayingTime = firstEventTimestamp;
-                  console.log(`[${this.id}] firstEventTimestamp: ${firstEventTimestamp}`);
-                  console.log(`[${this.id}] Dataset: ${this.datasetId}`)
-                  console.log(`[${this.id}] startReplayingTime: ${startReplayingTime}`);
-                  if (this.isReplayingStreams) {
-                    // REPLAY STREAM DATA
-                    // Only select the event that has the topic matches with the list of upStreams
-                    const matchedEvents = [];
-                    for (let eventIndex = 0; eventIndex < events.length; eventIndex++) {
-                      const event = events[eventIndex];
-                      for (let usIndex = 0; usIndex < this.upStreams.length; usIndex++) {
-                        const topicPattern = this.upStreams[usIndex];
-                        if (checkMQTTTopic(event.topic, topicPattern)) {
-                          matchedEvents.push(event);
-                          break;
-                        }
-                      }
-                    }
-                    const singleSensorId = `sensor-id-${Date.now()}`;
-                    const singleSensorData = {
-                      id: singleSensorId,
-                      scale: 1,
-                      enable: true,
-                      objectId: null,
-                      dataSource: DS_DATASET
-                    };
-
-                    this.addSensor(singleSensorId, singleSensorData, null, matchedEvents);
-                    // Create a single sensor with the dataSource === DS_DATASET
-                  } else {
-                    // Add sensors which have data source from data storage
-                    this.sensorsConfig.map((sensorData) => {
-                      const {
-                        id,
-                        topic,
-                        scale,
-                        enable,
-                        objectId,
-                        dataSource,
-                      } = sensorData;
-                      if (enable && dataSource === DS_DATASET && topic) {
-                        console.log("Going to add a DATASET sensor");
-                        // filter the events match the sensor's topics
-                        const matchedEvents = [];
-                        for (let eventIndex = 0; eventIndex < events.length; eventIndex++) {
-                          const event = events[eventIndex];
-                          if (checkMQTTTopic(event.topic, topic)) {
+              this.dataStorage.getAllEvents(
+                this.datasetId,
+                startTime,
+                endTime,
+                (err4, events) => {
+                  if (!err4 && events && events.length > 0) {
+                    const firstEventTimestamp = events[0].timestamp;
+                    startReplayingTime = firstEventTimestamp;
+                    // if (startReplayingTime > firstEventTimestamp) startReplayingTime = firstEventTimestamp;
+                    console.log(
+                      `[${this.id}] firstEventTimestamp: ${firstEventTimestamp}`
+                    );
+                    console.log(`[${this.id}] Dataset: ${this.datasetId}`);
+                    console.log(
+                      `[${this.id}] startReplayingTime: ${startReplayingTime}`
+                    );
+                    if (this.isReplayingStreams) {
+                      // REPLAY STREAM DATA
+                      // Only select the event that has the topic matches with the list of upStreams
+                      const matchedEvents = [];
+                      for (
+                        let eventIndex = 0;
+                        eventIndex < events.length;
+                        eventIndex++
+                      ) {
+                        const event = events[eventIndex];
+                        for (
+                          let usIndex = 0;
+                          usIndex < this.upStreams.length;
+                          usIndex++
+                        ) {
+                          const topicPattern = this.upStreams[usIndex];
+                          if (checkMQTTTopic(event.topic, topicPattern)) {
                             matchedEvents.push(event);
-                          }
-                        }
-                        let nbSensors = scale ? scale : 1;
-                        if (nbSensors === 1) {
-                          this.addSensor(id, sensorData, objectId, matchedEvents);
-                        } else {
-                          for (
-                            let sensorIndex = 0;
-                            sensorIndex < nbSensors;
-                            sensorIndex++
-                          ) {
-                            const sID = `${id}-${sensorIndex}`;
-                            this.addSensor(sID, sensorData, objectId, matchedEvents);
+                            break;
                           }
                         }
                       }
-                    });
+                      const singleSensorId = `sensor-id-${Date.now()}`;
+                      const singleSensorData = {
+                        id: singleSensorId,
+                        scale: 1,
+                        enable: true,
+                        objectId: null,
+                        dataSource: DS_DATASET,
+                      };
+
+                      this.addSensor(
+                        singleSensorId,
+                        singleSensorData,
+                        null,
+                        matchedEvents
+                      );
+                      // Create a single sensor with the dataSource === DS_DATASET
+                    } else {
+                      // Add sensors which have data source from data storage
+                      this.sensorsConfig.map((sensorData) => {
+                        const {
+                          id,
+                          topic,
+                          scale,
+                          enable,
+                          objectId,
+                          dataSource,
+                        } = sensorData;
+                        if (enable && dataSource === DS_DATASET && topic) {
+                          console.log("Going to add a DATASET sensor");
+                          // filter the events match the sensor's topics
+                          const matchedEvents = [];
+                          for (
+                            let eventIndex = 0;
+                            eventIndex < events.length;
+                            eventIndex++
+                          ) {
+                            const event = events[eventIndex];
+                            if (checkMQTTTopic(event.topic, topic)) {
+                              matchedEvents.push(event);
+                            }
+                          }
+                          let nbSensors = scale ? scale : 1;
+                          if (nbSensors === 1) {
+                            this.addSensor(
+                              id,
+                              sensorData,
+                              objectId,
+                              matchedEvents
+                            );
+                          } else {
+                            for (
+                              let sensorIndex = 0;
+                              sensorIndex < nbSensors;
+                              sensorIndex++
+                            ) {
+                              const sID = `${id}-${sensorIndex}`;
+                              this.addSensor(
+                                sID,
+                                sensorData,
+                                objectId,
+                                matchedEvents
+                              );
+                            }
+                          }
+                        }
+                      });
+                    }
                   }
                 }
-              });
+              );
             }
           });
         } else {
@@ -700,6 +752,35 @@ class Device {
         return callback();
       });
     }
+  }
+
+  isOffline() {
+    // console.log(`[${this.id}] status: ${this.status}`);
+    if (this.status === OFFLINE) return true;
+    console.log(
+      `[${this.id}] sensor ${this.sensors.length}, replaying sensors: ${this.nbReplayingSensor}, total sensors: ${this.sensorsConfig.length}`
+    );
+    if (this.sensors.length === 0) {
+      if (this.actuators.length === 0) {
+        console.log(`[${this.id}] does not have any sensor or actuator`);
+        console.log(`[${this.id}] Skipped this device`);
+        this.stop();
+        return true;
+      } else {
+        if (
+          this.nbReplayingSensor > 0 &&
+          this.nbReplayingSensor === this.sensorsConfig.length
+        ) {
+          console.log(
+            `[${this.id}] There is no event for replaying any sensors - stop this device`
+          );
+          console.log(`[${this.id}] Skipped this device`);
+          this.stop();
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**

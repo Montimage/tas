@@ -578,12 +578,16 @@ class DataRecorderPage extends Component {
                   >
                     {recorderStatus.logFile}
                   </a>
-                  .
                 </p>
-                Dataset:{" "}
-                <a href={`/data-sets/${tempDataRecorder.dataset.id}`}>
-                  {tempDataRecorder.dataset.name}
-                </a>
+                {tempDataRecorder.dataset && (
+                  <Fragment>
+                    Dataset:{" "}
+                    <a href={`/data-sets/${tempDataRecorder.dataset.id}`}>
+                      {tempDataRecorder.dataset.name}
+                    </a>
+                  </Fragment>
+                )}
+
               </div>
             }
             type={recorderStatus.isRunning ? "success" : "warning"}

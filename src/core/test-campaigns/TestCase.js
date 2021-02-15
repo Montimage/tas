@@ -4,7 +4,7 @@ const Simulation = require('../simulation');
 const { readJSONFile } = require('../utils');
 const modelsPath = `${__dirname}/../../server/data/models/`;
 class TestCase {
-  constructor(id, dataStorageConfig, testCampaignId = null, evaluationParameters = null,callbackWhenFinish = null) {
+  constructor(id, dataStorageConfig, testCampaignId = null, reportToken = null, evaluationParameters = null,callbackWhenFinish = null) {
     this.id = id;
     this.name = id;
     this.dataStorageConfig = dataStorageConfig;
@@ -15,6 +15,7 @@ class TestCase {
     this.datasetIds = null;
     this.status = OFFLINE;
     this.testCampaignId = testCampaignId;
+    this.reportToken = reportToken;
     this.scores = [];
     this.callbackWhenFinish = callbackWhenFinish;
     this.evaluationParameters = evaluationParameters;
@@ -77,7 +78,7 @@ class TestCase {
     for (let index = 0; index < totalNumberDatasets; index++) {
       const datasetId = this.datasetIds[index];
       const stopTestCase = () => this.stop();
-      const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId, testCampaignId: this.testCampaignId, evaluationParameters: this.evaluationParameters}, (score = null) => {
+      const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId, testCampaignId: this.testCampaignId, reportToken: this.reportToken, evaluationParameters: this.evaluationParameters}, (score = null) => {
         console.log(`A simulation ${index} is going to finished ... ${datasetId}`);
         if (score !== null && score !== undefined) {
           // Do something if the score === 0
@@ -96,7 +97,10 @@ class TestCase {
         } else {
           // Start the next simulation
           const nextSimulation = this.simulations[index+1];
-          nextSimulation.start();
+          // Wait few second before starting the next simulation
+          setTimeout(() => {
+            nextSimulation.start();
+          }, 5000);
         }
         // for (let simuIndex = 0; simuIndex < this.simulations.length; simuIndex++) {
         //   const sim = this.simulations[simuIndex];

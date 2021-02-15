@@ -115,18 +115,19 @@ router.get('/start', dbConnector, (req, res, next) => {
         const logFile = `${testCampaignId}_${startedTime}.log`;
         getLogger("TEST-CAMPAIGN", `${logsPath}${logFile}`);
         console.log('[devops] A test campaign is going to be started ...');
-
+        const reportToken = Date.now();
         if (dataStorage) {
           runningStatus = {
             isRunning: true,
             testCampaignId,
+            reportToken,
             dataStorage,
             webhookURL,
             startedTime,
             endTime: null,
             logFile
           };
-          startTestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters);
+          startTestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters, reportToken);
           res.send({
             error: null,
             devops,
@@ -143,13 +144,14 @@ router.get('/start', dbConnector, (req, res, next) => {
               runningStatus = {
                 isRunning: true,
                 testCampaignId,
+                reportToken,
                 dataStorage: ds,
                 webhookURL,
                 startedTime,
                 endTime: null,
                 logFile
               };
-              startTestCampaign(testCampaignId, ds, webhookURL, evaluationParameters);
+              startTestCampaign(testCampaignId, ds, webhookURL, evaluationParameters, reportToken);
               res.send({
                 error: null,
                 runningStatus

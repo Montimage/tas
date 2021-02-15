@@ -546,16 +546,22 @@ export const sendRequestReport = async (rpId) => {
 };
 
 export const sendRequestAllReports = async (options) => {
-  const { topologyFileName, testCampaignId } = options;
+  const { topologyFileName, testCampaignId, reportToken } = options;
   let query = "";
   if (topologyFileName) {
     query = `?topologyFileName=${topologyFileName}`;
     if (testCampaignId) {
-      query = `&testCampaignId=${testCampaignId}`;
+      query += `&testCampaignId=${testCampaignId}`;
+    }
+    if (reportToken) {
+      query += `&reportToken=${reportToken}`;
     }
   } else {
     if (testCampaignId) {
       query = `?testCampaignId=${testCampaignId}`;
+    }
+    if (reportToken) {
+      query += `&reportToken=${reportToken}`;
     }
   }
 

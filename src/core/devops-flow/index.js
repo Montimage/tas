@@ -23,7 +23,8 @@ const startTestCampaign = (
   testCampaignId,
   dataStorage,
   webhookURL,
-  evaluationParameters
+  evaluationParameters,
+  reportToken
 ) => {
   // console.log("Start test campaign: ");
   // console.log(testCampaignId);
@@ -34,7 +35,8 @@ const startTestCampaign = (
     testCampaignId,
     dataStorage,
     webhookURL,
-    evaluationParameters
+    evaluationParameters,
+    reportToken
   );
   testCampaign.init((err) => {
     if (err) {
@@ -83,7 +85,8 @@ if (process.argv[2] === "test") {
             testCampaignId,
             dataStorage,
             webhookURL,
-            evaluationParameters
+            evaluationParameters,
+            Date.now()
           );
         }
       }

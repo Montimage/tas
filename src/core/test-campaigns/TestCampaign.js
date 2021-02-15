@@ -4,9 +4,10 @@ const { OFFLINE, SIMULATING } = require("../DeviceStatus");
 const TestCase = require("./TestCase");
 
 class TestCampaign {
-  constructor(id, dataStorageConfig, webhookURL, evaluationParameters) {
+  constructor(id, dataStorageConfig, webhookURL, evaluationParameters, reportToken = Date.now()) {
     this.id = id;
     this.name = id;
+    this.reportToken = reportToken;
     this.dataStorageConfig = dataStorageConfig;
     this.dataStorage = new DataStorage(dataStorageConfig);
     this.webhookURL = webhookURL;
@@ -32,6 +33,7 @@ class TestCampaign {
               tcaseId,
               this.dataStorageConfig,
               this.id,
+              this.reportToken,
               this.evaluationParameters,
               (scores = null) => {
                 // When a test case finish - check if this is the last test case
