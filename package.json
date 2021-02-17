@@ -7,7 +7,7 @@
     "server": "nodemon src/server/app.js"
   },
   "nodemonConfig": {
-    "verbose": true,
+    "verbose": false,
     "ignore": [
       "*.test.js",
       "Articles/*",

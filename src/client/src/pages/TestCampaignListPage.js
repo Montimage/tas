@@ -39,7 +39,9 @@ class TestCampaignListPage extends Component {
     this.props.fetchDevops();
     this.props.fetchTestCampaignStatus();
     this.testCampaignStatusTimer = setInterval(() => {
-      this.props.fetchTestCampaignStatus();
+      if (!this.state.isChanged) {
+        this.props.fetchTestCampaignStatus();
+      }
     }, 3000);
   }
 
