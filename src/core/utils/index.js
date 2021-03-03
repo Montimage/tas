@@ -8,6 +8,21 @@ const checkMQTTTopic = (topic, pattern) => {
   return params !== undefined;
 };
 
+const buildDirPath = (dirPath, callback) =>{
+  if (fs.access(dirPath, fs.constants.F_OK, (err) => {
+    if (err) {
+      fs.mkdir(dirPath, {recursive: true}, (err2) => {
+        if (err2) {
+          return callback({error: err2});
+        }
+        return callback();
+      })
+    } else {
+      return callback();
+    }
+  }));
+};
+
 const readDir = (dirPath, callback) => {
   fs.readdir(dirPath, callback);
 };
@@ -40,7 +55,7 @@ const readJSONFile = (filePath, callback) => {
   } catch (error) {
     return callback(error);
   }
-}
+};
 
 /**
  * Write a string data to a file
@@ -67,7 +82,7 @@ const writeToFile = (_filePath, data, callback, isOverwrite = false) => {
   } catch (error) {
 
   }
-}
+};
 
 /**
  * Delete a file
@@ -267,6 +282,7 @@ module.exports = {
   readTextFile,
   writeToFile,
   readDir,
+  buildDirPath,
   deleteFile,
   checkMQTTTopic,
   getObjectId,

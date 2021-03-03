@@ -179,6 +179,11 @@ Start a new container
 docker run --name tas -d -p 8080:31057 montimage/iot_test_and_simulation
 ```
 
+To re-use the database configuration, devops configuration, topology models and data recorders models:
+
+```
+docker run --name tas -v absolutely_path_to_your_data_folder:/usr/src/app/src/server/data -d -p 8080:31057 montimage/iot_test_and_simulation
+```
 
 ### docker useful commands
 

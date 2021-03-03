@@ -38,7 +38,7 @@ const getDBClient = (callback, reload = false) => {
     }
   } else {
     getDataStorage((err, dataStorage) => {
-      if (err) {
+      if (err || !dataStorage) {
         console.error('[SERVER] Cannot get the data storage configuration');
         return callback(err);
       } else {
@@ -90,12 +90,14 @@ const getDataStorage = (callback, reload = false) => {
       console.error("[SERVER] reading data storage", err);
       const defaultDataStorage = {
         protocol: "MONGODB",
-        host: "localhost",
-        port: 27017,
-        username: null,
-        password: null,
-        dbname: null,
-        options: null,
+        connConfig:{
+          host: "localhost",
+          port: 27017,
+          username: null,
+          password: null,
+          dbname: null,
+          options: null
+        }
       };
       writeToFile(dataStoragePath, JSON.stringify(defaultDataStorage), (err2, data) => {
         if (err2) {

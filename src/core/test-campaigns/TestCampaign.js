@@ -83,7 +83,10 @@ class TestCampaign {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(this.results),
+      body: JSON.stringify({
+        reportURL: `/reports/?testCampaignId=${this.id}&reportToken=${this.reportToken}`,
+        result: this.results
+      }),
     })
       .then((res) => {
         console.log("Response from webhook:");

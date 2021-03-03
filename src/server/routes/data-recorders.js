@@ -9,6 +9,7 @@ const {
   readDir,
   deleteFile,
   getObjectId,
+  buildDirPath,
 } = require("../../core/utils");
 const dataRecordersPath = `${__dirname}/../data/data-recorders/`;
 let router = express.Router();
@@ -47,11 +48,11 @@ router.get("/stop/:fileName", function (req, res, next) {
   if (!fileName) {
     console.error(`[data-recorders] Missing data recorder's name`);
     res.send({
-      error: 'Missing data recorder name',
+      error: "Missing data recorder name",
       runningStatus: allRunningStatus,
     });
   } else {
-    const recorderId = getObjectId(fileName.replace('.json',''));
+    const recorderId = getObjectId(fileName.replace(".json", ""));
     if (allDataRecorders[recorderId]) {
       allDataRecorders[recorderId].stop();
       allDataRecorders[recorderId] = null;
@@ -170,16 +171,25 @@ router.post("/start", (req, res, next) => {
 
 // Read the list of data recorders
 router.get("/models/", (req, res, next) => {
-  readDir(dataRecordersPath, (err, files) => {
-    if (err) {
-      console.error("[SERVER]", err);
+  buildDirPath(dataRecordersPath, (err2) => {
+    if (err2) {
+      console.error("[SERVER]", err2);
       res.send({
-        error: "Cannot read the data recorders directory",
+        error: "Cannot create the data recorders directory",
       });
     } else {
-      res.send({
-        error: null,
-        dataRecorders: files.filter((f) => path.extname(f) === ".json"),
+      readDir(dataRecordersPath, (err, files) => {
+        if (err) {
+          console.error("[SERVER]", err);
+          res.send({
+            error: "Cannot read the data recorders directory",
+          });
+        } else {
+          res.send({
+            error: null,
+            dataRecorders: files.filter((f) => path.extname(f) === ".json"),
+          });
+        }
       });
     }
   });
@@ -343,20 +353,25 @@ router.post("/models", function (req, res, next) {
       error: `Invalid dataRecorder ${JSON.stringify(dataRecorder)}`,
     });
   }
-  const dataRecorderFileName = `${dataRecorder.name}.json`;
-  const dataRecorderFile = `${dataRecordersPath}${dataRecorderFileName}`;
-  writeToFile(dataRecorderFile, JSON.stringify(dataRecorder), (err, data) => {
-    if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot save the new configuration",
-      });
-    } else {
-      res.send({
-        error: null,
-        dataRecorderFileName,
-      });
+  buildDirPath(dataRecordersPath, (err2) => {
+    if (err2) {
+      return res.send({ error: "Cannot save the new configuration" });
     }
+    const dataRecorderFileName = `${dataRecorder.name}.json`;
+    const dataRecorderFile = `${dataRecordersPath}${dataRecorderFileName}`;
+    writeToFile(dataRecorderFile, JSON.stringify(dataRecorder), (err, data) => {
+      if (err) {
+        console.error("[SERVER]", err);
+        res.send({
+          error: "Cannot save the new configuration",
+        });
+      } else {
+        res.send({
+          error: null,
+          dataRecorderFileName,
+        });
+      }
+    });
   });
 });
 
