@@ -34,7 +34,8 @@ class AzureIoTDevice {
   }
 
   publish(data) {
-    this.client.sendEvent(data, function (err) {
+    const message = new Message(JSON.stringify(data));
+    this.client.sendEvent(message, function (err) {
       if (err) {
         console.error(`[AzureIoTDevice] Send error: ${err.toString()}`);
       } else {
