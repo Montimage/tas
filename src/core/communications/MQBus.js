@@ -1,4 +1,8 @@
 const MQTTBus = require('./MQTTBus');
+const AzureIoTDevice = require('./AzureIoTDevice');
+const MQTT_PROTOCOL = 'MQTT';
+const MQTTS_PROTOCOL = 'MQTTS';
+const AZURE_IOT_DEVICE = 'AZURE_IOT_DEVICE';
 /**
  * MQBus class presents a Message Queue Bus interface
  * - supports multiple MQ protocols such as: MQTT, MQTTS, AMQP, AMQPS, etc.
@@ -17,8 +21,12 @@ class MQBus {
     this.protocol = protocol;
     this.connConfig = connConfig;
     this.mqClient = null;
-    if (this.protocol === 'MQTT' || this.protocol === 'MQTTS') {
+    if (this.protocol === MQTT_PROTOCOL || this.protocol === MQTTS_PROTOCOL) {
       this.mqClient = new MQTTBus(connConfig, protocol ? protocol.toLowerCase() : 'mqtt');
+    } else if ( this.protocol === AZURE_IOT_DEVICE) {
+      this.mqClient = new AzureIoTDevice(connConfig);
+    } else {
+      console.error(`Unsupported protocol ${protocol}`);
     }
   }
 
@@ -35,8 +43,13 @@ class MQBus {
    * @param {Function} msgHandlerFct The function to handle the received messages
    */
   setupMessageHandler(msgHandlerFct) {
-    // console.log('[MQBus] Going to setup message handler', msgHandlerFct);
-    this.mqClient.setupMessageHandler(msgHandlerFct);
+    if (this.protocol !== AZURE_IOT_DEVICE) {
+      // console.log('[MQBus] Going to setup message handler', msgHandlerFct);
+      this.mqClient.setupMessageHandler(msgHandlerFct);
+    }
+    // else {
+    //   // TODO: handle the receiving message from IoT hub
+    // }
   }
 
   /**
@@ -44,6 +57,7 @@ class MQBus {
    * @param {Array|String} topics The topics to be listening on
    */
   subscribe(topics) {
+    if (this.protocol === AZURE_IOT_DEVICE) return; // Do nothing
     // console.log(`[MQBus] Going to subscribe to topics: ${JSON.stringify(topics)}`);
     if (typeof topics === 'string') {
       // single topic
@@ -61,6 +75,7 @@ class MQBus {
    * @param {Array|String} topics the topics to be unsubscribed
    */
   unsubscribe(topics) {
+    if (this.protocol === AZURE_IOT_DEVICE) return; // Do nothing
     // console.log(`[MQBus] Going to unsubscribe to topics: ${JSON.stringify(topics)}`);
     if (typeof topics === 'string') {
       // single topic
@@ -79,7 +94,11 @@ class MQBus {
    * @param {Object} data The data to be published
    */
   publish(topic, data){
-    this.mqClient.publish(topic, data);
+    if (this.protocol === AZURE_IOT_DEVICE) {
+      this.mqClient.publish(data);
+    } else {
+      this.mqClient.publish(topic, data);
+    }
   }
 
   /**

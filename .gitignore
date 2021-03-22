@@ -10,3 +10,6 @@ Articles
 certs/
 ssh-remote-montimage
 .env
+tests/
+models/
+node-red-flows/

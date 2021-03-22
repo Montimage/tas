@@ -182,7 +182,7 @@ const ModelDeviceItem = ({
         label="Protocol"
         defaultValue={data.testBroker.protocol}
         onChange={(v) => onChange("testBroker.protocol", v)}
-        options={["MQTT", "MQTTS"]}
+        options={["MQTT", "MQTTS","AZURE_IOT_DEVICE"]}
       />
       <ConnectionConfig
         defaultValue={data.testBroker.connConfig}
@@ -197,7 +197,7 @@ const ModelDeviceItem = ({
             label="Protocol"
             defaultValue={data.productionBroker.protocol}
             onChange={(v) => onChange("productionBroker.protocol", v)}
-            options={["MQTT", "MQTTS"]}
+            options={["MQTT", "MQTTS","AZURE_IOT_DEVICE"]}
           />
           <ConnectionConfig
             defaultValue={data.productionBroker.connConfig}
