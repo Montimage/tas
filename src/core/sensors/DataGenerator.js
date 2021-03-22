@@ -85,30 +85,32 @@ class DataGenerator extends DeviceDataSource {
       // get other data
       for (let index = 0; index < this.sources.length; index++) {
         const source = this.sources[index];
-        const value = source.getValue();
+        const value = source.getValue().value;
         this.values.push(value);
       }
       if(this.energy) {
-        this.values.push(this.energy.getValue());
+        this.values.push(this.energy.getValue().value);
       }
     }
     // console.log(`[DataGenerator] collect and report plain data: ${JSON.stringify(this.values)}`);
     this.dataHandler(this.values);
   }
 
-  collectAndReportData() {
+  collectAndReportJSONData() {
     this.values = {};
     if (this.energy) {
       // Update energy data field
-      const value = this.energy.getValue();
+      const value = this.energy.getValue().value;
       this.values[this.energy.key] = value;
     }
     // get other data
     for (let index = 0; index < this.sources.length; index++) {
       const source = this.sources[index];
-      const value = source.getValue();
+      const value = source.getValue().value;
       this.values[source.key] = value;
     }
+
+    // console.log(`[DataGenerator] collect and report JSON data: ${JSON.stringify(this.values)}`);
     this.dataHandler(this.values);
   }
 
@@ -218,10 +220,13 @@ class DataGenerator extends DeviceDataSource {
       }
       // Collect and handle data
       if (this.reportFormat === 2) {
+        // IPSO format
         this.collectAndReportDataInIPSOFormat();
       } else if (this.reportFormat === 1) {
-        this.collectAndReportData();
+        // JSON format
+        this.collectAndReportJSONData();
       } else {
+        // Plain data format
         this.collectAndReportPlainData();
       }
     }, this.timePeriod * 1000);

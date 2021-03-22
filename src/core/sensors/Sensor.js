@@ -79,7 +79,7 @@ class Sensor {
   }
 
   dataHandler(values, topic = null) {
-    if (typeof values === 'object') {
+    if (typeof values === 'object' && this.reportFormat === 2) {
       values["timestamp"] = Date.now();
       values["instanceId"] = this.id;
       if (this.name) {

@@ -42,7 +42,7 @@ class SensorModal extends Component {
     const { sensorData, isChanged } = this.state;
     const { enable, onClose, deviceId } = this.props;
     if (!sensorData) return null;
-    const reportFormats = ["PLAIN_DATA", "JSON_OBJECT", "IPSO_FORMAT"];
+    const reportFormats = ["PLAIN_DATA", "JSON_OBJECT", "IPSO_FORMAT"]; // 0 - 1 - 2
     const reportFormatHelpTexts = [
       "Report only the value of the sensor. The value will be in array if the sensor has multiple measurements",
       "Report the value of the sensor in JSON Object format, with the keys are defined in the description of the sensor",
