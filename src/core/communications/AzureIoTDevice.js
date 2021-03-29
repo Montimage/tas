@@ -39,7 +39,7 @@ class AzureIoTDevice {
       if (err) {
         console.error(`[AzureIoTDevice] Send error: ${err.toString()}`);
       } else {
-        console.log(`[AzureIoTDevice] Message sent!!!`);
+        console.log(`[AzureIoTDevice] Message sent!!! ${JSON.stringify(data)}`);
       }
     });
   }

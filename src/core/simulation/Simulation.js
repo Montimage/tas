@@ -182,13 +182,15 @@ class Simulation {
       this.allThings.pop();
     }
     const { devices } = this.model;
+    let isFirstDevice = true;
     for (let index = 0; index < devices.length; index++) {
       const dev = devices[index];
       const { id, name, scale, enable } = dev;
       if (enable === false) continue; // skip this device
       let nbDevices = scale ? scale : 1;
       if (nbDevices === 1) {
-        this.createDevice(dev, index === 0);
+        this.createDevice(dev, isFirstDevice);
+        isFirstDevice = false;
         // NOTE: All the information in the model will be transfer to each Device -> better in the future if we want to improve the performance by parallel the process
       } else {
         for (let tIndex = 0; tIndex < nbDevices; tIndex++) {
@@ -200,8 +202,9 @@ class Simulation {
               id: tID,
               name: tName,
             },
-            index === 0 && tIndex === 0
+            isFirstDevice && tIndex === 0
           );
+          isFirstDevice = false;
         }
       }
     }
