@@ -10,6 +10,7 @@ import {
   FormEditableTextItem,
   FormTextNotEditableItem,
 } from "../FormItems";
+import { CloseCircleOutlined, SaveOutlined } from "@ant-design/icons";
 
 const initEvent = () => ({
   timestamp: Date.now(),
@@ -41,16 +42,16 @@ class EventModal extends Component {
     const {onCancel, onOK, enable } = this.props;
     const footer = [
       <Button key="cancel" onClick={() => onCancel()}>
-        Cancel
+        <CloseCircleOutlined/> Cancel
       </Button>,
       <Button key="ok" type="primary" onClick={() => onOK(event)}>
-        OK
+        <SaveOutlined/> OK
       </Button>,
     ];
 
     return (
       <TSModal
-        title={"Event"}
+        title={"New Event"}
         visible={enable}
         onCancel={() => onCancel()}
         footer={footer}

@@ -1,7 +1,17 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Table, Button, Form, Alert } from "antd";
-import { BuildOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Table, Button, Form, Alert, Card } from "antd";
+import {
+  BuildOutlined,
+  CopyOutlined,
+  DeleteOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+  PlayCircleOutlined,
+  PlusCircleOutlined,
+  SaveOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
   requestAllTestCampaigns,
@@ -21,7 +31,7 @@ import {
 } from "../components/FormItems";
 import CollapseForm from "../components/CollapseForm";
 import { updateObjectByPath } from "../utils";
-import {URL} from '../api';
+import { URL } from "../api";
 
 class TestCampaignListPage extends Component {
   constructor(props) {
@@ -82,7 +92,12 @@ class TestCampaignListPage extends Component {
       stopTestCampaign,
       runningStatus,
     } = this.props;
-    const { webhookURL, testCampaignId, isChanged, evaluationParameters } = this.state;
+    const {
+      webhookURL,
+      testCampaignId,
+      isChanged,
+      evaluationParameters,
+    } = this.state;
     const dataSource = testCampaigns.map((tc) => ({ ...tc, key: tc.id }));
     const columns = [
       {
@@ -108,9 +123,9 @@ class TestCampaignListPage extends Component {
           <Fragment>
             <Button
               size="small"
-              onClick={() => this.onDataChange('testCampaignId',tc.id)}
+              onClick={() => this.onDataChange("testCampaignId", tc.id)}
               style={{ marginRight: 10 }}
-              disabled={tc.id === testCampaignId ? true: false}
+              disabled={tc.id === testCampaignId ? true : false}
             >
               <BuildOutlined /> Select
             </Button>
@@ -154,18 +169,70 @@ class TestCampaignListPage extends Component {
         pageTitle="Test Campaign"
         pageSubTitle="Setup automation testing"
       >
-        <CollapseForm title="Configuration for automation testing" active={true}>
+        {runningStatus ? (
+          <Fragment>
+            {runningStatus.isRunning ? (
+              <Button
+                type="primary"
+                danger
+                onClick={() => stopTestCampaign()}
+                style={{ marginRight: 10 }}
+              >
+                <StopOutlined /> Stop
+              </Button>
+            ) : (
+              <Button
+                type="primary"
+                onClick={() => launchTestCampaign()}
+                disabled={isChanged ? true : false}
+                style={{ marginRight: 10 }}
+              >
+                <PlayCircleOutlined /> Launch
+              </Button>
+            )}
+            <a href={`/logs/test-campaigns?logFile=${runningStatus.logFile}`} target="_blank">
+              <Button type="default" style={{ marginRight: 10 }}>
+                <FileTextOutlined /> View Log
+              </Button>
+            </a>
+            <a
+              href={`/reports/?testCampaignId=${testCampaignId}&reportToken=${runningStatus.reportToken}`}
+              target="_blank"
+            >
+              <Button type="default" style={{ marginRight: 10 }}>
+                <FileExcelOutlined /> View Report
+              </Button>
+            </a>
+          </Fragment>
+        ) : (
+          <Button
+            type="primary"
+            onClick={() => launchTestCampaign()}
+            disabled={isChanged ? true : false}
+            style={{ marginRight: 10 }}
+          >
+            <PlayCircleOutlined /> Launch
+          </Button>
+        )}
+        <Card
+          title="Configuration for automation testing"
+          style={{ marginBottom: 10, marginTop: 10 }}
+        >
           <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
             <FormTextNotEditableItem
               label={"Trigger URL"}
-              value={(<Alert message={`http://${window.location.host}/api/devops/start`}/>)}
-              helpText={`The end point to launch the test campaign`}
+              value={
+                <Alert
+                  message={`http://${window.location.host}/api/devops/start`}
+                />
+              }
+              helpText={`The end point to launch the test campaign. Send a GET request to this end-point to trigger the test campaign`}
             />
             <FormEditableTextItem
               label="Webhook URL"
               defaultValue={webhookURL}
-              onChange={(wb) => this.onDataChange('webhookURL',wb)}
-              helpText={`The end point to send the result of the test to`}
+              onChange={(wb) => this.onDataChange("webhookURL", wb)}
+              helpText={`The TaS sends the test results to this end-point`}
             />
             <FormTextNotEditableItem
               label="Selected Test Campaign"
@@ -174,25 +241,39 @@ class TestCampaignListPage extends Component {
                   <strong>{testCampaignId}</strong>
                 </a>
               }
-              helpText={"The test campaign that will be executed in automation testing"}
+              helpText={
+                "The test campaign that will be executed in automation testing"
+              }
             />
             {evaluationParameters ? (
-              <CollapseForm
-                title="Evaluation Parameters"
-              >
+              <CollapseForm title="Evaluation Parameters">
                 <FormSelectItem
                   label="Event Type"
                   helpText="Select the type of event to take into the evaluation"
                   defaultValue={evaluationParameters.eventType}
-                  options={["ALL_EVENTS","SENSOR_EVENTS", "ACTUATOR_EVENTS"]}
-                  onChange={(eventType) => this.onDataChange('evaluationParameters.eventType', eventType)}
+                  options={["ALL_EVENTS", "SENSOR_EVENTS", "ACTUATOR_EVENTS"]}
+                  onChange={(eventType) =>
+                    this.onDataChange(
+                      "evaluationParameters.eventType",
+                      eventType
+                    )
+                  }
                 />
                 <FormSelectItem
                   label="Metric Type"
                   helpText="Select the type of metric to take into the evaluation"
                   defaultValue={evaluationParameters.metricType}
-                  options={["METRIC_VALUE","METRIC_VALUE_TIMESTAMP", "METRIC_TIMESTAMP"]}
-                  onChange={(metricType) => this.onDataChange('evaluationParameters.metricType', metricType)}
+                  options={[
+                    "METRIC_VALUE",
+                    "METRIC_VALUE_TIMESTAMP",
+                    "METRIC_TIMESTAMP",
+                  ]}
+                  onChange={(metricType) =>
+                    this.onDataChange(
+                      "evaluationParameters.metricType",
+                      metricType
+                    )
+                  }
                 />
                 <FormNumberItem
                   label="Threshold"
@@ -201,94 +282,63 @@ class TestCampaignListPage extends Component {
                   min={0}
                   max={1}
                   step={0.01}
-                  onChange={(threshold) => this.onDataChange('evaluationParameters.threshold', threshold)}
+                  onChange={(threshold) =>
+                    this.onDataChange(
+                      "evaluationParameters.threshold",
+                      threshold
+                    )
+                  }
                 />
               </CollapseForm>
-            ):(
+            ) : (
               <Button
-                onClick={() => this.onDataChange('evaluationParameters', {
-                  eventType: "ALL_EVENTS",
-                  metricType: "METRIC_VALUE_TIMESTAMP",
-                  threshold: 0.5
-                })}
-                style={{marginBottom: 10}}
+                onClick={() =>
+                  this.onDataChange("evaluationParameters", {
+                    eventType: "ALL_EVENTS",
+                    metricType: "METRIC_VALUE_TIMESTAMP",
+                    threshold: 0.5,
+                  })
+                }
+                style={{ marginBottom: 10 }}
               >
                 Set Evaluation Parameters
               </Button>
             )}
-            <Form.Item
-              wrapperCol={{
-                xs: {
-                  span: 24,
-                  offset: 0,
-                },
-                sm: {
-                  span: 16,
-                  offset: 4,
-                },
-              }}
-            >
-              <Button
-                onClick={() => {
-                  updateDevops({
-                    webhookURL,
-                    testCampaignId,
-                    evaluationParameters
-                  });
-                  this.setState({ isChanged: false });
-                }}
-                disabled={isChanged ? false : true}
-                style={{marginRight: 10}}
-                type="primary"
-              >
-                Save
-              </Button>
-              {runningStatus ? (
-                <Fragment>
-                  {runningStatus.isRunning ? (
-                    <Button
-                      type="primary"
-                      danger
-                      onClick={() => stopTestCampaign()}
-                    >
-                      Stop
-                    </Button>
-                  ) : (
-                    <Button
-                      type="primary"
-                      onClick={() => launchTestCampaign()}
-                      disabled={isChanged ? true : false}
-                    >
-                      Launch
-                    </Button>
-                  )}
-                  <a
-                    href={`/logs/test-campaigns?logFile=${runningStatus.logFile}`}
-                  >
-                    <Button type="link">View Log</Button>
-                  </a>
-                  <a href={`/reports/?testCampaignId=${testCampaignId}&reportToken=${runningStatus.reportToken}`}>
-                    <Button type="link">View Report</Button>
-                  </a>
-                </Fragment>
-              ) : (
-                <Button
-                  type="primary"
-                  onClick={() => launchTestCampaign()}
-                  disabled={isChanged ? true : false}
-                >
-                  Launch
-                </Button>
-              )}
-            </Form.Item>
           </Form>
-        </CollapseForm>
-        <a href={`/test-campaigns/new-campaign-${Date.now()}`}>
-          <Button style={{ marginBottom: "10px" }}>Add New Campaign</Button>
+        </Card>
+        <Card
+          title="Test campaign list"
+          extra={
+            <a href={`/test-campaigns/new-campaign-${Date.now()}`}>
+              <Button>
+                <PlusCircleOutlined /> Add New Campaign
+              </Button>
+            </a>
+          }
+          style={{ marginBottom: 10 }}
+        >
+          <Table columns={columns} dataSource={dataSource} bordered />
+        </Card>
+        <Button
+          onClick={() => {
+            updateDevops({
+              webhookURL,
+              testCampaignId,
+              evaluationParameters,
+            });
+            this.setState({ isChanged: false });
+          }}
+          disabled={isChanged ? false : true}
+          style={{ marginRight: 10 }}
+          type="primary"
+        >
+          <SaveOutlined /> Save
+        </Button>
+        <a href={`/logs/test-campaigns`} target="_blank">
+          <Button type="default">
+            <FileExcelOutlined /> View All Test Campaign Logs
+          </Button>
         </a>
-        <Table columns={columns} dataSource={dataSource} />
-        <p></p>
-        <a href={`/logs/test-campaigns`}>View All Test Campaign Logs</a>
       </LayoutPage>
     );
   }

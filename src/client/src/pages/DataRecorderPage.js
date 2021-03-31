@@ -1,11 +1,18 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button, Switch, Form, List, Typography, Divider, Alert } from "antd";
 import {
-  SwitcherOutlined,
+  Button,
+  Form,
+  Alert,
+  Card,
+} from "antd";
+import {
   ExportOutlined,
   CaretRightOutlined,
   StopOutlined,
+  SaveOutlined,
+  PlusCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 
 import {
@@ -19,232 +26,20 @@ import {
   requestStopDataRecorder,
   requestDataStorage,
 } from "../actions";
-import JSONView from "../components/JSONView";
 import LayoutPage from "./LayoutPage";
 
 import {
-  getQuery,
   getLastPath,
   updateObjectByPath,
   deepCloneObject,
-  getObjectId
+  getObjectId,
 } from "../utils";
 import {
   FormEditableTextItem,
-  FormSelectItem,
   FormTextAreaItem,
 } from "../components/FormItems";
+import DataRecorderItem from '../components/DataRecorderItem';
 import ConnectionConfig from "../components/ConnectionConfig";
-import CollapseForm from "../components/CollapseForm";
-
-const { Text } = Typography;
-
-const DataRecorderItem = ({
-  data,
-  onChange,
-  onDelete,
-  onDuplicate,
-  onEnable,
-}) => (
-  <CollapseForm
-    title={`${data.name}`}
-    extra={
-      <Fragment>
-        <Switch
-          defaultChecked={data.enable ? true : false}
-          checkedChildren="Enable"
-          unCheckedChildren="Disable"
-          onClick={(value, event) => {
-            event.stopPropagation();
-            onEnable();
-          }}
-          style={{ marginRight: 10 }}
-        />
-        <Button
-          onClick={(event) => {
-            event.stopPropagation();
-            onDuplicate();
-          }}
-          size="small"
-          style={{ marginRight: 10 }}
-        >
-          Duplicate
-        </Button>
-        <Button
-          onClick={(event) => {
-            event.stopPropagation();
-            onDelete();
-          }}
-          size="small"
-          danger
-        >
-          Delete
-        </Button>
-      </Fragment>
-    }
-  >
-    <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
-      <FormEditableTextItem
-        label="Name"
-        defaultValue={data.name}
-        onChange={(newName) => onChange("name", newName)}
-      />
-      <FormEditableTextItem
-        label="Id"
-        defaultValue={data.id}
-        onChange={(newId) => onChange("id", newId)}
-      />
-      <Divider orientation="left">Source </Divider>
-      <FormSelectItem
-        label="Protocol"
-        defaultValue={data.source.protocol}
-        onChange={(v) => onChange("source.protocol", v)}
-        options={["MQTT", "MQTTS"]}
-      />
-      <ConnectionConfig
-        defaultValue={data.source.connConfig}
-        dataPath={"source.connConfig"}
-        onDataChange={onChange}
-        type={data.source.protocol}
-      />
-      <List
-        header={<strong>Upstreams ({data.source.upStreams.length})</strong>}
-        footer={
-          <Button
-            onClick={() => {
-              const newUpStreams = [
-                ...data.source.upStreams,
-                `new-up-stream-${Date.now()}`,
-              ];
-              onChange("source.upStreams", newUpStreams);
-            }}
-          >
-            Add New UpStream
-          </Button>
-        }
-        size="small"
-        bordered
-        dataSource={data.source.upStreams}
-        renderItem={(item, index) => (
-          <List.Item
-            actions={[
-              <Button
-                size="small"
-                danger
-                key="delete"
-                onClick={() => {
-                  if (data.source.upStreams.length === 1) {
-                    onChange("source.upStreams", []);
-                  } else {
-                    let newUpStreams = [...data.source.upStreams];
-                    newUpStreams.splice(index, 1);
-                    onChange("source.upStreams", newUpStreams);
-                  }
-                }}
-              >
-                Delete
-              </Button>,
-            ]}
-          >
-            <Text
-              editable={{
-                onChange: (v) => onChange(`source.upStreams[${index}]`, v),
-              }}
-            >
-              {item}
-            </Text>
-          </List.Item>
-        )}
-      />
-      <p></p>
-      <List
-        header={<strong>Downstreams ({data.source.downStreams.length})</strong>}
-        footer={
-          <Button
-            onClick={() => {
-              const newDownStreams = [
-                ...data.source.downStreams,
-                `new-down-stream-${Date.now()}`,
-              ];
-              onChange("source.downStreams", newDownStreams);
-            }}
-          >
-            Add New DownStream
-          </Button>
-        }
-        size="small"
-        bordered
-        dataSource={data.source.downStreams}
-        renderItem={(item, index) => (
-          <List.Item
-            actions={[
-              <Button
-                size="small"
-                danger
-                key="delete"
-                onClick={() => {
-                  if (data.source.downStreams.length === 1) {
-                    onChange("source.downStreams", []);
-                  } else {
-                    let newDownstreams = [...data.source.downStreams];
-                    newDownstreams.splice(index, 1);
-                    onChange("source.downStreams", newDownstreams);
-                  }
-                }}
-              >
-                Delete
-              </Button>,
-            ]}
-          >
-            <Text
-              value={item}
-              editable={{
-                onChange: (v) => onChange(`source.downStreams[${index}]`, v),
-              }}
-            >
-              {item}
-            </Text>
-          </List.Item>
-        )}
-      />
-      <Divider orientation="left">Forward </Divider>
-      {data.forward ? (
-        <Fragment>
-          <FormSelectItem
-            label="Protocol"
-            defaultValue={data.forward.protocol}
-            onChange={(v) => onChange("forward.protocol", v)}
-            options={["MQTT", "MQTTS"]}
-          />
-          <ConnectionConfig
-            defaultValue={data.forward.connConfig}
-            dataPath={"forward.connConfig"}
-            onDataChange={onChange}
-            type={data.forward.protocol}
-          />
-          <Button danger onClick={() => onChange("forward", null)}>
-            Remove Forward
-          </Button>
-        </Fragment>
-      ) : (
-        <Button
-          onClick={() =>
-            onChange("forward", {
-              protocol: "MQTT",
-              connConfig: {
-                host: "localhost",
-                port: 1883,
-                options: null,
-              },
-            })
-          }
-        >
-          Add Forward
-        </Button>
-      )}
-    </Form>
-  </CollapseForm>
-);
 
 const newTempDataRecorder = (name) => {
   const currentTime = Date.now();
@@ -265,7 +60,7 @@ const newDataRecorder = () => {
   return {
     id: `id-new-data-recorder-${currentTime}`,
     name: `name-new-data-recorder-${currentTime}`,
-    enable: false,
+    enable: true,
     source: {
       protocol: "MQTT",
       connConfig: {
@@ -407,105 +202,204 @@ class DataRecorderPage extends Component {
         ? dataRecorderFileName.replace(".json", "")
         : dataRecorderFileName
     );
-    console.log(recorderId);
     let recorderStatus = null;
     if (dataRecorderStatus && dataRecorderStatus[recorderId]) {
       recorderStatus = dataRecorderStatus[recorderId];
     }
-    let viewType = getQuery("view");
-    if (!viewType) viewType = "form";
-    let view = null;
-    //TODO: Fix JSON view - do not reload while editting
-    if (viewType === "json") {
-      view = (
-        <JSONView
-          value={tempDataRecorder}
-          onChange={this.onDataRecorderChange}
-        />
-      );
-    } else {
-      view = (
-        <Fragment>
-          <p></p>
-          <FormEditableTextItem
-            label="Name"
-            defaultValue={tempDataRecorder.name}
-            onChange={(newName) => this.onDataChange("name", newName)}
+    return (
+      <LayoutPage>
+        {recorderStatus && (
+          <Alert
+            style={{ marginBottom: "15px" }}
+            message={
+              <div>
+                <p>Model: {recorderStatus.model}</p>
+                <p>
+                  Status: {recorderStatus.isRunning ? "Recording" : "Stopped"}
+                </p>
+                <p>
+                  Started time:{" "}
+                  {new Date(recorderStatus.startedTime).toLocaleTimeString()}
+                </p>
+                {recorderStatus.endTime && (
+                  <p>
+                    End time:{" "}
+                    {new Date(recorderStatus.endTime).toLocaleTimeString()}
+                  </p>
+                )}
+                <p>
+                  Log file:{" "}
+                  <a
+                    href={`/logs/data-recorders?logFile=${recorderStatus.logFile}`}
+                  >
+                    {recorderStatus.logFile}
+                  </a>
+                </p>
+                {tempDataRecorder.dataset && (
+                  <Fragment>
+                    Dataset:{" "}
+                    <a href={`/data-sets/${tempDataRecorder.dataset.id}`}>
+                      {tempDataRecorder.dataset.name}
+                    </a>
+                  </Fragment>
+                )}
+              </div>
+            }
+            type={recorderStatus.isRunning ? "success" : "warning"}
           />
-          {tempDataRecorder.dataset && (
-            <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
-              <Divider orientation="left">Data Storage </Divider>
+        )}
+        <Button
+          type="primary"
+          onClick={() => {
+            if (isNewDataRecorder) {
+              addNewDataRecorder(tempDataRecorder);
+            } else {
+              updateDataRecorder(dataRecorderFileName, tempDataRecorder);
+            }
+            this.setState({ isChanged: false });
+          }}
+          style={{
+            marginRight: 10,
+          }}
+          disabled={isChanged ? false : true}
+        >
+          <SaveOutlined /> Save
+        </Button>
+        <Button
+          style={{ marginRight: 10 }}
+          onClick={() => this.exportModel(tempDataRecorder)}
+        >
+          <ExportOutlined />
+          Export Model
+        </Button>
+        {recorderStatus && recorderStatus.isRunning ? (
+          <Button
+            type="danger"
+            onClick={() => stopDataRecorder(dataRecorderFileName)}
+          >
+            <StopOutlined /> Stop
+          </Button>
+        ) : (
+          <Button
+            type="primary"
+            key="item-start"
+            onClick={() => startDataRecorder(dataRecorderFileName)}
+            disabled={
+              (recorderStatus && recorderStatus.isRunning) || isChanged
+                ? true
+                : false
+            }
+          >
+            <CaretRightOutlined /> Start
+          </Button>
+        )}
+        <Card
+          title="Overview"
+          style={{ marginBottom: 10, marginTop: 10 }}
+          size="small"
+        >
+          <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+            <FormEditableTextItem
+              label="Name"
+              defaultValue={tempDataRecorder.name}
+              onChange={(newName) => this.onDataChange("name", newName)}
+            />
+          </Form>
+        </Card>
+        {tempDataRecorder.dataset && (
+          <Fragment>
+            <Card
+              title="Setup the connection to the Data Storage"
+              style={{ marginBottom: 10 }}
+              size="small"
+            >
               {tempDataRecorder.dataStorage ? (
                 <Fragment>
-                  <ConnectionConfig
-                    defaultValue={tempDataRecorder.dataStorage.connConfig}
-                    dataPath={"dataStorage.connConfig"}
-                    onDataChange={(dataPath, value) =>
-                      this.onDataChange(dataPath, value)
-                    }
-                    type={tempDataRecorder.dataStorage.protocol}
-                  />
+                  <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+                    <ConnectionConfig
+                      defaultValue={tempDataRecorder.dataStorage.connConfig}
+                      dataPath={"dataStorage.connConfig"}
+                      onDataChange={(dataPath, value) =>
+                        this.onDataChange(dataPath, value)
+                      }
+                      type={tempDataRecorder.dataStorage.protocol}
+                    />
+                  </Form>
                   <Button
                     danger
                     onClick={() => this.onDataChange("dataStorage", null)}
                   >
-                    Remove Custom Data Storage
+                    <CloseCircleOutlined /> Remove Custom Data Storage
                   </Button>
                 </Fragment>
               ) : (
                 <Fragment>
                   <p>
-                    Use{" "}
+                    The data recorder is using{" "}
                     <a href="/data-storage" target="_blank">
-                      Default Data Storage
+                      the default Data Storage
                     </a>
                   </p>
                   <Button onClick={() => this.addCustomDataStorage()}>
-                    Add Custom Data Storage
+                    <PlusCircleOutlined /> Add Custom Data Storage
                   </Button>
                 </Fragment>
               )}
-              <Divider orientation="left">Dataset </Divider>
-              <p>Define the Dataset to save the recorded data</p>
-              <FormEditableTextItem
-                label="Id"
-                placeholder="Dataset Id"
-                defaultValue={tempDataRecorder.dataset.id}
-                onChange={(value) => this.onDataChange("dataset.id", value)}
-              />
-              <FormEditableTextItem
-                label="Name"
-                placeholder="Name"
-                defaultValue={tempDataRecorder.dataset.name}
-                onChange={(value) => this.onDataChange("dataset.name", value)}
-              />
-              <FormTextAreaItem
-                label="Description"
-                placeholder="Description"
-                defaultValue={tempDataRecorder.dataset.description}
-                onChange={(value) =>
-                  this.onDataChange("dataset.description", value)
-                }
-              />
-              <FormEditableTextItem
-                label="Tags"
-                placeholder="Tags"
-                defaultValue={JSON.stringify(tempDataRecorder.dataset.tags)}
-                onChange={(value) =>
-                  this.onDataChange("dataset.tags", JSON.parse(value))
-                }
-              />
-            </Form>
-          )}
-          <Divider orientation="left">Data Recorders </Divider>
-          {tempDataRecorder.dataRecorders ? (
+            </Card>
+            <Card
+              title="Define the new Dataset to store the recorded data"
+              style={{ marginBottom: 10 }}
+              size="small"
+            >
+              <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+                <FormEditableTextItem
+                  label="Id"
+                  placeholder="Dataset Id"
+                  defaultValue={tempDataRecorder.dataset.id}
+                  onChange={(value) => this.onDataChange("dataset.id", value)}
+                />
+                <FormEditableTextItem
+                  label="Name"
+                  placeholder="Name"
+                  defaultValue={tempDataRecorder.dataset.name}
+                  onChange={(value) => this.onDataChange("dataset.name", value)}
+                />
+                <FormTextAreaItem
+                  label="Description"
+                  placeholder="Description"
+                  defaultValue={tempDataRecorder.dataset.description}
+                  onChange={(value) =>
+                    this.onDataChange("dataset.description", value)
+                  }
+                />
+                <FormEditableTextItem
+                  label="Tags"
+                  placeholder="Tags"
+                  defaultValue={JSON.stringify(tempDataRecorder.dataset.tags)}
+                  onChange={(value) =>
+                    this.onDataChange("dataset.tags", JSON.parse(value))
+                  }
+                />
+              </Form>
+            </Card>
+          </Fragment>
+        )}
+        <Card
+          title={`Recorders (${
+            tempDataRecorder.dataRecorders
+              ? tempDataRecorder.dataRecorders.length
+              : 0
+          })`}
+          style={{ marginBottom: 10 }}
+          size="small"
+          extra={
+            <Button onClick={() => this.addNewDataRecorder()}>
+              <PlusCircleOutlined /> Add New Data Recorder
+            </Button>
+          }
+        >
+          {tempDataRecorder.dataRecorders && (
             <Fragment>
-              <p>
-                Number of recorders: {tempDataRecorder.dataRecorders.length}
-              </p>
-              <Button onClick={() => this.addNewDataRecorder()}>
-                Add New Data Recorder
-              </Button>
               {tempDataRecorder.dataRecorders.map((dr, index) => (
                 <DataRecorderItem
                   key={index}
@@ -542,115 +436,8 @@ class DataRecorderPage extends Component {
                 />
               ))}
             </Fragment>
-          ) : (
-            <Button onClick={() => this.addNewDataRecorder()}>
-              Add New Data Recorder
-            </Button>
           )}
-          <p></p>
-        </Fragment>
-      );
-    }
-
-    return (
-      <LayoutPage>
-        {recorderStatus && (
-          <Alert
-            style={{ marginBottom: "15px" }}
-            message={
-              <div>
-                <p>Model: {recorderStatus.model}</p>
-                <p>Status: {recorderStatus.isRunning ? 'Recording' : 'Stopped'}</p>
-                <p>
-                  Started time:{" "}
-                  {new Date(recorderStatus.startedTime).toLocaleTimeString()}
-                </p>
-                {recorderStatus.endTime && (
-                  <p>
-                    End time:{" "}
-                    {new Date(recorderStatus.endTime).toLocaleTimeString()}
-                  </p>
-                )}
-                <p>
-                  Log file:{" "}
-                  <a
-                    href={`/logs/data-recorders?logFile=${recorderStatus.logFile}`}
-                  >
-                    {recorderStatus.logFile}
-                  </a>
-                </p>
-                {tempDataRecorder.dataset && (
-                  <Fragment>
-                    Dataset:{" "}
-                    <a href={`/data-sets/${tempDataRecorder.dataset.id}`}>
-                      {tempDataRecorder.dataset.name}
-                    </a>
-                  </Fragment>
-                )}
-
-              </div>
-            }
-            type={recorderStatus.isRunning ? "success" : "warning"}
-          />
-        )}
-        <a
-          href={`${window.location.pathname}?view=${
-            viewType === "json" ? "form" : "json"
-          }`}
-          style={{ marginRight: 10 }}
-        >
-          <SwitcherOutlined /> Switch View
-        </a>
-        <Button
-          style={{ marginRight: 10 }}
-          onClick={() => this.exportModel(tempDataRecorder)}
-        >
-          <ExportOutlined />
-          Export Model
-        </Button>
-        {recorderStatus && recorderStatus.isRunning ? (
-          <Button
-            type="danger"
-            onClick={() => stopDataRecorder(dataRecorderFileName)}
-          >
-            <StopOutlined /> Stop
-          </Button>
-        ) : (
-          <Button
-            type="primary"
-            key="item-start"
-            onClick={() => startDataRecorder(dataRecorderFileName)}
-            disabled={
-              (recorderStatus && recorderStatus.isRunning) || isChanged
-                ? true
-                : false
-            }
-          >
-            <CaretRightOutlined /> Start
-          </Button>
-        )}
-        <p></p>
-        {view}
-        <Button
-          type="primary"
-          onClick={() => {
-            if (isNewDataRecorder) {
-              addNewDataRecorder(tempDataRecorder);
-            } else {
-              updateDataRecorder(dataRecorderFileName, tempDataRecorder);
-            }
-            this.setState({ isChanged: false });
-          }}
-          size="large"
-          style={{
-            position: "fixed",
-            top: 80,
-            right: 20,
-          }}
-          disabled={isChanged ? false : true}
-        >
-          Save
-        </Button>
+        </Card>
       </LayoutPage>
     );
   }

@@ -1,8 +1,12 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import moment from 'moment';
-import { Table, Menu, Dropdown, Button, Form } from "antd";
-import { DownOutlined } from "@ant-design/icons";
+import moment from "moment";
+import { Table, Menu, Dropdown, Button, Form, Card } from "antd";
+import {
+  DownOutlined,
+  PlusCircleOutlined,
+  SaveOutlined,
+} from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
   requestTestCase,
@@ -188,10 +192,10 @@ class TestCasePage extends Component {
     const dataSource = [];
 
     allDatasets.map((ds) => {
-        if (datasetIds.indexOf(ds.id) > -1) {
-          dataSource.push({...ds, key: dataSource.length});
-        }
-      });
+      if (datasetIds.indexOf(ds.id) > -1) {
+        dataSource.push({ ...ds, key: dataSource.length });
+      }
+    });
     const columns = [
       {
         title: "Id",
@@ -208,7 +212,7 @@ class TestCasePage extends Component {
         title: "Created At",
         key: "data",
         sorter: (a, b) => a.createdAt - b.createdAt,
-        render: (ds) => moment(ds.createdAt).format('MMMM Do YYYY, h:mm:ss a'),
+        render: (ds) => moment(ds.createdAt).format("MMMM Do YYYY, h:mm:ss a"),
         width: 300,
       },
       {
@@ -260,76 +264,75 @@ class TestCasePage extends Component {
     // - color
     // - action remove/add new tags
     return (
-      <LayoutPage
-        pageTitle={name}
-        pageSubTitle="View and update a test case"
-      >
-        <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
-          <FormEditableTextItem
-            label="Id"
-            defaultValue={id}
-            onChange={(newId) => this.updateId(newId)}
-          />
-          <FormEditableTextItem
-            label="Name"
-            defaultValue={name}
-            onChange={(newName) => this.updateName(newName)}
-          />
-          <FormEditableTextItem
-            label="Description"
-            defaultValue={description}
-            onChange={(newDescription) =>
-              this.updateDescription(newDescription)
-            }
-          />
-          <FormSelectItem
-            label="Model File Name"
-            defaultValue={modelFileName}
-            options={allModels}
-            onChange={(newModelFileName) =>
-              this.updateModelFileName(newModelFileName)
-            }
-          />
-          <FormEditableTextItem
-            label="Tags"
-            defaultValue={JSON.stringify(tags)}
-            onChange={(newTags) => this.updateTags(newTags)}
-          />
-        </Form>
-        <Button
-          style={{ marginBottom: "10px" }}
-          onClick={() => {
-            if (showDatasetModal === false) {
-              this.setState({ showDatasetModal: true });
-            }
-          }}
+      <LayoutPage pageTitle={name} pageSubTitle="View and update a test case">
+        <Card title="Overview" style={{ marginBottom: 10 }}>
+          <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+            <FormEditableTextItem
+              label="Id"
+              defaultValue={id}
+              onChange={(newId) => this.updateId(newId)}
+            />
+            <FormEditableTextItem
+              label="Name"
+              defaultValue={name}
+              onChange={(newName) => this.updateName(newName)}
+            />
+            <FormEditableTextItem
+              label="Description"
+              defaultValue={description}
+              onChange={(newDescription) =>
+                this.updateDescription(newDescription)
+              }
+            />
+            <FormSelectItem
+              label="Model File Name"
+              defaultValue={modelFileName}
+              options={allModels}
+              onChange={(newModelFileName) =>
+                this.updateModelFileName(newModelFileName)
+              }
+            />
+            <FormEditableTextItem
+              label="Tags"
+              defaultValue={JSON.stringify(tags)}
+              onChange={(newTags) => this.updateTags(newTags)}
+            />
+          </Form>
+        </Card>
+        <Card
+          title="Dataset list"
+          style={{ marginBottom: 10 }}
+          extra={
+            <Button
+              onClick={() => {
+                if (showDatasetModal === false) {
+                  this.setState({ showDatasetModal: true });
+                }
+              }}
+            >
+              <PlusCircleOutlined /> Add Dataset
+              <SelectionModal
+                title="Dataset"
+                enable={showDatasetModal}
+                onCancel={() => {
+                  this.setState({ showDatasetModal: false });
+                }}
+                defaultValue={datasetIds}
+                options={allDatasets}
+                onChange={(values) => this.updateDatasets(values)}
+              />
+            </Button>
+          }
         >
-          Add Dataset
-          <SelectionModal
-            title="Dataset"
-            enable={showDatasetModal}
-            onCancel={() => {
-              this.setState({ showDatasetModal: false });
-            }}
-            defaultValue={datasetIds}
-            options={allDatasets}
-            onChange={(values) => this.updateDatasets(values)}
-          />
+          <Table columns={columns} dataSource={dataSource} bordered />
+        </Card>
+        <Button
+          onClick={() => this.saveTestCase()}
+          disabled={isChanged ? false : true}
+          type="primary"
+        >
+          <SaveOutlined /> Save
         </Button>
-        <Table columns={columns} dataSource={dataSource} />
-          <Button
-            onClick={() => this.saveTestCase()}
-            disabled={isChanged ? false : true}
-            type="primary"
-            size="large"
-            style={{
-              position: "fixed",
-              top: 80,
-              right: 20,
-            }}
-          >
-            Save
-          </Button>
       </LayoutPage>
     );
   }

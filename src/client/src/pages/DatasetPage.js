@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button, Tooltip, Form } from "antd";
+import { Button, Tooltip, Form, Card } from "antd";
 import LayoutPage from "./LayoutPage";
 import {
   requestDataset,
@@ -19,6 +19,8 @@ import {
 import { getLastPath } from "../utils";
 import EventModal from "../components/EventModal";
 import EventStream from "../components/EventStream/EventStream";
+import CollapseForm from "../components/CollapseForm";
+import { DownloadOutlined, PlusCircleOutlined, SaveOutlined } from "@ant-design/icons";
 
 /**
  * - id
@@ -89,18 +91,18 @@ class DatasetPage extends Component {
         events: [],
         newEvent: initEvent(dsId),
         activeEventModal: null,
-        eventPage: 0
+        eventPage: 0,
       };
     }
   }
 
   requestEvents() {
     const dsId = getLastPath();
-    const {page} = this.state;
+    const { page } = this.state;
     let startTime = 0;
     let endTime = Date.now();
     this.props.fetchEvents(dsId, startTime, endTime, page);
-    this.setState({page: (page + 1)});
+    this.setState({ page: page + 1 });
   }
 
   componentDidMount() {
@@ -250,134 +252,146 @@ class DatasetPage extends Component {
     // TODO: Make statistic beautiful
     // TODO: implement editting event
     return (
-      <LayoutPage
-        pageTitle={name}
-        pageSubTitle="View and update a dataset"
-      >
-        <Form labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
-          {isNew ? (
-            <Fragment>
-              <FormEditableTextItem
-                label="Id"
-                defaultValue={id}
-                onChange={(newId) => this.updateId(newId)}
-              />
-              <FormSelectItem
-                label="Source"
-                defaultValue={source}
-                options={["GENERATED", "MUTATED", "RECORDED"]}
-                onChange={(newSource) => this.updateSource(newSource)}
-              />
-            </Fragment>
-          ) : (
-            <Fragment>
-              <FormTextNotEditableItem label="Id" value={id} />
-              <FormTextNotEditableItem label="Source" value={source} />
-            </Fragment>
-          )}
-
-          <FormEditableTextItem
-            label="Name"
-            defaultValue={name}
-            onChange={(newName) => this.updateName(newName)}
-          />
-          <FormEditableTextItem
-            label="Description"
-            defaultValue={description}
-            onChange={(newDescription) =>
-              this.updateDescription(newDescription)
-            }
-          />
-          <FormEditableTextItem
-            label="Tags"
-            defaultValue={JSON.stringify(tags)}
-            onChange={(newTags) => this.updateTags(newTags)}
-          />
-          <FormTextNotEditableItem label="Total number of events" value={totalNbEvents} />
-          <FormTextNotEditableItem label="Number of presented events" value={nbEvents} />
-          <FormTextNotEditableItem
-            label="Number of sensor's events"
-            value={nbSensors}
-          />
-          <FormTextNotEditableItem
-            label="Number of actuator's events"
-            value={nbActuators}
-          />
-          <FormTextNotEditableItem
-            label="Started Time"
-            value={new Date(startTime).toLocaleString()}
-          />
-          <FormTextNotEditableItem
-            label="Ended Time"
-            value={new Date(endTime).toLocaleString()}
-          />
-        </Form>
-        {nbEvents < totalNbEvents ?
-          <Button
-          style={{ marginBottom: "10px", marginRight: 10 }}
-          onClick={() => {
-            this.requestEvents();
-          }}
-          disabled={isNew ? true : false}>
-            Get more events ({nbEvents}/{totalNbEvents})
-          </Button>: null
-        }
-        <Tooltip title="The dataset need to be created before adding event">
-          <Button
-            style={{ marginBottom: "10px" }}
-            onClick={() => {
-              if (this.state.activeEventModal === null) {
-                this.changeActiveEventModal(newEvent._id);
-              }
-            }}
-            disabled={isNew ? true : false}
-          >
-            Add Event
-            <EventModal
-              event={newEvent}
-              enable={newEvent._id === this.state.activeEventModal}
-              onCancel={() => {
-                this.changeActiveEventModal(null);
-              }}
-              onOK={(newEvent) => {
-                const {
-                  timestamp,
-                  isSensorData,
-                  topic,
-                  datasetId,
-                  values,
-                } = newEvent;
-                this.props.addNewEvent({
-                  timestamp,
-                  isSensorData,
-                  topic,
-                  datasetId,
-                  values,
-                });
-                this.changeActiveEventModal(null);
-              }}
-            />
-          </Button>
-        </Tooltip>
-        <EventStream
-          events={events}
-          deleteEvent={deleteEvent}
-          addNewEvent={addNewEvent}
-          updateEvent={updateEvent}
-        />
+      <LayoutPage pageTitle={name} pageSubTitle="View and update a dataset">
         <Button
           onClick={() => this.savedataset()}
           disabled={isChanged ? false : true}
           type="primary"
-          size="large"
           style={{
-            position: "fixed",
-            top: 80,
-            right: 20,
+            margin: 10,
           }}
         >
-          Save
+          <SaveOutlined /> Save
         </Button>
+        <CollapseForm title="Overview" style={{ marginBottom: 10 }}>
+          <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+            {isNew ? (
+              <Fragment>
+                <FormEditableTextItem
+                  label="Id"
+                  defaultValue={id}
+                  onChange={(newId) => this.updateId(newId)}
+                />
+                <FormSelectItem
+                  label="Source"
+                  defaultValue={source}
+                  options={["GENERATED", "MUTATED", "RECORDED"]}
+                  onChange={(newSource) => this.updateSource(newSource)}
+                />
+              </Fragment>
+            ) : (
+              <Fragment>
+                <FormTextNotEditableItem label="Id" value={id} />
+                <FormTextNotEditableItem label="Source" value={source} />
+              </Fragment>
+            )}
+
+            <FormEditableTextItem
+              label="Name"
+              defaultValue={name}
+              onChange={(newName) => this.updateName(newName)}
+            />
+            <FormEditableTextItem
+              label="Description"
+              defaultValue={description}
+              onChange={(newDescription) =>
+                this.updateDescription(newDescription)
+              }
+            />
+            <FormEditableTextItem
+              label="Tags"
+              defaultValue={JSON.stringify(tags)}
+              onChange={(newTags) => this.updateTags(newTags)}
+            />
+            <FormTextNotEditableItem
+              label="Total number of events"
+              value={totalNbEvents}
+            />
+            <FormTextNotEditableItem
+              label="Number of presented events"
+              value={nbEvents}
+            />
+            <FormTextNotEditableItem
+              label="Number of sensor's events"
+              value={nbSensors}
+            />
+            <FormTextNotEditableItem
+              label="Number of actuator's events"
+              value={nbActuators}
+            />
+            <FormTextNotEditableItem
+              label="Started Time"
+              value={new Date(startTime).toLocaleString()}
+            />
+            <FormTextNotEditableItem
+              label="Ended Time"
+              value={new Date(endTime).toLocaleString()}
+            />
+          </Form>
+        </CollapseForm>
+        <Card
+          title="Event List"
+          size="small"
+          style={{ margin: 10 }}
+          extra={
+            <Fragment>
+              {nbEvents < totalNbEvents ? (
+                <Button
+                  style={{ marginRight: 10 }}
+                  onClick={() => {
+                    this.requestEvents();
+                  }}
+                  disabled={isNew ? true : false}
+                >
+                  <DownloadOutlined/> Get more events ({nbEvents}/{totalNbEvents})
+                </Button>
+              ) : null}
+              <Tooltip title="The dataset need to be created before adding event">
+                <Button
+                  onClick={() => {
+                    if (this.state.activeEventModal === null) {
+                      this.changeActiveEventModal(newEvent._id);
+                    }
+                  }}
+                  disabled={isNew ? true : false}
+                >
+                  <PlusCircleOutlined/> Add New Event
+                  <EventModal
+                    event={newEvent}
+                    enable={newEvent._id === this.state.activeEventModal}
+                    onCancel={() => {
+                      this.changeActiveEventModal(null);
+                    }}
+                    onOK={(newEvent) => {
+                      const {
+                        timestamp,
+                        isSensorData,
+                        topic,
+                        datasetId,
+                        values,
+                      } = newEvent;
+                      this.props.addNewEvent({
+                        timestamp,
+                        isSensorData,
+                        topic,
+                        datasetId,
+                        values,
+                      });
+                      this.changeActiveEventModal(null);
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+            </Fragment>
+          }
+        >
+          <EventStream
+            events={events}
+            deleteEvent={deleteEvent}
+            addNewEvent={addNewEvent}
+            updateEvent={updateEvent}
+          />
+        </Card>
       </LayoutPage>
     );
   }
@@ -390,7 +404,8 @@ const mapPropsToStates = ({ datasets }) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  fetchEvents: (datasetId, startTime, endTime, page) => dispatch(requestEventsByDatasetId({datasetId, startTime, endTime, page})),
+  fetchEvents: (datasetId, startTime, endTime, page) =>
+    dispatch(requestEventsByDatasetId({ datasetId, startTime, endTime, page })),
   fetchDataset: (datasetId) => dispatch(requestDataset(datasetId)),
   updatedataset: (originalId, updateddataset) =>
     dispatch(
@@ -406,5 +421,3 @@ const mapDispatchToProps = (dispatch) => ({
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(DatasetPage);
-
-// TODO: load more data in the table

@@ -1,7 +1,12 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Table, Menu, Dropdown, Button, Form } from "antd";
-import { DownOutlined } from "@ant-design/icons";
+import { Table, Menu, Dropdown, Button, Form, Card } from "antd";
+import {
+  DownOutlined,
+  FileExcelOutlined,
+  PlusCircleOutlined,
+  SaveOutlined,
+} from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
   requestTestCampaign,
@@ -13,7 +18,6 @@ import { FormEditableTextItem } from "../components/FormItems";
 import SelectionModal from "../components/SelectionModal";
 import { getLastPath } from "../utils";
 
-//TODO: add test case
 class TestCampaignPage extends Component {
   constructor(props) {
     super(props);
@@ -155,6 +159,7 @@ class TestCampaignPage extends Component {
       {
         title: "Action",
         key: "data",
+        width: 200,
         render: (tc) => (
           <Dropdown
             overlay={
@@ -201,62 +206,69 @@ class TestCampaignPage extends Component {
         pageTitle={name}
         pageSubTitle="View and update the test campaign detail"
       >
-        <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
-          <FormEditableTextItem
-            label="Id"
-            defaultValue={id}
-            onChange={(newId) => this.updateId(newId)}
-          />
-          <FormEditableTextItem
-            label="Name"
-            defaultValue={name}
-            onChange={(newName) => this.updateName(newName)}
-          />
-          <FormEditableTextItem
-            label="Description"
-            defaultValue={description}
-            onChange={(newDescription) =>
-              this.updateDescription(newDescription)
-            }
-          />
-        </Form>
-        <Button
-          style={{ marginBottom: "10px", marginRight: 10 }}
-          onClick={() => {
-            if (showTestCaseModal === false) {
-              this.setState({ showTestCaseModal: true });
-            }
-          }}
+        <Card title="Overview Information" style={{ marginBottom: 10 }}>
+          <Form labelCol={{ span: 4 }} wrapperCol={{ span: 6 }}>
+            <FormEditableTextItem
+              label="Id"
+              defaultValue={id}
+              onChange={(newId) => this.updateId(newId)}
+            />
+            <FormEditableTextItem
+              label="Name"
+              defaultValue={name}
+              onChange={(newName) => this.updateName(newName)}
+            />
+            <FormEditableTextItem
+              label="Description"
+              defaultValue={description}
+              onChange={(newDescription) =>
+                this.updateDescription(newDescription)
+              }
+            />
+          </Form>
+        </Card>
+        <Card
+          title="Test case list"
+          extra={
+            <Button
+              onClick={() => {
+                if (showTestCaseModal === false) {
+                  this.setState({ showTestCaseModal: true });
+                }
+              }}
+            >
+              <PlusCircleOutlined /> Add Test Case
+              <SelectionModal
+                title="Select test cases"
+                enable={showTestCaseModal}
+                onCancel={() => {
+                  this.setState({ showTestCaseModal: false });
+                }}
+                defaultValue={testCaseIds}
+                options={this.props.allTestCases}
+                onChange={(values) => this.updateTestCaseIds(values)}
+              />
+            </Button>
+          }
+          style={{marginBottom: 10}}
         >
-          Add Test Case
-          <SelectionModal
-            title="Select test cases"
-            enable={showTestCaseModal}
-            onCancel={() => {
-              this.setState({ showTestCaseModal: false });
-            }}
-            defaultValue={testCaseIds}
-            options={this.props.allTestCases}
-            onChange={(values) => this.updateTestCaseIds(values)}
-          />
-        </Button>
-        <a href={`/reports/?testCampaignId=${id}`}>
-          <Button>View All Campaign's Reports</Button>
-        </a>
-        <Table columns={columns} dataSource={dataSource} />
+          <Table columns={columns} dataSource={dataSource} bordered />
+        </Card>
+
         <Button
           onClick={() => this.saveTestCampaign()}
           disabled={isChanged ? false : true}
           type="primary"
-          size="large"
-          style={{
-            position: "fixed",
-            top: 80,
-            right: 20,
-          }}
+          style={{ marginRight: 10 }}
         >
-          Save
+          <SaveOutlined /> Save
         </Button>
+        <a href={`/reports/?testCampaignId=${id}`}>
+          <Button>
+            {" "}
+            <FileExcelOutlined /> View All Reports
+          </Button>
+        </a>
       </LayoutPage>
     );
   }

@@ -7,8 +7,14 @@ import {
 
 import EnergyForm from "./DataSourceForms/EnergyForm";
 import MultipleDataSources from "./DataSourceForms/MultipleDataSources";
-import { Button, Divider, Dropdown, Menu } from "antd";
-import { UpOutlined } from "@ant-design/icons";
+import { Button, Form, Dropdown, Menu, Card } from "antd";
+import {
+  DownOutlined,
+  PlusCircleOutlined,
+  UpOutlined,
+} from "@ant-design/icons";
+import { Fragment } from "react";
+import CollapseForm from "../CollapseForm";
 
 const initEnergy = () => ({
   type: "DATA_SOURCE_ENERGY",
@@ -74,153 +80,178 @@ const initFloat = () => ({
 });
 
 const DataGeneratorForm = ({ dataPath, dataSpecs, onDataChange }) => (
-  <React.Fragment>
-    <FormNumberItem
-      label="Number of Instance"
-      min={1}
-      max={1000000}
-      placeholder="Number of instances"
-      defaultValue={dataSpecs.scale ? dataSpecs.scale : 1}
-      onChange={(v) => onDataChange(`${dataPath}.scale`, v)}
-      helpText="The number of device with the same configuration. The id of device will be indexed automatically!"
-    />
-    <FormNumberItem
-      label="Time Internal (in seconds)"
-      min={1}
-      max={65535}
-      defaultValue={dataSpecs.timePeriod ? dataSpecs.timePeriod : 5}
-      onChange={(v) => onDataChange(`${dataPath}.timePeriod`, v)}
-      helpText="The time period to define the publishing data frequency"
-      rules={[
-        {
-          required: true,
-          message: "Time internal is required!",
-        },
-      ]}
-    />
-
-    <FormCheckBoxItems
-      label="Sensor Behaviours"
-      defaultValue={dataSpecs.sensorBehaviours}
-      onChange={(v) => onDataChange(`${dataPath}.sensorBehaviours`, v)}
-      options={[
-        "AB_LOW_ENERGY",
-        "AB_OUT_OF_ENERGY",
-        "AB_NODE_FAILED",
-        "AB_DOS_ATTACK",
-        "AB_SLOW_DOS_ATTACK",
-        "NORMAL_BEHAVIOUR",
-      ]}
-      helpText="The possible behaviours of the sensor"
-    />
-    {dataSpecs.sensorBehaviours.indexOf("AB_DOS_ATTACK") > -1 && (
-      <FormNumberItem
-        label="Speedup rate"
-        min={1}
-        max={100}
-        defaultValue={dataSpecs.dosAttackSpeedUpRate}
-        onChange={(v) => onDataChange(`${dataPath}.dosAttackSpeedUpRate`, v)}
-        helpText="The speedup rate in DDOS attack. Define how many time faster the sensor will publish data compare to normal condition"
-      />
-    )}
-    {dataSpecs.sensorBehaviours.indexOf("AB_NODE_FAILED") > -1 && (
-      <FormNumberItem
-        label="Time Before Failed (seconds)"
-        min={1}
-        max={65535}
-        defaultValue={dataSpecs.timeBeforeFailed}
-        onChange={(v) => onDataChange(`${dataPath}.timeBeforeFailed`, v)}
-        helpText="The time before this device going to be failed!"
-      />
-    )}
-    <FormSwitchItem
-      label="IP Smart Object Format"
-      onChange={(v) => onDataChange(`${dataPath}.isIPSOFormat`, v)}
-      checked={dataSpecs.isIPSOFormat ? true : false}
-      checkedChildren={"Enable"}
-      unCheckedChildren={"Disable"}
-      helpText="Change the data report to IP Smart Object format"
-    />
-    <Divider>
-      <h3>Measurements</h3>
-    </Divider>
-    <FormSwitchItem
-      label="Energy Measurement"
-      onChange={(v) => {
-        onDataChange(`${dataPath}.withEnergy`, v);
-        if (v && !dataSpecs.energy) {
-          onDataChange(`${dataPath}.energy`, initEnergy());
-        }
-      }}
-      checked={dataSpecs.withEnergy ? true : false}
-      checkedChildren={"Enable"}
-      unCheckedChildren={"Disable"}
-      helpText="Enable or disable the energy measurement for this device"
-    />
-    {dataSpecs.withEnergy && (
-      <EnergyForm
-        dataPath={`${dataPath}.energy`}
-        defaultValue={dataSpecs.energy ? dataSpecs.energy : initEnergy()}
-        onChange={(dPath, v) => onDataChange(dPath, v)}
-      />
-    )}
-    <MultipleDataSources
-      dataPath={`${dataPath}.sources`}
-      sources={dataSpecs.sources ? dataSpecs.sources : []}
-      onChange={(dPath, v) => onDataChange(dPath, v)}
-    />
-    <Dropdown
-      overlay={
-        <Menu>
-          <Menu.Item
-            key="1"
-            onClick={() => {
-              const index = dataSpecs.sources.length;
-              const dPath = `${dataPath}.sources[${index}]`;
-              onDataChange(dPath, initBoolean());
-            }}
-          >
-            Boolean Data Type
-          </Menu.Item>
-          <Menu.Item
-            key="2"
-            onClick={() => {
-              const index = dataSpecs.sources.length;
-              const dPath = `${dataPath}.sources[${index}]`;
-              onDataChange(dPath, initEnum());
-            }}
-          >
-            Enum Data Type
-          </Menu.Item>
-          <Menu.Item
-            key="3"
-            onClick={() => {
-              const index = dataSpecs.sources.length;
-              const dPath = `${dataPath}.sources[${index}]`;
-              onDataChange(dPath, initInteger());
-            }}
-          >
-            Integer Data Type
-          </Menu.Item>
-          <Menu.Item
-            key="4"
-            onClick={() => {
-              const index = dataSpecs.sources.length;
-              const dPath = `${dataPath}.sources[${index}]`;
-              onDataChange(dPath, initFloat());
-            }}
-          >
-            Float Data Type
-          </Menu.Item>
-        </Menu>
-      }
-      placement="topLeft"
+  <Fragment>
+    <CollapseForm
+      title="Sensor behaviour"
+      size="small"
+      type="inner"
+      style={{ marginBottom: 10 }}
     >
-      <Button type="primary" style={{ margin: "20px" }}>
-        Add New Measure <UpOutlined />
-      </Button>
-    </Dropdown>
-  </React.Fragment>
+      <Form
+        labelCol={{
+          span: 6,
+        }}
+        wrapperCol={{
+          span: 12,
+        }}
+      >
+        <FormNumberItem
+          label="Number of Instance"
+          min={1}
+          max={1000000}
+          placeholder="Number of instances"
+          defaultValue={dataSpecs.scale ? dataSpecs.scale : 1}
+          onChange={(v) => onDataChange(`${dataPath}.scale`, v)}
+          helpText="The number of device with the same configuration. The id of device will be indexed automatically!"
+        />
+        <FormNumberItem
+          label="Time Interval (in seconds)"
+          min={1}
+          max={65535}
+          defaultValue={dataSpecs.timePeriod ? dataSpecs.timePeriod : 5}
+          onChange={(v) => onDataChange(`${dataPath}.timePeriod`, v)}
+          helpText="The time period to define the publishing data frequency"
+          rules={[
+            {
+              required: true,
+              message: "Time interval is required!",
+            },
+          ]}
+        />
+
+        <FormCheckBoxItems
+          label="Sensor Behaviours"
+          defaultValue={dataSpecs.sensorBehaviours}
+          onChange={(v) => onDataChange(`${dataPath}.sensorBehaviours`, v)}
+          options={[
+            "AB_LOW_ENERGY",
+            "AB_OUT_OF_ENERGY",
+            "AB_NODE_FAILED",
+            "AB_DOS_ATTACK",
+            "AB_SLOW_DOS_ATTACK",
+            "NORMAL_BEHAVIOUR",
+          ]}
+          helpText="The possible behaviours of the sensor"
+        />
+        {dataSpecs.sensorBehaviours.indexOf("AB_DOS_ATTACK") > -1 && (
+          <FormNumberItem
+            label="Speedup rate"
+            min={1}
+            max={100}
+            defaultValue={dataSpecs.dosAttackSpeedUpRate}
+            onChange={(v) =>
+              onDataChange(`${dataPath}.dosAttackSpeedUpRate`, v)
+            }
+            helpText="The speedup rate in DDOS attack. Define how many time faster the sensor will publish data compare to normal condition"
+          />
+        )}
+        {dataSpecs.sensorBehaviours.indexOf("AB_NODE_FAILED") > -1 && (
+          <FormNumberItem
+            label="Time Before Failed (seconds)"
+            min={1}
+            max={65535}
+            defaultValue={dataSpecs.timeBeforeFailed}
+            onChange={(v) => onDataChange(`${dataPath}.timeBeforeFailed`, v)}
+            helpText="The time before this device going to be failed!"
+          />
+        )}
+      </Form>
+    </CollapseForm>
+    <Card
+      title="Sensor measurements"
+      size="small"
+      type="inner"
+      active={true}
+      style={{margin: 10}}
+      extra={
+        <Dropdown
+          overlay={
+            <Menu>
+              <Menu.Item
+                key="1"
+                onClick={() => {
+                  const index = dataSpecs.sources.length;
+                  const dPath = `${dataPath}.sources[${index}]`;
+                  onDataChange(dPath, initBoolean());
+                }}
+              >
+                Boolean Data Type
+              </Menu.Item>
+              <Menu.Item
+                key="2"
+                onClick={() => {
+                  const index = dataSpecs.sources.length;
+                  const dPath = `${dataPath}.sources[${index}]`;
+                  onDataChange(dPath, initEnum());
+                }}
+              >
+                Enum Data Type
+              </Menu.Item>
+              <Menu.Item
+                key="3"
+                onClick={() => {
+                  const index = dataSpecs.sources.length;
+                  const dPath = `${dataPath}.sources[${index}]`;
+                  onDataChange(dPath, initInteger());
+                }}
+              >
+                Integer Data Type
+              </Menu.Item>
+              <Menu.Item
+                key="4"
+                onClick={() => {
+                  const index = dataSpecs.sources.length;
+                  const dPath = `${dataPath}.sources[${index}]`;
+                  onDataChange(dPath, initFloat());
+                }}
+              >
+                Float Data Type
+              </Menu.Item>
+            </Menu>
+          }
+        >
+          <Button>
+            <PlusCircleOutlined /> New Measurement <DownOutlined />
+          </Button>
+        </Dropdown>
+      }
+    >
+      <Form
+        labelCol={{
+          span: 6,
+        }}
+        wrapperCol={{
+          span: 12,
+        }}
+      >
+        <FormSwitchItem
+          label="Energy Measurement"
+          onChange={(v) => {
+            onDataChange(`${dataPath}.withEnergy`, v);
+            if (v && !dataSpecs.energy) {
+              onDataChange(`${dataPath}.energy`, initEnergy());
+            }
+          }}
+          checked={dataSpecs.withEnergy ? true : false}
+          checkedChildren={"Enable"}
+          unCheckedChildren={"Disable"}
+          helpText="Enable or disable the energy measurement for this device"
+        />
+        {dataSpecs.withEnergy && (
+          <EnergyForm
+            dataPath={`${dataPath}.energy`}
+            defaultValue={dataSpecs.energy ? dataSpecs.energy : initEnergy()}
+            onChange={(dPath, v) => onDataChange(dPath, v)}
+          />
+        )}
+        <MultipleDataSources
+          dataPath={`${dataPath}.sources`}
+          sources={dataSpecs.sources ? dataSpecs.sources : []}
+          onChange={(dPath, v) => onDataChange(dPath, v)}
+        />
+      </Form>
+    </Card>
+  </Fragment>
 );
 
 export default DataGeneratorForm;

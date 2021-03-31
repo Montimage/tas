@@ -11,6 +11,7 @@ import JSONView from "../components/JSONView";
 import LayoutPage from "./LayoutPage";
 import { getQuery, updateObjectByPath, deepCloneObject } from "../utils";
 import ConnectionConfig from "../components/ConnectionConfig";
+import { InteractionOutlined, SaveOutlined } from "@ant-design/icons";
 
 class DataStoragePage extends Component {
   constructor(props) {
@@ -55,16 +56,22 @@ class DataStoragePage extends Component {
   render() {
     const { tempDataStorage, connectionStatus, isDSChanged } = this.state;
     const { updateDataStorage, testConnection } = this.props;
-
-    let viewType = getQuery("view");
-    if (!viewType) viewType = "form";
-    let view = null;
-    if (viewType === "json") {
-      view = (
-        <JSONView value={tempDataStorage} onChange={this.onDataStorageChange} />
-      );
-    } else {
-      view = (
+    return (
+      <LayoutPage
+        pageTitle="Data Storage"
+        pageSubTitle="Setup the default Data Storage configuration"
+      >
+        <p style={{ margin: 10 }}>
+          Connection Status:{" "}
+          <strong>
+            {" "}
+            {connectionStatus ? (
+              <span style={{ color: "green" }}>Connected</span>
+            ) : (
+              <span style={{ color: "red" }}>Not Connected</span>
+            )}{" "}
+          </strong>
+        </p>
         <Form
           labelCol={{
             span: 4,
@@ -82,23 +89,6 @@ class DataStoragePage extends Component {
             type="MONGODB"
           />
         </Form>
-      );
-    }
-    return (
-      <LayoutPage
-        pageTitle="DataStorage"
-        pageSubTitle="Setup the database to store the data"
-      >
-        Connection Status:{" "}
-        <strong>
-          {" "}
-          {connectionStatus ? (
-            <span style={{ color: "green" }}>Connected</span>
-          ) : (
-            <span style={{ color: "red" }}>Not Connected</span>
-          )}{" "}
-        </strong>
-        {view}
         <Button
           style={{ marginTop: "10px", marginRight: "10px" }}
           onClick={() => {
@@ -110,8 +100,9 @@ class DataStoragePage extends Component {
               testConnection();
             }
           }}
+          style={{ margin: 10 }}
         >
-          Test Connection
+          <InteractionOutlined /> Test Connection
         </Button>
         <Button
           type="primary"
@@ -123,7 +114,7 @@ class DataStoragePage extends Component {
           style={{ marginTop: "10px" }}
           disabled={this.state.isDSChanged ? false : true}
         >
-          Save
+          <SaveOutlined /> Save
         </Button>
       </LayoutPage>
     );

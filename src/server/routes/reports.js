@@ -9,7 +9,7 @@ router.get("/", dbConnector, function (req, res, next) {
   let options = {};
   const { topologyFileName, testCampaignId, reportToken } = req.query;
   if (topologyFileName) {
-    options["topologyFileName"] = topologyFileName;
+    options["topologyFileName"] = decodeURI(topologyFileName);
   }
   if (testCampaignId) {
     options["testCampaignId"] = testCampaignId;
@@ -17,7 +17,7 @@ router.get("/", dbConnector, function (req, res, next) {
   if (reportToken) {
     options["reportToken"] = reportToken;
   }
-
+  console.log(options);
   ReportSchema.findReportsWithOptions(options, (err2, reports) => {
     if (err2) {
       console.error("[SERVER] Failed to get reports");

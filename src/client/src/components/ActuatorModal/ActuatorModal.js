@@ -81,17 +81,29 @@ class ActuatorModal extends Component {
             ]}
           />
           <FormEditableTextItem
-            label="Object Id"
-            defaultValue={actuatorData.objectId}
-            onChange={(v) => this.onDataChange("actuatorData.objectId", v)}
-            placeholder="Identify of device type (IP Smart Object Format)"
-            helpText="The identify of the device type based on IPSO format. For example 3313 - for temperature"
-          />
-          <FormEditableTextItem
             label="Name"
             defaultValue={actuatorData.name}
             onChange={(v) => this.onDataChange("actuatorData.name", v)}
             helpText="The actuator's name"
+          />
+          <FormEditableTextItem
+            label="Topic"
+            defaultValue={actuatorData.topic}
+            onChange={(v) => this.onDataChange("actuatorData.topic", v)}
+            helpText="The MQTT/STOMP topic on which the actuator will be listening to receive actuated data"
+            rules = {[
+              {
+                required: true,
+                message: "Topic is required!"
+              }
+            ]}
+          />
+          <FormEditableTextItem
+            label="Object Id"
+            defaultValue={actuatorData.objectId}
+            onChange={(v) => this.onDataChange("actuatorData.objectId", v)}
+            placeholder="Identify of device type (IP Smart Object Format)"
+            helpText="Optional! The identify of the device type based on IPSO format. For example 3313 - for temperature"
           />
           <FormNumberItem
             label="Number of Instance"
@@ -101,12 +113,6 @@ class ActuatorModal extends Component {
             defaultValue={actuatorData.scale ? actuatorData.scale : 1}
             onChange={(v) => this.onDataChange("actuatorData.scale", v)}
             helpText="The number of actuators with the same configuration. The id of the generated actuator will be indexed automatically"
-          />
-          <FormEditableTextItem
-            label="Topic"
-            defaultValue={actuatorData.topic}
-            onChange={(v) => this.onDataChange("actuatorData.topic", v)}
-            helpText="The MQTT/STOMP topic on which the actuator will be listening to receive actuated data"
           />
           <FormSwitchItem
             label="Enable"

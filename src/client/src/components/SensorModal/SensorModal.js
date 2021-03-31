@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import TSModal from "../TSModal";
-import { Form, Button } from "antd";
+import { Form, Button, Card } from "antd";
 import {
   FormSwitchItem,
   FormEditableTextItem,
@@ -13,6 +13,7 @@ import {
 import { updateObjectByPath } from "../../utils";
 import DataGeneratorForm from "./DataGeneratorForm";
 import CollapseForm from "../CollapseForm";
+import { CloseCircleOutlined, SaveOutlined } from "@ant-design/icons";
 
 class SensorModal extends Component {
   constructor(props) {
@@ -55,7 +56,7 @@ class SensorModal extends Component {
         onCancel={() => onClose()}
         footer={[
           <Button key="cancel" onClick={() => onClose()}>
-            Cancel
+            <CloseCircleOutlined/> Cancel
           </Button>,
           <Button
             key="ok"
@@ -63,7 +64,7 @@ class SensorModal extends Component {
             onClick={() => this.saveData()}
             disabled={isChanged ? false : true}
           >
-            OK
+            <SaveOutlined/> OK
           </Button>,
         ]}
       >
@@ -75,145 +76,164 @@ class SensorModal extends Component {
             span: 12,
           }}
         >
-          <FormTextNotEditableItem label="Device" value={deviceId} />
-          <FormEditableTextItem
-            label="Id"
-            defaultValue={sensorData.id}
-            onChange={(v) => this.onDataChange("sensorData.id", v)}
-            placeholder="Identify of the device"
-            helpText="The identify of the device"
-            rules={[
-              {
-                required: true,
-                message: "Id is required!",
-              },
-            ]}
-          />
-          <FormEditableTextItem
-            label="Object Id"
-            defaultValue={sensorData.objectId}
-            onChange={(v) => this.onDataChange("sensorData.objectId", v)}
-            placeholder="Identify of the type of device (IPSO Standard)"
-            helpText="The identify of the device type based on IPSO format. For example 3313 - for temperature"
-          />
-          <FormEditableTextItem
-            label="Name"
-            defaultValue={sensorData.name}
-            onChange={(v) => this.onDataChange("sensorData.name", v)}
-            helpText="The name of the device"
-          />
-          <FormEditableTextItem
-            label="Topic"
-            defaultValue={sensorData.topic}
-            onChange={(v) => this.onDataChange("sensorData.topic", v)}
-            helpText="The topic to which the sensor will publish data!"
-          />
-          <FormSwitchItem
-            label="Enable"
-            onChange={(v) => this.onDataChange("sensorData.enable", v)}
-            checked={sensorData.enable ? true : false}
-            checkedChildren={"On"}
-            unCheckedChildren={"Off"}
-            helpText="Enable or disable this device from the simulation"
-          />
-          <FormSelectItem
-            label="Report Format"
-            defaultValue={reportFormats[sensorData.reportFormat]}
-            helpText={reportFormatHelpTexts[sensorData.reportFormat]}
-            options={reportFormats}
-            onChange={(v) =>
-              this.onDataChange(
-                "sensorData.reportFormat",
-                reportFormats.indexOf(v)
-              )
-            }
-          />
-          <FormSelectItem
-            label="Data Source"
-            defaultValue={sensorData.dataSource}
-            options={[
-              "DATA_SOURCE_DATASET",
-              "DATA_SOURCE_GENERATOR",
-              "DATA_SOURCE_RECORDER",
-            ]}
-            onChange={(v) => this.onDataChange("sensorData.dataSource", v)}
-          />
-          {sensorData.dataSource === "DATA_SOURCE_DATASET" && (
-            <Fragment>
-              {sensorData.replayOptions ? (
-                <CollapseForm title="Replay Options">
-                  <FormTimeRangeItem
-                    label="Time Range"
-                    defaultValue={[
-                      sensorData.replayOptions.startTime
-                        ? sensorData.replayOptions.startTime
-                        : Date.now() - 5 * 60 * 1000,,
-                      sensorData.replayOptions.endTime
-                        ? sensorData.replayOptions.endTime
-                        : Date.now(),
-                    ]}
-                    onChange={(v) => {
-                      this.onDataChange(
-                        `sensorData.replayOptions.startTime`,
-                        v[0]
-                      );
-                      this.onDataChange(
-                        `sensorData.replayOptions.endTime`,
-                        v[1]
-                      );
-                    }}
-                    helpText="The time range when the data should be replayed."
-                  />
-                  <FormNumberItem
-                    label="Speedup"
-                    min={0.01}
-                    max={100}
-                    defaultValue={
-                      sensorData.replayOptions.speedup
-                        ? sensorData.replayOptions.speedup
-                        : 1
-                    }
-                    onChange={(v) =>
-                      this.onDataChange(`sensorData.replayOptions.speedup`, v)
-                    }
-                    helpText="The replaying speedup (0.01 - 100)!"
-                  />
-                  <FormSwitchItem
-                    label="Repeat"
-                    onChange={(v) =>
-                      this.onDataChange(`sensorData.replayOptions.repeat`, v)
-                    }
-                    checked={sensorData.replayOptions.repeat ? true : false}
-                    checkedChildren={"Repeat"}
-                    unCheckedChildren={"No Repeat"}
-                    helpText="Repeatly replaying the data"
-                  />
+          <CollapseForm
+            title="Overview"
+            style={{ marginBottom: 10 }}
+          >
+            <FormTextNotEditableItem label="Device" value={deviceId} />
+            <FormEditableTextItem
+              label="Id"
+              defaultValue={sensorData.id}
+              onChange={(v) => this.onDataChange("sensorData.id", v)}
+              placeholder="Identify of the device"
+              helpText="The identify of the device"
+              rules={[
+                {
+                  required: true,
+                  message: "Id is required!",
+                },
+              ]}
+            />
+            <FormEditableTextItem
+              label="Name"
+              defaultValue={sensorData.name}
+              onChange={(v) => this.onDataChange("sensorData.name", v)}
+              helpText="The name of the device"
+            />
+            <FormEditableTextItem
+              label="Topic"
+              defaultValue={sensorData.topic}
+              onChange={(v) => this.onDataChange("sensorData.topic", v)}
+              helpText="The topic to which the sensor will publish data!"
+              rules={[
+                {
+                  required: true,
+                  message: "Topic is required!",
+                },
+              ]}
+            />
+            <FormEditableTextItem
+              label="Object Id"
+              defaultValue={sensorData.objectId}
+              onChange={(v) => this.onDataChange("sensorData.objectId", v)}
+              placeholder="Identify of the type of device (IPSO Standard)"
+              helpText="The identify of the device type based on IPSO format. For example 3313 - for temperature"
+            />
+            <FormSwitchItem
+              label="Enable"
+              onChange={(v) => this.onDataChange("sensorData.enable", v)}
+              checked={sensorData.enable ? true : false}
+              checkedChildren={"On"}
+              unCheckedChildren={"Off"}
+              helpText="Enable or disable this device from the simulation"
+            />
+            <FormSelectItem
+              label="Report Format"
+              defaultValue={reportFormats[sensorData.reportFormat]}
+              helpText={reportFormatHelpTexts[sensorData.reportFormat]}
+              options={reportFormats}
+              onChange={(v) =>
+                this.onDataChange(
+                  "sensorData.reportFormat",
+                  reportFormats.indexOf(v)
+                )
+              }
+            />
+          </CollapseForm>
+          <Card
+            size="small"
+            type="inner"
+            title="Setup data source"
+            style={{ margin: 10 }}
+          >
+            <FormSelectItem
+              label="Data Source"
+              defaultValue={sensorData.dataSource}
+              options={[
+                "DATA_SOURCE_DATASET",
+                "DATA_SOURCE_GENERATOR",
+                "DATA_SOURCE_RECORDER",
+              ]}
+              onChange={(v) => this.onDataChange("sensorData.dataSource", v)}
+            />
+            {sensorData.dataSource === "DATA_SOURCE_DATASET" && (
+              <Fragment>
+                {sensorData.replayOptions ? (
+                  <CollapseForm title="Replay Options">
+                    <FormTimeRangeItem
+                      label="Time Range"
+                      defaultValue={[
+                        sensorData.replayOptions.startTime
+                          ? sensorData.replayOptions.startTime
+                          : Date.now() - 5 * 60 * 1000,
+                        ,
+                        sensorData.replayOptions.endTime
+                          ? sensorData.replayOptions.endTime
+                          : Date.now(),
+                      ]}
+                      onChange={(v) => {
+                        this.onDataChange(
+                          `sensorData.replayOptions.startTime`,
+                          v[0]
+                        );
+                        this.onDataChange(
+                          `sensorData.replayOptions.endTime`,
+                          v[1]
+                        );
+                      }}
+                      helpText="The time range when the data should be replayed."
+                    />
+                    <FormNumberItem
+                      label="Speedup"
+                      min={0.01}
+                      max={100}
+                      defaultValue={
+                        sensorData.replayOptions.speedup
+                          ? sensorData.replayOptions.speedup
+                          : 1
+                      }
+                      onChange={(v) =>
+                        this.onDataChange(`sensorData.replayOptions.speedup`, v)
+                      }
+                      helpText="The replaying speedup (0.01 - 100)!"
+                    />
+                    <FormSwitchItem
+                      label="Repeat"
+                      onChange={(v) =>
+                        this.onDataChange(`sensorData.replayOptions.repeat`, v)
+                      }
+                      checked={sensorData.replayOptions.repeat ? true : false}
+                      checkedChildren={"Repeat"}
+                      unCheckedChildren={"No Repeat"}
+                      helpText="Repeatly replaying the data"
+                    />
+                    <Button
+                      danger
+                      onClick={() =>
+                        this.onDataChange("sensorData.replayOptions", null)
+                      }
+                    >
+                      Delete Replaying Options
+                    </Button>
+                  </CollapseForm>
+                ) : (
                   <Button
-                    danger
+                    style={{ marginBottom: 10 }}
                     onClick={() =>
-                      this.onDataChange("sensorData.replayOptions", null)
+                      this.onDataChange("sensorData.replayOptions", {
+                        startTime: 0,
+                        endTime: Date.now(),
+                        repeat: false,
+                        speedup: 1,
+                      })
                     }
                   >
-                    Delete Replaying Options
+                    Set Replaying Options
                   </Button>
-                </CollapseForm>
-              ) : (
-                <Button
-                style={{marginBottom: 10}}
-                  onClick={() =>
-                    this.onDataChange("sensorData.replayOptions", {
-                      startTime: 0,
-                      endTime: Date.now(),
-                      repeat: false,
-                      speedup: 1,
-                    })
-                  }
-                >
-                  Set Replaying Options
-                </Button>
-              )}
-            </Fragment>
-          )}
+                )}
+              </Fragment>
+            )}
+          </Card>
           <DataGeneratorForm
             dataPath={"sensorData.dataSpecs"}
             dataSpecs={sensorData.dataSpecs}

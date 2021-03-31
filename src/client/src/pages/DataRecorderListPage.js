@@ -9,6 +9,11 @@ import {
   DeleteOutlined,
   CaretRightOutlined,
   StopOutlined,
+  PlusSquareFilled,
+  PlayCircleOutlined,
+  PlusCircleOutlined,
+  PlusSquareOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
@@ -80,7 +85,7 @@ class DataRecorderListPage extends Component {
       {
         title: "Action",
         key: "action",
-        width: 350,
+        width: 400,
         render: (item) => (
           <Fragment>
             {item.isRunning ? (
@@ -125,15 +130,15 @@ class DataRecorderListPage extends Component {
 
     return (
       <LayoutPage
-        pageTitle="DataRecorder"
-        pageSubTitle="DataRecorder will collect data from the target environment and store the data into the DataStorage and also can forward the data into the simulation environment"
+        pageTitle="Data Recorder"
+        pageSubTitle="Data Recorder will collect data from the target environment and store the data into the DataStorage and also can forward the data into the simulation environment"
       >
         <Dropdown
           overlay={
             <Menu>
               <Menu.Item key="DataRecorder:3">
                 <a href={`/data-recorders/new-DataRecorder-${Date.now()}`}>
-                  <ClearOutlined /> Create New
+                  <PlusSquareOutlined /> Create New Data Recorder
                 </a>
               </Menu.Item>
               <Menu.Item
@@ -161,13 +166,17 @@ class DataRecorderListPage extends Component {
             onClick={(e) => e.preventDefault()}
             style={{ marginBottom: "15px" }}
           >
-            Add DataRecorder <DownOutlined />
+            <PlusCircleOutlined/> Add Data Recorder <DownOutlined />
           </Button>
         </Dropdown>
 
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} bordered/>
         <p></p>
-        <a href={`/logs/data-recorders`}>View Logs</a>
+        <a href={`/logs/data-recorders`} target="_blank">
+          <Button type="default">
+            <FileTextOutlined/> View All Recording Logs
+          </Button>
+        </a>
       </LayoutPage>
     );
   }

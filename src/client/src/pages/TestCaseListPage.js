@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
 import { Table, Button } from "antd";
-import { DeleteOutlined, CopyOutlined } from "@ant-design/icons";
+import { DeleteOutlined, CopyOutlined, PlusCircleOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
   requestAllTestCases,
@@ -54,9 +54,9 @@ class TestCaseListPage extends Component {
         pageSubTitle="All the test cases"
       >
         <a href={`/test-cases/new-case-${Date.now()}`}>
-          <Button style={{ marginBottom: "10px" }}>Add New Case</Button>
+          <Button style={{ marginBottom: "10px" }}> <PlusCircleOutlined/> Add New Case</Button>
         </a>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} bordered/>
       </LayoutPage>
     );
   }

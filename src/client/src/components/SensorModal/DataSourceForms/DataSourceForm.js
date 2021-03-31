@@ -3,11 +3,11 @@ import { FormEditableTextItem, FormCheckBoxItems } from "../../FormItems";
 import "./DataSourceForm.css";
 import { Button } from "antd";
 import CollapseForm from "../../CollapseForm";
+import { CloseCircleOutlined } from "@ant-design/icons";
 
 const defaultBehaviours = [
   "AB_FIX_VALUE",
-  "AB_INVALID_VALUE",
-  "NORMAL_BEHAVIOUR",
+  "AB_INVALID_VALUE"
 ];
 
 const DataSourceForm = ({
@@ -36,17 +36,17 @@ const DataSourceForm = ({
         defaultValue={defaultValue.resourceId}
         onChange={(v) => onChange(`${dataPath}.resourceId`, v)}
         placeholder="Optional"
-        helpText="The resource id if the report follows the IPSO standard! For example: 5700 - for sensor value"
+        helpText="Optional! The resource id if the report follows the IPSO standard! For example: 5700 - for sensor value"
       />
       <FormEditableTextItem
         label="unit"
         defaultValue={defaultValue.unit}
         onChange={(v) => onChange(`${dataPath}.unit`, v)}
         placeholder="Unit of the measurement"
-        helpText="The unit of this measurement"
+        helpText="Optional! The unit of this measurement"
       />
       <FormCheckBoxItems
-        label="Behaviours"
+        label="Abnormal Behaviours"
         defaultValue={defaultValue.behaviours}
         onChange={(v) => onChange(`${dataPath}.behaviours`, v)}
         options={
@@ -56,7 +56,7 @@ const DataSourceForm = ({
       />
       {children}
       <Button type="danger" onClick={() => onChange(dataPath, null)}>
-        Remove
+        <CloseCircleOutlined/> Remove
       </Button>
   </CollapseForm>
 );

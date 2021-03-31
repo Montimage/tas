@@ -6,6 +6,7 @@ import {
   CaretRightOutlined,
   CopyOutlined,
   DeleteOutlined,
+  PlusCircleOutlined,
 } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
@@ -25,7 +26,7 @@ class DatasetListPage extends Component {
 - tags
 - description
 - createdAt/ lastModified
-- source:  
+- source:
    + GENERATED
    + MUTATED
    + RECORDED
@@ -60,6 +61,7 @@ class DatasetListPage extends Component {
       {
         title: "Id",
         key: "data",
+        sorter: (a, b) => a.id.localeCompare(b.id),
         render: (ds) => <a href={`/data-sets/${ds.id}`}> {ds.id} </a>,
       },
       {
@@ -90,9 +92,9 @@ class DatasetListPage extends Component {
     return (
       <LayoutPage pageTitle="Dataset" pageSubTitle="All the datasets">
         <a href={`/data-sets/new-dataset-${Date.now()}`}>
-          <Button style={{ marginBottom: "10px" }}>Add New Dataset</Button>
+          <Button style={{ marginBottom: "10px" }}> <PlusCircleOutlined/> Add New Dataset</Button>
         </a>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} bordered/>
       </LayoutPage>
     );
   }

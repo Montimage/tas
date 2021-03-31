@@ -15,7 +15,13 @@ import {
   requestStopSimulation,
   requestSimulationStatus,
 } from "../actions";
-import { Form, Button } from "antd";
+import { Form, Button, Card } from "antd";
+import {
+  FileExcelOutlined,
+  FileTextOutlined,
+  PlayCircleOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 const NONE_DATA_SET_OPTION = "No Data Source";
 class SimulationPage extends Component {
   constructor(props) {
@@ -104,72 +110,89 @@ class SimulationPage extends Component {
             pageTitle="Simulation Page"
             pageSubTitle="Manually perform a simulation"
           >
-            <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
-              <FormSelectItem
-                label={"Model File Name"}
-                defaultValue={modelFileName}
-                options={allModels}
-                onChange={(value) => this.onModelFileNameChange(value)}
-              />
-              {modelFileName ? (
+            <Card style={{ marginBottom: 10 }}>
+              <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+                <FormSelectItem
+                  label={"Model File Name"}
+                  defaultValue={modelFileName}
+                  options={allModels}
+                  onChange={(value) => this.onModelFileNameChange(value)}
+                />
+                {modelFileName ? (
+                  <FormTextNotEditableItem
+                    label={"Model"}
+                    value={
+                      <a href={`/api/models/${modelFileName}`}>
+                        {modelFileName}
+                      </a>
+                    }
+                  />
+                ) : (
+                  <FormTextNotEditableItem label={"Model"} value={model.name} />
+                )}
+
+                {datasetId && (
+                  <FormTextNotEditableItem
+                    label={"Dataset Source"}
+                    helpText="The source of the data input for the simulation"
+                    value={datasetId}
+                  />
+                )}
                 <FormTextNotEditableItem
-                  label={"Model"}
+                  label="New dataset Id"
+                  helpText="The dataset contains the generated data of the simulation"
                   value={
-                    <a href={`/api/models/${modelFileName}`}>{modelFileName}</a>
+                    <a href={`/data-sets/${newDataset.id}`}>{newDataset.id}</a>
                   }
                 />
-              ) : (
-                <FormTextNotEditableItem label={"Model"} value={model.name} />
-              )}
-
-              {datasetId && (
-                <FormTextNotEditableItem
-                  label={"Dataset Source"}
-                  helpText="The source of the data input for the simulation"
-                  value={datasetId}
-                />
-              )}
-              <p>The data generated are stored in the dataset</p>
-              <FormTextNotEditableItem
-                label="Dataset Id"
-                value={
-                  <a href={`/data-sets/${newDataset.id}`}>{newDataset.id}</a>
-                }
-              />
-              <Form.Item
-                wrapperCol={{
-                  xs: {
-                    span: 24,
-                    offset: 0,
-                  },
-                  sm: {
-                    span: 16,
-                    offset: 4,
-                  },
-                }}
-              >
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    this.props.stopSimulation(modelFileName);
+                <Form.Item
+                  wrapperCol={{
+                    xs: {
+                      span: 24,
+                      offset: 0,
+                    },
+                    sm: {
+                      span: 16,
+                      offset: 4,
+                    },
                   }}
-                  danger
                 >
-                  Stop
-                </Button>
-                <a href={`/logs/simulations?logFile=${logFile}`}>
-                  <Button type="link">View Log</Button>
-                </a>
-                <a href={`/reports/${report.id}`}>
-                  <Button type="link">View Report</Button>
-                </a>
-              </Form.Item>
-            </Form>
-            <p></p>
-            <a href={`/logs/simulations`} style={{ marginRight: 10 }}>
-              View Logs
-            </a>{" "}
-            <a href={`/reports`}>View Reports</a>
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      this.props.stopSimulation(modelFileName);
+                    }}
+                    danger
+                    style={{ marginRight: 10 }}
+                  >
+                    <StopOutlined /> Stop
+                  </Button>
+                  <a
+                    href={`/logs/simulations?logFile=${logFile}`}
+                    target="_blank"
+                  >
+                    <Button type="default" style={{ marginRight: 10 }}>
+                      <FileTextOutlined /> View Simulation Log
+                    </Button>
+                  </a>
+                  <a href={`/reports/${report.id}`} target="_blank">
+                    <Button type="default" style={{ marginRight: 10 }}>
+                      <FileExcelOutlined /> View Simulation Report
+                    </Button>
+                  </a>
+                </Form.Item>
+              </Form>
+            </Card>
+            <a href={`/logs/simulations`} target="_blank">
+              <Button type="default" style={{ marginRight: 10 }}>
+                <FileTextOutlined /> View All Simulation Logs
+              </Button>
+            </a>
+            <a href={`/reports`} target="_blank">
+              <Button type="default" style={{ marginRight: 10 }}>
+                <FileExcelOutlined /> View All Simulation Reports
+              </Button>
+            </a>
           </LayoutPage>
         );
       }
@@ -180,62 +203,59 @@ class SimulationPage extends Component {
         pageTitle="Simulation Page"
         pageSubTitle="Manually perform a simulation"
       >
-        <Form
-          labelCol={{
-            span: 4,
-          }}
-          wrapperCol={{
-            span: 14,
-          }}
-        >
-          <FormSelectItem
-            label={"Model File Name"}
-            defaultValue={modelFileName}
-            options={allModels}
-            onChange={(value) => this.onModelFileNameChange(value)}
-          />
-          <FormSelectItem
-            label={"Data Source"}
-            defaultValue={datasetId}
-            options={[...datasetOptions, NONE_DATA_SET_OPTION]}
-            onChange={(value) => this.onDatasetIdChange(value)}
-          />
-          <p>Store the generated data to a new dataset</p>
-          <FormEditableTextItem
-            label="Id"
-            placeholder="New Dataset Id"
-            defaultValue={newDatasetId}
-            onChange={(value) => this.onNewDatasetIdChange(value)}
-          />
-          <FormEditableTextItem
-            label="Name"
-            placeholder="Name"
-            defaultValue={datasetName}
-            onChange={(value) => this.onDatasetNameChange(value)}
-          />
-          <FormTextAreaItem
-            label="Description"
-            defaultValue={datasetDescription}
-            onChange={(value) => this.onDatasetDescriptionChange(value)}
-          />
-          <FormEditableTextItem
-            label="Tags"
-            placeholder="Tags"
-            defaultValue={JSON.stringify(datasetTags)}
-            onChange={(value) => this.onDatasetTagsChange(JSON.parse(value))}
-          />
-          <Form.Item
+        <Card style={{ marginBottom: 10 }}>
+          <Form
+            labelCol={{
+              span: 4,
+            }}
             wrapperCol={{
-              xs: {
-                span: 24,
-                offset: 0,
-              },
-              sm: {
-                span: 16,
-                offset: 4,
-              },
+              span: 14,
             }}
           >
+            <FormSelectItem
+              label={"Model File Name"}
+              defaultValue={modelFileName}
+              options={allModels}
+              onChange={(value) => this.onModelFileNameChange(value)}
+            />
+            <FormSelectItem
+              label={"Data Source"}
+              defaultValue={datasetId}
+              options={[...datasetOptions, NONE_DATA_SET_OPTION]}
+              onChange={(value) => this.onDatasetIdChange(value)}
+            />
+            <Card
+              size="small"
+              type="inner"
+              title="Setup the dataset to store the generated data of the simulation"
+              style={{ marginBottom: 10 }}
+            >
+              <FormEditableTextItem
+                label="Id"
+                placeholder="New Dataset Id"
+                defaultValue={newDatasetId}
+                onChange={(value) => this.onNewDatasetIdChange(value)}
+              />
+              <FormEditableTextItem
+                label="Name"
+                placeholder="Name"
+                defaultValue={datasetName}
+                onChange={(value) => this.onDatasetNameChange(value)}
+              />
+              <FormTextAreaItem
+                label="Description"
+                defaultValue={datasetDescription}
+                onChange={(value) => this.onDatasetDescriptionChange(value)}
+              />
+              <FormEditableTextItem
+                label="Tags"
+                placeholder="Tags"
+                defaultValue={JSON.stringify(datasetTags)}
+                onChange={(value) =>
+                  this.onDatasetTagsChange(JSON.parse(value))
+                }
+              />
+            </Card>
             <Button
               type="primary"
               onClick={() => {
@@ -252,15 +272,20 @@ class SimulationPage extends Component {
                 );
               }}
             >
-              Start
+              <PlayCircleOutlined /> Start
             </Button>
-          </Form.Item>
-        </Form>
-        <p></p>
-        <a href={`/logs/simulations`} style={{ marginRight: 10 }}>
-          View Logs
-        </a>{" "}
-        <a href={`/reports`}>View Reports</a>
+          </Form>
+        </Card>
+        <a href={`/logs/simulations`} target="_blank">
+          <Button type="default" style={{ marginRight: 10 }}>
+            <FileTextOutlined /> View All Simulation Logs
+          </Button>
+        </a>
+        <a href={`/reports`} target="_blank">
+          <Button type="default" style={{ marginRight: 10 }}>
+            <FileExcelOutlined /> View All Simulation Reports
+          </Button>
+        </a>
       </LayoutPage>
     );
   }

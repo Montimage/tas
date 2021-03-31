@@ -9,6 +9,9 @@ import {
   CopyOutlined,
   DeleteOutlined,
   StopOutlined,
+  PlusCircleOutlined,
+  PlusSquareOutlined,
+  PlayCircleOutlined,
 } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
@@ -77,7 +80,7 @@ class ModelListPage extends Component {
       {
         title: "Action",
         key: "action",
-        width: 350,
+        width: 400,
         render: (item) => (
           <Fragment>
             {item.isRunning ? (
@@ -98,7 +101,7 @@ class ModelListPage extends Component {
                   type="dashed"
                   onClick={() => startSimulation(item.name)}
                 >
-                  <CaretRightOutlined /> Simulate
+                  <PlayCircleOutlined /> Simulate
                 </Button>
               </a>
             )}
@@ -129,7 +132,7 @@ class ModelListPage extends Component {
             <Menu>
               <Menu.Item key="model:3">
                 <a href={`/models/new-model-${Date.now()}`}>
-                  <ClearOutlined /> Create New
+                  <PlusSquareOutlined /> Create New
                 </a>
               </Menu.Item>
               <Menu.Item
@@ -157,10 +160,10 @@ class ModelListPage extends Component {
             onClick={(e) => e.preventDefault()}
             style={{ marginBottom: "15px" }}
           >
-            Add Model <DownOutlined />
+            <PlusCircleOutlined /> Add Model <DownOutlined />
           </Button>
         </Dropdown>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} bordered/>
       </LayoutPage>
     );
   }
