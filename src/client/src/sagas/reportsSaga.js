@@ -103,6 +103,14 @@ function* handleRequestAllReports(action) {
     const options = action.payload;
     const allReports = yield call(() => sendRequestAllReports(options));
     yield put(setAllReports(allReports));
+    if (allReports.length === 0) {
+      yield put(
+        setNotification({
+          type: "warning",
+          message: `There is not any report!`,
+        })
+      );
+    }
     // dispatch data
   } catch (error) {
     // dispatch error

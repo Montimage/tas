@@ -317,7 +317,7 @@ class TestCampaignListPage extends Component {
           }
           style={{ marginBottom: 10 }}
         >
-          <Table columns={columns} dataSource={dataSource} bordered />
+          <Table columns={columns} dataSource={dataSource} bordered pagination={false}/>
         </Card>
         <Button
           onClick={() => {

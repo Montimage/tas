@@ -84,7 +84,7 @@ const getDBClient = (callback, reload = false) => {
 // Read a specific model by its name:
 
 const getDataStorage = (callback, reload = false) => {
-  if (dataStorageConfig) return callback(null, dataStorageConfig);
+  if (dataStorageConfig && !reload) return callback(null, dataStorageConfig);
   return readJSONFile(dataStoragePath, (err, data) => {
     if (err) {
       console.error("[SERVER] reading data storage", err);

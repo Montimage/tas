@@ -7,6 +7,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 RUN npm install -g nodemon
+# RUN npm install pm2 -g
 RUN npm install --only=production
 RUN mv /usr/src/app/node_modules /node_modules
 # If you are building your code for production
@@ -14,4 +15,4 @@ RUN mv /usr/src/app/node_modules /node_modules
 # Bundle app source
 COPY . .
 EXPOSE 31057
-CMD [ "node", "src/server/app.js" ]
+CMD [ "nodemon", "src/server/app.js" ]

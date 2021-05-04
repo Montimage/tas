@@ -280,7 +280,7 @@ class ModelPage extends Component {
             }
           >
             {tempModel.dataStorage ? (
-              <Fragment>
+              <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
                 <ConnectionConfig
                   defaultValue={tempModel.dataStorage.connConfig}
                   dataPath={"dataStorage.connConfig"}
@@ -289,7 +289,7 @@ class ModelPage extends Component {
                   }
                   type={tempModel.dataStorage.protocol}
                 />
-              </Fragment>
+              </Form>
             ) : (
               <Fragment>
                 <p>

@@ -17,8 +17,8 @@ router.get("/", dbConnector, function (req, res, next) {
   if (reportToken) {
     options["reportToken"] = reportToken;
   }
-  console.log(options);
-  ReportSchema.findReportsWithOptions(options, (err2, reports) => {
+  console.log(`Request reports options: ${JSON.stringify(options)}`);
+  ReportSchema.findReportsWithOptions(options ? options : {}, (err2, reports) => {
     if (err2) {
       console.error("[SERVER] Failed to get reports");
       console.error(err2);
@@ -26,6 +26,7 @@ router.get("/", dbConnector, function (req, res, next) {
         error: "Failed to get reports",
       });
     } else {
+      console.log(`Number of reports ${reports.length}`);
       res.send({
         reports,
       });
