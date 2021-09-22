@@ -1,1 +1,1 @@
-{"webhookURL":"http://localhost:3333/webhook","testCampaignId":"smarthome-test-campaign-01","evaluationParameters":{"eventType":"ALL_EVENTS","metricType":"METRIC_VALUE_TIMESTAMP","threshold":0.6}}
+{"webhookURL":"http://192.168.0.11:8080/genensis/tas/webhook","testCampaignId":"testcampaign-com-center-user-confort","evaluationParameters":{"eventType":"ALL_EVENTS","metricType":"METRIC_VALUE_TIMESTAMP","threshold":0.5}}
