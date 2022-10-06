@@ -1,6 +1,6 @@
 /* Working with data set */
 const express = require("express");
-const EventSchema = require("../../core/enact-mongoose/schemas/EventSchema");
+const EventSchema = require("../../core/mongoose/schemas/EventSchema");
 const router = express.Router();
 const { DatasetSchema, dbConnector } = require("./db-connector");
 

@@ -1,12 +1,12 @@
 
 const {
-  ENACTDB,
+  DATABASE,
   EventSchema,
   ReportSchema,
   DatasetSchema,
   TestCaseSchema,
   TestCampaignSchema
-} = require("../../core/enact-mongoose");
+} = require("../../core/mongoose");
 
 const {
   readJSONFile,

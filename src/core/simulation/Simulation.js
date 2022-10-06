@@ -1,5 +1,5 @@
 const { OFFLINE, SIMULATING } = require("../DeviceStatus");
-const { EventSchema, ReportSchema } = require("../enact-mongoose");
+const { EventSchema, ReportSchema } = require("../mongoose");
 const {
   evalulate, THRESHOLD_FLEXIBLE, ALL_EVENTS, METRIC_VALUE_TIMESTAMP,
 } = require("../evaluation");

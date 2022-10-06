@@ -1,11 +1,11 @@
 const {
-  ENACTDB,
+  DATABASE,
   EventSchema,
   DatasetSchema,
   TestCampaignSchema,
   TestCaseSchema,
-} = require("../enact-mongoose");
-const ReportSchema = require("../enact-mongoose/schemas/ReportSchema");
+} = require("../mongoose");
+const ReportSchema = require("../mongoose/schemas/ReportSchema");
 
 /**
  * DataStorage class presents the interface of a data base
@@ -39,12 +39,12 @@ class DataStorage {
         options,
       } = this.connConfig;
       if (username && password) {
-        this.dsClient = new ENACTDB(host, port, dbname, {
+        this.dsClient = new DATABASE(host, port, dbname, {
           username: username,
           password: password,
         });
       } else {
-        this.dsClient = new ENACTDB(host, port, dbname);
+        this.dsClient = new DATABASE(host, port, dbname);
       }
 
       this.dsClient.connect((error) => {

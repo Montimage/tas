@@ -10,7 +10,7 @@ const DatasetSchema = require('./schemas/DatasetSchema');
 const TestCaseSchema = require('./schemas/TestCaseSchema');
 const TestCampaignSchema = require('./schemas/TestCampaignSchema');
 
-function ENACTDB(host, port, dbName, auth = null) {
+function DATABASE(host, port, dbName, auth = null) {
   this.host = host;
   this.port = port;
   this.dbName = dbName;
@@ -18,16 +18,16 @@ function ENACTDB(host, port, dbName, auth = null) {
   this.isConnected = false;
 }
 
-ENACTDB.prototype.connect = function(callback) {
+DATABASE.prototype.connect = function(callback) {
 
   if (this.isConnected) {
-    console.log('[ENACTDB] Already connected!');
+    console.log('[DATABASE] Already connected!');
     return callback();
   }
 
   const connString = `mongodb://${this.host}:${this.port}`;
 
-  console.log("[ENACTDB] Connection string: ", connString);
+  console.log("[DATABASE] Connection string: ", connString);
 
   const connectOptions = {
     dbName: this.dbName,
@@ -42,22 +42,22 @@ ENACTDB.prototype.connect = function(callback) {
 
   mongoose.connect(connString, connectOptions, error => {
     if (error) {
-      console.error('[ENACTDB] ',error);
+      console.error('[DATABASE] ',error);
       return callback(error);
     }
-    console.log("[ENACTDB] New connection to database has been established!");
+    console.log("[DATABASE] New connection to database has been established!");
     this.isConnected = true;
     return callback(null);
   });
 };
 
-ENACTDB.prototype.close = function() {
-  console.log("[ENACTDB] Going to close the connection");
+DATABASE.prototype.close = function() {
+  console.log("[DATABASE] Going to close the connection");
   mongoose.disconnect();
 };
 
 module.exports = {
-  ENACTDB,
+  DATABASE,
   ReportSchema,
   SensorSchema,
   ActuatorSchema,

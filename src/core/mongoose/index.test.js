@@ -1,6 +1,6 @@
-const { ENACTDB, EventSchema, TestCaseSchema } = require("./index");
+const { DATABASE, EventSchema, TestCaseSchema } = require("./index");
 
-const mydb = new ENACTDB("localhost", 27017, "tasdb");
+const mydb = new DATABASE("localhost", 27017, "tasdb");
 mydb.connect(() => {
   // EventSchema.findEventsBetweenTimes(
   //   { topic: "devices/device-01/sensors/motion", datasetId: "my-data-set" },

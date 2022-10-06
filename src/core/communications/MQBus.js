@@ -1,4 +1,6 @@
 const MQTTBus = require('./MQTTBus');
+const KafkaBus = require('./KafkaBus');
+
 /**
  * MQBus class presents a Message Queue Bus interface
  * - supports multiple MQ protocols such as: MQTT, MQTTS, AMQP, AMQPS, etc.
@@ -19,6 +21,8 @@ class MQBus {
     this.mqClient = null;
     if (this.protocol === 'MQTT' || this.protocol === 'MQTTS') {
       this.mqClient = new MQTTBus(connConfig, protocol ? protocol.toLowerCase() : 'mqtt');
+    } else if (this.protocol === 'Kafka') {
+      this.mqClient = new KafkaBus(connConfig, protocol ? protocol.toLowerCase() : 'kafka');
     }
   }
 

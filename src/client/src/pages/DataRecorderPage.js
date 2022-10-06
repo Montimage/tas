@@ -99,7 +99,7 @@ const DataRecorderItem = ({
         label="Protocol"
         defaultValue={data.source.protocol}
         onChange={(v) => onChange("source.protocol", v)}
-        options={["MQTT", "MQTTS"]}
+        options={["MQTT", "MQTTS", "Kafka"]}
       />
       <ConnectionConfig
         defaultValue={data.source.connConfig}
@@ -214,7 +214,7 @@ const DataRecorderItem = ({
             label="Protocol"
             defaultValue={data.forward.protocol}
             onChange={(v) => onChange("forward.protocol", v)}
-            options={["MQTT", "MQTTS"]}
+            options={["MQTT", "MQTTS", "Kafka"]}
           />
           <ConnectionConfig
             defaultValue={data.forward.connConfig}

@@ -1,4 +1,4 @@
-const { ENACTDB, ActuatorSchema, SensorSchema } = require("../enact-mongoose");
+const { DATABASE, ActuatorSchema, SensorSchema } = require("../mongoose");
 const Thing = require("./Thing");
 const { ONLINE, OFFLINE, SIMULATING } = require("../DeviceStatus");
 /**
@@ -12,7 +12,7 @@ const { ONLINE, OFFLINE, SIMULATING } = require("../DeviceStatus");
 class DataGenerator extends Thing {
   constructor(id) {
     super(id);
-    this.enactDB = null;
+    this.db = null;
     this.dbConfig = null;
   }
 
@@ -31,7 +31,7 @@ class DataGenerator extends Thing {
     }
 
     if (dbConfig.username && dbConfig.password) {
-      this.enactDB = new ENACTDB(
+      this.db = new DATABASE(
         dbConfig.host,
         dbConfig.port,
         dbConfig.dbname,
@@ -41,10 +41,10 @@ class DataGenerator extends Thing {
         }
       );
     } else {
-      this.enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname);
+      this.db = new DATABASE(dbConfig.host, dbConfig.port, dbConfig.dbname);
     }
 
-    this.enactDB.connect((error) => {
+    this.db.connect((error) => {
       if (error) {
         console.log(
           "[Data-Generator] ERROR: Failed to connect to database",
@@ -65,7 +65,7 @@ class DataGenerator extends Thing {
    */
   stop() {
     if (this.status === ONLINE || this.status === SIMULATING) {
-      this.enactDB.close();
+      this.db.close();
     }
     super.stop();
   }
