@@ -5,7 +5,7 @@ import VERSION from "../../VERSION";
 const { Footer } = Layout;
 const TSFooter = () => (
   <Footer style={{ textAlign: "center", marginTop: "30px" }}>
-    ENACT©{new Date().getFullYear()} Created by{" "}
+    PRECINCT©{new Date().getFullYear()} Created by{" "}
     <a href="https://www.montimage.com">Montimage</a>. Version {VERSION}
   </Footer>
 );
