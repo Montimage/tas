@@ -2,6 +2,59 @@
 
 Test and Simulation enabler
 
+## How to update the GUI of React App?
+
+```
+// Clone the new repo
+git clone https://manhdung_nguyen@bitbucket.org/montimage/test_and_simulation.git mmt-tas
+
+// Install packages
+$ cd mmt-tas/src/client
+$ npm install
+
+// Run the build script -> may get some errors concerning the dependencies, e.g., eslint
+$ npm run-script build
+
+// Fix errors by adding the file ".env"
+$ cat .env
+SKIP_PREFLIGHT_CHECK=true
+
+// Also need to run the following command to update browserslist
+$ npx browserslist@latest --update-db
+
+// Rerun the build script after changes
+$ npm run-script build
+
+> client@0.1.0 build /home/strongcourage/mmt-tas/src/client
+> react-scripts build && rm -r ../public &&  mv build ../public
+
+Creating an optimized production build...
+Compiled with warnings.
+...
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+File sizes after gzip:
+
+  651.49 KB  build/static/js/2.ce71c2e1.chunk.js
+  69.73 KB   build/static/css/2.cf6a4fd5.chunk.css
+  29.8 KB    build/static/js/main.da005dba.chunk.js
+  773 B      build/static/js/runtime-main.09b85ec0.js
+  561 B      build/static/css/main.e5723f0c.chunk.css
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  serve -s build
+
+Find out more about deployment here:
+
+  bit.ly/CRA-deploy
+```
+
 ## Use docker image
 
 Refer: `https://hub.docker.com/r/montimage/iot_test_and_simulation`
