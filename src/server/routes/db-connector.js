@@ -60,7 +60,7 @@ const getDBClient = (callback, reload = false) => {
               password
             };
           }
-          dbClient = new ENACTDB(host, port, dbname, auth);
+          dbClient = new DATABASE(host, port, dbname, auth);
           dbClient.connect((err2) => {
             if (err2) {
               console.error('[SERVER] Cannot connect to the database');
