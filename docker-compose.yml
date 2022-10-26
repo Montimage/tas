@@ -20,6 +20,17 @@ services:
       netbackend:
         ipv4_address: 192.168.0.4
 
+  node-red:
+    image: nodered/node-red:latest
+    container_name: node-red
+    ports:
+      - "1880:1880"
+    networks:
+      netbackend:
+        ipv4_address: 192.168.0.2
+    volumes:
+      - node-red-data:/data
+
   mmt-tas:
     networks:
       netbackend:
@@ -36,3 +47,4 @@ services:
 
 volumes:
   db:
+  node-red-data:
