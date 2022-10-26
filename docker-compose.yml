@@ -1,0 +1,38 @@
+version: "3.7"
+
+networks:
+  netbackend:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.0.0/24
+
+services:
+  mongodb:
+    image: mongo
+    container_name: mongo
+    restart: unless-stopped
+    ports:
+      - 27017:27017
+    volumes:
+      - db:/data/db
+    networks:
+      netbackend:
+        ipv4_address: 192.168.0.4
+
+  mmt-tas:
+    networks:
+      netbackend:
+        ipv4_address: 192.168.0.3
+    depends_on:
+      - mongodb
+    container_name: mmt-tas
+    image: strongcourage/precinct-mmt-tas:v0.1
+    #build: .
+    ports:
+      - 8080:31057
+    stdin_open: true
+    tty: true
+
+volumes:
+  db:
