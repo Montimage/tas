@@ -1,8 +1,15 @@
-FROM node:13-alpine
+FROM node:18-alpine
 # Create app directory
 WORKDIR /usr/src/app
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
+
+# Install mqtt-broker
+RUN apk --no-cache add mosquitto
+
+# Install nodered
+RUN npm install -g --unsafe-perm node-red
+RUN cd /usr/local/lib/node_modules/node-red && npm install node-red-dashboard node-red-mongodb
+
+# Install Tas
 # where available (npm@5+)
 COPY package*.json ./
 
@@ -11,5 +18,14 @@ RUN npm install --only=production
 # RUN npm ci --only=production
 # Bundle app source
 COPY . .
-EXPOSE 31057
-CMD [ "node", "src/server/app.js" ]
+# Install supervisord
+RUN apk --no-cache add supervisor
+
+# Copy supervisord.conf file
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Expose ports for Mosquitto and Node-RED
+EXPOSE 1883 1880 3004
+
+# Start supervisord
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
