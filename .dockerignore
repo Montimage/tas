@@ -4,7 +4,7 @@ npm-debug.log
 docs/
 docker/
 genes-models/
-node-red-flows/
 light-controller.png
 src/client/
 src/server/logs/
+homeio-models/
