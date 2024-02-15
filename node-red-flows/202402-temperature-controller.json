@@ -1,0 +1,402 @@
+[
+    {
+        "id": "93a81233.5770c",
+        "type": "tab",
+        "label": "Temperature-Controller",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "ecbcdf2b2627b80d",
+        "type": "group",
+        "z": "93a81233.5770c",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "f86cf3c.9d0cd1",
+            "91f4da28.e00078",
+            "2cd368d.858c598",
+            "e5476d3f.75691",
+            "38d3ae56.84d542",
+            "df86bca7.3591b",
+            "0dd880d681b8fa46"
+        ],
+        "x": 154,
+        "y": 319,
+        "w": 992,
+        "h": 302
+    },
+    {
+        "id": "0dfb87812dcd6912",
+        "type": "group",
+        "z": "93a81233.5770c",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "ef7e0c5830938b1e",
+            "6dcedd0d27c956e3",
+            "228de06468291048",
+            "867597e32faa8511",
+            "c7b28769d937d4b1",
+            "8a4e77d4b0150acd"
+        ],
+        "x": 154,
+        "y": 639,
+        "w": 992,
+        "h": 402
+    },
+    {
+        "id": "f86cf3c.9d0cd1",
+        "type": "mqtt in",
+        "z": "93a81233.5770c",
+        "g": "ecbcdf2b2627b80d",
+        "name": "Sensors' data input",
+        "topic": "sensors/#",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "a68d2dd8.5b2a7",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 270,
+        "y": 460,
+        "wires": [
+            [
+                "91f4da28.e00078"
+            ]
+        ]
+    },
+    {
+        "id": "91f4da28.e00078",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "g": "ecbcdf2b2627b80d",
+        "name": "Update Temperature",
+        "func": "const data = JSON.parse(msg.payload);\nconsole.log(data)\nif (data){\n    const {values} = data;\n    if (values) {\n        const {temp} = values;    \n        if (temp) {\n            msg.payload = Math.round(temp.value);\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 460,
+        "wires": [
+            [
+                "2cd368d.858c598",
+                "df86bca7.3591b"
+            ]
+        ]
+    },
+    {
+        "id": "2cd368d.858c598",
+        "type": "ui_gauge",
+        "z": "93a81233.5770c",
+        "g": "ecbcdf2b2627b80d",
+        "name": "Temperature",
+        "group": "bf0586c8.d88058",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "wave",
+        "title": "Temperature",
+        "label": "C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "50",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 750,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "e5476d3f.75691",
+        "type": "mqtt out",
+        "z": "93a81233.5770c",
+        "g": "ecbcdf2b2627b80d",
+        "name": "",
+        "topic": "actuators/heater",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 1040,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "38d3ae56.84d542",
+        "type": "ui_slider",
+        "z": "93a81233.5770c",
+        "g": "ecbcdf2b2627b80d",
+        "name": "Heat Controller",
+        "label": "Heat Controller",
+        "tooltip": "Control the heat level",
+        "group": "f5c6eb9af365d9ef",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "end",
+        "topic": "",
+        "topicType": "str",
+        "min": 0,
+        "max": 10,
+        "step": 1,
+        "className": "",
+        "x": 760,
+        "y": 580,
+        "wires": [
+            [
+                "e5476d3f.75691"
+            ]
+        ]
+    },
+    {
+        "id": "df86bca7.3591b",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "g": "ecbcdf2b2627b80d",
+        "name": "Temperature Calculation",
+        "func": "const currentTemp = Math.round(msg.payload/3);\nconst heatingLevel = 10 - currentTemp;\nif (heatingLevel < 0){\n    msg.payload = 0;\n} else if (heatingLevel > 10){\n    msg.payload = 10;\n} else {\n    msg.payload = heatingLevel;\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 790,
+        "y": 500,
+        "wires": [
+            [
+                "38d3ae56.84d542"
+            ]
+        ]
+    },
+    {
+        "id": "ef7e0c5830938b1e",
+        "type": "inject",
+        "z": "93a81233.5770c",
+        "d": true,
+        "g": "0dfb87812dcd6912",
+        "name": "Simulate Thermostat's value (random generated every 3s)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "3",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 420,
+        "y": 920,
+        "wires": [
+            [
+                "228de06468291048"
+            ]
+        ]
+    },
+    {
+        "id": "6dcedd0d27c956e3",
+        "type": "mqtt out",
+        "z": "93a81233.5770c",
+        "g": "0dfb87812dcd6912",
+        "name": "",
+        "topic": "sensors/temp",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "a68d2dd8.5b2a7",
+        "x": 1040,
+        "y": 820,
+        "wires": []
+    },
+    {
+        "id": "228de06468291048",
+        "type": "function",
+        "z": "93a81233.5770c",
+        "g": "0dfb87812dcd6912",
+        "name": "convert timestamp to random temperature",
+        "func": "const timestamp = msg.payload;\nmsg.payload = Math.round(timestamp % 30);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 1000,
+        "wires": [
+            [
+                "6dcedd0d27c956e3"
+            ]
+        ]
+    },
+    {
+        "id": "0dd880d681b8fa46",
+        "type": "comment",
+        "z": "93a81233.5770c",
+        "g": "ecbcdf2b2627b80d",
+        "name": "Process the input signals then give some action to actuator",
+        "info": "",
+        "x": 400,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "867597e32faa8511",
+        "type": "inject",
+        "z": "93a81233.5770c",
+        "g": "0dfb87812dcd6912",
+        "name": "Simulate a fix value of temperature (40) - click to modify the value",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "40",
+        "payloadType": "num",
+        "x": 430,
+        "y": 760,
+        "wires": [
+            [
+                "6dcedd0d27c956e3"
+            ]
+        ]
+    },
+    {
+        "id": "c7b28769d937d4b1",
+        "type": "inject",
+        "z": "93a81233.5770c",
+        "g": "0dfb87812dcd6912",
+        "name": "Simulate a fix value of temperature (10) - click to modify the value",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "10",
+        "payloadType": "num",
+        "x": 430,
+        "y": 840,
+        "wires": [
+            [
+                "6dcedd0d27c956e3"
+            ]
+        ]
+    },
+    {
+        "id": "8a4e77d4b0150acd",
+        "type": "comment",
+        "z": "93a81233.5770c",
+        "g": "0dfb87812dcd6912",
+        "name": "Simulating the input signal",
+        "info": "",
+        "x": 290,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "a68d2dd8.5b2a7",
+        "type": "mqtt-broker",
+        "name": "mosquitto-broker",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "compatmode": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "bf0586c8.d88058",
+        "type": "ui_group",
+        "name": "Sensors",
+        "tab": "13b9565e.27d32a",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": true,
+        "className": ""
+    },
+    {
+        "id": "f5c6eb9af365d9ef",
+        "type": "ui_group",
+        "name": "Actuators",
+        "tab": "13b9565e.27d32a",
+        "order": 4,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "13b9565e.27d32a",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
