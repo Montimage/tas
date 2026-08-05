@@ -8,6 +8,11 @@ const {
   readDir,
   deleteFile,
 } = require("../../core/utils");
+const {
+  isValidName,
+  resolveWithin,
+  sendBadRequest,
+} = require("./path-safety");
 const modelsPath = `${__dirname}/../data/models/`;
 let router = express.Router();
 
@@ -37,12 +42,15 @@ router.get("/:fileName", function (req, res, next) {
   const {
     fileName
   } = req.params;
-  const modelFile = `${modelsPath}${fileName}`;
+  const modelFile = resolveWithin(modelsPath, fileName);
+  if (!modelFile) {
+    return sendBadRequest(res, "Invalid model name");
+  }
   readJSONFile(modelFile, (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
       res.send({
-        error: err
+        error: "Cannot read the model file"
       });
     } else {
       res.send({
@@ -54,7 +62,10 @@ router.get("/:fileName", function (req, res, next) {
 });
 
 const duplicateModel = (fileName, res) => {
-  const modelFile = `${modelsPath}${fileName}`;
+  const modelFile = resolveWithin(modelsPath, fileName);
+  if (!modelFile) {
+    return sendBadRequest(res, "Invalid model name");
+  }
   readJSONFile(modelFile, (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
@@ -64,8 +75,15 @@ const duplicateModel = (fileName, res) => {
     } else {
       const newName = `${data.name} [Duplicated]`;
       const newModel = {...data, name: newName};
+      if (!isValidName(newName)) {
+        return sendBadRequest(res, "Invalid model name");
+      }
       const newFileName = `${newName}.json`;
-      writeToFile(`${modelsPath}${newFileName}`, JSON.stringify(newModel), (err, dupModel) => {
+      const newFile = resolveWithin(modelsPath, newFileName);
+      if (!newFile) {
+        return sendBadRequest(res, "Invalid model name");
+      }
+      writeToFile(newFile, JSON.stringify(newModel), (err, dupModel) => {
         if (err) {
           console.error("[SERVER]", err);
           res.send({
@@ -100,9 +118,19 @@ const updateModel = (model, fileName, res) => {
       error: `Invalid model ${JSON.stringify(model)}`
     });
   }
+  if (!isValidName(name)) {
+    return sendBadRequest(res, "Invalid model name");
+  }
   const newName = `${name}.json`;
+  const oldModelFile = resolveWithin(modelsPath, fileName);
+  if (!oldModelFile) {
+    return sendBadRequest(res, "Invalid model name");
+  }
+  const modelFile = resolveWithin(modelsPath, newName);
+  if (!modelFile) {
+    return sendBadRequest(res, "Invalid model name");
+  }
   if (fileName === newName) {
-    const modelFile = `${modelsPath}${fileName}`;
     writeToFile(modelFile, JSON.stringify(model), (err, data) => {
       if (err) {
         console.error("[SERVER]", err);
@@ -117,8 +145,6 @@ const updateModel = (model, fileName, res) => {
     }, true);
   }
   else {
-    const modelFile = `${modelsPath}${newName}`;
-    const oldModelFile = `${modelsPath}${fileName}`;
     writeToFile(modelFile, JSON.stringify(model), (err, data) => {
       if (err) {
         console.error("[SERVER]", err);
@@ -180,9 +206,15 @@ router.post("/", function (req, res, next) {
       error: `Invalid model ${JSON.stringify(model)}`
     });
   }
+  if (!isValidName(name)) {
+    return sendBadRequest(res, "Invalid model name");
+  }
 
   const modelFileName = `${model.name}.json`;
-  const modelFilePath = `${modelsPath}${modelFileName}`;
+  const modelFilePath = resolveWithin(modelsPath, modelFileName);
+  if (!modelFilePath) {
+    return sendBadRequest(res, "Invalid model name");
+  }
   writeToFile(modelFilePath, JSON.stringify(model), (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
@@ -202,7 +234,10 @@ router.delete("/:fileName", function (req, res, next) {
   const {
     fileName
   } = req.params;
-  const modelFile = `${modelsPath}${fileName}`;
+  const modelFile = resolveWithin(modelsPath, fileName);
+  if (!modelFile) {
+    return sendBadRequest(res, "Invalid model name");
+  }
   deleteFile(modelFile, (err) => {
     if (err) {
       console.error("[SERVER]", err);

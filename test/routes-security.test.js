@@ -1,0 +1,267 @@
+const { test, before, after } = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const express = require("express");
+const { request } = require("./_http");
+
+const modelRouter = require("../src/server/routes/model");
+const dataRecorderRouter = require("../src/server/routes/data-recorders");
+const simulationRouter = require("../src/server/routes/simulation");
+const createLogRouter = require("../src/server/routes/logs");
+
+const modelsDir = path.resolve(__dirname, "../src/server/data/models");
+const dataRecordersDir = path.resolve(__dirname, "../src/server/data/data-recorders");
+const repoPackageJson = path.resolve(__dirname, "../package.json");
+
+let server;
+let app;
+
+before(() => {
+  app = express();
+  app.use(express.json());
+  app.use("/api/models", modelRouter);
+  app.use("/api/data-recorders", dataRecorderRouter);
+  app.use("/api/simulation", simulationRouter);
+  app.use("/api/logs/simulations", createLogRouter("simulations"));
+  server = app.listen(0);
+});
+
+after(() => {
+  server.close();
+});
+
+const unique = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+const inModelsDir = (fileName) => path.join(modelsDir, fileName);
+const inRecordersDir = (fileName) => path.join(dataRecordersDir, fileName);
+
+// ---------------------------------------------------------------------------
+// Issue #1 — containment of URL-parameterised filesystem access
+// ---------------------------------------------------------------------------
+
+test("models GET rejects traversal and does not disclose server paths", async () => {
+  const attempts = [
+    "/api/models/..%2Fpackage.json",
+    "/api/models/%2e%2e%2fpackage.json",
+    "/api/models/..%2F..%2F..%2Fetc%2Fpasswd",
+  ];
+  for (const p of attempts) {
+    const res = await request(server, "GET", p);
+    assert.equal(res.status, 400, `expected 400 for ${p}, got ${res.status} (${res.raw})`);
+    assert.ok(!res.raw.includes("/home/"), `response must not leak server paths: ${res.raw}`);
+    assert.ok(!res.raw.includes("workspace"), `response must not leak server paths: ${res.raw}`);
+    assert.ok(!res.raw.includes("package.json"), `response must not leak the target: ${res.raw}`);
+  }
+});
+
+test("models GET serves a legitimate model unchanged", async () => {
+  const res = await request(server, "GET", "/api/models/202402-Temperature-Controller.json");
+  assert.equal(res.status, 200);
+  assert.equal(res.body.error, null);
+  assert.ok(res.body.model);
+  assert.equal(res.body.model.name, "Temperature-Controller");
+});
+
+test("models DELETE rejects traversal and does not delete outside files", async () => {
+  assert.ok(fs.existsSync(repoPackageJson));
+  const res = await request(server, "DELETE", "/api/models/..%2Fpackage.json");
+  assert.equal(res.status, 400);
+  assert.ok(fs.existsSync(repoPackageJson), "package.json must not be deleted");
+});
+
+test("models DELETE rejects URL-encoded separator traversal", async () => {
+  const res = await request(server, "DELETE", "/api/models/%2e%2e%2fpackage.json");
+  assert.equal(res.status, 400);
+  assert.ok(fs.existsSync(repoPackageJson), "package.json must not be deleted");
+});
+
+test("data-recorders GET rejects traversal", async () => {
+  const res = await request(server, "GET", "/api/data-recorders/models/..%2Fpackage.json");
+  assert.equal(res.status, 400);
+  assert.ok(!res.raw.includes("workspace"));
+});
+
+test("data-recorders GET serves a legitimate recorder unchanged", async () => {
+  const res = await request(server, "GET", "/api/data-recorders/models/TemperatureControllerRecorder.json");
+  assert.equal(res.status, 200);
+  assert.ok(res.body.dataRecorder);
+  assert.equal(res.body.dataRecorder.name, "Temperature Controller Recorder");
+});
+
+test("data-recorders DELETE rejects traversal and does not delete outside files", async () => {
+  const res = await request(server, "DELETE", "/api/data-recorders/models/..%2Fpackage.json");
+  assert.equal(res.status, 400);
+  assert.ok(fs.existsSync(repoPackageJson), "package.json must not be deleted");
+});
+
+test("logs GET rejects traversal and does not disclose server paths", async () => {
+  const res = await request(server, "GET", "/api/logs/simulations/..%2Fpackage.json");
+  assert.equal(res.status, 400);
+  assert.ok(!res.raw.includes("workspace"));
+  assert.ok(!res.raw.includes("package.json"));
+});
+
+test("logs DELETE rejects traversal and does not delete outside files", async () => {
+  const res = await request(server, "DELETE", "/api/logs/simulations/..%2Fpackage.json");
+  assert.equal(res.status, 400);
+  assert.ok(fs.existsSync(repoPackageJson), "package.json must not be deleted");
+});
+
+test("simulation POST /start rejects traversal in body modelFileName", async () => {
+  const res = await request(server, "POST", "/api/simulation/start", {
+    modelFileName: "..%2Fpackage.json",
+  });
+  assert.equal(res.status, 400);
+  assert.ok(fs.existsSync(repoPackageJson));
+});
+
+test("data-recorders POST /start rejects traversal in body dataRecorderFileName", async () => {
+  const res = await request(server, "POST", "/api/data-recorders/start", {
+    dataRecorderFileName: "../../package.json",
+  });
+  assert.equal(res.status, 400);
+  assert.ok(fs.existsSync(repoPackageJson));
+});
+
+// ---------------------------------------------------------------------------
+// Issue #2 — sanitise user-supplied names before deriving storage filenames
+// ---------------------------------------------------------------------------
+
+test("models POST rejects hostile names and creates no file", async () => {
+  const hostile = ["../../escape", "..%2F..%2Fescape", "a/b", "a\\b", "x".repeat(200), ".", ".."];
+  for (const name of hostile) {
+    const res = await request(server, "POST", "/api/models", {
+      model: { name, devices: [] },
+    });
+    assert.equal(res.status, 400, `expected 400 for name ${JSON.stringify(name)}`);
+  }
+  assert.ok(!fs.existsSync(path.resolve(__dirname, "../escape.json")));
+  assert.ok(!fs.existsSync(inModelsDir("escape.json")));
+  assert.ok(!fs.existsSync(path.resolve(__dirname, "../../escape.json")));
+});
+
+test("models create, read, rename and delete with valid names", async () => {
+  const name = unique("sec-model");
+  const create = await request(server, "POST", "/api/models", {
+    model: { name, devices: [] },
+  });
+  assert.equal(create.status, 200);
+  const fileName = create.body.modelFileName;
+  assert.ok(fileName, "expected a modelFileName");
+  assert.ok(fs.existsSync(inModelsDir(fileName)));
+
+  const read = await request(server, "GET", `/api/models/${fileName}`);
+  assert.equal(read.status, 200);
+  assert.equal(read.body.model.name, name);
+
+  const renamed = `${name}-renamed`;
+  const rename = await request(server, "POST", `/api/models/${fileName}`, {
+    model: { name: renamed, devices: [] },
+  });
+  assert.equal(rename.status, 200);
+  assert.ok(!fs.existsSync(inModelsDir(fileName)), "old file must be removed on rename");
+  assert.ok(fs.existsSync(inModelsDir(`${renamed}.json`)), "renamed file must exist");
+
+  const del = await request(server, "DELETE", `/api/models/${renamed}.json`);
+  assert.equal(del.status, 200);
+  assert.ok(!fs.existsSync(inModelsDir(`${renamed}.json`)));
+});
+
+test("models POST duplicate produces a readable duplicated name", async () => {
+  const name = unique("sec-dup");
+  const create = await request(server, "POST", "/api/models", {
+    model: { name, devices: [] },
+  });
+  assert.equal(create.status, 200);
+  const fileName = create.body.modelFileName;
+  try {
+    const dup = await request(server, "POST", `/api/models/${fileName}`, {
+      isDuplicated: true,
+    });
+    assert.equal(dup.status, 200);
+    const dupFileName = dup.body.modelFileName;
+    assert.ok(dupFileName.includes("[Duplicated]"), `expected [Duplicated] in ${dupFileName}`);
+    assert.ok(fs.existsSync(inModelsDir(dupFileName)));
+    await request(server, "DELETE", `/api/models/${encodeURIComponent(dupFileName)}`);
+  } finally {
+    await request(server, "DELETE", `/api/models/${fileName}`);
+  }
+});
+
+test("models rename with a hostile new name is rejected and removes nothing", async () => {
+  const name = unique("sec-rename");
+  const create = await request(server, "POST", "/api/models", {
+    model: { name, devices: [] },
+  });
+  assert.equal(create.status, 200);
+  const fileName = create.body.modelFileName;
+  try {
+    const res = await request(server, "POST", `/api/models/${fileName}`, {
+      model: { name: "../../pwned", devices: [] },
+    });
+    assert.equal(res.status, 400);
+    assert.ok(fs.existsSync(inModelsDir(fileName)), "original file must be untouched");
+    assert.ok(!fs.existsSync(path.resolve(__dirname, "../../pwned.json")));
+    assert.ok(!fs.existsSync(inModelsDir("pwned.json")));
+  } finally {
+    await request(server, "DELETE", `/api/models/${fileName}`);
+  }
+});
+
+test("data-recorders POST /models rejects hostile names and creates no file", async () => {
+  const hostile = ["../../escape", "a/b", "x".repeat(200)];
+  for (const name of hostile) {
+    const res = await request(server, "POST", "/api/data-recorders/models", {
+      dataRecorder: { name, dataRecorders: [] },
+    });
+    assert.equal(res.status, 400, `expected 400 for name ${JSON.stringify(name)}`);
+  }
+  assert.ok(!fs.existsSync(inRecordersDir("escape.json")));
+});
+
+test("data-recorders create and delete with valid names", async () => {
+  const name = unique("sec-dr");
+  const create = await request(server, "POST", "/api/data-recorders/models", {
+    dataRecorder: { name, dataRecorders: [] },
+  });
+  assert.equal(create.status, 200);
+  const fileName = create.body.dataRecorderFileName;
+  assert.ok(fs.existsSync(inRecordersDir(fileName)));
+
+  const del = await request(server, "DELETE", `/api/data-recorders/models/${fileName}`);
+  assert.equal(del.status, 200);
+  assert.ok(!fs.existsSync(inRecordersDir(fileName)));
+});
+
+test("data-recorders rename with hostile new name is rejected and removes nothing", async () => {
+  const name = unique("sec-dr-rename");
+  const create = await request(server, "POST", "/api/data-recorders/models", {
+    dataRecorder: { name, dataRecorders: [] },
+  });
+  assert.equal(create.status, 200);
+  const fileName = create.body.dataRecorderFileName;
+  try {
+    const res = await request(server, "POST", `/api/data-recorders/models/${fileName}`, {
+      dataRecorder: { name: "../../pwned", dataRecorders: [] },
+    });
+    assert.equal(res.status, 400);
+    assert.ok(fs.existsSync(inRecordersDir(fileName)), "original file must be untouched");
+    assert.ok(!fs.existsSync(inRecordersDir("pwned.json")));
+  } finally {
+    await request(server, "DELETE", `/api/data-recorders/models/${fileName}`);
+  }
+});
+
+test("data-recorders start rejects a hostile model name in the body", async () => {
+  const res = await request(server, "POST", "/api/data-recorders/start", {
+    model: { name: "../../pwned", dataRecorders: [] },
+  });
+  assert.equal(res.status, 400);
+});
+
+test("simulation start rejects a hostile topology name in the body", async () => {
+  const res = await request(server, "POST", "/api/simulation/start", {
+    model: { name: "../../pwned", devices: [] },
+  });
+  assert.equal(res.status, 400);
+});
