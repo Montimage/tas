@@ -20,16 +20,28 @@ const image = process.env.TAS_IMAGE;
 
 test("Dockerfile runs the application as the unprivileged `node` user", () => {
   const content = fs.readFileSync(dockerfile, "utf8");
-  assert.match(content, /^\s*USER\s+node\s*$/m, "Dockerfile must declare USER node");
+  assert.match(
+    content,
+    /^\s*USER\s+node\s*$/m,
+    "Dockerfile must declare USER node"
+  );
 });
 
 test(
   "built image runs its process as a non-root user",
   { skip: !image && "TAS_IMAGE not set; runtime inspect skipped" },
   () => {
-    const user = execFileSync("docker", ["inspect", "--format", "{{.Config.User}}", image], {
-      encoding: "utf8",
-    }).trim();
-    assert.equal(user, "node", `expected container user 'node', got '${user || "<root>"}'`);
+    const user = execFileSync(
+      "docker",
+      ["inspect", "--format", "{{.Config.User}}", image],
+      {
+        encoding: "utf8",
+      }
+    ).trim();
+    assert.equal(
+      user,
+      "node",
+      `expected container user 'node', got '${user || "<root>"}'`
+    );
   }
 );

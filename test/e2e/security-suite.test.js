@@ -42,7 +42,11 @@ after(async () => {
 
 test("suite drives a real running instance over HTTP", async () => {
   const res = await request(server.baseUrl, "GET", "/");
-  assert.equal(res.status, 200, "dashboard root must be served by the real instance");
+  assert.equal(
+    res.status,
+    200,
+    "dashboard root must be served by the real instance"
+  );
   const api = await request(server.baseUrl, "GET", "/api/models/");
   assert.equal(api.status, 200, "API must be reachable over HTTP");
   assert.equal(api.body.error, null);
@@ -62,36 +66,76 @@ test("path containment: models GET rejects traversal with no path disclosure", a
   ];
   for (const p of attempts) {
     const res = await request(server.baseUrl, "GET", p);
-    assert.equal(res.status, 400, `expected 400 for ${p}, got ${res.status} (${res.raw})`);
-    assert.ok(!res.raw.includes("package.json"), `must not leak target: ${res.raw}`);
-    assert.ok(!res.raw.includes("/home/"), `must not leak server paths: ${res.raw}`);
-    assert.ok(!res.raw.includes("workspace"), `must not leak server paths: ${res.raw}`);
-    assert.ok(!res.raw.includes("models/data"), `must not leak storage path: ${res.raw}`);
+    assert.equal(
+      res.status,
+      400,
+      `expected 400 for ${p}, got ${res.status} (${res.raw})`
+    );
+    assert.ok(
+      !res.raw.includes("package.json"),
+      `must not leak target: ${res.raw}`
+    );
+    assert.ok(
+      !res.raw.includes("/home/"),
+      `must not leak server paths: ${res.raw}`
+    );
+    assert.ok(
+      !res.raw.includes("workspace"),
+      `must not leak server paths: ${res.raw}`
+    );
+    assert.ok(
+      !res.raw.includes("models/data"),
+      `must not leak storage path: ${res.raw}`
+    );
   }
 });
 
 test("path containment: models GET and DELETE leave files untouched", async () => {
   assert.ok(fs.existsSync(repoPackageJson), "canary must exist");
   const beforeList = await listDir(modelsDir);
-  const del = await request(server.baseUrl, "DELETE", "/api/models/..%2Fpackage.json");
+  const del = await request(
+    server.baseUrl,
+    "DELETE",
+    "/api/models/..%2Fpackage.json"
+  );
   assert.equal(del.status, 400, "traversal delete must be rejected");
   assert.ok(fs.existsSync(repoPackageJson), "canary must NOT be deleted");
-  const get = await request(server.baseUrl, "GET", "/api/models/%2e%2e%2fpackage.json");
+  const get = await request(
+    server.baseUrl,
+    "GET",
+    "/api/models/%2e%2e%2fpackage.json"
+  );
   assert.equal(get.status, 400, "traversal read must be rejected");
   const afterList = await listDir(modelsDir);
-  assert.deepEqual(afterList, beforeList, "no file written or removed in the models dir");
+  assert.deepEqual(
+    afterList,
+    beforeList,
+    "no file written or removed in the models dir"
+  );
 });
 
 test("path containment: data-recorders GET and DELETE reject traversal", async () => {
   assert.ok(fs.existsSync(repoPackageJson));
   const beforeList = await listDir(recordersDir);
-  const get = await request(server.baseUrl, "GET", "/api/data-recorders/models/..%2Fpackage.json");
+  const get = await request(
+    server.baseUrl,
+    "GET",
+    "/api/data-recorders/models/..%2Fpackage.json"
+  );
   assert.equal(get.status, 400);
   assert.ok(!get.raw.includes("workspace"));
-  const del = await request(server.baseUrl, "DELETE", "/api/data-recorders/models/..%2Fpackage.json");
+  const del = await request(
+    server.baseUrl,
+    "DELETE",
+    "/api/data-recorders/models/..%2Fpackage.json"
+  );
   assert.equal(del.status, 400);
   assert.ok(fs.existsSync(repoPackageJson), "canary must not be deleted");
-  assert.deepEqual(await listDir(recordersDir), beforeList, "recorders dir untouched");
+  assert.deepEqual(
+    await listDir(recordersDir),
+    beforeList,
+    "recorders dir untouched"
+  );
 });
 
 test("path containment: logs GET and DELETE reject traversal across all log families", async () => {
@@ -110,17 +154,36 @@ test("path containment: logs GET and DELETE reject traversal across all log fami
 
 test("path containment: simulation start rejects a hostile modelFileName in the body", async () => {
   const res = await request(server.baseUrl, "POST", "/api/simulation/start", {
-    body: { modelFileName: "..%2Fpackage.json", model: { name: unique("sim"), devices: [] } },
+    body: {
+      modelFileName: "..%2Fpackage.json",
+      model: { name: unique("sim"), devices: [] },
+    },
   });
-  assert.equal(res.status, 400, "hostile simulation modelFileName must be rejected");
+  assert.equal(
+    res.status,
+    400,
+    "hostile simulation modelFileName must be rejected"
+  );
   assert.ok(fs.existsSync(repoPackageJson));
 });
 
 test("path containment: data-recorders start rejects a hostile dataRecorderFileName in the body", async () => {
-  const res = await request(server.baseUrl, "POST", "/api/data-recorders/start", {
-    body: { dataRecorderFileName: "../../package.json", model: { name: unique("dr"), dataRecorders: [] } },
-  });
-  assert.equal(res.status, 400, "hostile recorder dataRecorderFileName must be rejected");
+  const res = await request(
+    server.baseUrl,
+    "POST",
+    "/api/data-recorders/start",
+    {
+      body: {
+        dataRecorderFileName: "../../package.json",
+        model: { name: unique("dr"), dataRecorders: [] },
+      },
+    }
+  );
+  assert.equal(
+    res.status,
+    400,
+    "hostile recorder dataRecorderFileName must be rejected"
+  );
   assert.ok(fs.existsSync(repoPackageJson));
 });
 
@@ -143,11 +206,25 @@ test("name sanitisation: creating a model with a hostile name writes no file", a
     const res = await request(server.baseUrl, "POST", "/api/models", {
       body: { model: { name, devices: [] } },
     });
-    assert.equal(res.status, 400, `expected 400 for name ${JSON.stringify(name)}`);
+    assert.equal(
+      res.status,
+      400,
+      `expected 400 for name ${JSON.stringify(name)}`
+    );
   }
-  assert.ok(!fs.existsSync(inModelsDir("escape.json")), "escape.json must not exist");
-  assert.ok(!fs.existsSync(path.join(repoRoot, "escape.json")), "no repo-root escape");
-  assert.deepEqual(await listDir(modelsDir), beforeList, "no file written or removed");
+  assert.ok(
+    !fs.existsSync(inModelsDir("escape.json")),
+    "escape.json must not exist"
+  );
+  assert.ok(
+    !fs.existsSync(path.join(repoRoot, "escape.json")),
+    "no repo-root escape"
+  );
+  assert.deepEqual(
+    await listDir(modelsDir),
+    beforeList,
+    "no file written or removed"
+  );
 });
 
 test("name sanitisation: hostile rename is rejected and leaves the original file", async () => {
@@ -158,13 +235,27 @@ test("name sanitisation: hostile rename is rejected and leaves the original file
   assert.equal(created.status, 200);
   const fileName = created.body.modelFileName;
   try {
-    const res = await request(server.baseUrl, "POST", `/api/models/${fileName}`, {
-      body: { model: { name: "../../pwned", devices: [] } },
-    });
+    const res = await request(
+      server.baseUrl,
+      "POST",
+      `/api/models/${fileName}`,
+      {
+        body: { model: { name: "../../pwned", devices: [] } },
+      }
+    );
     assert.equal(res.status, 400, "hostile rename must be rejected");
-    assert.ok(fs.existsSync(inModelsDir(fileName)), "original file must be untouched");
-    assert.ok(!fs.existsSync(inModelsDir("pwned.json")), "no pwned.json created");
-    assert.ok(!fs.existsSync(path.join(repoRoot, "pwned.json")), "no repo-root pwned.json");
+    assert.ok(
+      fs.existsSync(inModelsDir(fileName)),
+      "original file must be untouched"
+    );
+    assert.ok(
+      !fs.existsSync(inModelsDir("pwned.json")),
+      "no pwned.json created"
+    );
+    assert.ok(
+      !fs.existsSync(path.join(repoRoot, "pwned.json")),
+      "no repo-root pwned.json"
+    );
   } finally {
     await request(server.baseUrl, "DELETE", `/api/models/${fileName}`);
   }
@@ -205,7 +296,11 @@ test("CORS: OPTIONS preflight from an allowed origin is accepted", async () => {
       "Access-Control-Request-Method": "GET",
     },
   });
-  assert.equal(res.status, 204, "preflight from allowed origin must be accepted");
+  assert.equal(
+    res.status,
+    204,
+    "preflight from allowed origin must be accepted"
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -214,7 +309,10 @@ test("CORS: OPTIONS preflight from an allowed origin is accepted", async () => {
 
 test("legitimate topology lifecycle: list, read, create, rename, delete", async () => {
   const name = unique("topo");
-  assert.equal((await request(server.baseUrl, "GET", "/api/models/")).status, 200);
+  assert.equal(
+    (await request(server.baseUrl, "GET", "/api/models/")).status,
+    200
+  );
 
   const create = await request(server.baseUrl, "POST", "/api/models", {
     body: { model: { name, devices: [] } },
@@ -230,14 +328,32 @@ test("legitimate topology lifecycle: list, read, create, rename, delete", async 
   assert.equal(read.body.model.name, name);
 
   const renamed = `${name}-renamed`;
-  const rename = await request(server.baseUrl, "POST", `/api/models/${fileName}`, {
-    body: { model: { name: renamed, devices: [] } },
-  });
+  const rename = await request(
+    server.baseUrl,
+    "POST",
+    `/api/models/${fileName}`,
+    {
+      body: { model: { name: renamed, devices: [] } },
+    }
+  );
   assert.equal(rename.status, 200, "rename must succeed");
-  assert.ok(!fs.existsSync(inModelsDir(fileName)), "old file must be removed on rename");
-  assert.ok(fs.existsSync(inModelsDir(`${renamed}.json`)), "renamed file must exist");
+  assert.ok(
+    !fs.existsSync(inModelsDir(fileName)),
+    "old file must be removed on rename"
+  );
+  assert.ok(
+    fs.existsSync(inModelsDir(`${renamed}.json`)),
+    "renamed file must exist"
+  );
 
-  const del = await request(server.baseUrl, "DELETE", `/api/models/${renamed}.json`);
+  const del = await request(
+    server.baseUrl,
+    "DELETE",
+    `/api/models/${renamed}.json`
+  );
   assert.equal(del.status, 200, "delete must succeed");
-  assert.ok(!fs.existsSync(inModelsDir(`${renamed}.json`)), "deleted file must be gone");
+  assert.ok(
+    !fs.existsSync(inModelsDir(`${renamed}.json`)),
+    "deleted file must be gone"
+  );
 });

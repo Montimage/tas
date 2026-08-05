@@ -61,7 +61,12 @@ function request(baseUrl, method, requestPath, { body, headers = {} } = {}) {
           } catch (_) {
             /* not JSON */
           }
-          resolve({ status: res.statusCode, headers: res.headers, raw, body: parsed });
+          resolve({
+            status: res.statusCode,
+            headers: res.headers,
+            raw,
+            body: parsed,
+          });
         });
       }
     );
@@ -156,7 +161,8 @@ async function startServer(env = {}) {
 }
 
 /** A unique, filesystem-safe identifier for created test artifacts. */
-const unique = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+const unique = (prefix) =>
+  `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
 const inModelsDir = (fileName) => path.join(modelsDir, fileName);
 const inRecordersDir = (fileName) => path.join(recordersDir, fileName);

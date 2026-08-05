@@ -45,6 +45,14 @@ test("burst traffic is rate-limited (429) rather than served", async () => {
   }
   // With a limit of 3, requests 1-3 are served; the burst past the limit is
   // rejected rather than served.
-  assert.deepEqual(statuses.slice(0, 3), [200, 200, 200], "first requests must be served");
-  assert.deepEqual(statuses.slice(3), [429, 429, 429], "burst traffic must be rejected");
+  assert.deepEqual(
+    statuses.slice(0, 3),
+    [200, 200, 200],
+    "first requests must be served"
+  );
+  assert.deepEqual(
+    statuses.slice(3),
+    [429, 429, 429],
+    "burst traffic must be rejected"
+  );
 });
