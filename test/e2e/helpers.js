@@ -167,6 +167,36 @@ const unique = (prefix) =>
 const inModelsDir = (fileName) => path.join(modelsDir, fileName);
 const inRecordersDir = (fileName) => path.join(recordersDir, fileName);
 
+/**
+ * Every location a traversal payload in this suite would land a file if
+ * containment regressed. The storage root is `src/server/data/models`, so
+ * `../` escapes to `src/server/data` and `../../` to `src/server` - NOT to the
+ * repo root. Canaries must check the real targets, otherwise a successful
+ * escape passes unnoticed.
+ * @param {String} baseName Artifact name without the `.json` extension
+ * @returns {String[]} Absolute paths that must never exist after a hostile name
+ */
+const escapeArtifacts = (baseName) => [
+  path.join(modelsDir, `${baseName}.json`),
+  path.resolve(modelsDir, `../${baseName}.json`),
+  path.resolve(modelsDir, `../../${baseName}.json`),
+  path.resolve(repoRoot, `${baseName}.json`),
+];
+
+/**
+ * Delete a file if it exists. The suite is the regression gate and is expected
+ * to be red until the containment fixes land, so it must clean up anything an
+ * unfixed instance escaped into the source tree rather than leaving it behind.
+ * @param {String} filePath Absolute path to remove
+ */
+const removeIfPresent = (filePath) => {
+  try {
+    fs.unlinkSync(filePath);
+  } catch (_) {
+    /* absent, which is the expected case */
+  }
+};
+
 /** Snapshot the list of files in a directory (for "nothing written/removed" asserts). */
 const listDir = (dir) =>
   new Promise((resolve) =>
@@ -185,5 +215,7 @@ module.exports = {
   unique,
   inModelsDir,
   inRecordersDir,
+  escapeArtifacts,
+  removeIfPresent,
   listDir,
 };

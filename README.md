@@ -57,8 +57,9 @@ the image) and drives it over HTTP:
 
 ```
 # HTTP assertions: path containment, name sanitisation, CORS, rate/body limits,
-# and legitimate topology flows
-node --test test/e2e/security-suite.test.js test/e2e/limits.test.js
+# and legitimate topology flows. Run serialised - each file spawns its own real
+# instance against the same storage root.
+node --test-concurrency=1 --test test/e2e/security-suite.test.js test/e2e/limits.test.js
 
 # Container assertion: the built image must run its processes as a non-root user
 docker build -t montimage/tas:e2e .

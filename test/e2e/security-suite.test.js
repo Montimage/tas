@@ -10,20 +10,23 @@
 const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const path = require("node:path");
 const {
   startServer,
   request,
   unique,
-  repoRoot,
   repoPackageJson,
   modelsDir,
   recordersDir,
   inModelsDir,
+  escapeArtifacts,
+  removeIfPresent,
   listDir,
   allowedOrigin,
   hostileOrigin,
 } = require("./helpers");
+
+/** Hostile base names this suite tries to write outside the storage root. */
+const escapeNames = ["escape", "pwned"];
 
 let server;
 
@@ -34,6 +37,12 @@ before(async () => {
 
 after(async () => {
   if (server) await server.stop();
+  // This suite is the regression gate, so it runs red against an unfixed
+  // instance - which really does escape files into the source tree. Remove
+  // them so a failing run never leaves the checkout dirty.
+  for (const name of escapeNames) {
+    escapeArtifacts(name).forEach(removeIfPresent);
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -212,14 +221,14 @@ test("name sanitisation: creating a model with a hostile name writes no file", a
       `expected 400 for name ${JSON.stringify(name)}`
     );
   }
-  assert.ok(
-    !fs.existsSync(inModelsDir("escape.json")),
-    "escape.json must not exist"
-  );
-  assert.ok(
-    !fs.existsSync(path.join(repoRoot, "escape.json")),
-    "no repo-root escape"
-  );
+  // Check every directory a `../` payload actually reaches from the storage
+  // root, not just the storage root and the repo root.
+  for (const artifact of escapeArtifacts("escape")) {
+    assert.ok(
+      !fs.existsSync(artifact),
+      `hostile name must not write ${artifact}`
+    );
+  }
   assert.deepEqual(
     await listDir(modelsDir),
     beforeList,
@@ -248,14 +257,12 @@ test("name sanitisation: hostile rename is rejected and leaves the original file
       fs.existsSync(inModelsDir(fileName)),
       "original file must be untouched"
     );
-    assert.ok(
-      !fs.existsSync(inModelsDir("pwned.json")),
-      "no pwned.json created"
-    );
-    assert.ok(
-      !fs.existsSync(path.join(repoRoot, "pwned.json")),
-      "no repo-root pwned.json"
-    );
+    for (const artifact of escapeArtifacts("pwned")) {
+      assert.ok(
+        !fs.existsSync(artifact),
+        `hostile rename must not write ${artifact}`
+      );
+    }
   } finally {
     await request(server.baseUrl, "DELETE", `/api/models/${fileName}`);
   }
