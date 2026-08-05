@@ -4,7 +4,8 @@
   "description": "ENACT Test and Simulation Enabler",
   "scripts": {
     "start": "NODE_ENV=production node src/server/app.js",
-    "server": "nodemon src/server/app.js"
+    "server": "nodemon src/server/app.js",
+    "test": "node --test test/*.test.js"
   },
   "nodemonConfig": {
     "verbose": true,
@@ -41,6 +42,7 @@
     "debug": "~2.6.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-rate-limit": "^8.6.2",
     "file-loader": "^5.1.0",
     "fs": "0.0.1-security",
     "fstream": "^1.0.12",
