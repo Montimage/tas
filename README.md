@@ -50,6 +50,26 @@ docker run --name mongo-server -d -p 27017:27017 mongo
 
 ## DEVELOPMENT
 
+### Run the E2E security regression suite
+
+The suite starts a real server instance (and, for the container checks, builds
+the image) and drives it over HTTP:
+
+```
+# HTTP assertions: path containment, name sanitisation, CORS, rate/body limits,
+# and legitimate topology flows
+node --test test/e2e/security-suite.test.js test/e2e/limits.test.js
+
+# Container assertion: the built image must run its processes as a non-root user
+docker build -t montimage/tas:e2e .
+TAS_IMAGE=montimage/tas:e2e node --test test/e2e/container-nonroot.test.js
+```
+
+These assertions require the security fixes (path containment, CORS allowlist,
+body-size and rate limits, non-root image) to be present, and are enforced in
+CI on every push to `master` and every pull request via
+`.github/workflows/e2e-security.yml`.
+
 ### Create docker image for multiple platform
 Source: https://www.docker.com/blog/multi-arch-images/
 - Enable `buildx`:
