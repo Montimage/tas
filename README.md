@@ -44,6 +44,7 @@ _Start the application_
 ```
 npm run start
 ```
+
 Access to the Test and Simulation Enabler dashboard at: `http://your_ip:3004`
 
 ## Connect to a MongoDB Server
@@ -54,6 +55,7 @@ After starting the application, the Data Storage need to be configured to connec
 - Go to the Tab `Data Storage` and update the parameter for connecting to a MongoDB Server
 
 A MongoDB Server can be set up easily with docker:
+
 ```
 docker run --name mongo-server -d -p 27017:27017 mongo
 ```
@@ -61,15 +63,20 @@ docker run --name mongo-server -d -p 27017:27017 mongo
 ## DEVELOPMENT
 
 ### Create docker image for multiple platform
+
 Source: https://www.docker.com/blog/multi-arch-images/
+
 - Enable `buildx`:
 - Create new build engine:
+
 ```
 docker buildx create --name mybuilder
 docker buildx use mybuilder
 docker buildx inspect --bootstrap
 ```
+
 - Build a new image for multiple platform
+
 ```
 docker buildx build --platform linux/amd64,linux/arm64 -t image_name:tag --push .
 ```
@@ -123,4 +130,5 @@ ask that you **do not** disclose unknown issues on public channels before they
 are triaged.
 
 # License
+
 Montimage
