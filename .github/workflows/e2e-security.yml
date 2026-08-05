@@ -1,0 +1,45 @@
+name: E2E Security Regression Suite
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
+jobs:
+  http-suite:
+    name: E2E over HTTP (containment, sanitisation, CORS, limits, legit flows)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the end-to-end security suite over HTTP
+        run: node --test test/e2e/security-suite.test.js test/e2e/limits.test.js
+
+  container:
+    name: Container image runs as non-root
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build the TaS container image
+        run: docker build -t montimage/tas:e2e .
+
+      - name: Assert the built image runs as a non-root user
+        run: node --test test/e2e/container-nonroot.test.js
+        env:
+          TAS_IMAGE: montimage/tas:e2e
