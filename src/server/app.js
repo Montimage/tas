@@ -45,8 +45,12 @@ app.use(function corsControl(req, res, next) {
     return next();
   }
 
-  const selfOrigin = req.protocol + '://' + req.get('host');
-  const isSameOrigin = origin === selfOrigin;
+  // Compare against the Host header only (not the scheme). Behind a
+  // TLS-terminating reverse proxy, req.protocol reports 'http' while the
+  // browser's Origin carries the external scheme (https); comparing the
+  // full scheme+host would falsely reject legitimately same-origin requests.
+  const authorityMatch = /^https?:\/\/([^/]+)/.exec(origin);
+  const isSameOrigin = authorityMatch !== null && authorityMatch[1] === req.get('host');
 
   if (isSameOrigin) {
     res.setHeader('Vary', 'Origin');
