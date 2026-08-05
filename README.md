@@ -29,6 +29,14 @@ _Customize dashboard address_
 Create `.env` file: `cp env.example .env`
 Update the `host` and `port` then start the application.
 
+> **Configuration and credentials**
+> The `.env` file is git-ignored and **never tracked** in the repository or
+> baked into the published Docker image (it is listed in `.dockerignore`).
+> It is the documented place for machine-specific values and any credentials
+> (MongoDB URIs, MQTT passwords, API keys). Use `cp env.example .env` to create
+> it locally, and never commit a `.env` file. Without a local `.env`, the
+> server starts with the safe defaults from `env.example`.
+
 _Start the application_
 
 ```
