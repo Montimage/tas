@@ -17,6 +17,11 @@ const {
   documentSchema,
   safeNameSchema,
   fileNameParam,
+  fileNameMaxLength,
+  dataStorageSchema,
+  idSchema,
+  textSchema,
+  timestampSchema,
 } = require("../middleware/validate");
 
 let router = express.Router();
@@ -31,17 +36,64 @@ const modelsPath = `${__dirname}/../data/models/`;
 // `.json` name the dashboard started it with.
 const simulationFileNameParam = fileNameParam(".json");
 
+/**
+ * The fields a run is configured with, wherever they arrive from.
+ *
+ * `Simulation` reads each of these straight off the model it is given and then
+ * lets `options` overwrite it, so the two carry the same values and are held to
+ * the same shapes. Every one of them reaches something that cares about its
+ * type: `datasetId` becomes the MongoDB filter the original events are read
+ * with, `newDataset.id` becomes the filter the generated ones are read back
+ * with, and `dataStorage` decides which database the whole run connects to.
+ * Left undeclared they arrive as any type at all, which is how a filter turns
+ * into `{ $ne: null }` and a connection turns towards a host of the caller's
+ * choosing.
+ */
+const simulationRunFields = {
+  datasetId: idSchema.allow(null),
+  // The dataset the run writes into. Persisted, so it tolerates the fields a
+  // stored document carries back, but its `id` still has to be a string.
+  newDataset: documentSchema({
+    id: idSchema,
+    name: textSchema.allow(null, ""),
+    description: textSchema.allow(null, ""),
+    tags: Joi.array().items(Joi.string().max(256)),
+    source: textSchema.allow(null, ""),
+  }).allow(null),
+  replayOptions: documentSchema({
+    startTime: timestampSchema,
+    endTime: timestampSchema,
+    repeat: Joi.boolean(),
+    speedup: Joi.number().positive(),
+  }).allow(null),
+  dataStorage: dataStorageSchema.allow(null),
+  // Interpolated into a log filename by the devops flow, so it is held to the
+  // filename allowlist rather than only to being a string.
+  testCampaignId: safeNameSchema.allow(null),
+  evaluationParameters: documentSchema({
+    threshold: Joi.number(),
+    eventType: Joi.string().max(256),
+    metricType: Joi.string().max(256),
+  }).allow(null),
+};
+
 const simulationModelBody = documentSchema({
   name: safeNameSchema.required(),
   devices: Joi.array().items(Joi.object()).required(),
-  dataStorage: Joi.object(),
+  // A stored topology carries many fields beyond these, so unknown keys still
+  // pass — but not these ones: they feed the sinks above, and leaving them to
+  // `.unknown(true)` is exactly what let them arrive with any type.
+  ...simulationRunFields,
 });
 
 // A run starts either from a stored model or from an inline one.
 const simulationStartBody = Joi.object({
   model: simulationModelBody,
-  modelFileName: Joi.string().max(128),
-  options: Joi.object(),
+  modelFileName: Joi.string().max(fileNameMaxLength(".json")),
+  // Unknown keys are rejected here rather than tolerated: unlike a stored
+  // topology, `options` is assembled by the caller for this one request, so
+  // there is no round-tripped field to make room for.
+  options: Joi.object(simulationRunFields),
 })
   .or("model", "modelFileName")
   .required();

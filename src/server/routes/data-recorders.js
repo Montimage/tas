@@ -21,6 +21,7 @@ const {
   documentSchema,
   safeNameSchema,
   fileNameParam,
+  fileNameMaxLength,
 } = require("../middleware/validate");
 const dataRecordersPath = `${__dirname}/../data/data-recorders/`;
 let router = express.Router();
@@ -56,7 +57,7 @@ const dataRecorderUpdateBody = Joi.object({
 // from neither.
 const dataRecorderStartBody = Joi.object({
   model: dataRecorderBody,
-  dataRecorderFileName: Joi.string().max(128),
+  dataRecorderFileName: Joi.string().max(fileNameMaxLength(".json")),
 })
   .or("model", "dataRecorderFileName")
   .required();

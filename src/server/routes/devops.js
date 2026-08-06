@@ -38,11 +38,14 @@ let runningStatus = null;
 // ---------------------------------------------------------------------------
 
 // `testCampaignId` becomes part of a log filename, so it is held to the
-// filename allowlist here rather than only where the path is derived.
+// filename allowlist here rather than only where the path is derived. A
+// configuration may carry no campaign at all, but an empty one is not the same
+// thing as an absent one: it names no campaign and would interpolate into a
+// filename as nothing, so `null` is accepted and `""` is not.
 const devopsBody = Joi.object({
   devops: documentSchema({
     webhookURL: urlSchema.allow(null, ""),
-    testCampaignId: safeNameSchema.allow(null, ""),
+    testCampaignId: safeNameSchema.allow(null),
     dataStorage: Joi.object().allow(null),
     evaluationParameters: Joi.object().allow(null),
   }).required(),
@@ -58,13 +61,6 @@ router.get("/status", validate(), (req, res, next) => {
   });
 });
 
-/**
- * A test campaign id is optional in the stored configuration, but when one is
- * present it is interpolated into a log filename, so it must survive the same
- * allowlist every other name-derived path in the API goes through.
- * @param {*} testCampaignId The value from the devops configuration
- * @returns {Boolean} true when the value is absent or safe to derive a name from
- */
 let _devops = null;
 
 const getDevops = (callback) => {

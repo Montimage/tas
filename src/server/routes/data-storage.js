@@ -9,7 +9,7 @@ const {
 let router = express.Router();
 const {
   validate,
-  documentSchema,
+  dataStorageSchema,
 } = require("../middleware/validate");
 
 // ---------------------------------------------------------------------------
@@ -17,25 +17,11 @@ const {
 // ---------------------------------------------------------------------------
 
 // The persisted shape `db-connector` reads back: a protocol plus the
-// connection settings it destructures as `connConfig`.
-const connConfigSchema = documentSchema({
-  // Deliberately a character allowlist rather than a strict hostname check:
-  // it still rules out the separators that would let a host rewrite the
-  // connection string, without rejecting the service names an operator may
-  // legitimately have configured.
-  host: Joi.string().pattern(/^[A-Za-z0-9._-]+$/).max(253).required(),
-  port: Joi.number().integer().min(1).max(65535).required(),
-  username: Joi.string().max(256).allow(null, ""),
-  password: Joi.string().max(256).allow(null, ""),
-  dbname: Joi.string().max(256).allow(null, ""),
-  options: Joi.object().allow(null),
-}).required();
-
+// connection settings it destructures as `connConfig`. Declared in the
+// middleware because a simulation may carry a connection of its own, and the
+// two paths must agree on what a safe connection looks like.
 const dataStorageBody = Joi.object({
-  dataStorage: documentSchema({
-    protocol: Joi.string().valid("MONGODB").required(),
-    connConfig: connConfigSchema,
-  }).required(),
+  dataStorage: dataStorageSchema.required(),
 }).required();
 
 router.get("/", validate(), function (req, res, next) {

@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const { NAME_MAX_LENGTH } = require("../routes/path-safety");
 
 /**
  * Request sections that carry externally controlled input, with the validation
@@ -129,6 +130,17 @@ const MONGO_OPERATOR_KEY = /^\$|\./;
  * `{ $ne: ... }` are the shapes that turn an update or a filter into something
  * the caller never should have been able to express.
  *
+ * The rule applies to the document's *own* keys and does not recurse. `{ $ne:
+ * 1 }` and `{ "a.b": 1 }` are rejected on the document itself, but a field
+ * declared as a bare `Joi.object()` — `event.values`, the evaluation
+ * parameters — still accepts `{ $ne: 1 }` one level down. That is deliberate,
+ * and it is sufficient for the sinks this codebase actually has: the update
+ * filters are `{ _id }` and `{ id }`, built from declared scalars, and an
+ * operator key nested inside a free-form value is written as a literal field
+ * name rather than interpreted as an operator. Making the rule recursive would
+ * change how those free-form payloads validate, so it is out of scope here —
+ * a field that does reach a filter is declared with its own type instead.
+ *
  * @param {Object} keys Declared fields of the document
  * @returns {Joi.Schema}
  */
@@ -138,18 +150,33 @@ const documentSchema = (keys) =>
 /**
  * Schema for a name that is used to derive a filename on disk.
  *
- * Deliberately the same allowlist as `routes/path-safety.js`: a name that this
- * schema accepts is a name that containment will also accept, so the two never
- * disagree about what is safe.
+ * Deliberately the same allowlist and the same length cap as
+ * `routes/path-safety.js`: a name that this schema accepts is a name that
+ * containment will also accept, so the two never disagree about what is safe.
  */
 const safeNameSchema = Joi.string()
   .pattern(/^[A-Za-z0-9][A-Za-z0-9 _\-.()\[\]+@'#]*$/)
-  .max(128)
+  .max(NAME_MAX_LENGTH)
   .messages({
     "string.pattern.base":
       "{{#label}} must start with an alphanumeric character and contain only safe characters",
-    "string.max": "{{#label}} must not exceed 128 characters",
+    "string.max": "{{#label}} must not exceed {{#limit}} characters",
   });
+
+/**
+ * The longest a filename derived from a name may be.
+ *
+ * A stored file is named `${name}${extension}`, so it is always longer than the
+ * name it was derived from. Capping the filename at `NAME_MAX_LENGTH` too would
+ * accept a name on the write path and then reject the very filename that write
+ * produced, leaving a file on disk that no route could read, update or delete.
+ * The two caps are counted against different strings and must differ by exactly
+ * the extension.
+ *
+ * @param {String} extension Extension including the dot, e.g. `.json`
+ * @returns {Number} Maximum length of the derived filename
+ */
+const fileNameMaxLength = (extension) => NAME_MAX_LENGTH + extension.length;
 
 /**
  * Build a schema for a filename parameter with a fixed extension.
@@ -160,11 +187,11 @@ const safeNameSchema = Joi.string()
 const fileNameParam = (extension) =>
   Joi.string()
     .pattern(new RegExp(`^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\${extension}$`))
-    .max(128)
+    .max(fileNameMaxLength(extension))
     .required()
     .messages({
       "string.pattern.base": `{{#label}} must be a safe ${extension} file name`,
-      "string.max": "{{#label}} must not exceed 128 characters",
+      "string.max": "{{#label}} must not exceed {{#limit}} characters",
     });
 
 /**
@@ -188,11 +215,39 @@ const timestampSchema = Joi.number().integer().min(0);
 /** Schema for an http(s) URL. */
 const urlSchema = Joi.string().uri({ scheme: [/https?/] }).max(2048);
 
+/**
+ * Schema for a database connection configuration.
+ *
+ * Declared once because more than one endpoint accepts one: `POST
+ * /api/data-storage` persists the default, and a simulation may carry its own
+ * to override that default for a single run. Both decide which database the
+ * product connects to, so both are held to the same shape — a caller must not
+ * be able to point a run at a host of its choosing through whichever endpoint
+ * happens to check less.
+ */
+const dataStorageSchema = documentSchema({
+  protocol: Joi.string().valid("MONGODB").required(),
+  connConfig: documentSchema({
+    // Deliberately a character allowlist rather than a strict hostname check:
+    // it still rules out the separators that would let a host rewrite the
+    // connection string, without rejecting the service names an operator may
+    // legitimately have configured.
+    host: Joi.string().pattern(/^[A-Za-z0-9._-]+$/).max(253).required(),
+    port: Joi.number().integer().min(1).max(65535).required(),
+    username: Joi.string().max(256).allow(null, ""),
+    password: Joi.string().max(256).allow(null, ""),
+    dbname: Joi.string().max(256).allow(null, ""),
+    options: Joi.object().allow(null),
+  }).required(),
+});
+
 module.exports = {
   validate,
   documentSchema,
   safeNameSchema,
   fileNameParam,
+  fileNameMaxLength,
+  dataStorageSchema,
   textSchema,
   idSchema,
   pageSchema,

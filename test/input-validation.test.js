@@ -16,6 +16,7 @@ const eventRouter = require("../src/server/routes/events");
 const reportRouter = require("../src/server/routes/reports");
 const dataStorageRouter = require("../src/server/routes/data-storage");
 const devopsRouter = require("../src/server/routes/devops");
+const { NAME_MAX_LENGTH } = require("../src/server/routes/path-safety");
 
 const modelsDir = path.resolve(__dirname, "../src/server/data/models");
 const dataRecordersDir = path.resolve(__dirname, "../src/server/data/data-recorders");
@@ -280,6 +281,23 @@ test("MongoDB operator documents are rejected before reaching a database call", 
   }
 });
 
+test("an empty test campaign id is rejected, as it was before the schemas", async () => {
+  // The helper the schema replaced answered 400 for `""` (`isValidName`
+  // required a non-empty name), and an empty id would interpolate into a log
+  // file name as nothing at all. An absent id stays acceptable — that is
+  // asserted separately in the route security suite.
+  const before = fs.readFileSync(devopsFile, "utf8");
+  const res = await request(server, "POST", "/api/devops", {
+    devops: { webhookURL: "http://localhost:3333/webhook", testCampaignId: "" },
+  });
+  assertValidationError(res, "POST /api/devops with an empty testCampaignId");
+  assert.equal(
+    fs.readFileSync(devopsFile, "utf8"),
+    before,
+    "a rejected configuration must never be written to disk"
+  );
+});
+
 // ---------------------------------------------------------------------------
 // 3. Query parameters intended as strings cannot arrive as structured objects
 // ---------------------------------------------------------------------------
@@ -433,6 +451,41 @@ test("the model lifecycle the dashboard drives still succeeds", async () => {
   }
 });
 
+test("a model whose name is at the length limit round-trips through its own routes", async () => {
+  // The write path caps the *name* and the read paths cap the *file name* that
+  // write derived from it, so a name at exactly the limit is where the two
+  // disagree if they are ever counted against the same number: the file would
+  // be written and then no route could read, update or delete it.
+  const name = unique("iv-boundary").padEnd(NAME_MAX_LENGTH, "x");
+  assert.equal(name.length, NAME_MAX_LENGTH, "the test must exercise the limit itself");
+  const fileName = `${name}.json`;
+  const filePath = path.join(modelsDir, fileName);
+
+  const create = await request(server, "POST", "/api/models", {
+    model: { name, devices: [] },
+  });
+  assert.equal(create.status, 200, `a name at the limit must be accepted (${create.raw})`);
+  assert.equal(create.body.modelFileName, fileName);
+
+  try {
+    const read = await request(server, "GET", `/api/models/${encodeURIComponent(fileName)}`);
+    assert.equal(read.status, 200, `the file the write produced must be readable (${read.raw})`);
+    assert.equal(read.body.model.name, name);
+
+    const removed = await request(
+      server,
+      "DELETE",
+      `/api/models/${encodeURIComponent(fileName)}`
+    );
+    assert.equal(removed.status, 200, `the file must be deletable (${removed.raw})`);
+    assert.ok(!fs.existsSync(filePath), "the delete must actually remove the file");
+  } finally {
+    // Only reached when an assertion above failed before the delete ran; the
+    // checkout must not keep the file either way.
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+});
+
 test("the data recorder lifecycle the dashboard drives still succeeds", async () => {
   const name = unique("iv-recorder");
   const create = await request(server, "POST", "/api/data-recorders/models", {
@@ -566,4 +619,178 @@ test("the database-backed payloads the dashboard sends still satisfy their schem
       `${method} ${routePath} must accept the dashboard's payload: ${JSON.stringify(outcome.body)}`
     );
   }
+});
+
+// ---------------------------------------------------------------------------
+// 7. A run's configuration cannot reach a MongoDB filter, or point the run at
+//    a database of the caller's choosing
+// ---------------------------------------------------------------------------
+
+// `POST /api/simulation/start` is never driven to a 200 here: that would
+// actually start a simulation, open a database connection and write log files.
+// Only the schema runs, which is where these are decided anyway.
+const startRun = (body) => validateOnly(simulationRouter, "POST", "/start", { body });
+
+/**
+ * Assert a start request was refused with the standard failure shape, and name
+ * the field the refusal has to be about.
+ */
+const assertRunRejected = async (body, field, context) => {
+  const outcome = await startRun(body);
+  assert.equal(outcome.passed, false, `${context} must be rejected`);
+  assertValidationError(
+    { status: outcome.status, body: outcome.body, raw: JSON.stringify(outcome.body) },
+    context
+  );
+  assert.ok(
+    outcome.body.details.some((detail) => detail.field === field),
+    `${context} must be reported against ${field}: ${JSON.stringify(outcome.body.details)}`
+  );
+};
+
+const assertRunAccepted = async (body, context) => {
+  const outcome = await startRun(body);
+  assert.equal(
+    outcome.passed,
+    true,
+    `${context} must still be accepted: ${JSON.stringify(outcome.body)}`
+  );
+};
+
+test("the payload the dashboard starts a simulation with is still accepted", async () => {
+  // `src/client/src/api/index.js` sends exactly this, and `SimulationPage`
+  // sends a null datasetId when no data source is selected.
+  for (const datasetId of ["dataset-2024-03", null]) {
+    await assertRunAccepted(
+      {
+        modelFileName: "202402-Temperature-Controller.json",
+        options: {
+          datasetId,
+          newDataset: {
+            id: `dataset-id-${Date.now()}`,
+            name: `Dataset has been created at ${Date.now()}`,
+            description: `This is the description of the dataset`,
+            tags: ["generated"],
+            source: "GENERATED",
+          },
+        },
+      },
+      `the dashboard payload with datasetId ${JSON.stringify(datasetId)}`
+    );
+  }
+});
+
+test("starting a run with no options of its own is still accepted", async () => {
+  // `ModelListPage` dispatches with the file name only, so the datasetId and
+  // newDataset it does not set are dropped by JSON.stringify and an empty
+  // options object arrives.
+  await assertRunAccepted(
+    { modelFileName: "202402-Temperature-Controller.json", options: {} },
+    "a start request carrying an empty options object"
+  );
+});
+
+test("the shipped topology is still accepted as an inline model", async () => {
+  const model = JSON.parse(
+    fs.readFileSync(path.join(modelsDir, "202402-Temperature-Controller.json"), "utf8")
+  );
+  await assertRunAccepted({ model }, "the shipped topology posted inline");
+});
+
+test("a run's dataset id cannot arrive as a structured value", async () => {
+  // It becomes the filter `EventSchema.findEventsBetweenTimes` reads the
+  // original events with, so a structured value changes which events the run
+  // is scored against rather than naming one dataset.
+  for (const datasetId of [{ $ne: null }, { $gt: "" }, ["ds-1"], 42]) {
+    await assertRunRejected(
+      { modelFileName: "m.json", options: { datasetId } },
+      "options.datasetId",
+      `options.datasetId as ${JSON.stringify(datasetId)}`
+    );
+  }
+  // The generated dataset's id reaches a filter of its own.
+  await assertRunRejected(
+    { modelFileName: "m.json", options: { newDataset: { id: { $ne: null } } } },
+    "options.newDataset.id",
+    "options.newDataset.id as an operator document"
+  );
+});
+
+test("a run cannot point its database connection at a host of its choosing", async () => {
+  // `options.dataStorage` becomes the connection every device of the run
+  // publishes through, so an unconstrained one redirects the whole run.
+  const hostile = [
+    "evil.example.com/tas?replicaSet=x",
+    "evil.example.com:27017,other.example.com",
+    "a".repeat(300),
+    "evil example",
+  ];
+  for (const host of hostile) {
+    await assertRunRejected(
+      {
+        modelFileName: "m.json",
+        options: { dataStorage: { protocol: "MONGODB", connConfig: { host, port: 27017 } } },
+      },
+      "options.dataStorage.connConfig.host",
+      `options.dataStorage host ${JSON.stringify(host.slice(0, 40))}`
+    );
+  }
+  await assertRunRejected(
+    {
+      modelFileName: "m.json",
+      options: {
+        dataStorage: { protocol: "HTTP", connConfig: { host: "localhost", port: 27017 } },
+      },
+    },
+    "options.dataStorage.protocol",
+    "a data storage protocol the connector cannot speak"
+  );
+  // A well-formed connection is still allowed: the point is the shape, not the
+  // ability to override.
+  await assertRunAccepted(
+    {
+      modelFileName: "m.json",
+      options: {
+        dataStorage: {
+          protocol: "MONGODB",
+          connConfig: { host: "localhost", port: 27017, dbname: "tas", username: "", password: "" },
+        },
+      },
+    },
+    "a well-formed data storage override"
+  );
+});
+
+test("options no run declares never reach the simulation", async () => {
+  await assertRunRejected(
+    { modelFileName: "m.json", options: { $ne: null } },
+    "options.$ne",
+    "an operator key smuggled in as an option"
+  );
+});
+
+test("the same fields are constrained when they arrive on an inline model", async () => {
+  // `Simulation` reads these off the model first and only then lets options
+  // overwrite them, so the model reaches the identical sinks. The model stays
+  // open to the other fields a stored topology carries.
+  await assertRunRejected(
+    { model: { name: "iv-inline", devices: [], datasetId: { $ne: null } } },
+    "model.datasetId",
+    "an inline model's datasetId as an operator document"
+  );
+  await assertRunRejected(
+    {
+      model: {
+        name: "iv-inline",
+        devices: [],
+        dataStorage: { protocol: "MONGODB", connConfig: { host: "evil.example.com/x", port: 1 } },
+      },
+    },
+    "model.dataStorage.connConfig.host",
+    "an inline model's dataStorage host"
+  );
+  await assertRunAccepted(
+    { model: { name: "iv-inline", devices: [], somethingElseEntirely: { nested: true } } },
+    "an inline model carrying a field the schema does not declare"
+  );
 });

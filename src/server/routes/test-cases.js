@@ -14,6 +14,7 @@ const {
 const {
   validate,
   documentSchema,
+  fileNameMaxLength,
   idSchema,
   textSchema,
 } = require("../middleware/validate");
@@ -33,7 +34,7 @@ const testCaseFields = {
   // Declared as a string so a structured value can never reach the containment
   // guard below, which then only has to decide whether the path is inside the
   // models directory.
-  modelFileName: Joi.string().max(128).allow(null, ""),
+  modelFileName: Joi.string().max(fileNameMaxLength(".json")).allow(null, ""),
 };
 
 const testCaseCreateBody = Joi.object({
