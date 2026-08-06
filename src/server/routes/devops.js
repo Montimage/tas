@@ -71,8 +71,13 @@ const getDevops = (callback) => {
 router.get("/", function (req, res, next) {
   getDevops((err, devO) => {
     if (err) {
+      // Same reasoning as in `loadValidatedDevops` below: the raw fs error
+      // carries the absolute path of devops.json in its own enumerable
+      // properties, which JSON.stringify would serialise straight into the
+      // response. Keep the detail server-side and answer with a constant.
+      console.error('[SERVER] Cannot get devops configuration', err);
       res.send({
-        error: err
+        error: "Cannot get devops configuration"
       });
     } else {
       res.send({

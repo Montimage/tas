@@ -382,6 +382,38 @@ test("devops GET /start rejects a hostile testCampaignId already on disk", async
   }
 });
 
+test("devops GET does not disclose the config path when it cannot be read", async () => {
+  // A Node fs error carries the absolute path of the file it failed to open in
+  // its own enumerable properties, so echoing it back leaks the server layout.
+  // Reaching that branch needs both an unreadable file and a router that has
+  // not cached a configuration yet, hence the same cold-cache router as above.
+  // The file is put back in `finally`, and the suite-wide `after` hook restores
+  // it again from the same snapshot, so a mid-test failure cannot cost the
+  // checkout its devops.json.
+  fs.unlinkSync(devopsFile);
+  const modulePath = require.resolve("../src/server/routes/devops");
+  delete require.cache[modulePath];
+  const coldApp = express();
+  coldApp.use(express.json());
+  coldApp.use("/api/devops", require(modulePath));
+  const coldServer = coldApp.listen(0);
+  try {
+    const res = await request(coldServer, "GET", "/api/devops");
+    assert.equal(
+      res.body.error,
+      "Cannot get devops configuration",
+      `an unreadable configuration must report a constant message (${res.raw})`
+    );
+    assert.ok(!res.raw.includes("/home/"), `must not leak server paths: ${res.raw}`);
+    assert.ok(!res.raw.includes("workspace"), `must not leak server paths: ${res.raw}`);
+    assert.ok(!res.raw.includes("devops.json"), `must not leak the config path: ${res.raw}`);
+  } finally {
+    coldServer.close();
+    fs.writeFileSync(devopsFile, originalDevops);
+    delete require.cache[modulePath];
+  }
+});
+
 test("test-cases POST rejects a hostile modelFileName and never reaches the database", async () => {
   const hostile = [
     "../../../package.json",
