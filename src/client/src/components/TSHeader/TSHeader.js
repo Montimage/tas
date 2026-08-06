@@ -2,11 +2,12 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { Layout, Menu, Row, Col } from "antd";
 import {
-  ClusterOutlined, DatabaseOutlined, DeploymentUnitOutlined, InteractionOutlined, FileTextOutlined, FolderOpenOutlined, EyeOutlined,
+  ClusterOutlined, DatabaseOutlined, DeploymentUnitOutlined, InteractionOutlined, FileTextOutlined, FolderOpenOutlined, EyeOutlined, LogoutOutlined,
 } from "@ant-design/icons";
 
 import {
   setNotification,
+  logout,
 } from "../../actions";
 import "./styles.css";
 
@@ -14,6 +15,7 @@ const { Header } = Layout;
 
 class TSHeader extends Component {
   render() {
+    const { authenticated, user, logout } = this.props;
     const menuLinks = [
       '/test-campaigns',
       '/test-cases',
@@ -99,6 +101,12 @@ class TSHeader extends Component {
                   Report
                 </a>
               </Menu.Item>
+              {authenticated ? (
+                <Menu.Item key="logout" onClick={() => logout()}>
+                  <LogoutOutlined />
+                  {user ? `Sign out (${user})` : "Sign out"}
+                </Menu.Item>
+              ) : null}
             </Menu>
           </Col>
         </Row>
@@ -108,13 +116,16 @@ class TSHeader extends Component {
   }
 }
 
-const mapPropsToStates = ({ requesting }) => ({
+const mapPropsToStates = ({ requesting, auth }) => ({
   requesting,
+  authenticated: auth.authenticated,
+  user: auth.user,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   setNotification: ({ type, message }) =>
     dispatch(setNotification({ type, message })),
+  logout: () => dispatch(logout()),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(TSHeader);

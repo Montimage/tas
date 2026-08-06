@@ -3,6 +3,116 @@
 export const URL = "";
 
 /**
+ * Name of the cookie the server puts the session's CSRF token in.
+ *
+ * Deliberately readable by JavaScript (see `src/server/middleware/auth.js`):
+ * reading it here and echoing it back in a header is the entire mechanism that
+ * tells the server this request came from the dashboard and not from a page on
+ * somebody else's site.
+ */
+const CSRF_COOKIE = "tas.csrf";
+
+/** The header the server expects the session's CSRF token in. */
+const CSRF_HEADER = "X-CSRF-Token";
+
+/** Methods that change nothing, and therefore carry no token. */
+const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
+
+/**
+ * The message a request that fell outside a live session is reported with.
+ *
+ * Exported so the login view can recognise it and phrase the prompt in the
+ * same words the notification used.
+ */
+export const SESSION_EXPIRED_MESSAGE =
+  "Your session has expired. Please sign in again.";
+
+/**
+ * Read the session's CSRF token out of `document.cookie`.
+ *
+ * Tolerant of every way the cookie can be missing - no document at all (a
+ * test renderer), no cookie yet (not logged in), a value that is not valid
+ * percent-encoding - because the caller's only sensible reaction to any of
+ * them is the same: send an empty token and let the server refuse it.
+ *
+ * @returns {String} The token, or "" when there is none
+ */
+export const readCsrfToken = () => {
+  if (typeof document === "undefined" || typeof document.cookie !== "string") {
+    return "";
+  }
+  const prefix = `${CSRF_COOKIE}=`;
+  const entries = document.cookie.split(";");
+  for (let index = 0; index < entries.length; index++) {
+    const entry = entries[index].trim();
+    if (entry.indexOf(prefix) === 0) {
+      const raw = entry.slice(prefix.length);
+      try {
+        return decodeURIComponent(raw);
+      } catch (e) {
+        return raw;
+      }
+    }
+  }
+  return "";
+};
+
+/**
+ * The one subscriber notified when the API says the caller has no session.
+ *
+ * A module-level slot rather than a list: there is exactly one thing in the
+ * app that reacts to this (the auth saga), and a list would quietly accumulate
+ * stale handlers across hot reloads.
+ */
+let sessionExpiredHandler = null;
+
+/**
+ * Register the handler called when a request comes back 401.
+ *
+ * @param {Function|null} handler The handler, or null to unregister
+ */
+export const onSessionExpired = (handler) => {
+  sessionExpiredHandler = typeof handler === "function" ? handler : null;
+};
+
+/** Tell the subscriber, if there is one, that the session is gone. */
+const notifySessionExpired = () => {
+  if (!sessionExpiredHandler) return;
+  try {
+    sessionExpiredHandler();
+  } catch (e) {
+    // A broken subscriber must not swallow the error the caller is about to
+    // be thrown; there is nothing useful to do with it here.
+  }
+};
+
+/**
+ * `fetch`, with the two things every API call in this file needs.
+ *
+ * The session cookie has to be sent (`credentials`), and every state-changing
+ * request has to echo the session's CSRF token or the server answers 403 (see
+ * `src/server/middleware/csrf.js`). Attaching the token here rather than at
+ * each of the ~50 call sites is what keeps a route added later from being the
+ * one that forgets it.
+ *
+ * @param {String} url The absolute URL, already built from `URL`
+ * @param {Object} [options] The usual `fetch` options
+ * @returns {Promise<Response>}
+ */
+const apiFetch = (url, options = {}) => {
+  const method = String(options.method || "GET").toUpperCase();
+  const headers = { ...(options.headers || {}) };
+  if (SAFE_METHODS.indexOf(method) === -1) {
+    headers[CSRF_HEADER] = readCsrfToken();
+  }
+  return fetch(url, {
+    ...options,
+    credentials: "same-origin",
+    headers,
+  });
+};
+
+/**
  * Build the message shown to the user from an error response.
  *
  * The API answers every failure with `{ error, details? }` (see
@@ -46,10 +156,20 @@ const errorMessage = (data, response) => {
  * Failures are still thrown, and still thrown as a plain string, because that
  * is what every saga's `catch` puts straight into a notification.
  *
+ * A 401 is the one status with a second consequence: it means the session the
+ * request was made under is gone, which the rest of the app has to know about
+ * even though the caller only sees a thrown string. The registered subscriber
+ * is told before the throw, so the dashboard can offer a sign-in without any
+ * saga having to learn a new failure shape. `authRequest` opts the three
+ * authentication calls out of that: a refused *login* is not an expired
+ * session, and reporting it as one would replace "Invalid credentials" with a
+ * message about a session the user never had.
+ *
  * @param {Response} response The fetch response
+ * @param {Object} [options] `{ authRequest }` for calls under `/api/auth`
  * @returns {Promise<Object>} The parsed body of a successful response
  */
-const parseResponse = async (response) => {
+const parseResponse = async (response, options = {}) => {
   let body = null;
   try {
     body = await response.json();
@@ -57,6 +177,10 @@ const parseResponse = async (response) => {
     // A non-JSON body (an error page from a proxy, an empty response) must not
     // surface as a raw SyntaxError.
     body = null;
+  }
+  if (response.status === 401 && options.authRequest !== true) {
+    notifySessionExpired();
+    throw SESSION_EXPIRED_MESSAGE;
   }
   if (!response.ok || (body && body.error)) {
     throw errorMessage(body, response);
@@ -67,14 +191,14 @@ const parseResponse = async (response) => {
 // MODELS
 export const requestAllModels = async () => {
   const url = `${URL}/api/models`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.models;
 };
 
 export const requestDeleteModel = async (modelFileName) => {
   const url = `${URL}/api/models/${modelFileName}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "DELETE",
   });
   const data = await parseResponse(response);
@@ -83,7 +207,7 @@ export const requestDeleteModel = async (modelFileName) => {
 
 export const requestDuplicateModel = async (modelFileName) => {
   const url = `${URL}/api/models/${modelFileName}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -98,14 +222,14 @@ export const requestDuplicateModel = async (modelFileName) => {
 
 export const requestModel = async (modelFileName) => {
   const url = `${URL}/api/models/${modelFileName}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.model;
 };
 
 export const uploadModel = async (model) => {
   const url = `${URL}/api/models`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -118,7 +242,7 @@ export const uploadModel = async (model) => {
 
 export const updateModel = async (modelFileName, model) => {
   const url = `${URL}/api/models/${modelFileName}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -132,14 +256,14 @@ export const updateModel = async (modelFileName, model) => {
 // DATA RECORDERS
 export const requestAllDataRecorders = async () => {
   const url = `${URL}/api/data-recorders/models`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.dataRecorders;
 };
 
 export const requestDeleteDataRecorder = async (dataRecorderFileName) => {
   const url = `${URL}/api/data-recorders/models/${dataRecorderFileName}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "DELETE",
   });
   const data = await parseResponse(response);
@@ -148,7 +272,7 @@ export const requestDeleteDataRecorder = async (dataRecorderFileName) => {
 
 export const requestDuplicateDataRecorder = async (dataRecorderFileName) => {
   const url = `${URL}/api/data-recorders/models/${dataRecorderFileName}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -163,14 +287,14 @@ export const requestDuplicateDataRecorder = async (dataRecorderFileName) => {
 
 export const requestDataRecorder = async (dataRecorderFileName) => {
   const url = `${URL}/api/data-recorders/models/${dataRecorderFileName}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.dataRecorder;
 };
 
 export const uploadDataRecorder = async (dataRecorder) => {
   const url = `${URL}/api/data-recorders/models`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -186,7 +310,7 @@ export const updateDataRecorder = async (
   dataRecorder
 ) => {
   const url = `${URL}/api/data-recorders/models/${dataRecorderFileName}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -199,7 +323,7 @@ export const updateDataRecorder = async (
 
 export const sendRequestStartDataRecorder = async (dataRecorderFileName) => {
   const url = `${URL}/api/data-recorders/start`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -212,14 +336,14 @@ export const sendRequestStartDataRecorder = async (dataRecorderFileName) => {
 
 export const sendRequestStopDataRecorder = async (fileName) => {
   const url = `${URL}/api/data-recorders/stop/${fileName}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.status;
 };
 
 export const sendRequestDataRecorderStatus = async () => {
   const url = `${URL}/api/data-recorders/status`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.status;
 };
@@ -227,14 +351,14 @@ export const sendRequestDataRecorderStatus = async () => {
 // DATA STORAGE
 export const sendRequestDataStorage = async () => {
   const url = `${URL}/api/data-storage`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.dataStorage;
 };
 
 export const sendRequestUpdateDataStorage = async (dataStorage) => {
   const url = `${URL}/api/data-storage`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -247,21 +371,21 @@ export const sendRequestUpdateDataStorage = async (dataStorage) => {
 
 export const sendRequestTestDataStorageConnection = async (dataStorage) => {
   const url = `${URL}/api/data-storage/test`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.connectionStatus;
 };
 
 export const sendRequestLogFile = async (tool, logFile) => {
   const url = `${URL}/api/logs/${tool}/${logFile}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.content;
 };
 
 export const sendRequestDeleteLogFile = async (tool, logFile) => {
   const url = `${URL}/api/logs/${tool}/${logFile}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "DELETE",
   });
   const data = await parseResponse(response);
@@ -270,14 +394,14 @@ export const sendRequestDeleteLogFile = async (tool, logFile) => {
 
 export const sendRequestAllLogFiles = async (tool) => {
   const url = `${URL}/api/logs/${tool}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.files;
 };
 
 export const requestStartDeploy = async (tool, model) => {
   const url = `${URL}/api/${tool}/deploy`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -290,14 +414,14 @@ export const requestStartDeploy = async (tool, model) => {
 
 export const sendRequestStopSimulation = async (fileName) => {
   const url = `${URL}/api/simulation/stop/${fileName}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.simulationStatus;
 };
 
 export const sendRequestSimulationStatus = async () => {
   const url = `${URL}/api/simulation/status`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.simulationStatus;
 };
@@ -305,14 +429,14 @@ export const sendRequestSimulationStatus = async () => {
 // Test campaigns
 export const sendRequestTestCampaign = async (tcId) => {
   const url = `${URL}/api/test-campaigns/${tcId}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.testCampaign;
 };
 
 export const sendRequestUpdateTestCampaign = async (id, testCampaign) => {
   const url = `${URL}/api/test-campaigns/${id}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -325,14 +449,14 @@ export const sendRequestUpdateTestCampaign = async (id, testCampaign) => {
 
 export const sendRequestAllTestCampaigns = async () => {
   const url = `${URL}/api/test-campaigns`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.testCampaigns;
 };
 
 export const sendRequestAddNewTestCampaign = async (testCampaign) => {
   const url = `${URL}/api/test-campaigns`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -345,7 +469,7 @@ export const sendRequestAddNewTestCampaign = async (testCampaign) => {
 
 export const sendRequestDeleteTestCampaign = async (testCampaignId) => {
   const url = `${URL}/api/test-campaigns/${testCampaignId}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "DELETE",
   });
   const data = await parseResponse(response);
@@ -355,14 +479,14 @@ export const sendRequestDeleteTestCampaign = async (testCampaignId) => {
 // Devops
 export const sendRequestDevops = async () => {
   const url = `${URL}/api/devops`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.devops;
 };
 
 export const sendRequestUpdateDevops = async (devops) => {
   const url = `${URL}/api/devops`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -376,14 +500,14 @@ export const sendRequestUpdateDevops = async (devops) => {
 // Test cases
 export const sendRequestTestCase = async (tcId) => {
   const url = `${URL}/api/test-cases/${tcId}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const status = await parseResponse(response);
   return status.testCase;
 };
 
 export const sendRequestUpdateTestCase = async (id, testCase) => {
   const url = `${URL}/api/test-cases/${id}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -396,14 +520,14 @@ export const sendRequestUpdateTestCase = async (id, testCase) => {
 
 export const sendRequestAllTestCases = async () => {
   const url = `${URL}/api/test-cases`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.testCases;
 };
 
 export const sendRequestAddNewTestCase = async (testCase) => {
   const url = `${URL}/api/test-cases`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -416,7 +540,7 @@ export const sendRequestAddNewTestCase = async (testCase) => {
 
 export const sendRequestDeleteTestCase = async (testCaseId) => {
   const url = `${URL}/api/test-cases/${testCaseId}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "DELETE",
   });
   const data = await parseResponse(response);
@@ -426,14 +550,14 @@ export const sendRequestDeleteTestCase = async (testCaseId) => {
 // Dataset
 export const sendRequestDataset = async (tcId) => {
   const url = `${URL}/api/data-sets/${tcId}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const status = await parseResponse(response);
   return status.dataset;
 };
 
 export const sendRequestUpdateDataset = async (id, dataset) => {
   const url = `${URL}/api/data-sets/${id}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -446,14 +570,14 @@ export const sendRequestUpdateDataset = async (id, dataset) => {
 
 export const sendRequestAllDatasets = async () => {
   const url = `${URL}/api/data-sets`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return data.datasets;
 };
 
 export const sendRequestAddNewDataset = async (dataset) => {
   const url = `${URL}/api/data-sets`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -466,7 +590,7 @@ export const sendRequestAddNewDataset = async (dataset) => {
 
 export const sendRequestDeleteDataset = async (datasetId) => {
   const url = `${URL}/api/data-sets/${datasetId}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "DELETE",
   });
   const data = await parseResponse(response);
@@ -476,7 +600,7 @@ export const sendRequestDeleteDataset = async (datasetId) => {
 // Reports
 export const sendRequestReport = async (rpId) => {
   const url = `${URL}/api/reports/${rpId}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const status = await parseResponse(response);
   return status;
 };
@@ -496,14 +620,14 @@ export const sendRequestAllReports = async (options) => {
   }
 
   const url = `${URL}/api/reports${query}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const status = await parseResponse(response);
   return status.reports;
 };
 
 export const sendRequestDeleteReport = async (reportId) => {
   const url = `${URL}/api/reports/${reportId}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "DELETE",
   });
   const data = await parseResponse(response);
@@ -513,7 +637,7 @@ export const sendRequestDeleteReport = async (reportId) => {
 export const sendRequestUpdateReport = async (id, report, newScore) => {
   console.log('Update report: ', id, report, newScore);
   const url = `${URL}/api/reports/${id}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -527,14 +651,14 @@ export const sendRequestUpdateReport = async (id, report, newScore) => {
 // Event
 export const sendRequestEvent = async (tcId) => {
   const url = `${URL}/api/events/${tcId}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const status = await parseResponse(response);
   return status.event;
 };
 
 export const sendRequestUpdateEvent = async (id, event) => {
   const url = `${URL}/api/events/${id}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -554,14 +678,14 @@ export const sendRequestEventsByDatasetId = async (
   const url = `${URL}/api/events?datasetId=${datasetId}&startTime=${
     startTime ? startTime : 0
   }&endTime=${endTime ? endTime : Date.now()}&page=${page}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const data = await parseResponse(response);
   return {totalNbEvents: data.totalNbEvents, events: data.events};
 };
 
 export const sendRequestAddNewEvent = async (event) => {
   const url = `${URL}/api/events`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -574,7 +698,7 @@ export const sendRequestAddNewEvent = async (event) => {
 
 export const sendRequestDeleteEvent = async (eventId) => {
   const url = `${URL}/api/events/${eventId}`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "DELETE",
   });
   const data = await parseResponse(response);
@@ -587,7 +711,7 @@ export const sendRequestStartSimulation = async (
   newDataset
 ) => {
   const url = `${URL}/api/simulation/start`;
-  const response = await fetch(url, {
+  const response = await apiFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -607,21 +731,57 @@ export const sendRequestStartSimulation = async (
 // Test campaign
 export const sendRequestLaunchTestCampaign = async () => {
   const url = `${URL}/api/devops/start`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const status = await parseResponse(response);
   return status.runningStatus;
 };
 
 export const sendRequestStopTestCampaign = async () => {
   const url = `${URL}/api/devops/stop`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const status = await parseResponse(response);
   return status.runningStatus;
 };
 
 export const sendRequestTestCampaignStatus = async () => {
   const url = `${URL}/api/devops/status`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   const status = await parseResponse(response);
   return status.runningStatus;
+};
+
+// AUTHENTICATION
+export const requestLogin = async ({ username, password }) => {
+  const url = `${URL}/api/auth/login`;
+  const response = await apiFetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, password }),
+  });
+  // The whole body is the session: `{ authenticated, user, csrfToken }`.
+  const data = await parseResponse(response, { authRequest: true });
+  return data;
+};
+
+export const requestLogout = async () => {
+  const url = `${URL}/api/auth/logout`;
+  const response = await apiFetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const data = await parseResponse(response, { authRequest: true });
+  return data;
+};
+
+export const requestSession = async () => {
+  // Answers 200 either way, on purpose, so a cold start can ask "am I logged
+  // in?" without turning every anonymous load into a 401.
+  const url = `${URL}/api/auth/session`;
+  const response = await apiFetch(url);
+  const data = await parseResponse(response, { authRequest: true });
+  return data;
 };

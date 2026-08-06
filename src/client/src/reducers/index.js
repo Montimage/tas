@@ -19,6 +19,7 @@ import devopsReducer from './devopsReducer';
 import testCasesReducer from './testCasesReducer';
 import datasetsReducer from './datasetsReducer';
 import reportsReducer from './reportsReducer';
+import authReducer from './authReducer';
 
 const rootReducer = combineReducers({
   allDataRecorders: allDataRecordersReducer,
@@ -37,7 +38,8 @@ const rootReducer = combineReducers({
   devops: devopsReducer,
   testCases: testCasesReducer,
   datasets: datasetsReducer,
-  reports: reportsReducer
+  reports: reportsReducer,
+  auth: authReducer
 });
 
 export default rootReducer;
