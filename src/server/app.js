@@ -3,10 +3,10 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var compression = require('compression');
-var helmet = require('helmet');
 var rateLimit = require('express-rate-limit');
 var { loadConfig } = require('./config');
 var { errorHandler, apiNotFound, forbidden, ApiError, sendError } = require('./middleware/errors');
+var { securityHeaders } = require('./middleware/security-headers');
 
 // Read the environment configuration once at startup.
 const config = loadConfig();
@@ -39,7 +39,19 @@ var app = express();
 app.set("query parser", "simple");
 
 app.use(compression()); //Compress all routes
-app.use(helmet());
+
+/**
+ * Security response headers, including an explicit Content Security Policy.
+ *
+ * The policy is written out in `middleware/security-headers.js` from what the
+ * dashboard bundle actually loads, rather than inherited from the middleware's
+ * defaults. It ships in report-only mode so a deployment can observe violations
+ * before they start blocking; set `CSP_REPORT_ONLY=false` to enforce it.
+ */
+app.use(securityHeaders({
+  reportOnly: config.cspReportOnly,
+  reportUri: config.cspReportUri
+}));
 app.set("port", config.port);
 
 /**

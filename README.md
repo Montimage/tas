@@ -201,6 +201,8 @@ tighten a limit.
 | `BODY_LIMIT`           | `1mb`             | Largest request body accepted. Anything bigger is rejected with `413` rather than buffered. `MAX_BODY_SIZE` is accepted as an alias.                                             |
 | `RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | Length of the rate-limiting window applied to `/api`.                                                                                                                            |
 | `RATE_LIMIT_MAX`       | `1000`            | Requests allowed per window per client. Going over returns `429`.                                                                                                                |
+| `CSP_REPORT_ONLY`      | `true`            | Ship the Content Security Policy as `Content-Security-Policy-Report-Only`, so browsers report violations without blocking. Set to `false` to enforce the policy.                 |
+| `CSP_REPORT_URI`       | _(empty)_         | Endpoint browsers should POST policy violation reports to. Empty means violations are only visible in the browser console.                                                        |
 
 Values are read from the process environment first, then from `.env`, then from
 these defaults — so a container or a CI job can override a setting without
@@ -209,6 +211,47 @@ editing the operator's `.env` file.
 `CORS_ALLOWED_ORIGINS` is only needed when the dashboard is served from a
 different origin than the API. In the shipped image both are on the same port,
 so the default is already correct and no configuration is required.
+
+### Content Security Policy
+
+The server sends a Content Security Policy that is written out in full in
+`src/server/middleware/security-headers.js` rather than inherited from the
+middleware's defaults, and is derived from what the shipped dashboard bundle
+actually loads: same-origin scripts plus the build's inline webpack runtime
+(allowed by its SHA-256 hash, not by `'unsafe-inline'`), same-origin styles plus
+the inline styles the component library injects, `data:` images, same-origin
+`fetch` calls, and a `blob:` worker for the embedded JSON editor. No third-party
+origin is permitted.
+
+It ships in **report-only** mode. A deployment that serves a differently-built
+dashboard would otherwise have it break on the first load with no warning, so
+the safe rollout is to watch for violations first and only then enforce:
+
+1. Deploy as shipped and load the dashboard. Violations appear in the browser
+   console (and at `CSP_REPORT_URI`, if you set one).
+2. If nothing is reported, set `CSP_REPORT_ONLY=false` to enforce the policy.
+
+Point `CSP_REPORT_URI` at an external collector or a path outside `/api`. Reports
+sent to `/api/...` are counted by the rate limiter described above, so a page in
+violation can spend a client's whole request budget on reports and get its real
+API calls rejected with `429`.
+
+One violation is known and expected: a bundled vendor library contains a
+`new Function("return this")` fallback that browsers attribute to `script-src`.
+It is short-circuited before it runs and wrapped in a `try`/`catch`, so the
+dashboard is unaffected — do **not** answer it by adding `'unsafe-eval'`.
+
+Rebuilding the client changes the inline runtime script, and therefore its hash.
+The hash is recomputed from `src/public/index.html` at startup, so a rebuild
+needs no configuration change - but restart the server after one.
+
+The upgrade to the current major version of the header middleware also adds
+`Referrer-Policy`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`,
+`Origin-Agent-Cluster` and `X-Permitted-Cross-Domain-Policies`, and sets
+`X-XSS-Protection: 0` rather than `1; mode=block`. The latter is a deliberate
+upstream change: the legacy browser XSS auditor that header re-enabled was
+itself exploitable and has been removed from every current browser. The policy
+above is what replaces it. No header that was previously sent has been dropped.
 
 ## Reporting a security issue
 
