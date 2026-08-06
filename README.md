@@ -39,6 +39,14 @@ _Customize dashboard address_
 Create `.env` file: `cp env.example .env`
 Update the `host` and `port` then start the application.
 
+> **Configuration and credentials**
+> The `.env` file is git-ignored and **never tracked** in the repository or
+> baked into the published Docker image (it is listed in `.dockerignore`).
+> It is the documented place for machine-specific values and any credentials
+> (MongoDB URIs, MQTT passwords, API keys). Use `cp env.example .env` to create
+> it locally, and never commit a `.env` file. Without a local `.env`, the
+> server starts with the safe defaults from `env.example`.
+
 _Start the application_
 
 ```
@@ -61,6 +69,27 @@ docker run --name mongo-server -d -p 27017:27017 mongo
 ```
 
 ## DEVELOPMENT
+
+### Run the E2E security regression suite
+
+The suite starts a real server instance (and, for the container checks, builds
+the image) and drives it over HTTP:
+
+```
+# HTTP assertions: path containment, name sanitisation, CORS, rate/body limits,
+# and legitimate topology flows. Run serialised - each file spawns its own real
+# instance against the same storage root.
+node --test-concurrency=1 --test test/e2e/security-suite.test.js test/e2e/limits.test.js
+
+# Container assertion: the built image must run its processes as a non-root user
+docker build -t montimage/tas:e2e .
+TAS_IMAGE=montimage/tas:e2e node --test test/e2e/container-nonroot.test.js
+```
+
+These assertions require the security fixes (path containment, CORS allowlist,
+body-size and rate limits, non-root image) to be present, and are enforced in
+CI on every push to `master` and every pull request via
+`.github/workflows/e2e-security.yml`.
 
 ### Create docker image for multiple platform
 
