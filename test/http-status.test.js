@@ -665,8 +665,12 @@ test("the dashboard's request layer honours the status code", async () => {
     path.resolve(__dirname, "../src/client/src/api/index.js"),
     "utf8"
   );
-  const fetches = (apiSource.match(/await fetch\(/g) || []).length;
-  const parsed = (apiSource.match(/await parseResponse\(response\)/g) || []).length;
+  // `apiFetch` is that single funnel on the request side (#9): it is the one
+  // place the session cookie and the CSRF header are attached, so a request
+  // that does not go through it would be missing both as well as the status
+  // check.
+  const fetches = (apiSource.match(/await apiFetch\(/g) || []).length;
+  const parsed = (apiSource.match(/await parseResponse\(response[,)]/g) || []).length;
   assert.ok(fetches > 0, "the request layer must still make requests");
   assert.equal(
     parsed,
