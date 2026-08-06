@@ -91,6 +91,12 @@ body-size and rate limits, non-root image) to be present, and are enforced in
 CI on every push to `master` and every pull request via
 `.github/workflows/e2e-security.yml`.
 
+`npm test` runs everything under `test/`, including the end-to-end files, and
+is serialised with the same `--test-concurrency=1` for the same reason. Some
+end-to-end assertions drive routes that need a database; with none reachable
+they wait out the connect timeout, so a full local run takes roughly half a
+minute even though the assertions themselves are fast.
+
 ### Create docker image for multiple platform
 
 Source: https://www.docker.com/blog/multi-arch-images/

@@ -17,6 +17,11 @@ const {
   writeToFile
 } = require("../../core/utils");
 const { OFFLINE } = require("../../core/DeviceStatus");
+const {
+  isValidName,
+  resolveWithin,
+  sendBadRequest,
+} = require("./path-safety");
 let logsPath = `${__dirname}/../logs/test-campaigns/`;
 
 let runningStatus = null;
@@ -30,6 +35,18 @@ router.get("/status", (req, res, next) => {
     runningStatus
   });
 });
+
+/**
+ * A test campaign id is optional in the stored configuration, but when one is
+ * present it is interpolated into a log filename, so it must survive the same
+ * allowlist every other name-derived path in the API goes through.
+ * @param {*} testCampaignId The value from the devops configuration
+ * @returns {Boolean} true when the value is absent or safe to derive a name from
+ */
+const isValidTestCampaignId = (testCampaignId) =>
+  testCampaignId === undefined ||
+  testCampaignId === null ||
+  isValidName(testCampaignId);
 
 let _devops = null;
 
@@ -76,6 +93,13 @@ router.post("/", function (req, res, next) {
       error: "Cannot find devops content in body"
     });
   }
+  // The test campaign id becomes part of a log filename in GET /start, so a
+  // hostile value must never reach the persisted configuration in the first
+  // place. Validating only on read-back would still leave the escape sitting
+  // in devops.json for any other consumer.
+  if (!isValidTestCampaignId(devops.testCampaignId)) {
+    return sendBadRequest(res, "Invalid test campaign id");
+  }
   writeToFile(devopsFilePath, JSON.stringify(devops), (err, data) => {
     if (err) {
       console.error("[SERVER] Cannot save devops.json file", err);
@@ -91,75 +115,99 @@ router.post("/", function (req, res, next) {
   }, true);
 });
 
-router.get('/start', dbConnector, (req, res, next) => {
+/**
+ * Load the persisted devops configuration and reject it before any further
+ * work when its test campaign id cannot safely derive a log filename.
+ *
+ * This runs ahead of `dbConnector` on purpose: the containment decision must
+ * not depend on a reachable database, otherwise a hostile configuration is
+ * only rejected on instances that happen to have one.
+ */
+const loadValidatedDevops = (req, res, next) => {
   getDevops((err, devops) => {
     if (err) {
       console.error('[SERVER] Cannot get devops configuration');
-      res.send({
+      return res.send({
         error: err
       });
-    } else {
-      const {
-        webhookURL,
-        testCampaignId,
-        dataStorage,
-        evaluationParameters,
-      } = devops;
-      if (!testCampaignId) {
-        console.error('Test campaign Id must not be NULL');
+    }
+    const { testCampaignId } = devops || {};
+    if (!testCampaignId) {
+      console.error('Test campaign Id must not be NULL');
+      return res.send({
+        error: `Test campaign Id must not be null`
+      });
+    }
+    // A configuration written by an older, unvalidated build can still hold a
+    // hostile id, so read-back is checked as well as write.
+    if (!isValidName(testCampaignId)) {
+      return sendBadRequest(res, "Invalid test campaign id");
+    }
+    req.devops = devops;
+    return next();
+  });
+};
+
+router.get('/start', loadValidatedDevops, dbConnector, (req, res, next) => {
+  const devops = req.devops;
+  const {
+    webhookURL,
+    testCampaignId,
+    dataStorage,
+    evaluationParameters,
+  } = devops;
+  const startedTime = Date.now();
+  const logFile = `${testCampaignId}_${startedTime}.log`;
+  // The logger creates missing parent directories, so an escaping filename
+  // would write outside the log root rather than fail. Resolve and contain it.
+  const logFilePath = resolveWithin(logsPath, logFile);
+  if (!logFilePath) {
+    return sendBadRequest(res, "Invalid test campaign id");
+  }
+  getLogger("TEST-CAMPAIGN", logFilePath);
+  console.log('[devops] A test campaign is going to be started ...');
+
+  if (dataStorage) {
+    runningStatus = {
+      isRunning: true,
+      testCampaignId,
+      dataStorage,
+      webhookURL,
+      startedTime,
+      endTime: null,
+      logFile
+    };
+    startTestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters);
+    res.send({
+      error: null,
+      devops,
+      runningStatus
+    });
+  } else {
+    getDataStorage((err, ds) => {
+      if (err) {
+        console.log('[devops] Cannot get data storage');
         res.send({
-          error: `Test campaign Id must not be null`
+          error: 'Cannot get data storage'
         });
       } else {
-        const startedTime = Date.now();
-        const logFile = `${testCampaignId}_${startedTime}.log`;
-        getLogger("TEST-CAMPAIGN", `${logsPath}${logFile}`);
-        console.log('[devops] A test campaign is going to be started ...');
-
-        if (dataStorage) {
-          runningStatus = {
-            isRunning: true,
-            testCampaignId,
-            dataStorage,
-            webhookURL,
-            startedTime,
-            endTime: null,
-            logFile
-          };
-          startTestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters);
-          res.send({
-            error: null,
-            devops,
-            runningStatus
-          });
-        } else {
-          getDataStorage((err, ds) => {
-            if (err) {
-              console.log('[devops] Cannot get data storage');
-              res.send({
-                error: 'Cannot get data storage'
-              });
-            } else {
-              runningStatus = {
-                isRunning: true,
-                testCampaignId,
-                dataStorage: ds,
-                webhookURL,
-                startedTime,
-                endTime: null,
-                logFile
-              };
-              startTestCampaign(testCampaignId, ds, webhookURL, evaluationParameters);
-              res.send({
-                error: null,
-                runningStatus
-              });
-            }
-          });
-        }
+        runningStatus = {
+          isRunning: true,
+          testCampaignId,
+          dataStorage: ds,
+          webhookURL,
+          startedTime,
+          endTime: null,
+          logFile
+        };
+        startTestCampaign(testCampaignId, ds, webhookURL, evaluationParameters);
+        res.send({
+          error: null,
+          runningStatus
+        });
       }
-    }
-  });
+    });
+  }
 });
 
 router.get('/stop', (req, res, next) => {

@@ -16,6 +16,8 @@ const repoRoot = path.resolve(__dirname, "../..");
 const modelsDir = path.resolve(repoRoot, "src/server/data/models");
 const recordersDir = path.resolve(repoRoot, "src/server/data/data-recorders");
 const repoPackageJson = path.resolve(repoRoot, "package.json");
+const devopsConfigPath = path.resolve(repoRoot, "src/server/data/devops.json");
+const campaignLogsDir = path.resolve(repoRoot, "src/server/logs/test-campaigns");
 
 /** An origin the server will be configured to allow via CORS_ALLOWED_ORIGINS. */
 const allowedOrigin = "http://allowed.example";
@@ -197,6 +199,38 @@ const removeIfPresent = (filePath) => {
   }
 };
 
+/**
+ * Every directory a `../` payload in a test-campaign log filename reaches from
+ * `src/server/logs/test-campaigns/`. The logger creates missing parents, so an
+ * escaping name really does write into these if containment regresses - the
+ * canaries must look where the payload actually lands.
+ */
+const campaignLogEscapeDirs = [
+  path.resolve(campaignLogsDir, ".."),
+  path.resolve(campaignLogsDir, "../.."),
+  path.resolve(campaignLogsDir, "../../.."),
+  repoRoot,
+];
+
+/**
+ * Absolute paths of any file in a campaign-log escape directory whose name
+ * starts with the given prefix. The log filename carries a timestamp, so the
+ * canary matches on the prefix rather than an exact name.
+ * @param {String} prefix Artifact name prefix, e.g. the hostile campaign id
+ * @returns {String[]} Paths that must be empty after a rejected request
+ */
+const escapedCampaignLogs = (prefix) =>
+  campaignLogEscapeDirs.flatMap((dir) => {
+    try {
+      return fs
+        .readdirSync(dir)
+        .filter((f) => f.startsWith(prefix))
+        .map((f) => path.join(dir, f));
+    } catch (_) {
+      return []; // directory absent, which is the expected case
+    }
+  });
+
 /** Snapshot the list of files in a directory (for "nothing written/removed" asserts). */
 const listDir = (dir) =>
   new Promise((resolve) =>
@@ -208,6 +242,8 @@ module.exports = {
   modelsDir,
   recordersDir,
   repoPackageJson,
+  devopsConfigPath,
+  campaignLogsDir,
   allowedOrigin,
   hostileOrigin,
   request,
@@ -216,6 +252,7 @@ module.exports = {
   inModelsDir,
   inRecordersDir,
   escapeArtifacts,
+  escapedCampaignLogs,
   removeIfPresent,
   listDir,
 };
