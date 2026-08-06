@@ -30,6 +30,17 @@ const { timingSafeCompare } = require("../auth/passwords");
 const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
 
 /**
+ * The safe methods that can still reach a handler and therefore still mutate.
+ *
+ * `OPTIONS` is excluded deliberately: it never reaches a route handler in this
+ * application, so demanding a token on it would answer a preflight — or a plain
+ * capability probe — with a CSRF failure. Keeping it out means the guard is
+ * correct on its own rather than only because the gate ahead of it answers
+ * preflights first.
+ */
+const ROUTED_SAFE_METHODS = ["GET", "HEAD"];
+
+/**
  * Routes that change state over a *safe* method, and therefore need the token
  * anyway (paths relative to the `/api` mount, lower-cased).
  *
@@ -96,11 +107,11 @@ const isMutatingSafeMethodPath = (path) => {
 
 function createCsrfMiddleware() {
   return function csrfProtection(req, res, next) {
-    if (
-      SAFE_METHODS.indexOf(req.method) !== -1 &&
-      !isMutatingSafeMethodPath(normalizePath(req.path))
-    ) {
-      return next();
+    if (SAFE_METHODS.indexOf(req.method) !== -1) {
+      const routed = ROUTED_SAFE_METHODS.indexOf(req.method) !== -1;
+      if (!routed || !isMutatingSafeMethodPath(normalizePath(req.path))) {
+        return next();
+      }
     }
     if (EXEMPT_PATHS.indexOf(normalizePath(req.path)) !== -1) {
       return next();
@@ -127,6 +138,7 @@ module.exports = {
   isMutatingSafeMethodPath,
   CSRF_HEADER,
   SAFE_METHODS,
+  ROUTED_SAFE_METHODS,
   EXEMPT_PATHS,
   MUTATING_SAFE_METHOD_PATHS,
   MUTATING_SAFE_METHOD_PREFIXES,
