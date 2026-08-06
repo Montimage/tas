@@ -314,8 +314,11 @@ const simulationRunFields = {
   // The dataset the run writes into; its `id` becomes a filter of its own.
   newDataset: datasetSchema.allow(null),
   replayOptions: documentSchema({
-    startTime: timestampSchema,
-    endTime: timestampSchema,
+    // Null is how "no bound" is expressed here — `src/core/simulation` ships a
+    // topology with both set to null and guards on truthiness — so these are
+    // nullable like every other run field rather than merely absent.
+    startTime: timestampSchema.allow(null),
+    endTime: timestampSchema.allow(null),
     repeat: Joi.boolean(),
     speedup: Joi.number().positive(),
   }).allow(null),

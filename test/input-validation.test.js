@@ -988,14 +988,28 @@ test("a stored topology cannot carry a database connection of its own choosing",
         "a rejected topology must never reach the disk the start route reads from"
       );
 
-      // The update route persists the same document, so it is checked too.
-      const updated = await request(
-        server,
-        "POST",
-        `/api/models/${encodeURIComponent("202402-Temperature-Controller.json")}`,
-        { model: { name, devices: [], ...extra } }
+      // The update route persists the same document, so it is checked too —
+      // through the schema alone. Driving it for real would point a rename at a
+      // tracked fixture: `updateModel` writes `${model.name}.json` and deletes
+      // the file it was given, so the day this assertion regresses the handler
+      // would delete the shipped topology out of the checkout.
+      const updated = await validateOnly(modelRouter, "POST", "/:fileName", {
+        params: { fileName: "202402-Temperature-Controller.json" },
+        body: { model: { name, devices: [], ...extra } },
+      });
+      assert.equal(
+        updated.passed,
+        false,
+        `POST /api/models/:fileName must reject ${JSON.stringify(extra)}`
       );
-      assertValidationError(updated, `POST /api/models/:fileName with ${JSON.stringify(extra)}`);
+      assertValidationError(
+        { status: updated.status, body: updated.body, raw: JSON.stringify(updated.body) },
+        `POST /api/models/:fileName with ${JSON.stringify(extra)}`
+      );
+      assert.ok(
+        updated.body.details.some((detail) => detail.field === field),
+        `the update refusal must name ${field}: ${JSON.stringify(updated.body.details)}`
+      );
     }
   } finally {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
@@ -1039,9 +1053,10 @@ test("the shipped topology and recorder still satisfy their tightened schemas", 
 test("an event value is accepted in every form the product records", async () => {
   // The MQTT buses hand the handler `message.toString()`, so a sensor reading
   // is recorded as a string; structured payloads are recorded as objects. The
-  // Mongoose path is Mixed and stores either, and the dashboard's event editor
-  // round-trips whichever it finds, so the schema has to admit both.
-  const values = ["23.5", 23.5, { temp: 20 }, [1, 2], true, null];
+  // Mongoose path is Mixed and stores whichever it is given, and the
+  // dashboard's event editor round-trips whichever it finds, so the schema has
+  // to admit both.
+  const values = ["23.5", 23.5, { temp: 20 }, [1, 2], true];
   for (const value of values) {
     await assertBodyAccepted(
       eventRouter,
@@ -1068,6 +1083,41 @@ test("an event value is accepted in every form the product records", async () =>
     { event: { timestamp: 1, topic: "t", datasetId: "ds-1", values: "x".repeat(9000) } },
     "event.values",
     "an event value beyond the declared bound"
+  );
+
+  // And not null: `EventSchema` declares `values` required, and mongoose's
+  // required check rejects null, so accepting it here would trade a clean 400
+  // for a save that fails behind a 200 — and on the update route, which does
+  // not run validators, for a null written past the schema.
+  await assertBodyRejected(
+    eventRouter,
+    "POST",
+    "/",
+    { event: { timestamp: 1, topic: "t", datasetId: "ds-1", values: null } },
+    "event.values",
+    "a null event value on create"
+  );
+  await assertBodyRejected(
+    eventRouter,
+    "POST",
+    "/:eventId",
+    { event: { values: null } },
+    "event.values",
+    "a null event value on update"
+  );
+});
+
+test("a topology carrying null replay bounds is still accepted", async () => {
+  // `src/core/simulation/homeio-full.json` ships exactly this, and `Simulation`
+  // guards on truthiness, so null is how "no bound" is expressed rather than a
+  // malformed timestamp. Both routes that take a topology must accept it.
+  const replayOptions = { startTime: null, endTime: null, repeat: true, speedup: 5 };
+  const model = { name: unique("iv-replay"), devices: [], replayOptions };
+  await assertBodyAccepted(modelRouter, "POST", "/", { model }, "a stored topology with null replay bounds");
+  await assertRunAccepted({ model }, "a run started from a topology with null replay bounds");
+  await assertRunAccepted(
+    { modelFileName: "202402-Temperature-Controller.json", options: { replayOptions } },
+    "a run whose options carry null replay bounds"
   );
 });
 

@@ -31,22 +31,26 @@ const eventQuery = Joi.object({
 
 // What the product actually records: the MQTT buses hand the handler
 // `message.toString()`, so a sensor reading arrives as a string, while
-// structured payloads arrive as objects — and the Mongoose schema stores either
-// (`values` is a Mixed path). The dashboard round-trips whichever it finds.
-// Declared by shape rather than left as `any` so it still cannot be an
+// structured payloads arrive as objects — and the Mongoose path is Mixed, so it
+// stores whichever of those it is given. The dashboard round-trips whichever it
+// finds. Declared by shape rather than left as `any` so it still cannot be an
 // unbounded structure, but not narrowed to an object: `values` never reaches a
 // filter, so narrowing it buys no safety and only rejects real events. The
 // security property on this document is that `datasetId` and `topic` are typed,
 // which they are.
-const eventValueSchema = Joi.alternatives()
-  .try(
-    Joi.object(),
-    Joi.array(),
-    Joi.string().max(8192),
-    Joi.number(),
-    Joi.boolean()
-  )
-  .allow(null);
+//
+// Null is deliberately not among the branches: `EventSchema` declares `values`
+// as required, and mongoose's required check rejects null, so admitting it here
+// would turn a clean 400 into a save that fails behind a 200 — and the update
+// route calls `findByIdAndUpdate` without `runValidators`, which would write it
+// past the schema entirely.
+const eventValueSchema = Joi.alternatives().try(
+  Joi.object(),
+  Joi.array(),
+  Joi.string().max(8192),
+  Joi.number(),
+  Joi.boolean()
+);
 
 const eventFields = {
   timestamp: timestampSchema,
