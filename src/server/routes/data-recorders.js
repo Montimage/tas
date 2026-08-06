@@ -10,6 +10,11 @@ const {
   deleteFile,
   getObjectId,
 } = require("../../core/utils");
+const {
+  isValidName,
+  resolveWithin,
+  sendBadRequest,
+} = require("./path-safety");
 const dataRecordersPath = `${__dirname}/../data/data-recorders/`;
 let router = express.Router();
 let getLogger = require("../logger");
@@ -80,6 +85,10 @@ const startRecorder = (model, res) => {
       res.send({
         error: " Invalid data recorder model",
       });
+    } else if (!isValidName(name)) {
+      res.status(400).send({
+        error: "Invalid data recorder name",
+      });
     } else {
       const recorderId = getObjectId(name);
       if (allDataRecorders[recorderId]) {
@@ -149,7 +158,10 @@ router.post("/start", (req, res, next) => {
   const { model, dataRecorderFileName } = req.body;
   if (dataRecorderFileName) {
     // start recorder by file name
-    const dataRecorderFile = `${dataRecordersPath}${dataRecorderFileName}`;
+    const dataRecorderFile = resolveWithin(dataRecordersPath, dataRecorderFileName);
+    if (!dataRecorderFile) {
+      return sendBadRequest(res, "Invalid data recorder file name");
+    }
     readJSONFile(dataRecorderFile, (err, data) => {
       if (err) {
         console.error(
@@ -188,12 +200,15 @@ router.get("/models/", (req, res, next) => {
 // Read a specific data recorder by its name:
 router.get("/models/:fileName", function (req, res, next) {
   const { fileName } = req.params;
-  const dataRecorderFile = `${dataRecordersPath}${fileName}`;
+  const dataRecorderFile = resolveWithin(dataRecordersPath, fileName);
+  if (!dataRecorderFile) {
+    return sendBadRequest(res, "Invalid data recorder name");
+  }
   readJSONFile(dataRecorderFile, (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
       res.send({
-        error: err,
+        error: "Cannot read the data recorder file",
       });
     } else {
       res.send({
@@ -222,11 +237,18 @@ const updateDataRecorder = (fileName, dataRecorder, res) => {
       error: `Invalid dataRecorder ${JSON.stringify(dataRecorder)}`,
     });
   }
+  if (!isValidName(name)) {
+    return sendBadRequest(res, "Invalid data recorder name");
+  }
   const newName = `${name}.json`;
+  const oldDataRecorderFile = resolveWithin(dataRecordersPath, fileName);
+  const newDataRecorderFile = resolveWithin(dataRecordersPath, newName);
+  if (!oldDataRecorderFile || !newDataRecorderFile) {
+    return sendBadRequest(res, "Invalid data recorder name");
+  }
   if (newName === fileName) {
-    const dataRecorderFile = `${dataRecordersPath}${fileName}`;
     writeToFile(
-      dataRecorderFile,
+      newDataRecorderFile,
       JSON.stringify(dataRecorder),
       (err, data) => {
         if (err) {
@@ -244,8 +266,6 @@ const updateDataRecorder = (fileName, dataRecorder, res) => {
     );
   } else {
     // new file
-    const oldDataRecorderFile = `${dataRecordersPath}${fileName}`;
-    const newDataRecorderFile = `${dataRecordersPath}${newName}`;
     writeToFile(
       newDataRecorderFile,
       JSON.stringify(dataRecorder),
@@ -276,7 +296,10 @@ const updateDataRecorder = (fileName, dataRecorder, res) => {
 };
 
 const duplicateDataRecorder = (fileName, res) => {
-  const dataRecorderFile = `${dataRecordersPath}${fileName}`;
+  const dataRecorderFile = resolveWithin(dataRecordersPath, fileName);
+  if (!dataRecorderFile) {
+    return sendBadRequest(res, "Invalid data recorder name");
+  }
   readJSONFile(dataRecorderFile, (err, data) => {
     if (err) {
       console.error("[SERVER] Cannot read data recorder: ", err);
@@ -289,9 +312,16 @@ const duplicateDataRecorder = (fileName, res) => {
         ...data,
         name: newName,
       };
+      if (!isValidName(newName)) {
+        return sendBadRequest(res, "Invalid data recorder name");
+      }
       const newFileName = `${newName}.json`;
+      const newDataRecorderFile = resolveWithin(dataRecordersPath, newFileName);
+      if (!newDataRecorderFile) {
+        return sendBadRequest(res, "Invalid data recorder name");
+      }
       writeToFile(
-        `${dataRecordersPath}${newFileName}`,
+        newDataRecorderFile,
         JSON.stringify(newDataRecorder),
         (err, dupDataRecorder) => {
           if (err) {
@@ -343,8 +373,14 @@ router.post("/models", function (req, res, next) {
       error: `Invalid dataRecorder ${JSON.stringify(dataRecorder)}`,
     });
   }
+  if (!isValidName(name)) {
+    return sendBadRequest(res, "Invalid data recorder name");
+  }
   const dataRecorderFileName = `${dataRecorder.name}.json`;
-  const dataRecorderFile = `${dataRecordersPath}${dataRecorderFileName}`;
+  const dataRecorderFile = resolveWithin(dataRecordersPath, dataRecorderFileName);
+  if (!dataRecorderFile) {
+    return sendBadRequest(res, "Invalid data recorder name");
+  }
   writeToFile(dataRecorderFile, JSON.stringify(dataRecorder), (err, data) => {
     if (err) {
       console.error("[SERVER]", err);
@@ -363,7 +399,10 @@ router.post("/models", function (req, res, next) {
 // Delete a data recorder
 router.delete("/models/:fileName", function (req, res, next) {
   const { fileName } = req.params;
-  const dataRecorderFile = `${dataRecordersPath}${fileName}`;
+  const dataRecorderFile = resolveWithin(dataRecordersPath, fileName);
+  if (!dataRecorderFile) {
+    return sendBadRequest(res, "Invalid data recorder name");
+  }
   deleteFile(dataRecorderFile, (err) => {
     if (err) {
       console.error("[SERVER]", err);

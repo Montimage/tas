@@ -4,6 +4,11 @@ const { SIMULATING, OFFLINE } = require("../../core/DeviceStatus");
 let getLogger = require("../logger");
 const Simulation = require("../../core/simulation");
 const { readJSONFile } = require("../../core/utils");
+const {
+  isValidName,
+  resolveWithin,
+  sendBadRequest,
+} = require("./path-safety");
 const { getDataStorage } = require("./db-connector");
 const { getObjectId } = require('../../core/utils');
 
@@ -50,6 +55,9 @@ const startSimulation = (model, options, res, modelFileName = null) => {
       error: "Invalid model",
       model: model,
     });
+  }
+  if (!isValidName(name)) {
+    return sendBadRequest(res, "Invalid model name");
   }
 
   const simId = getObjectId(name);
@@ -122,7 +130,10 @@ router.post("/start", function (req, res, next) {
   simulationStatus = null;
   const { model, modelFileName, options } = req.body;
   if (modelFileName) {
-    const modelFilePath = `${modelsPath}${modelFileName}`;
+    const modelFilePath = resolveWithin(modelsPath, modelFileName);
+    if (!modelFilePath) {
+      return sendBadRequest(res, "Invalid model file name");
+    }
     readJSONFile(modelFilePath, (err, myModel) => {
       if (err) {
         console.error(`Cannot read model ${modelFileName}`, err);
