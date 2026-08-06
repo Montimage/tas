@@ -101,14 +101,23 @@ test("writeToFile reports a synchronous path failure through the callback", asyn
   assert.equal(err.code, "ERR_INVALID_ARG_VALUE");
 });
 
-test("writeToFile reports a synchronous data failure through the callback", async () => {
-  // fs.writeFile validates the data argument synchronously too, so a caller
-  // that passes a non-serialised value hits the same swallowed-error path.
+test("writeToFile always calls back for a non-string data argument", async () => {
+  // fs.writeFile validates the data argument synchronously as well, so a caller
+  // that passes a non-serialised value hits the same swallowed-error path - but
+  // only from Node 19 on, where the implicit string coercion deprecated as
+  // DEP0162 reached end of life. Earlier versions coerce 42 to "42" and write
+  // it. The repo declares no `engines`, so assert the part that holds either
+  // way: the callback is always invoked, which is the regression this guards.
+  // The NUL-byte path above is the version-stable trigger for the error itself.
   const [err] = await callbackArgs((cb) =>
     writeToFile(path.join(tmpDir, "bad-data.json"), 42, cb, true)
   );
-  assert.ok(err, "a synchronous write failure must produce an error argument");
-  assert.equal(err.code, "ERR_INVALID_ARG_TYPE");
+  if (err) {
+    assert.ok(
+      err instanceof TypeError,
+      `expected an argument-type failure, got ${err.constructor.name}: ${err}`
+    );
+  }
 });
 
 test("writeToFile still writes and calls back on success", async () => {
