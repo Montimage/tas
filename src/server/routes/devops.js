@@ -126,9 +126,13 @@ router.post("/", function (req, res, next) {
 const loadValidatedDevops = (req, res, next) => {
   getDevops((err, devops) => {
     if (err) {
-      console.error('[SERVER] Cannot get devops configuration');
+      // The raw fs error carries the absolute path of devops.json in its own
+      // enumerable properties, which JSON.stringify would serialise straight
+      // into the response. Keep the detail server-side and answer with a
+      // constant message.
+      console.error('[SERVER] Cannot get devops configuration', err);
       return res.send({
-        error: err
+        error: "Cannot get devops configuration"
       });
     }
     const { testCampaignId } = devops || {};

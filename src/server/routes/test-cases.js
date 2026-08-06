@@ -28,6 +28,15 @@ const containModelFileName = (req, res, next) => {
     // Shape errors stay the responsibility of the handler below.
     return next();
   }
+  // A `$`-prefixed key makes the body a MongoDB update document rather than a
+  // plain set of fields, and the update route hands it to `findOneAndUpdate`
+  // as-is. `{"$set": {"modelFileName": "..."}}` carries no own `modelFileName`
+  // key, so the containment below would wave it through and the operator would
+  // still persist an arbitrary path. No legitimate client sends operators - the
+  // UI posts a flat object of form fields - so reject them outright.
+  if (Object.keys(testCase).some((key) => key.startsWith("$"))) {
+    return sendBadRequest(res, "Invalid test case");
+  }
   if (!("modelFileName" in testCase)) {
     return next();
   }

@@ -417,6 +417,36 @@ test("test-cases POST /:testCaseId rejects a hostile modelFileName", async () =>
   assert.ok(fs.existsSync(repoPackageJson));
 });
 
+test("test-cases POST /:testCaseId rejects a MongoDB update operator", async () => {
+  // Without this the containment is bypassable in one request: an operator
+  // document carries no own `modelFileName` key, so a check that only looks at
+  // plain fields waves it through and mongoose casts it to the database intact.
+  const hostile = [
+    { $set: { modelFileName: "/etc/passwd" } },
+    { $set: { modelFileName: "../../../package.json" } },
+    { $setOnInsert: { modelFileName: "/etc/passwd" } },
+    { $unset: { modelFileName: "" } },
+  ];
+  for (const testCase of hostile) {
+    const res = await request(server, "POST", "/api/test-cases/any-id", { testCase });
+    assert.equal(
+      res.status,
+      400,
+      `expected 400 for ${JSON.stringify(testCase)}, got ${res.status} (${res.raw})`
+    );
+    assert.ok(!res.raw.includes("/home/"), `must not leak server paths: ${res.raw}`);
+    assert.ok(!res.raw.includes("workspace"), `must not leak server paths: ${res.raw}`);
+  }
+  assert.ok(fs.existsSync(repoPackageJson), "canary must be untouched");
+});
+
+test("test-cases POST rejects a MongoDB update operator", async () => {
+  const res = await request(server, "POST", "/api/test-cases", {
+    testCase: { $set: { modelFileName: "/etc/passwd" } },
+  });
+  assert.equal(res.status, 400, `expected 400, got ${res.status} (${res.raw})`);
+});
+
 test("test-cases POST rejects a non-string modelFileName", async () => {
   for (const modelFileName of [42, { $ne: null }, ["../../x"]]) {
     const res = await request(server, "POST", "/api/test-cases", {
@@ -427,5 +457,64 @@ test("test-cases POST rejects a non-string modelFileName", async () => {
       400,
       `expected 400 for modelFileName ${JSON.stringify(modelFileName)}`
     );
+  }
+});
+
+// The rejection tests above all return before `dbConnector`, but the value the
+// guard *stores* on the way through only reaches an assertion when a database
+// answers - which CI has none of. Exercise the middleware on its own so a guard
+// that contained the wrong path cannot pass unnoticed. It is taken off the
+// router's own stack rather than re-exported, so the test binds to the exact
+// function the create and update routes run.
+const containModelFileName = testCasesRouter.stack.find(
+  (layer) => layer.route && layer.route.path === "/" && layer.route.methods.post
+).route.stack[0].handle;
+
+test("test-cases containment stores the resolved path inside the models directory", async () => {
+  const guardApp = express();
+  guardApp.use(express.json());
+  guardApp.post("/contain", containModelFileName, (req, res) => {
+    // `undefined` is JSON-dropped, so report the raw state explicitly.
+    res.send({
+      contained: req.containedModelFileName === undefined
+        ? "undefined"
+        : req.containedModelFileName,
+    });
+  });
+  const guardServer = guardApp.listen(0);
+  try {
+    const legitimate = await request(guardServer, "POST", "/contain", {
+      testCase: { modelFileName: "202402-Temperature-Controller.json" },
+    });
+    assert.equal(legitimate.status, 200, legitimate.raw);
+    assert.equal(
+      legitimate.body.contained,
+      inModelsDir("202402-Temperature-Controller.json"),
+      "a legitimate name must be stored as its resolved path in the models directory"
+    );
+
+    // An explicitly empty name is a caller asking for "no model", which is
+    // stored as null rather than a path to a file that cannot exist.
+    for (const modelFileName of [null, ""]) {
+      const res = await request(guardServer, "POST", "/contain", {
+        testCase: { modelFileName },
+      });
+      assert.equal(res.status, 200, res.raw);
+      assert.equal(
+        res.body.contained,
+        null,
+        `expected null for modelFileName ${JSON.stringify(modelFileName)}`
+      );
+    }
+
+    // A payload that carries no modelFileName at all leaves the value unset,
+    // which is what tells the update route to leave the stored one alone.
+    const absent = await request(guardServer, "POST", "/contain", {
+      testCase: { name: "no model field" },
+    });
+    assert.equal(absent.status, 200, absent.raw);
+    assert.equal(absent.body.contained, "undefined");
+  } finally {
+    guardServer.close();
   }
 });
