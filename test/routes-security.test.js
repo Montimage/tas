@@ -497,10 +497,13 @@ test("test-cases POST rejects a non-string modelFileName", async () => {
 // answers - which CI has none of. Exercise the middleware on its own so a guard
 // that contained the wrong path cannot pass unnoticed. It is taken off the
 // router's own stack rather than re-exported, so the test binds to the exact
-// function the create and update routes run.
-const containModelFileName = testCasesRouter.stack.find(
-  (layer) => layer.route && layer.route.path === "/" && layer.route.methods.post
-).route.stack[0].handle;
+// function the create and update routes run. It is found by name rather than by
+// position, so adding middleware ahead of it (input validation, say) cannot
+// silently point this test at a different function.
+const containModelFileName = testCasesRouter.stack
+  .find((layer) => layer.route && layer.route.path === "/" && layer.route.methods.post)
+  .route.stack.map((layer) => layer.handle)
+  .find((handle) => handle.name === "containModelFileName");
 
 test("test-cases containment stores the resolved path inside the models directory", async () => {
   const guardApp = express();

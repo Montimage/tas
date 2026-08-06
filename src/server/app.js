@@ -24,6 +24,19 @@ const devopsRouter = require('./routes/devops');
 
 var app = express();
 
+/**
+ * Parse query strings with Node's own parser rather than Express's default.
+ *
+ * The default ("extended") parser reads bracket notation, so `?a[$ne]=1`
+ * arrives as the object `{ a: { $ne: '1' } }` and, where a handler copies a
+ * query value into a database filter, silently becomes a query operator. With
+ * the simple parser every query value is a string or an array of strings, so
+ * that shape cannot be constructed at all. The per-endpoint schemas in
+ * `middleware/validate` enforce the same rule declaratively; this makes it
+ * structurally impossible one layer earlier.
+ */
+app.set("query parser", "simple");
+
 app.use(compression()); //Compress all routes
 app.use(helmet());
 app.set("port", config.port);

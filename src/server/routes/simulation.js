@@ -1,5 +1,6 @@
 /* Working with Data Generator */
 var express = require("express");
+const Joi = require("joi");
 const { SIMULATING, OFFLINE } = require("../../core/DeviceStatus");
 let getLogger = require("../logger");
 const Simulation = require("../../core/simulation");
@@ -11,10 +12,40 @@ const {
 } = require("./path-safety");
 const { getDataStorage } = require("./db-connector");
 const { getObjectId } = require('../../core/utils');
+const {
+  validate,
+  documentSchema,
+  safeNameSchema,
+  fileNameParam,
+} = require("../middleware/validate");
 
 let router = express.Router();
 const logsPath = `${__dirname}/../logs/simulations/`;
 const modelsPath = `${__dirname}/../data/models/`;
+
+// ---------------------------------------------------------------------------
+// Validation schemas for the simulation endpoints (issue #10)
+// ---------------------------------------------------------------------------
+
+// A simulation is keyed by its model file name, so `/stop` is given the same
+// `.json` name the dashboard started it with.
+const simulationFileNameParam = fileNameParam(".json");
+
+const simulationModelBody = documentSchema({
+  name: safeNameSchema.required(),
+  devices: Joi.array().items(Joi.object()).required(),
+  dataStorage: Joi.object(),
+});
+
+// A run starts either from a stored model or from an inline one.
+const simulationStartBody = Joi.object({
+  model: simulationModelBody,
+  modelFileName: Joi.string().max(128),
+  options: Joi.object(),
+})
+  .or("model", "modelFileName")
+  .required();
+
 /**
  * ```javascript
 //Init
@@ -125,7 +156,7 @@ const startSimulation = (model, options, res, modelFileName = null) => {
   }
 };
 
-router.post("/start", function (req, res, next) {
+router.post("/start", validate({ body: simulationStartBody }), function (req, res, next) {
   stats = null;
   simulationStatus = null;
   const { model, modelFileName, options } = req.body;
@@ -147,32 +178,24 @@ router.post("/start", function (req, res, next) {
   }
 });
 
-router.get("/stop/:fileName", function (req, res, next) {
+router.get("/stop/:fileName", validate({ params: { fileName: simulationFileNameParam } }), function (req, res, next) {
   const { fileName } = req.params;
-  if (!fileName) {
-    console.error(`[simulation] Missing topology's name`);
-    res.send({
-      error: "Missing topology's name",
-      simulationStatus: allSimulationStatus,
-    });
-  } else {
-    const simId = getObjectId(fileName.replace(".json", ""));
-    if (allSimulations[simId]) {
-      allSimulations[simId].stop();
-      allSimulations[simId] = null;
-    }
-    if (allSimulationStatus[simId]) {
-      allSimulationStatus[simId].isRunning = false;
-      allSimulationStatus[simId].endTime = Date.now();
-    }
-    res.send({
-      error: null,
-      simulationStatus: allSimulationStatus,
-    });
+  const simId = getObjectId(fileName.replace(".json", ""));
+  if (allSimulations[simId]) {
+    allSimulations[simId].stop();
+    allSimulations[simId] = null;
   }
+  if (allSimulationStatus[simId]) {
+    allSimulationStatus[simId].isRunning = false;
+    allSimulationStatus[simId].endTime = Date.now();
+  }
+  res.send({
+    error: null,
+    simulationStatus: allSimulationStatus,
+  });
 });
 
-router.get("/status", (req, res, next) => {
+router.get("/status", validate(), (req, res, next) => {
   const keys = Object.keys(allSimulationStatus);
   for (let index = 0; index < keys.length; index++) {
     const key = keys[index];
@@ -185,7 +208,7 @@ router.get("/status", (req, res, next) => {
   });
 });
 
-router.get("/stats", (req, res, next) => {
+router.get("/stats", validate(), (req, res, next) => {
   if (!simulation) return res.send({ error: null, stats: null });
   stats = simulation.getStats();
   res.send({

@@ -1,5 +1,6 @@
 /* Working with Data Generator */
 var express = require("express");
+const Joi = require("joi");
 const {
   dbConnector,
   getDataStorage,
@@ -22,14 +23,35 @@ const {
   resolveWithin,
   sendBadRequest,
 } = require("./path-safety");
+const {
+  validate,
+  documentSchema,
+  safeNameSchema,
+  urlSchema,
+} = require("../middleware/validate");
 let logsPath = `${__dirname}/../logs/test-campaigns/`;
 
 let runningStatus = null;
 
+// ---------------------------------------------------------------------------
+// Validation schemas for the devops endpoints (issue #10)
+// ---------------------------------------------------------------------------
+
+// `testCampaignId` becomes part of a log filename, so it is held to the
+// filename allowlist here rather than only where the path is derived.
+const devopsBody = Joi.object({
+  devops: documentSchema({
+    webhookURL: urlSchema.allow(null, ""),
+    testCampaignId: safeNameSchema.allow(null, ""),
+    dataStorage: Joi.object().allow(null),
+    evaluationParameters: Joi.object().allow(null),
+  }).required(),
+}).required();
+
 /**
  * Get the running status of test campaign
  */
-router.get("/status", (req, res, next) => {
+router.get("/status", validate(), (req, res, next) => {
   if (runningStatus) runningStatus.isRunning = getTestCampainStatus() !== OFFLINE;
   res.send({
     runningStatus
@@ -43,11 +65,6 @@ router.get("/status", (req, res, next) => {
  * @param {*} testCampaignId The value from the devops configuration
  * @returns {Boolean} true when the value is absent or safe to derive a name from
  */
-const isValidTestCampaignId = (testCampaignId) =>
-  testCampaignId === undefined ||
-  testCampaignId === null ||
-  isValidName(testCampaignId);
-
 let _devops = null;
 
 const getDevops = (callback) => {
@@ -68,7 +85,7 @@ const getDevops = (callback) => {
   });
 };
 
-router.get("/", function (req, res, next) {
+router.get("/", validate(), function (req, res, next) {
   getDevops((err, devO) => {
     if (err) {
       // Same reasoning as in `loadValidatedDevops` below: the raw fs error
@@ -88,23 +105,16 @@ router.get("/", function (req, res, next) {
 });
 
 // Save the default devops
-router.post("/", function (req, res, next) {
+router.post("/", validate({ body: devopsBody }), function (req, res, next) {
   const {
     devops
   } = req.body;
-  if (!devops) {
-    console.error("[SERVER]", "Cannot find devops content in body");
-    return res.send({
-      error: "Cannot find devops content in body"
-    });
-  }
   // The test campaign id becomes part of a log filename in GET /start, so a
   // hostile value must never reach the persisted configuration in the first
-  // place. Validating only on read-back would still leave the escape sitting
-  // in devops.json for any other consumer.
-  if (!isValidTestCampaignId(devops.testCampaignId)) {
-    return sendBadRequest(res, "Invalid test campaign id");
-  }
+  // place. That is now the schema's job: `devopsBody` holds the id to the same
+  // filename allowlist, so nothing hostile gets this far. The read-back guard
+  // in `loadValidatedDevops` still stands, for configurations an older build
+  // may have written.
   writeToFile(devopsFilePath, JSON.stringify(devops), (err, data) => {
     if (err) {
       console.error("[SERVER] Cannot save devops.json file", err);
@@ -157,7 +167,7 @@ const loadValidatedDevops = (req, res, next) => {
   });
 };
 
-router.get('/start', loadValidatedDevops, dbConnector, (req, res, next) => {
+router.get('/start', validate(), loadValidatedDevops, dbConnector, (req, res, next) => {
   const devops = req.devops;
   const {
     webhookURL,
@@ -219,7 +229,7 @@ router.get('/start', loadValidatedDevops, dbConnector, (req, res, next) => {
   }
 });
 
-router.get('/stop', (req, res, next) => {
+router.get('/stop', validate(), (req, res, next) => {
   const copiedStatus = runningStatus;
   if (runningStatus) {
     stopTestCampaign();

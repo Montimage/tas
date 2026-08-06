@@ -1,6 +1,7 @@
 /* Working with Data Generator */
 var express = require("express");
 var path = require('path');
+const Joi = require("joi");
 
 const {
   readJSONFile,
@@ -13,15 +14,48 @@ const {
   resolveWithin,
   sendBadRequest,
 } = require("./path-safety");
+const {
+  validate,
+  documentSchema,
+  safeNameSchema,
+  fileNameParam,
+} = require("../middleware/validate");
 const modelsPath = `${__dirname}/../data/models/`;
 let router = express.Router();
+
+// ---------------------------------------------------------------------------
+// Validation schemas for the model endpoints (issue #10)
+// ---------------------------------------------------------------------------
+
+const modelNameParam = fileNameParam(".json");
+
+const modelBody = documentSchema({
+  name: safeNameSchema.required(),
+  devices: Joi.array().items(Joi.object()).required(),
+});
+
+// A model is created with its full document.
+const modelCreateBody = Joi.object({
+  model: modelBody.required(),
+}).required();
+
+// The same endpoint updates a model and duplicates one. A duplicate request
+// carries only the flag and an update carries only the model, so declaring
+// exactly one of the two is what lets the handler branch without re-checking
+// that the model it is about to write actually arrived.
+const modelUpdateBody = Joi.object({
+  model: modelBody,
+  isDuplicated: Joi.valid(true),
+})
+  .xor("model", "isDuplicated")
+  .required();
 
 ///////////////
 // MODEL
 ///////////////
 
 // Read the list of models
-router.get("/", (req, res, next) => {
+router.get("/", validate(), (req, res, next) => {
   readDir(modelsPath, (err, files) => {
     if (err) {
       console.error("[SERVER]", err);
@@ -38,7 +72,7 @@ router.get("/", (req, res, next) => {
 });
 
 // Read a specific model by its name:
-router.get("/:fileName", function (req, res, next) {
+router.get("/:fileName", validate({ params: { fileName: modelNameParam } }), function (req, res, next) {
   const {
     fileName
   } = req.params;
@@ -100,24 +134,11 @@ const duplicateModel = (fileName, res) => {
 }
 
 const updateModel = (model, fileName, res) => {
-  
-  if (!model) {
-    console.error("[SERVER]", "Cannot find model in body");
-    return res.send({
-      error: "Cannot find model in body"
-    });
-  }
-
   const {
-    name,
-    devices
+    name
   } = model;
-  if (!name || !devices) {
-    console.error("[SERVER]", `Invalid model ${JSON.stringify(model)}`);
-    return res.send({
-      error: `Invalid model ${JSON.stringify(model)}`
-    });
-  }
+  // Containment, not validation: the schema has already established that the
+  // name is well formed, but the path it derives is still checked at the sink.
   if (!isValidName(name)) {
     return sendBadRequest(res, "Invalid model name");
   }
@@ -167,7 +188,7 @@ const updateModel = (model, fileName, res) => {
 };
 
 // Update a model - or duplicate a model
-router.post("/:fileName", function (req, res, next) {
+router.post("/:fileName", validate({ params: { fileName: modelNameParam }, body: modelUpdateBody }), function (req, res, next) {
   const {
     fileName
   } = req.params;
@@ -185,27 +206,14 @@ router.post("/:fileName", function (req, res, next) {
 });
 
 // Save a new model
-router.post("/", function (req, res, next) {
+router.post("/", validate({ body: modelCreateBody }), function (req, res, next) {
   const {
     model
   } = req.body;
-  if (!model) {
-    console.error("[SERVER]", "Cannot find model in body");
-    return res.send({
-      error: "Cannot find model in body"
-    });
-  }
-
   const {
-    name,
-    devices
+    name
   } = model;
-  if (!name || !devices) {
-    console.error("[SERVER]", `Invalid model ${JSON.stringify(model)}`);
-    return res.send({
-      error: `Invalid model ${JSON.stringify(model)}`
-    });
-  }
+  // Containment, not validation: see `updateModel` above.
   if (!isValidName(name)) {
     return sendBadRequest(res, "Invalid model name");
   }
@@ -230,7 +238,7 @@ router.post("/", function (req, res, next) {
 });
 
 // Delete a model
-router.delete("/:fileName", function (req, res, next) {
+router.delete("/:fileName", validate({ params: { fileName: modelNameParam } }), function (req, res, next) {
   const {
     fileName
   } = req.params;

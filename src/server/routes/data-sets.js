@@ -1,10 +1,48 @@
 /* Working with data set */
 const express = require("express");
+const Joi = require("joi");
 const EventSchema = require("../../core/enact-mongoose/schemas/EventSchema");
 const router = express.Router();
 const { DatasetSchema, dbConnector } = require("./db-connector");
+const {
+  validate,
+  documentSchema,
+  idSchema,
+  pageSchema,
+  textSchema,
+} = require("../middleware/validate");
 
-router.get("/", dbConnector, function (req, res, next) {
+// ---------------------------------------------------------------------------
+// Validation schemas for the data-set endpoints (issue #10)
+// ---------------------------------------------------------------------------
+
+const datasetIdParam = idSchema.required();
+
+const datasetQuery = Joi.object({
+  page: pageSchema.default(0),
+});
+
+const datasetFields = {
+  id: idSchema,
+  name: textSchema,
+  tags: Joi.array().items(Joi.string().max(256)),
+  description: textSchema.allow(null, ""),
+  source: textSchema.allow(null, ""),
+};
+
+const datasetCreateBody = Joi.object({
+  dataset: documentSchema({
+    ...datasetFields,
+    id: idSchema.required(),
+    name: textSchema.required(),
+  }).required(),
+}).required();
+
+const datasetUpdateBody = Joi.object({
+  dataset: documentSchema(datasetFields).required(),
+}).required();
+
+router.get("/", validate({ query: datasetQuery }), dbConnector, function (req, res, next) {
   let page = req.query.page;
   if (!page) page = 0;
   DatasetSchema.findDatasetsWithPagingOptions(null, page, (err2, datasets) => {
@@ -24,7 +62,7 @@ router.get("/", dbConnector, function (req, res, next) {
 /**
  * Get a data set by id
  */
-router.get("/:datasetId", dbConnector, function (req, res, next) {
+router.get("/:datasetId", validate({ params: { datasetId: datasetIdParam } }), dbConnector, function (req, res, next) {
   const { datasetId } = req.params;
 
   DatasetSchema.findOne({ id: datasetId }, (err2, dataset) => {
@@ -42,7 +80,7 @@ router.get("/:datasetId", dbConnector, function (req, res, next) {
 });
 
 // Add a new data set
-router.post("/", dbConnector, function (req, res, next) {
+router.post("/", validate({ body: datasetCreateBody }), dbConnector, function (req, res, next) {
   const { dataset } = req.body;
   const { id, name, tags, description, source } = dataset;
   const currentTime = Date.now();
@@ -72,7 +110,7 @@ router.post("/", dbConnector, function (req, res, next) {
 /**
  * Update a data set
  */
-router.post("/:datasetId", dbConnector, function (req, res, next) {
+router.post("/:datasetId", validate({ params: { datasetId: datasetIdParam }, body: datasetUpdateBody }), dbConnector, function (req, res, next) {
   const { dataset } = req.body;
   const { datasetId } = req.params;
 
@@ -97,7 +135,7 @@ router.post("/:datasetId", dbConnector, function (req, res, next) {
 /**
  * Delete a data set by id
  */
-router.delete("/:datasetId", dbConnector, function (req, res, next) {
+router.delete("/:datasetId", validate({ params: { datasetId: datasetIdParam } }), dbConnector, function (req, res, next) {
   const { datasetId } = req.params;
 
   DatasetSchema.findOneAndDelete({ id: datasetId }, (err, ret) => {
