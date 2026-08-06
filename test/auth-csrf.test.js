@@ -277,109 +277,167 @@ test("a forged CORS preflight cannot enumerate the routing table", async () => {
 // ---------------------------------------------------------------------------
 
 /**
- * Every `GET`/`HEAD` route in the API that has been read and found to change
- * nothing, as `<router file>:<path relative to the /api mount>`.
+ * Every `GET`/`HEAD` route under `/api` that has been read and found to change
+ * nothing a caller can see or choose, as its `/api`-relative path.
  *
- * This is the counterpart to `MUTATING_SAFE_METHOD_PATHS`: between them the two
- * lists have to account for every safe-method route the application mounts. A
- * route added later belongs to one or the other, and the test below fails until
- * somebody says which — which is the point, because the failure mode this
- * guards is a new `GET /reset` that nothing refuses and no test notices.
+ * "Read-only" is meant at the level this guard is about: several of these do
+ * refresh a module-level cache, a running-status flag or a lazily opened
+ * database connection. None of them takes a payload, creates or destroys
+ * anything, or does something a cross-site page would gain by triggering. What
+ * disqualifies a route from this list is state a caller supplies or chooses.
+ *
+ * This is the counterpart to `MUTATING_SAFE_METHOD_PATHS` in the CSRF guard:
+ * between them, the two lists have to account for every safe-method route the
+ * application mounts. A route added later belongs to one or the other and the
+ * test below fails until somebody says which — which is the point, because the
+ * failure mode it guards is a new `GET /reset` that nothing refuses and no test
+ * notices.
  */
-/**
- * Where `src/server/app.js` mounts each router, so a route declared relative to
- * its router can be turned into the `/api`-relative path the guard compares.
- * `logs.js` is mounted three times under `/logs/...`; one of them is enough to
- * classify its routes, which are identical across the three.
- */
-const MOUNTS = {
-  "auth.js": "/auth",
-  "data-recorders.js": "/data-recorders",
-  "data-sets.js": "/data-sets",
-  "data-storage.js": "/data-storage",
-  "db-connector.js": null,
-  "devops.js": "/devops",
-  "events.js": "/events",
-  "health.js": "/health",
-  "logs.js": "/logs/data-recorders",
-  "model.js": "/models",
-  "path-safety.js": null,
-  "reports.js": "/reports",
-  "simulation.js": "/simulation",
-  "test-campaigns.js": "/test-campaigns",
-  "test-cases.js": "/test-cases",
-};
-
 const READ_ONLY_SAFE_ROUTES = new Set([
-  "auth.js:/session",
-  "data-recorders.js:/",
-  "data-recorders.js:/:fileName",
-  "data-recorders.js:/models/",
-  "data-recorders.js:/models/:fileName",
-  "data-recorders.js:/status",
-  "data-sets.js:/",
-  "data-sets.js:/:datasetId",
-  "data-storage.js:/",
-  "data-storage.js:/test",
-  "devops.js:/",
-  "devops.js:/status",
-  "events.js:/",
-  "events.js:/:eventId",
-  "health.js:/",
-  "logs.js:/",
-  "logs.js:/:fileName",
-  "model.js:/",
-  "model.js:/:fileName",
-  "reports.js:/",
-  "reports.js:/:reportId",
-  "simulation.js:/stats",
-  "simulation.js:/status",
-  "test-campaigns.js:/",
-  "test-campaigns.js:/:testCampaignId",
-  "test-cases.js:/",
-  "test-cases.js:/:testCaseId",
+  "/auth/session",
+  "/data-recorders/models",
+  "/data-recorders/models/:fileName",
+  "/data-recorders/status",
+  "/data-sets",
+  "/data-sets/:datasetId",
+  "/data-storage",
+  "/data-storage/test",
+  "/devops",
+  "/devops/status",
+  "/events",
+  "/events/:eventId",
+  "/health",
+  "/logs/data-recorders",
+  "/logs/data-recorders/:fileName",
+  "/logs/simulations",
+  "/logs/simulations/:fileName",
+  "/logs/test-campaigns",
+  "/logs/test-campaigns/:fileName",
+  "/models",
+  "/models/:fileName",
+  "/reports",
+  "/reports/:reportId",
+  "/simulation/stats",
+  "/simulation/status",
+  "/test-campaigns",
+  "/test-campaigns/:testCampaignId",
+  "/test-cases",
+  "/test-cases/:testCaseId",
 ]);
 
-test("every safe-method route is classified as read-only or as needing a token", async () => {
-  const fs = require("node:fs");
-  const path = require("node:path");
-  const routesDir = path.resolve(__dirname, "../src/server/routes");
-  const unclassified = [];
-  const files = fs.readdirSync(routesDir).filter((name) => name.endsWith(".js"));
+/**
+ * Recover the path a layer was mounted at from the regexp Express compiled for
+ * it. Express keeps no copy of the original string, and reading the live stack
+ * is the only way to see what the guard actually sees: a source-text scan would
+ * miss a computed path, a `router.route(...)`, a route registered outside
+ * `src/server/routes/`, and every extra mount of a router mounted more than
+ * once — each of which is a way for an unprotected route to ship green.
+ *
+ * @param {Object} layer An Express router-stack layer
+ * @returns {String} The mount path, or "" for a layer that matches everything
+ */
+function layerPath(layer) {
+  if (layer.regexp && layer.regexp.fast_slash) return "";
+  const source = String((layer.regexp && layer.regexp.source) || "");
+  const trimmed = source
+    .replace(/^\^/, "")
+    .replace(/\\\/\?\(\?=\\\/\|\$\)$/, "")
+    .replace(/\\\/\?\$$/, "")
+    .replace(/\$$/, "");
+  return trimmed.replace(/\\(.)/g, "$1");
+}
 
-  assert.deepEqual(
-    files.filter((file) => !(file in MOUNTS)),
-    [],
-    "a new router file must be added to MOUNTS so its safe-method routes are classified"
+/**
+ * Walk a mounted Express application and yield every route it can reach.
+ *
+ * @param {Object} stack A router stack
+ * @param {String} prefix The path this stack is mounted at
+ * @returns {Array<{path: String, methods: Object}>} The routes found
+ */
+function collectRoutes(stack, prefix) {
+  const found = [];
+  for (const layer of stack || []) {
+    if (layer.route) {
+      const routePath = layer.route.path === "/" ? "" : layer.route.path;
+      found.push({
+        path: (prefix + routePath).replace(/\/+$/, "") || "/",
+        methods: layer.route.methods || {},
+      });
+    } else if (layer.handle && layer.handle.stack) {
+      found.push(...collectRoutes(layer.handle.stack, prefix + layerPath(layer)));
+    }
+  }
+  return found;
+}
+
+test("every safe-method route under /api is classified read-only or token-bearing", async () => {
+  // Boot the real application so the route table is the one the guard sees.
+  const appPath = require.resolve("../src/server/app.js");
+  const saved = {};
+  const env = {
+    AUTH_ADMIN_USERNAME: USERNAME,
+    AUTH_ADMIN_PASSWORD: PASSWORD,
+    SESSION_SECRET: "route-walk-secret",
+  };
+  Object.keys(env).forEach((key) => {
+    saved[key] = process.env[key];
+    process.env[key] = env[key];
+  });
+  delete require.cache[appPath];
+  delete require.cache[require.resolve("../src/server/config.js")];
+  let app;
+  try {
+    app = require(appPath);
+  } finally {
+    Object.keys(saved).forEach((key) => {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    });
+    delete require.cache[appPath];
+    delete require.cache[require.resolve("../src/server/config.js")];
+  }
+
+  const router = app._router || app.router;
+  assert.ok(router && router.stack, "the Express route table must be reachable");
+
+  const safeApiRoutes = collectRoutes(router.stack, "")
+    .filter((route) => route.path === "/api" || route.path.startsWith("/api/"))
+    .filter((route) => route.methods.get || route.methods.head)
+    .map((route) => route.path.slice("/api".length) || "/");
+
+  assert.ok(
+    safeApiRoutes.length > 20,
+    `the walk must actually find routes, found ${safeApiRoutes.length}`
   );
 
-  for (const file of files) {
-    const source = fs.readFileSync(path.join(routesDir, file), "utf8");
-    const pattern = /router\.(get|head)\(\s*["'`]([^"'`]*)["'`]/g;
-    let match;
-    while ((match = pattern.exec(source)) !== null) {
-      const routePath = match[2];
-      const key = `${file}:${routePath}`;
-      if (READ_ONLY_SAFE_ROUTES.has(key)) continue;
-      // The router's own mount prefix is what makes the guard's path absolute;
-      // `isMutatingSafeMethodPath` is deliberately checked with a concrete
-      // example rather than the parameterised form.
-      const mounted = MOUNTS[file];
-      const concrete = mounted
-        ? `${mounted}${routePath.replace(/:[^/]+/g, "placeholder.json")}`.replace(/\/+$/, "") ||
-          mounted
-        : null;
-      if (concrete && isMutatingSafeMethodPath(concrete)) continue;
-      unclassified.push(key);
+  const seen = new Set();
+  const unclassified = [];
+  for (const path of safeApiRoutes) {
+    if (READ_ONLY_SAFE_ROUTES.has(path)) {
+      seen.add(path);
+      continue;
     }
+    // Checked with the parameter left in place *and* filled in, because the
+    // guard matches a concrete request path at runtime.
+    const concrete = path.replace(/:[^/]+/g, "placeholder.json");
+    if (isMutatingSafeMethodPath(path) && isMutatingSafeMethodPath(concrete)) continue;
+    unclassified.push(path);
   }
 
   assert.deepEqual(
-    unclassified,
+    [...new Set(unclassified)].sort(),
     [],
-    "a safe-method route is neither on the reviewed read-only list nor covered by " +
-      "the CSRF guard's mutating-path list - classify it in one of the two, and if " +
-      "it changes state add it to MUTATING_SAFE_METHOD_PATHS in " +
+    "a safe-method route under /api is neither on the reviewed read-only list nor " +
+      "covered by the CSRF guard's mutating-path list - classify it in one of the " +
+      "two, and if it changes state add it to MUTATING_SAFE_METHOD_PATHS in " +
       "src/server/middleware/csrf.js"
+  );
+
+  // A stale entry is a pre-authorisation for a route nobody reviewed: it would
+  // wave through a future route that happens to reuse the path.
+  assert.deepEqual(
+    [...READ_ONLY_SAFE_ROUTES].filter((path) => !seen.has(path)).sort(),
+    [],
+    "READ_ONLY_SAFE_ROUTES lists a path that no longer exists - remove it"
   );
 });
