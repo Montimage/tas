@@ -19,8 +19,8 @@ const {
   fileNameParam,
   fileNameMaxLength,
   dataStorageSchema,
+  datasetSchema,
   idSchema,
-  textSchema,
   timestampSchema,
 } = require("../middleware/validate");
 
@@ -51,15 +51,8 @@ const simulationFileNameParam = fileNameParam(".json");
  */
 const simulationRunFields = {
   datasetId: idSchema.allow(null),
-  // The dataset the run writes into. Persisted, so it tolerates the fields a
-  // stored document carries back, but its `id` still has to be a string.
-  newDataset: documentSchema({
-    id: idSchema,
-    name: textSchema.allow(null, ""),
-    description: textSchema.allow(null, ""),
-    tags: Joi.array().items(Joi.string().max(256)),
-    source: textSchema.allow(null, ""),
-  }).allow(null),
+  // The dataset the run writes into; its `id` becomes a filter of its own.
+  newDataset: datasetSchema.allow(null),
   replayOptions: documentSchema({
     startTime: timestampSchema,
     endTime: timestampSchema,
@@ -92,8 +85,10 @@ const simulationStartBody = Joi.object({
   modelFileName: Joi.string().max(fileNameMaxLength(".json")),
   // Unknown keys are rejected here rather than tolerated: unlike a stored
   // topology, `options` is assembled by the caller for this one request, so
-  // there is no round-tripped field to make room for.
-  options: Joi.object(simulationRunFields),
+  // there is no round-tripped field to make room for. Defaulted because the
+  // handler dereferences it: a request that omits it entirely must still leave
+  // an object behind, not an undefined the run would crash on.
+  options: Joi.object(simulationRunFields).default({}),
 })
   .or("model", "modelFileName")
   .required();
@@ -124,7 +119,7 @@ let allSimulationStatus = {};
 let allSimulations = {};
 // Start simulating a model
 
-const startSimulation = (model, options, res, modelFileName = null) => {
+const startSimulation = (model, options = {}, res, modelFileName = null) => {
   // Check if there is a configuration
   if (!model) {
     console.error("[SERVER]", "Cannot simulate a null model");

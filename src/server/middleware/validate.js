@@ -241,6 +241,22 @@ const dataStorageSchema = documentSchema({
   }).required(),
 });
 
+/**
+ * Schema for a dataset document a run or a recording writes into.
+ *
+ * Declared once because a simulation carries one as `newDataset` and a data
+ * recorder carries one as `dataset`, and both end up in `saveDataset`, where
+ * the `id` becomes the filter the dataset is looked up with. Unknown keys are
+ * tolerated so a dataset read back from the database still round-trips.
+ */
+const datasetSchema = documentSchema({
+  id: idSchema,
+  name: textSchema.allow(null, ""),
+  description: textSchema.allow(null, ""),
+  tags: Joi.array().items(Joi.string().max(256)),
+  source: textSchema.allow(null, ""),
+});
+
 module.exports = {
   validate,
   documentSchema,
@@ -248,6 +264,7 @@ module.exports = {
   fileNameParam,
   fileNameMaxLength,
   dataStorageSchema,
+  datasetSchema,
   textSchema,
   idSchema,
   pageSchema,

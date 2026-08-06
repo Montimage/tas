@@ -22,6 +22,8 @@ const {
   safeNameSchema,
   fileNameParam,
   fileNameMaxLength,
+  dataStorageSchema,
+  datasetSchema,
 } = require("../middleware/validate");
 const dataRecordersPath = `${__dirname}/../data/data-recorders/`;
 let router = express.Router();
@@ -38,6 +40,13 @@ const recorderNameParam = fileNameParam(".json");
 const dataRecorderBody = documentSchema({
   name: safeNameSchema.required(),
   dataRecorders: Joi.array().items(Joi.object()).required(),
+  // `DataRecorder` reads both of these straight off the document it is handed:
+  // `dataStorage` becomes the database every recorded event is written to, and
+  // `dataset` is the document `saveDataset` looks up by `id`. A recorder
+  // carries plenty of other fields, so unknown keys still pass — but not these
+  // two, which `.unknown(true)` would otherwise admit with any shape at all.
+  dataStorage: dataStorageSchema.allow(null),
+  dataset: datasetSchema.allow(null),
 });
 
 const dataRecorderCreateBody = Joi.object({

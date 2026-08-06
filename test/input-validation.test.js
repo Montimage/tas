@@ -632,11 +632,11 @@ test("the database-backed payloads the dashboard sends still satisfy their schem
 const startRun = (body) => validateOnly(simulationRouter, "POST", "/start", { body });
 
 /**
- * Assert a start request was refused with the standard failure shape, and name
- * the field the refusal has to be about.
+ * Assert a body was refused with the standard failure shape, and name the field
+ * the refusal has to be about.
  */
-const assertRunRejected = async (body, field, context) => {
-  const outcome = await startRun(body);
+const assertBodyRejected = async (router, method, routePath, body, field, context) => {
+  const outcome = await validateOnly(router, method, routePath, { body });
   assert.equal(outcome.passed, false, `${context} must be rejected`);
   assertValidationError(
     { status: outcome.status, body: outcome.body, raw: JSON.stringify(outcome.body) },
@@ -648,14 +648,21 @@ const assertRunRejected = async (body, field, context) => {
   );
 };
 
-const assertRunAccepted = async (body, context) => {
-  const outcome = await startRun(body);
+const assertBodyAccepted = async (router, method, routePath, body, context) => {
+  const outcome = await validateOnly(router, method, routePath, { body });
   assert.equal(
     outcome.passed,
     true,
     `${context} must still be accepted: ${JSON.stringify(outcome.body)}`
   );
+  return outcome;
 };
+
+const assertRunRejected = (body, field, context) =>
+  assertBodyRejected(simulationRouter, "POST", "/start", body, field, context);
+
+const assertRunAccepted = (body, context) =>
+  assertBodyAccepted(simulationRouter, "POST", "/start", body, context);
 
 test("the payload the dashboard starts a simulation with is still accepted", async () => {
   // `src/client/src/api/index.js` sends exactly this, and `SimulationPage`
@@ -688,6 +695,24 @@ test("starting a run with no options of its own is still accepted", async () => 
     { modelFileName: "202402-Temperature-Controller.json", options: {} },
     "a start request carrying an empty options object"
   );
+});
+
+test("a run that sends no options at all still reaches the handler with an object", async () => {
+  // The handler dereferences `options` inside the readJSONFile callback, so an
+  // undefined there throws asynchronously and takes the process down rather
+  // than failing the one request. The schema is what guarantees it cannot be
+  // undefined, so that guarantee is asserted on the validated body itself.
+  const outcome = await assertRunAccepted(
+    { modelFileName: "202402-Temperature-Controller.json" },
+    "a start request that omits options entirely"
+  );
+  assert.equal(
+    typeof outcome.req.body.options,
+    "object",
+    "the handler must never be handed an undefined options"
+  );
+  assert.ok(outcome.req.body.options !== null, "nor a null one");
+  assert.deepEqual(outcome.req.body.options, {});
 });
 
 test("the shipped topology is still accepted as an inline model", async () => {
@@ -793,4 +818,139 @@ test("the same fields are constrained when they arrive on an inline model", asyn
     { model: { name: "iv-inline", devices: [], somethingElseEntirely: { nested: true } } },
     "an inline model carrying a field the schema does not declare"
   );
+});
+
+// ---------------------------------------------------------------------------
+// 8. The other endpoints that accept a database connection are held to the
+//    same shape as the one that persists it
+// ---------------------------------------------------------------------------
+
+// A recorder writes every event it records into the connection its document
+// carries, and the devops configuration is read back and handed to the test
+// campaign flow, which builds one from it. Both reach the same
+// `mongodb://${host}:${port}` builder as `POST /api/data-storage`.
+const hostileConnConfigs = [
+  { host: "evil.example.com/tas?replicaSet=x", port: 27017 },
+  { host: "evil.example.com:27017,other.example.com", port: 27017 },
+  { host: "a".repeat(300), port: 27017 },
+];
+
+// The connection the dashboard builds in `DataRecorderPage.addCustomDataStorage`.
+const dashboardDataStorage = {
+  protocol: "MONGODB",
+  connConfig: {
+    host: "localhost",
+    port: 27017,
+    username: null,
+    password: null,
+    dbname: "my_db_name",
+    options: null,
+  },
+};
+
+test("a data recorder cannot point its database connection at a host of its choosing", async () => {
+  for (const connConfig of hostileConnConfigs) {
+    await assertBodyRejected(
+      dataRecorderRouter,
+      "POST",
+      "/start",
+      { model: { name: "iv-recorder", dataRecorders: [], dataStorage: { protocol: "MONGODB", connConfig } } },
+      "model.dataStorage.connConfig.host",
+      `a recorder started with host ${JSON.stringify(connConfig.host.slice(0, 40))}`
+    );
+    // The same document is what `POST /models` persists, so it is checked there too.
+    await assertBodyRejected(
+      dataRecorderRouter,
+      "POST",
+      "/models",
+      { dataRecorder: { name: "iv-recorder", dataRecorders: [], dataStorage: { protocol: "MONGODB", connConfig } } },
+      "dataRecorder.dataStorage.connConfig.host",
+      `a recorder stored with host ${JSON.stringify(connConfig.host.slice(0, 40))}`
+    );
+  }
+});
+
+test("a data recorder's dataset id cannot arrive as a structured value", async () => {
+  // It becomes the filter `saveDataset` looks the dataset up with.
+  await assertBodyRejected(
+    dataRecorderRouter,
+    "POST",
+    "/start",
+    { model: { name: "iv-recorder", dataRecorders: [], dataset: { id: { $ne: null } } } },
+    "model.dataset.id",
+    "a recorder dataset id as an operator document"
+  );
+});
+
+test("the shipped data recorder still satisfies its schema", async () => {
+  const recorder = JSON.parse(
+    fs.readFileSync(path.join(dataRecordersDir, "TemperatureControllerRecorder.json"), "utf8")
+  );
+  await assertBodyAccepted(
+    dataRecorderRouter,
+    "POST",
+    "/models",
+    { dataRecorder: recorder },
+    "the shipped recorder document"
+  );
+  await assertBodyAccepted(
+    dataRecorderRouter,
+    "POST",
+    "/start",
+    { model: recorder },
+    "the shipped recorder started inline"
+  );
+  await assertBodyAccepted(
+    dataRecorderRouter,
+    "POST",
+    "/models",
+    {
+      dataRecorder: {
+        name: "iv-recorder",
+        dataRecorders: [],
+        dataStorage: dashboardDataStorage,
+        dataset: { id: "new-data-set-id-1", name: "n", description: "d", tags: ["generated"] },
+      },
+    },
+    "a recorder carrying the connection the dashboard builds"
+  );
+});
+
+test("the devops configuration cannot carry a database connection of any shape", async () => {
+  for (const connConfig of hostileConnConfigs) {
+    const before = fs.readFileSync(devopsFile, "utf8");
+    const res = await request(server, "POST", "/api/devops", {
+      devops: {
+        webhookURL: "http://localhost:3333/webhook",
+        testCampaignId: "iv-campaign",
+        dataStorage: { protocol: "MONGODB", connConfig },
+      },
+    });
+    assertValidationError(res, `POST /api/devops with host ${JSON.stringify(connConfig.host.slice(0, 40))}`);
+    assert.ok(
+      res.body.details.some((detail) => detail.field === "devops.dataStorage.connConfig.host"),
+      `the refusal must name the host: ${res.raw}`
+    );
+    assert.equal(
+      fs.readFileSync(devopsFile, "utf8"),
+      before,
+      "a rejected configuration must never be written to disk"
+    );
+  }
+});
+
+test("a well-formed devops database connection is still accepted", async () => {
+  const before = fs.readFileSync(devopsFile, "utf8");
+  try {
+    const res = await request(server, "POST", "/api/devops", {
+      devops: {
+        webhookURL: "http://localhost:3333/webhook",
+        testCampaignId: "iv-campaign",
+        dataStorage: dashboardDataStorage,
+      },
+    });
+    assert.equal(res.status, 200, `a well-formed connection must be accepted (${res.raw})`);
+  } finally {
+    fs.writeFileSync(devopsFile, before);
+  }
 });

@@ -28,6 +28,7 @@ const {
   documentSchema,
   safeNameSchema,
   urlSchema,
+  dataStorageSchema,
 } = require("../middleware/validate");
 let logsPath = `${__dirname}/../logs/test-campaigns/`;
 
@@ -46,7 +47,10 @@ const devopsBody = Joi.object({
   devops: documentSchema({
     webhookURL: urlSchema.allow(null, ""),
     testCampaignId: safeNameSchema.allow(null),
-    dataStorage: Joi.object().allow(null),
+    // Persisted, then handed to the test campaign flow, which builds a
+    // `DataStorage` from it — the same sink a simulation's own connection
+    // reaches, so it is held to the same shape.
+    dataStorage: dataStorageSchema.allow(null),
     evaluationParameters: Joi.object().allow(null),
   }).required(),
 }).required();
