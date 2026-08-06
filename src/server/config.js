@@ -21,7 +21,9 @@ var SECURITY_DEFAULTS = {
   bodyLimit: '1mb',
   rateLimitWindowMs: 15 * 60 * 1000, // 15 minutes
   rateLimitMax: 1000, // requests per window per client
-  corsAllowedOrigins: [] // empty = same-origin only
+  corsAllowedOrigins: [], // empty = same-origin only
+  cspReportOnly: true, // report violations, do not block, until observed clean
+  cspReportUri: '' // empty = browsers report to the console only
 };
 
 /**
@@ -39,6 +41,51 @@ function normalizeOrigins(value) {
       return origin.trim().replace(/\/+$/, '');
     })
     .filter(Boolean);
+}
+
+/**
+ * Read a configuration value that is a yes/no switch.
+ *
+ * Unset (or empty) means the safe default applies. Anything an operator would
+ * reasonably write for "off" turns it off; every other value turns it on, so a
+ * typo fails towards the stricter setting rather than silently disabling it.
+ * @param {String} value Raw configuration value
+ * @param {Boolean} fallback Value to use when nothing is configured
+ * @returns {Boolean} Parsed switch
+ */
+function parseBoolean(value, fallback) {
+  if (value === undefined || value === null || String(value).trim() === '') {
+    return fallback;
+  }
+  return ['false', '0', 'no', 'off'].indexOf(String(value).trim().toLowerCase()) === -1;
+}
+
+/**
+ * Read the endpoint browsers should send policy violation reports to.
+ *
+ * `;` and `,` separate directives inside a Content Security Policy, so a value
+ * carrying either would be an attempt to append directives to the policy. The
+ * header middleware refuses such a value too, but it does so from deep inside a
+ * dependency and never names the setting that caused it, which leaves an
+ * operator with a stack trace instead of a fix.
+ * @param {String} value Raw configuration value
+ * @returns {String} The trimmed endpoint, empty when unset
+ * @throws {Error} When the value could break out of the directive
+ */
+function parseReportUri(value) {
+  var uri = String(value || '').trim();
+  if (/[;,]/.test(uri)) {
+    throw new Error('CSP_REPORT_URI must not contain ";" or "," - they would inject CSP directives');
+  }
+  // Interior whitespace would add a second, bogus report endpoint to the
+  // directive; a control character (a newline pasted out of a config file, say)
+  // cannot go into a header at all, and would turn every single response into a
+  // 500 with a stack trace from inside the HTTP layer - long after startup,
+  // where an operator has nothing to connect it to. Fail here instead.
+  if (/[\s\u0000-\u001f\u007f]/.test(uri)) {
+    throw new Error('CSP_REPORT_URI must not contain whitespace or control characters');
+  }
+  return uri;
 }
 
 /**
@@ -89,7 +136,9 @@ function loadConfig(options) {
     bodyLimit: value('BODY_LIMIT') || value('MAX_BODY_SIZE') || SECURITY_DEFAULTS.bodyLimit,
     rateLimitWindowMs: Number(value('RATE_LIMIT_WINDOW_MS')) || SECURITY_DEFAULTS.rateLimitWindowMs,
     rateLimitMax: Number(value('RATE_LIMIT_MAX')) || SECURITY_DEFAULTS.rateLimitMax,
-    corsAllowedOrigins: normalizeOrigins(value('CORS_ALLOWED_ORIGINS'))
+    corsAllowedOrigins: normalizeOrigins(value('CORS_ALLOWED_ORIGINS')),
+    cspReportOnly: parseBoolean(value('CSP_REPORT_ONLY'), SECURITY_DEFAULTS.cspReportOnly),
+    cspReportUri: parseReportUri(value('CSP_REPORT_URI') || SECURITY_DEFAULTS.cspReportUri)
   });
 }
 
