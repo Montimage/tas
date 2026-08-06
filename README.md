@@ -78,7 +78,8 @@ one without parsing the body.
 | ------ | -------------------------------------------------------------------------- |
 | `2xx`  | The request was served.                                                    |
 | `400`  | The request was malformed — a field of the wrong type, a name that cannot derive a safe file path, a document the database refused. |
-| `403`  | The request came from an origin that is not in `CORS_ALLOWED_ORIGINS`.     |
+| `401`  | The request carries no valid session. Log in at `POST /api/auth/login`; a session that has expired or been logged out reads the same. |
+| `403`  | The request came from an origin that is not in `CORS_ALLOWED_ORIGINS`, or a state-changing request did not carry a valid `X-CSRF-Token`. |
 | `404`  | The addressed model, data recorder, log, data set, event, report, test case, test campaign or API path does not exist. |
 | `409`  | The request conflicts with the current state — starting a simulation or a data recorder that is already running. |
 | `413`  | The body is larger than `BODY_LIMIT`.                                      |
@@ -161,33 +162,154 @@ The noderedflow is the default flow when open the nodered application
 
 # Security
 
-## No built-in authentication
+## Authentication
 
-The TaS service currently ships **without any built-in authentication or
-authorization**. The web dashboard, the REST API, the MQTT broker, and Node-RED
-do not require credentials, and there is no user/role model. In practice:
+Every API endpoint requires an authenticated session. TaS is single-tenant:
+there is one administrator account, and it is provisioned from configuration
+rather than from anything in this repository, so a checkout never carries a
+working credential and two deployments never share one.
 
-- Any client that can reach the HTTP/WebSocket end-points can view and modify
-  the dashboard, models, data recorders, and simulations.
-- Any client that can reach the MQTT port can publish and subscribe as a broker
-  client.
+### Provisioning the administrator credential
+
+The preferred form is a pre-computed hash, so the plaintext only ever exists on
+the machine where it was generated:
+
+```
+node -e "console.log(require('./src/server/auth/passwords').hashPassword(process.argv[1]))" 'your-password-here'
+# scrypt$16384$8$1$<salt>$<hash>
+```
+
+Put the result in `AUTH_ADMIN_PASSWORD_HASH`:
+
+```
+AUTH_ADMIN_USERNAME=admin
+AUTH_ADMIN_PASSWORD_HASH=scrypt$16384$8$1$...
+```
+
+For a first start, `AUTH_ADMIN_PASSWORD` accepts a plaintext instead. It is
+hashed once at startup and the plaintext is discarded immediately — it is never
+stored, never logged and never returned — but it does sit in the environment of
+the running process, which is why the hashed form is preferred.
+
+With neither set the server still starts, says so loudly on stderr, and refuses
+every API request: an appliance that cannot be configured is safer than one that
+opens itself up.
+
+### What answers without a session
+
+The allowlist is explicit, lives in one place (`src/server/middleware/auth.js`)
+and holds exactly three endpoints:
+
+| Endpoint             | Why it is public                                                        |
+| -------------------- | ----------------------------------------------------------------------- |
+| `GET /api/health`    | Liveness probe for an orchestrator or monitor. Reports `{"status":"ok"}` and deliberately nothing else — no uptime, version or dependency state. |
+| `POST /api/auth/login` | The endpoint that issues a session.                                   |
+| `GET /api/auth/session` | Lets the dashboard ask whether it is logged in. Answers `200` either way, so a cold start is not a 401 storm. |
+
+`OPTIONS` (CORS preflight) is also answered without a session, because a
+preflight carries no credentials by definition.
+
+`POST /api/auth/logout` is **not** on the list: logging out acts on a session,
+so it needs one.
+
+The static dashboard bundle and the single-page app shell stay public as well.
+That is deliberate — the login page is part of that bundle, so gating it would
+leave a browser with nothing to log in with. The bundle contains no operational
+data: every value the dashboard displays comes from the API, which is closed.
+
+### Sessions
+
+`POST /api/auth/login` with `{"username": "...", "password": "..."}` answers
+`200` and sets two cookies:
+
+- `tas.sid` — an opaque, signed, `HttpOnly`, `SameSite=Lax` session identifier.
+  The session itself lives server-side, which is what makes it revocable.
+- `tas.csrf` — the CSRF token for that session. Readable by script on purpose
+  (see below).
+
+Sessions expire two ways. `SESSION_TTL_MS` (default 1 hour) is an *idle*
+timeout that slides forward on every request, so working in the dashboard never
+logs you out mid-task; `SESSION_ABSOLUTE_TTL_MS` (default 12 hours) is a hard
+cap that does not slide. `POST /api/auth/logout` invalidates a session
+immediately, and replaying its cookie afterwards answers `401`. Sessions are
+held in the process, so a restart ends all of them.
+
+### Cross-site request forgery
+
+Every state-changing request (`POST`, `DELETE`) must carry the session's token
+in an `X-CSRF-Token` header:
+
+```
+curl -X POST http://127.0.0.1:3004/api/models \
+  -H 'Content-Type: application/json' \
+  -H "X-CSRF-Token: $(...value of the tas.csrf cookie...)" \
+  -b cookies.txt -d '{"model": {"name": "demo", "devices": []}}'
+```
+
+A browser attaches the session cookie to any request that reaches this origin,
+including one an unrelated page caused, so the cookie alone cannot be what
+authorises a write. A cross-site page can cause the cookie to be *sent* but the
+same-origin policy stops it from *reading* it, so it can never produce the
+header. `POST /api/auth/login` is exempt, because it is what issues the token.
+
+`GET` never requires the header.
+
+### Delegating identity to a reverse proxy
+
+A deployment already behind an authenticating proxy can let the proxy assert who
+the caller is. Two settings must agree, because a header on its own is forgeable
+by anyone who can reach the port:
+
+```
+AUTH_TRUST_PROXY_HEADER=true
+AUTH_TRUSTED_PROXIES=10.0.0.7        # the proxy's address, as TaS sees it
+AUTH_PROXY_USER_HEADER=x-forwarded-user   # optional; this is the default
+```
+
+The header is honoured **only** when the connection comes from an address on
+`AUTH_TRUSTED_PROXIES`. With the flag on and the list empty the feature stays
+disabled and the server warns at startup. With the flag off — the default — the
+header is completely inert.
+
+The proxy must strip the identity header from incoming requests, or a client can
+set it itself. For example, with nginx:
+
+```
+location / {
+  auth_request /oauth2/auth;
+  proxy_set_header X-Forwarded-User $upstream_http_x_auth_request_user;  # set, never pass through
+  proxy_pass http://127.0.0.1:3004;
+}
+```
+
+### Login rate limit
+
+Failed logins are limited to `AUTH_LOGIN_RATE_LIMIT_MAX` (default 10) per
+`AUTH_LOGIN_RATE_LIMIT_WINDOW_MS` (default 15 minutes) per client, after which
+the endpoint answers `429`. Successful logins do not count towards it, so a
+working dashboard is never locked out by its own traffic. Every attempt, failed
+or successful, is written to the server log with the attempted username, the
+client address, the user agent and a running count of consecutive failures — the
+password never is.
 
 ## Deployment baseline
 
-Treat the service as **untrusted**. The safe baseline is to never expose it to
-an untrusted or public network:
+The API is authenticated, but the safe baseline is still defence in depth:
 
-- Bind published ports to loopback only (`127.0.0.1`), or to a private network
-  interface whose network is trusted.
-- Do not publish the ports to `0.0.0.0` or forward them from a public host or
-  load balancer.
-- If the service must be reachable from an untrusted network, put an
-  authenticated reverse proxy (with TLS) in front of it today; real
-  authentication scoped to TaS itself is planned and, once available, will let
-  you retire that workaround.
+- Terminate TLS in front of TaS. Set `SESSION_COOKIE_SECURE=true` whenever TLS
+  reaches the application itself; the default is `false` because the shipped
+  `docker run` speaks plain HTTP on loopback, where a `Secure` cookie would
+  never be sent at all and nobody could log in.
+- Set `SESSION_SECRET` to a long random value. Without it the server generates
+  an ephemeral one per process, which means every session ends at a restart.
+- Bind published ports to loopback (`127.0.0.1`) or to a trusted private
+  network interface rather than to `0.0.0.0`, unless the service is genuinely
+  meant to be reachable from elsewhere.
+- The MQTT broker and Node-RED are **not** covered by any of this. They have no
+  credentials of their own, so anything that can reach their ports can still
+  publish, subscribe and edit flows — keep those ports off untrusted networks.
 
-The quick-start `docker run` on this page already reflects this baseline by
-binding to loopback.
+The quick-start `docker run` on this page already binds to loopback.
 
 ## Security-related configuration
 
@@ -203,6 +325,18 @@ tighten a limit.
 | `RATE_LIMIT_MAX`       | `1000`            | Requests allowed per window per client. Going over returns `429`.                                                                                                                |
 | `CSP_REPORT_ONLY`      | `true`            | Ship the Content Security Policy as `Content-Security-Policy-Report-Only`, so browsers report violations without blocking. Set to `false` to enforce the policy.                 |
 | `CSP_REPORT_URI`       | _(empty)_         | Endpoint browsers should POST policy violation reports to. Empty means violations are only visible in the browser console. Must be a single URL: `;`, `,`, whitespace and control characters are refused at startup.                                                        |
+| `AUTH_ADMIN_USERNAME`  | `admin`           | The single administrator account name.                                                                                                                                                                                                                                     |
+| `AUTH_ADMIN_PASSWORD`  | _(empty)_         | Plaintext bootstrap password. Hashed once at startup and then discarded. Empty means no credential is configured, and every API request is refused.                                                                                                                        |
+| `AUTH_ADMIN_PASSWORD_HASH` | _(empty)_     | Preferred: a `scrypt$...` value produced by `hashPassword` (see above). Takes precedence over `AUTH_ADMIN_PASSWORD`.                                                                                                                                                       |
+| `SESSION_SECRET`       | _(none)_          | Secret the session cookie is signed with. There is deliberately no default: when unset, an ephemeral secret is generated per process and a warning is logged, so sessions do not survive a restart. Set it in production.                                                   |
+| `SESSION_TTL_MS`       | `3600000` (1 h)   | Idle timeout. Slides forward on every request, so an in-use session is never logged out.                                                                                                                                                                                   |
+| `SESSION_ABSOLUTE_TTL_MS` | `43200000` (12 h) | Hard lifetime. Does not slide: no session outlives it, however busy it is.                                                                                                                                                                                              |
+| `SESSION_COOKIE_SECURE` | `false`          | Mark the session cookies `Secure`. Set to `true` whenever TLS reaches the application; the default suits the documented plain-HTTP-on-loopback baseline, where a `Secure` cookie would never be sent.                                                                       |
+| `AUTH_TRUST_PROXY_HEADER` | `false`        | Believe an identity header from an authenticating reverse proxy. Ignored unless `AUTH_TRUSTED_PROXIES` is non-empty.                                                                                                                                                        |
+| `AUTH_PROXY_USER_HEADER` | `x-forwarded-user` | Name of that identity header.                                                                                                                                                                                                                                          |
+| `AUTH_TRUSTED_PROXIES` | _(empty)_         | Comma- or whitespace-separated peer addresses whose identity header is honoured. Empty means delegation stays disabled whatever the flag says.                                                                                                                              |
+| `AUTH_LOGIN_RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | Window for the login-specific rate limit.                                                                                                                                                                                                             |
+| `AUTH_LOGIN_RATE_LIMIT_MAX` | `10`         | Failed logins allowed per window per client. Successful logins do not count.                                                                                                                                                                                               |
 
 Values are read from the process environment first, then from `.env`, then from
 these defaults — so a container or a CI job can override a setting without
