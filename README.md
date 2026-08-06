@@ -152,6 +152,27 @@ an untrusted or public network:
 The quick-start `docker run` on this page already reflects this baseline by
 binding to loopback.
 
+## Security-related configuration
+
+The hardening limits are configurable. Every value below has a safe default, so
+an unconfigured deployment is already protected — set these only to relax or
+tighten a limit.
+
+| Variable               | Default           | Purpose                                                                                                                                                                          |
+| ---------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CORS_ALLOWED_ORIGINS` | _(empty)_         | Comma- or whitespace-separated list of origins allowed to call the API from a browser. Empty means same-origin only, and a request from any other origin is rejected with `403`. |
+| `BODY_LIMIT`           | `1mb`             | Largest request body accepted. Anything bigger is rejected with `413` rather than buffered. `MAX_BODY_SIZE` is accepted as an alias.                                             |
+| `RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | Length of the rate-limiting window applied to `/api`.                                                                                                                            |
+| `RATE_LIMIT_MAX`       | `1000`            | Requests allowed per window per client. Going over returns `429`.                                                                                                                |
+
+Values are read from the process environment first, then from `.env`, then from
+these defaults — so a container or a CI job can override a setting without
+editing the operator's `.env` file.
+
+`CORS_ALLOWED_ORIGINS` is only needed when the dashboard is served from a
+different origin than the API. In the shipped image both are on the same port,
+so the default is already correct and no configuration is required.
+
 ## Reporting a security issue
 
 See [SECURITY.md](SECURITY.md) for how to report a vulnerability privately. We
