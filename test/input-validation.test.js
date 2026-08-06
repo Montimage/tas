@@ -21,6 +21,7 @@ const modelsDir = path.resolve(__dirname, "../src/server/data/models");
 const dataRecordersDir = path.resolve(__dirname, "../src/server/data/data-recorders");
 const devopsFile = path.resolve(__dirname, "../src/server/data/devops.json");
 const dataStorageFile = path.resolve(__dirname, "../src/server/data/data-storage.json");
+const simulationLogsDir = path.resolve(__dirname, "../src/server/logs/simulations");
 
 let server;
 let app;
@@ -30,6 +31,13 @@ before(() => {
   // The devops write path is exercised below and overwrites the shipped
   // configuration; snapshot it so the checkout is left unchanged.
   originalDevops = fs.readFileSync(devopsFile, "utf8");
+
+  // `GET /api/logs/simulations` lists this directory, but nothing under
+  // `src/server/logs` is tracked (`*.log` is gitignored) and no code creates it
+  // up front -- it only appears once a simulation has run. On a fresh checkout
+  // (CI) it is absent, the route answers "Cannot read the logs directory" and
+  // serves no `files` array, so create it before the listing test asserts.
+  fs.mkdirSync(simulationLogsDir, { recursive: true });
 
   app = express();
   app.use(express.json());
