@@ -6,6 +6,10 @@ const {
   readDir,
   deleteFile,
 } = require("../../core/utils");
+const {
+  resolveWithin,
+  sendBadRequest,
+} = require("./path-safety");
 
 const _logsPath = `${__dirname}/../logs/`;
 
@@ -38,7 +42,10 @@ const createRouter = (appLog = true) => {
     const {
       fileName
     } = req.params;
-    const logFile = `${logsPath}${fileName}`;
+    const logFile = resolveWithin(logsPath, fileName);
+    if (!logFile) {
+      return sendBadRequest(res, "Invalid log file name");
+    }
     readTextFile(logFile, (err, content) => {
       if (err) {
         console.error("[SERVER]", err);
@@ -59,7 +66,10 @@ const createRouter = (appLog = true) => {
     const {
       fileName
     } = req.params;
-    const logFile = `${logsPath}${fileName}`;
+    const logFile = resolveWithin(logsPath, fileName);
+    if (!logFile) {
+      return sendBadRequest(res, "Invalid log file name");
+    }
     deleteFile(logFile, (err) => {
       if (err) {
         console.error("[SERVER]", err);

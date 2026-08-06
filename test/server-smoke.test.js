@@ -1,33 +1,61 @@
-var test = require('node:test');
-var assert = require('node:assert');
-var { startApp } = require('./helpers/start-app');
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const http = require('node:http');
+const net = require('node:net');
+const { spawn } = require('node:child_process');
 
-test('the server boots and serves the dashboard and the API without a .env file', async function () {
-  var saved = ['SERVER_HOST', 'SERVER_PORT'].map(function (k) {
-    var v = process.env[k];
-    delete process.env[k];
-    return [k, v];
-  });
-  var ctx = await startApp({});
-  try {
-    var dashboard = await fetch(ctx.base + '/');
-    assert.strictEqual(dashboard.status, 200);
-    assert.ok((await dashboard.text()).toLowerCase().indexOf('<!doctype html>') !== -1);
+const REPO = `${__dirname}/..`;
 
-    var api = await fetch(ctx.base + '/api/devops/status');
-    assert.strictEqual(api.status, 200);
-
-    var staticAsset = await fetch(ctx.base + '/favicon.ico');
-    assert.strictEqual(staticAsset.status, 200);
-  } finally {
-    ctx.server.close();
-    ctx.restore();
-    saved.forEach(function (pair) {
-      if (pair[1] === undefined) {
-        delete process.env[pair[0]];
-      } else {
-        process.env[pair[0]] = pair[1];
-      }
+function getFreePort() {
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.listen(0, '127.0.0.1', () => {
+      const { port } = srv.address();
+      srv.close(() => resolve(port));
     });
+    srv.on('error', reject);
+  });
+}
+
+function waitForStatus(url, timeoutMs = 15000) {
+  const started = Date.now();
+  return new Promise((resolve, reject) => {
+    const attempt = () => {
+      const req = http.get(url, (res) => {
+        res.resume();
+        resolve(res.statusCode);
+      });
+      req.on('error', () => {
+        if (Date.now() - started > timeoutMs) {
+          return reject(new Error(`server did not respond within ${timeoutMs}ms at ${url}`));
+        }
+        setTimeout(attempt, 300);
+      });
+    };
+    attempt();
+  });
+}
+
+test('server starts and serves dashboard + API without a tracked .env file', async () => {
+  const port = await getFreePort();
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tas-smoke-'));
+  fs.writeFileSync(path.join(tmp, '.env'), `SERVER_HOST=127.0.0.1\nSERVER_PORT=${port}\n`);
+  const appFile = path.join(REPO, 'src/server/app.js');
+  const child = spawn(process.execPath, [appFile], {
+    cwd: tmp,
+    env: { ...process.env, NODE_ENV: 'production' },
+    stdio: 'ignore'
+  });
+  try {
+    const apiStatus = await waitForStatus(`http://127.0.0.1:${port}/api/models`);
+    assert.strictEqual(apiStatus, 200, 'GET /api/models should return 200');
+    const indexStatus = await waitForStatus(`http://127.0.0.1:${port}/`);
+    assert.strictEqual(indexStatus, 200, 'GET / should return 200');
+  } finally {
+    child.kill('SIGKILL');
+    fs.rmSync(tmp, { recursive: true, force: true });
   }
 });

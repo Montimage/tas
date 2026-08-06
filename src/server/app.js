@@ -7,6 +7,7 @@ var helmet = require('helmet');
 var rateLimit = require('express-rate-limit');
 var { loadConfig } = require('./config');
 
+// Read the environment configuration once at startup.
 const config = loadConfig();
 
 const simulationRouter = require('./routes/simulation');
