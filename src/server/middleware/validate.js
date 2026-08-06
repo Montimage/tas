@@ -1,5 +1,6 @@
 const Joi = require("joi");
 const { NAME_MAX_LENGTH } = require("../routes/path-safety");
+const { badRequest } = require("./errors");
 
 /**
  * Request sections that carry externally controlled input, with the validation
@@ -100,10 +101,10 @@ const validate = (schemas = {}) => {
     }
 
     if (details.length > 0) {
-      return res.status(400).json({
-        error: "Validation failed",
-        details,
-      });
+      // Handed to `next` rather than answered here, so a rejected request is
+      // rendered by the same handler as every other failure and the API keeps
+      // one error shape (`middleware/errors.js`).
+      return next(badRequest("Validation failed", details));
     }
 
     for (const { key, value } of validated) {

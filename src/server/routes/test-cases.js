@@ -18,6 +18,11 @@ const {
   idSchema,
   textSchema,
 } = require("../middleware/validate");
+const {
+  errorHandler,
+  databaseError,
+  notFound,
+} = require("../middleware/errors");
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the test-case endpoints (issue #10)
@@ -94,10 +99,7 @@ const containModelFileName = (req, res, next) => {
 router.get("/", validate(), dbConnector, function (req, res, next) {
   TestCaseSchema.find((err2, testCases) => {
     if (err2) {
-      console.error('[SERVER] Failed to get testcases', err2);
-      res.send({
-        error: 'Failed to get test case'
-      });
+      next(databaseError(err2, 'Failed to get test case'));
     } else {
       res.send({
         testCases
@@ -116,10 +118,9 @@ router.get("/:testCaseId", validate({ params: { testCaseId: testCaseIdParam } })
 
   TestCaseSchema.findOne({id: testCaseId}, (err2, testCase) => {
     if (err2) {
-      console.error('[SERVER] Failed to get testcases', err2);
-      res.send({
-        error: 'Failed to get test case'
-      });
+      next(databaseError(err2, 'Failed to get test case'));
+    } else if (!testCase) {
+      next(notFound('Test case not found'));
     } else {
       res.send({
         testCase
@@ -150,10 +151,7 @@ router.post("/", validate({ body: testCaseCreateBody }), containModelFileName, d
   });
   newTestCase.save((err, _testCase) => {
     if (err) {
-      console.error('[SERVER] Failed to save the test cases', err);
-      res.send({
-        error: 'Failed to save the test case'
-      });
+      next(databaseError(err, 'Failed to save the test case'));
     } else {
       res.send({
         testCase: _testCase
@@ -183,10 +181,7 @@ router.post("/:testCaseId", validate({ params: { testCaseId: testCaseIdParam }, 
 
   TestCaseSchema.findOneAndUpdate({id: testCaseId}, update, (err, ts) => {
     if (err) {
-      console.error('[SERVER] Failed to save the test cases', err);
-      res.send({
-        error: 'Failed to save the test case'
-      });
+      next(databaseError(err, 'Failed to save the test case'));
     } else {
       res.send({
         testCase: ts
@@ -205,10 +200,7 @@ router.delete("/:testCaseId", validate({ params: { testCaseId: testCaseIdParam }
 
   TestCaseSchema.findOneAndDelete({id: testCaseId}, (err, ret) => {
     if (err) {
-      console.error('[SERVER] Failed to save the test cases', err);
-      res.send({
-        error: 'Failed to save the test case'
-      });
+      next(databaseError(err, 'Failed to delete the test case'));
     } else {
       res.send({
         result: ret
@@ -216,5 +208,9 @@ router.delete("/:testCaseId", validate({ params: { testCaseId: testCaseIdParam }
     }
   });
 });
+
+// Attached to the router itself as well as to the application: see the note in
+// `routes/model.js`.
+router.use(errorHandler);
 
 module.exports = router;

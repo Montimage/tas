@@ -2,14 +2,73 @@
 // export const URL = `http://localhost:31057`;
 export const URL = "";
 
+/**
+ * Build the message shown to the user from an error response.
+ *
+ * The API answers every failure with `{ error, details? }` (see
+ * `src/server/middleware/errors.js`). `details` is the per-field breakdown of a
+ * validation failure, and folding it into the message is what tells the user
+ * *which* field was refused rather than only that something was.
+ *
+ * Always returns a string: the notification component renders anything else
+ * with JSON.stringify, which turns an Error into the useless "{}".
+ *
+ * @param {Object|null} data The parsed response body, when there was one
+ * @param {Response} response The fetch response
+ * @returns {String}
+ */
+const errorMessage = (data, response) => {
+  const base =
+    data && typeof data.error === "string" && data.error
+      ? data.error
+      : `Request failed (HTTP ${response.status})`;
+  const details = data && Array.isArray(data.details) ? data.details : [];
+  if (details.length === 0) return base;
+  const named = details
+    .map((detail) =>
+      detail && typeof detail === "object"
+        ? detail.message || detail.field
+        : String(detail)
+    )
+    .filter(Boolean);
+  return named.length > 0 ? `${base}: ${named.join("; ")}` : base;
+};
+
+/**
+ * Read a response, honouring the HTTP status code.
+ *
+ * The server used to answer 200 for everything and signal failure only with an
+ * `error` field, so this layer could get away with looking at the body alone.
+ * It now answers 400/404/409/5xx (issue #11), which is the only thing that
+ * distinguishes a served request from a failed one when the body is empty or is
+ * not JSON at all - a proxy's error page, say.
+ *
+ * Failures are still thrown, and still thrown as a plain string, because that
+ * is what every saga's `catch` puts straight into a notification.
+ *
+ * @param {Response} response The fetch response
+ * @returns {Promise<Object>} The parsed body of a successful response
+ */
+const parseResponse = async (response) => {
+  let body = null;
+  try {
+    body = await response.json();
+  } catch (e) {
+    // A non-JSON body (an error page from a proxy, an empty response) must not
+    // surface as a raw SyntaxError.
+    body = null;
+  }
+  if (!response.ok || (body && body.error)) {
+    throw errorMessage(body, response);
+  }
+  return body === null ? {} : body;
+};
+
 // MODELS
 export const requestAllModels = async () => {
   const url = `${URL}/api/models`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.models;
 };
 
@@ -18,10 +77,7 @@ export const requestDeleteModel = async (modelFileName) => {
   const response = await fetch(url, {
     method: "DELETE",
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.result;
 };
 
@@ -36,20 +92,14 @@ export const requestDuplicateModel = async (modelFileName) => {
       isDuplicated: true,
     }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.modelFileName;
 };
 
 export const requestModel = async (modelFileName) => {
   const url = `${URL}/api/models/${modelFileName}`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.model;
 };
 
@@ -62,10 +112,7 @@ export const uploadModel = async (model) => {
     },
     body: JSON.stringify({ model }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.modelFileName;
 };
 
@@ -78,10 +125,7 @@ export const updateModel = async (modelFileName, model) => {
     },
     body: JSON.stringify({ model }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.modelFileName;
 };
 
@@ -89,10 +133,7 @@ export const updateModel = async (modelFileName, model) => {
 export const requestAllDataRecorders = async () => {
   const url = `${URL}/api/data-recorders/models`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.dataRecorders;
 };
 
@@ -101,10 +142,7 @@ export const requestDeleteDataRecorder = async (dataRecorderFileName) => {
   const response = await fetch(url, {
     method: "DELETE",
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.result;
 };
 
@@ -119,20 +157,14 @@ export const requestDuplicateDataRecorder = async (dataRecorderFileName) => {
       isDuplicated: true,
     }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.dataRecorderFileName;
 };
 
 export const requestDataRecorder = async (dataRecorderFileName) => {
   const url = `${URL}/api/data-recorders/models/${dataRecorderFileName}`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.dataRecorder;
 };
 
@@ -145,10 +177,7 @@ export const uploadDataRecorder = async (dataRecorder) => {
     },
     body: JSON.stringify({ dataRecorder }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.dataRecorderFileName;
 };
 
@@ -164,10 +193,7 @@ export const updateDataRecorder = async (
     },
     body: JSON.stringify({ dataRecorder }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.dataRecorderFileName;
 };
 
@@ -180,30 +206,21 @@ export const sendRequestStartDataRecorder = async (dataRecorderFileName) => {
     },
     body: JSON.stringify({ dataRecorderFileName }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.status;
 };
 
 export const sendRequestStopDataRecorder = async (fileName) => {
   const url = `${URL}/api/data-recorders/stop/${fileName}`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.status;
 };
 
 export const sendRequestDataRecorderStatus = async () => {
   const url = `${URL}/api/data-recorders/status`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.status;
 };
 
@@ -211,10 +228,7 @@ export const sendRequestDataRecorderStatus = async () => {
 export const sendRequestDataStorage = async () => {
   const url = `${URL}/api/data-storage`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.dataStorage;
 };
 
@@ -227,30 +241,21 @@ export const sendRequestUpdateDataStorage = async (dataStorage) => {
     },
     body: JSON.stringify({ dataStorage }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.dataStorage;
 };
 
 export const sendRequestTestDataStorageConnection = async (dataStorage) => {
   const url = `${URL}/api/data-storage/test`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.connectionStatus;
 };
 
 export const sendRequestLogFile = async (tool, logFile) => {
   const url = `${URL}/api/logs/${tool}/${logFile}`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.content;
 };
 
@@ -259,20 +264,14 @@ export const sendRequestDeleteLogFile = async (tool, logFile) => {
   const response = await fetch(url, {
     method: "DELETE",
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.result;
 };
 
 export const sendRequestAllLogFiles = async (tool) => {
   const url = `${URL}/api/logs/${tool}`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.files;
 };
 
@@ -285,30 +284,21 @@ export const requestStartDeploy = async (tool, model) => {
     },
     body: JSON.stringify({ model }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.simulationStatus;
 };
 
 export const sendRequestStopSimulation = async (fileName) => {
   const url = `${URL}/api/simulation/stop/${fileName}`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.simulationStatus;
 };
 
 export const sendRequestSimulationStatus = async () => {
   const url = `${URL}/api/simulation/status`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.simulationStatus;
 };
 
@@ -316,10 +306,7 @@ export const sendRequestSimulationStatus = async () => {
 export const sendRequestTestCampaign = async (tcId) => {
   const url = `${URL}/api/test-campaigns/${tcId}`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.testCampaign;
 };
 
@@ -332,20 +319,14 @@ export const sendRequestUpdateTestCampaign = async (id, testCampaign) => {
     },
     body: JSON.stringify({ testCampaign }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.testCampaign;
 };
 
 export const sendRequestAllTestCampaigns = async () => {
   const url = `${URL}/api/test-campaigns`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.testCampaigns;
 };
 
@@ -358,10 +339,7 @@ export const sendRequestAddNewTestCampaign = async (testCampaign) => {
     },
     body: JSON.stringify({ testCampaign }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.testCampaign;
 };
 
@@ -370,10 +348,7 @@ export const sendRequestDeleteTestCampaign = async (testCampaignId) => {
   const response = await fetch(url, {
     method: "DELETE",
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.result;
 };
 
@@ -381,10 +356,7 @@ export const sendRequestDeleteTestCampaign = async (testCampaignId) => {
 export const sendRequestDevops = async () => {
   const url = `${URL}/api/devops`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.devops;
 };
 
@@ -397,10 +369,7 @@ export const sendRequestUpdateDevops = async (devops) => {
     },
     body: JSON.stringify({ devops }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.devops;
 };
 
@@ -408,10 +377,7 @@ export const sendRequestUpdateDevops = async (devops) => {
 export const sendRequestTestCase = async (tcId) => {
   const url = `${URL}/api/test-cases/${tcId}`;
   const response = await fetch(url);
-  const status = await response.json();
-  if (status.error) {
-    throw status.error;
-  }
+  const status = await parseResponse(response);
   return status.testCase;
 };
 
@@ -424,20 +390,14 @@ export const sendRequestUpdateTestCase = async (id, testCase) => {
     },
     body: JSON.stringify({ testCase }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.testCase;
 };
 
 export const sendRequestAllTestCases = async () => {
   const url = `${URL}/api/test-cases`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.testCases;
 };
 
@@ -450,10 +410,7 @@ export const sendRequestAddNewTestCase = async (testCase) => {
     },
     body: JSON.stringify({ testCase }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.testCase;
 };
 
@@ -462,10 +419,7 @@ export const sendRequestDeleteTestCase = async (testCaseId) => {
   const response = await fetch(url, {
     method: "DELETE",
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.result;
 };
 
@@ -473,10 +427,7 @@ export const sendRequestDeleteTestCase = async (testCaseId) => {
 export const sendRequestDataset = async (tcId) => {
   const url = `${URL}/api/data-sets/${tcId}`;
   const response = await fetch(url);
-  const status = await response.json();
-  if (status.error) {
-    throw status.error;
-  }
+  const status = await parseResponse(response);
   return status.dataset;
 };
 
@@ -489,20 +440,14 @@ export const sendRequestUpdateDataset = async (id, dataset) => {
     },
     body: JSON.stringify({ dataset }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.dataset;
 };
 
 export const sendRequestAllDatasets = async () => {
   const url = `${URL}/api/data-sets`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.datasets;
 };
 
@@ -515,10 +460,7 @@ export const sendRequestAddNewDataset = async (dataset) => {
     },
     body: JSON.stringify({ dataset }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.dataset;
 };
 
@@ -527,10 +469,7 @@ export const sendRequestDeleteDataset = async (datasetId) => {
   const response = await fetch(url, {
     method: "DELETE",
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.result;
 };
 
@@ -538,10 +477,7 @@ export const sendRequestDeleteDataset = async (datasetId) => {
 export const sendRequestReport = async (rpId) => {
   const url = `${URL}/api/reports/${rpId}`;
   const response = await fetch(url);
-  const status = await response.json();
-  if (status.error) {
-    throw status.error;
-  }
+  const status = await parseResponse(response);
   return status;
 };
 
@@ -561,10 +497,7 @@ export const sendRequestAllReports = async (options) => {
 
   const url = `${URL}/api/reports${query}`;
   const response = await fetch(url);
-  const status = await response.json();
-  if (status.error) {
-    throw status.error;
-  }
+  const status = await parseResponse(response);
   return status.reports;
 };
 
@@ -573,10 +506,7 @@ export const sendRequestDeleteReport = async (reportId) => {
   const response = await fetch(url, {
     method: "DELETE",
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.result;
 };
 
@@ -590,10 +520,7 @@ export const sendRequestUpdateReport = async (id, report, newScore) => {
     },
     body: JSON.stringify({ report, newScore }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.report;
 };
 
@@ -601,10 +528,7 @@ export const sendRequestUpdateReport = async (id, report, newScore) => {
 export const sendRequestEvent = async (tcId) => {
   const url = `${URL}/api/events/${tcId}`;
   const response = await fetch(url);
-  const status = await response.json();
-  if (status.error) {
-    throw status.error;
-  }
+  const status = await parseResponse(response);
   return status.event;
 };
 
@@ -617,10 +541,7 @@ export const sendRequestUpdateEvent = async (id, event) => {
     },
     body: JSON.stringify({ event }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.event;
 };
 
@@ -634,10 +555,7 @@ export const sendRequestEventsByDatasetId = async (
     startTime ? startTime : 0
   }&endTime=${endTime ? endTime : Date.now()}&page=${page}`;
   const response = await fetch(url);
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return {totalNbEvents: data.totalNbEvents, events: data.events};
 };
 
@@ -650,10 +568,7 @@ export const sendRequestAddNewEvent = async (event) => {
     },
     body: JSON.stringify({ event }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.event;
 };
 
@@ -662,10 +577,7 @@ export const sendRequestDeleteEvent = async (eventId) => {
   const response = await fetch(url, {
     method: "DELETE",
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.result;
 };
 
@@ -688,10 +600,7 @@ export const sendRequestStartSimulation = async (
       },
     }),
   });
-  const data = await response.json();
-  if (data.error) {
-    throw data.error;
-  }
+  const data = await parseResponse(response);
   return data.simulationStatus;
 };
 
@@ -699,29 +608,20 @@ export const sendRequestStartSimulation = async (
 export const sendRequestLaunchTestCampaign = async () => {
   const url = `${URL}/api/devops/start`;
   const response = await fetch(url);
-  const status = await response.json();
-  if (status.error) {
-    throw status.error;
-  }
+  const status = await parseResponse(response);
   return status.runningStatus;
 };
 
 export const sendRequestStopTestCampaign = async () => {
   const url = `${URL}/api/devops/stop`;
   const response = await fetch(url);
-  const status = await response.json();
-  if (status.error) {
-    throw status.error;
-  }
+  const status = await parseResponse(response);
   return status.runningStatus;
 };
 
 export const sendRequestTestCampaignStatus = async () => {
   const url = `${URL}/api/devops/status`;
   const response = await fetch(url);
-  const status = await response.json();
-  if (status.error) {
-    throw status.error;
-  }
+  const status = await parseResponse(response);
   return status.runningStatus;
 };

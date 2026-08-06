@@ -17,6 +17,7 @@ const reportRouter = require("../src/server/routes/reports");
 const dataStorageRouter = require("../src/server/routes/data-storage");
 const devopsRouter = require("../src/server/routes/devops");
 const { NAME_MAX_LENGTH } = require("../src/server/routes/path-safety");
+const { errorHandler } = require("../src/server/middleware/errors");
 
 const modelsDir = path.resolve(__dirname, "../src/server/data/models");
 const dataRecordersDir = path.resolve(__dirname, "../src/server/data/data-recorders");
@@ -141,7 +142,24 @@ const validateOnly = (router, method, routePath, req) => {
       },
     };
     const request_ = { params: {}, query: {}, body: {}, ...req };
-    layer(request_, res, () => resolve({ passed: true, req: request_ }));
+    // The validation layer reports a refusal by handing an error to `next`, so
+    // that a rejected request is rendered by the same central handler as every
+    // other failure (issue #11). Render it here the same way, so what this
+    // helper asserts on is the body the API would really have sent — a `next`
+    // that ignored the error would report every refusal as a pass.
+    layer(request_, res, (err) => {
+      if (!err) return resolve({ passed: true, req: request_ });
+      // The handler records every refusal server-side, which is the behaviour
+      // the status-code suite asserts. Here it is only being used to render a
+      // body, and hundreds of refusals would bury the suite's own output.
+      const realConsoleError = console.error;
+      console.error = () => {};
+      try {
+        return errorHandler(err, request_, res, () => {});
+      } finally {
+        console.error = realConsoleError;
+      }
+    });
   });
 };
 

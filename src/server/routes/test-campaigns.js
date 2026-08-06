@@ -13,6 +13,11 @@ const {
   textSchema,
   urlSchema,
 } = require("../middleware/validate");
+const {
+  errorHandler,
+  databaseError,
+  notFound,
+} = require("../middleware/errors");
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the test-campaign endpoints (issue #10)
@@ -44,10 +49,7 @@ const testCampaignUpdateBody = Joi.object({
 router.get("/", validate(), dbConnector, function (req, res, next) {
   TestCampaignSchema.find((err2, testCampaigns) => {
     if (err2) {
-      console.error('[SERVER] Failed to get testCampaigns', err2);
-      res.send({
-        error: 'Failed to get test campaign'
-      });
+      next(databaseError(err2, 'Failed to get test campaign'));
     } else {
       res.send({
         testCampaigns
@@ -79,10 +81,7 @@ router.post("/", validate({ body: testCampaignCreateBody }), dbConnector, functi
   });
   newtestCampaign.save((err, _testCampaign) => {
     if (err) {
-      console.error('[SERVER] Failed to save the test campaigns', err);
-      res.send({
-        error: 'Failed to save the test campaign'
-      });
+      next(databaseError(err, 'Failed to save the test campaign'));
     } else {
       res.send({
         testCampaign: _testCampaign
@@ -101,10 +100,9 @@ router.get("/:testCampaignId", validate({ params: { testCampaignId: testCampaign
 
   TestCampaignSchema.findOne({id: testCampaignId}, (err2, testCampaign) => {
     if (err2) {
-      console.error('[SERVER] Failed to get testCampaigns', err2);
-      res.send({
-        error: 'Failed to get test campaign'
-      });
+      next(databaseError(err2, 'Failed to get test campaign'));
+    } else if (!testCampaign) {
+      next(notFound('Test campaign not found'));
     } else {
       res.send({
         testCampaign
@@ -126,10 +124,7 @@ router.post("/:testCampaignId", validate({ params: { testCampaignId: testCampaig
 
   TestCampaignSchema.findOneAndUpdate({id: testCampaignId}, testCampaign, (err, ts) => {
     if (err) {
-      console.error('[SERVER] Failed to save the test campaigns', err);
-      res.send({
-        error: 'Failed to save the test campaign'
-      });
+      next(databaseError(err, 'Failed to save the test campaign'));
     } else {
       res.send({
         testCampaign: ts
@@ -148,10 +143,7 @@ router.delete("/:testCampaignId", validate({ params: { testCampaignId: testCampa
 
   TestCampaignSchema.findOneAndDelete({id: testCampaignId}, (err, ret) => {
     if (err) {
-      console.error('[SERVER] Failed to delete the test campaign', err);
-      res.send({
-        error: 'Failed to delete the test campaign'
-      });
+      next(databaseError(err, 'Failed to delete the test campaign'));
     } else {
       res.send({
         result: ret
@@ -159,5 +151,9 @@ router.delete("/:testCampaignId", validate({ params: { testCampaignId: testCampa
     }
   });
 });
+
+// Attached to the router itself as well as to the application: see the note in
+// `routes/model.js`.
+router.use(errorHandler);
 
 module.exports = router;
