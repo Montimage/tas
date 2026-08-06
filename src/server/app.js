@@ -7,6 +7,10 @@ var rateLimit = require('express-rate-limit');
 var { loadConfig } = require('./config');
 var { errorHandler, apiNotFound, forbidden, ApiError, sendError } = require('./middleware/errors');
 var { securityHeaders } = require('./middleware/security-headers');
+var { createAuthMiddleware } = require('./middleware/auth');
+var { createCsrfMiddleware } = require('./middleware/csrf');
+var { createCredential } = require('./auth/credentials');
+var { createSessionStore } = require('./auth/session-store');
 
 // Read the environment configuration once at startup.
 const config = loadConfig();
@@ -22,6 +26,28 @@ const testCampaignRouter = require('./routes/test-campaigns');
 const dataSetRouter = require('./routes/data-sets');
 const eventRouter = require('./routes/events');
 const devopsRouter = require('./routes/devops');
+const healthRouter = require('./routes/health');
+const createAuthRouter = require('./routes/auth');
+
+/**
+ * The single administrator credential and the session table, built once.
+ *
+ * Both are process-wide by design: there is one operator account, and the
+ * session table is the thing that makes a session revocable (see
+ * `auth/session-store.js`).
+ */
+const credential = createCredential(config);
+const sessions = createSessionStore({
+  idleTtlMs: config.sessionIdleTtlMs,
+  absoluteTtlMs: config.sessionAbsoluteTtlMs
+});
+
+if (!credential.configured) {
+  console.error('[AUTH] No administrator credential configured — every API endpoint will reject requests. Set AUTH_ADMIN_PASSWORD or AUTH_ADMIN_PASSWORD_HASH.');
+}
+if (config.authTrustProxyHeader === true && config.authTrustedProxies.length === 0) {
+  console.error('[AUTH] AUTH_TRUST_PROXY_HEADER is enabled but AUTH_TRUSTED_PROXIES is empty — proxy identity delegation stays disabled.');
+}
 
 var app = express();
 
@@ -95,7 +121,10 @@ app.use(function corsControl(req, res, next) {
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // X-CSRF-Token is part of every state-changing request the dashboard makes,
+  // so a cross-origin dashboard configured through CORS_ALLOWED_ORIGINS cannot
+  // work without the browser being told the header is permitted.
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-CSRF-Token');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
@@ -112,7 +141,10 @@ app.use(bodyParser.urlencoded({
   limit: config.bodyLimit,
   extended: true
 }));
-app.use(cookieParser());
+// The secret is what makes `signed: true` cookies verifiable: a session cookie
+// that was edited or minted by anything but this process fails the signature
+// check and never reaches the session table.
+app.use(cookieParser(config.sessionSecret));
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Per-client rate limiting on the unauthenticated API surface.
@@ -129,6 +161,40 @@ const apiLimiter = rateLimit({
 });
 
 app.use('/api', apiLimiter);
+
+/**
+ * A second, much tighter limit on the login endpoint alone.
+ *
+ * `skipSuccessfulRequests` is what makes it usable: only *failed* logins count
+ * towards it, so an operator who mistypes a password a few times is unaffected
+ * while a credential-guessing run is cut off after a handful of attempts. The
+ * general API limit above is far too loose to be that ceiling.
+ */
+const loginLimiter = rateLimit({
+  windowMs: config.authLoginRateLimitWindowMs,
+  max: config.authLoginRateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  handler: function (req, res, next) {
+    next(new ApiError(429, 'Too many login attempts, please try again later.'));
+  }
+});
+
+app.use('/api/auth/login', loginLimiter);
+
+/**
+ * Everything under /api requires a session, bar the short allowlist declared in
+ * `middleware/auth.js`; every state-changing request additionally has to echo
+ * the token bound to that session (`middleware/csrf.js`). Both are mounted here,
+ * ahead of every router, so a route added later is closed by default rather
+ * than open until somebody remembers to guard it.
+ */
+app.use('/api', createAuthMiddleware({ credential: credential, sessions: sessions, config: config }));
+app.use('/api', createCsrfMiddleware());
+
+app.use('/api/health', healthRouter);
+app.use('/api/auth', createAuthRouter({ credential: credential, sessions: sessions, config: config }));
 
 app.use('/api/models', modelRouter);
 app.use('/api/data-recorders', dataRecorderRouter);
