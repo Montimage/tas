@@ -78,9 +78,11 @@ one without parsing the body.
 | ------ | -------------------------------------------------------------------------- |
 | `2xx`  | The request was served.                                                    |
 | `400`  | The request was malformed — a field of the wrong type, a name that cannot derive a safe file path, a document the database refused. |
+| `403`  | The request came from an origin that is not in `CORS_ALLOWED_ORIGINS`.     |
 | `404`  | The addressed model, data recorder, log, data set, event, report, test case, test campaign or API path does not exist. |
 | `409`  | The request conflicts with the current state — starting a simulation or a data recorder that is already running. |
 | `413`  | The body is larger than `BODY_LIMIT`.                                      |
+| `415`  | The request carries a content encoding the server cannot read.             |
 | `429`  | The client is over `RATE_LIMIT_MAX` for the current window.                |
 | `5xx`  | The server failed (`500`), or a dependency such as the database is not reachable (`503`). |
 

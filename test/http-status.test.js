@@ -791,3 +791,50 @@ test("a data recorder already running refuses a second start", async () => {
     if (client) client.close(true, () => {});
   }
 });
+
+test("two concurrent starts of one data recorder cannot both be served", async () => {
+  // As with the simulation above: the recorder is registered inside the
+  // `getDataStorage` callback, so the window this pins open exists only while
+  // the default data storage has not been read yet - it is cached from the
+  // first read onwards and answers synchronously after that. A freshly
+  // required router and connector put the pair back in the state a running
+  // server is in when the first start of the day arrives.
+  const routerPath = require.resolve("../src/server/routes/data-recorders");
+  const connectorPath = require.resolve("../src/server/routes/db-connector");
+  delete require.cache[routerPath];
+  delete require.cache[connectorPath];
+  const coldRouter = require(routerPath);
+  delete require.cache[routerPath];
+  delete require.cache[connectorPath];
+
+  const coldApp = express();
+  coldApp.use(express.json());
+  coldApp.use("/api/data-recorders", coldRouter);
+  const coldServer = coldApp.listen(0);
+  const name = unique("race-recorder");
+  const body = { model: { name, dataRecorders: [] } };
+  try {
+    const answers = await Promise.all([
+      request(coldServer, "POST", "/api/data-recorders/start", body),
+      request(coldServer, "POST", "/api/data-recorders/start", body),
+    ]);
+    assert.deepEqual(
+      answers.map((answer) => answer.status).sort(),
+      [200, 409],
+      `exactly one of two concurrent starts may be served: ${answers
+        .map((answer) => answer.raw)
+        .join(" | ")}`
+    );
+    const refused = answers.find((answer) => answer.status === 409);
+    assertErrorShape(refused, 409, "the second of two concurrent starts");
+  } finally {
+    await request(coldServer, "GET", `/api/data-recorders/stop/${name}.json`);
+    coldServer.close();
+    removeRunLogs(recorderLogsDir, name);
+    // See the note in the test above: the connection this start opened is
+    // still outstanding, and nothing in the server closes one that never
+    // finished opening.
+    const client = require("mongoose").connection.client;
+    if (client) client.close(true, () => {});
+  }
+});
