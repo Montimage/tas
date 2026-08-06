@@ -187,9 +187,10 @@ AUTH_ADMIN_PASSWORD_HASH=scrypt$16384$8$1$...
 ```
 
 For a first start, `AUTH_ADMIN_PASSWORD` accepts a plaintext instead. It is
-hashed once at startup and the plaintext is discarded immediately — it is never
-stored, never logged and never returned — but it does sit in the environment of
-the running process, which is why the hashed form is preferred.
+hashed once at startup and the plaintext is discarded immediately — it is erased
+from the configuration object as it is hashed, so it is never stored, never
+logged and never returned — but it does sit in the environment of the running
+process, which is why the hashed form is preferred.
 
 With neither set the server still starts, says so loudly on stderr, and refuses
 every API request: an appliance that cannot be configured is safer than one that
@@ -206,8 +207,12 @@ and holds exactly three endpoints:
 | `POST /api/auth/login` | The endpoint that issues a session.                                   |
 | `GET /api/auth/session` | Lets the dashboard ask whether it is logged in. Answers `200` either way, so a cold start is not a 401 storm. |
 
-`OPTIONS` (CORS preflight) is also answered without a session, because a
-preflight carries no credentials by definition.
+A genuine CORS **preflight** — an `OPTIONS` request carrying both an `Origin`
+and an `Access-Control-Request-Method` header — is also answered without a
+session, because a preflight carries no credentials by definition. A *bare*
+`OPTIONS` is not exempt: it is refused with `401` like anything else, so an
+anonymous caller cannot read an `Allow` header off every path and map which
+endpoints exist and which methods they accept.
 
 `POST /api/auth/logout` is **not** on the list: logging out acts on a session,
 so it needs one.
@@ -233,6 +238,12 @@ logs you out mid-task; `SESSION_ABSOLUTE_TTL_MS` (default 12 hours) is a hard
 cap that does not slide. `POST /api/auth/logout` invalidates a session
 immediately, and replaying its cookie afterwards answers `401`. Sessions are
 held in the process, so a restart ends all of them.
+
+The session table also has a hard size cap, `SESSION_MAX_RECORDS` (default
+1000): when it is full the least recently seen record is evicted. Expiry alone
+is not a bound — nothing stops records being minted faster than they age out —
+and a single-tenant appliance never has a thousand live operator sessions, so
+the cap only ever bites on runaway traffic.
 
 ### Cross-site request forgery
 
@@ -281,6 +292,31 @@ location / {
   proxy_pass http://127.0.0.1:3004;
 }
 ```
+
+A browser needs nothing more: the first request establishes a session and the
+cookies, and the dashboard boots straight into `GET /api/auth/session`, which
+reports the delegated identity.
+
+**CSRF still applies to a delegated request.** Delegation is deliberately not an
+exemption: the proxy attaches the identity header to whatever reaches it,
+cookies or no cookies, so a cross-site forged `POST` arrives in exactly the
+shape of a cookieless delegated request. A non-browser client behind the proxy
+must therefore fetch its token first and echo it back:
+
+```
+# 1. ask who the proxy says we are, and collect the token for that session
+TOKEN=$(curl -s http://127.0.0.1:3004/api/auth/session | sed 's/.*"csrfToken":"\([^"]*\)".*/\1/')
+
+# 2. now a write is accepted
+curl -X POST http://127.0.0.1:3004/api/models \
+  -H 'Content-Type: application/json' \
+  -H "X-CSRF-Token: $TOKEN" \
+  -d '{"model": {"name": "demo", "devices": []}}'
+```
+
+Every such cookieless client shares one session record per asserted identity —
+the record is reused rather than re-minted per request, so a monitoring probe
+behind the proxy cannot grow the session table.
 
 ### Login rate limit
 
@@ -331,6 +367,7 @@ tighten a limit.
 | `SESSION_SECRET`       | _(none)_          | Secret the session cookie is signed with. There is deliberately no default: when unset, an ephemeral secret is generated per process and a warning is logged, so sessions do not survive a restart. Set it in production.                                                   |
 | `SESSION_TTL_MS`       | `3600000` (1 h)   | Idle timeout. Slides forward on every request, so an in-use session is never logged out.                                                                                                                                                                                   |
 | `SESSION_ABSOLUTE_TTL_MS` | `43200000` (12 h) | Hard lifetime. Does not slide: no session outlives it, however busy it is.                                                                                                                                                                                              |
+| `SESSION_MAX_RECORDS`  | `1000`            | Hard cap on how many session records are held at once. When it is full the least recently seen record is evicted, so the table stays bounded whatever the traffic.                                                                                                          |
 | `SESSION_COOKIE_SECURE` | `false`          | Mark the session cookies `Secure`. Set to `true` whenever TLS reaches the application; the default suits the documented plain-HTTP-on-loopback baseline, where a `Secure` cookie would never be sent.                                                                       |
 | `AUTH_TRUST_PROXY_HEADER` | `false`        | Believe an identity header from an authenticating reverse proxy. Ignored unless `AUTH_TRUSTED_PROXIES` is non-empty.                                                                                                                                                        |
 | `AUTH_PROXY_USER_HEADER` | `x-forwarded-user` | Name of that identity header.                                                                                                                                                                                                                                          |

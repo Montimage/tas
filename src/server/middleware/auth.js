@@ -26,9 +26,27 @@
  * A header alone is not evidence of anything — anyone who can reach the port
  * can send `X-Forwarded-User: admin` — so trusting the header without pinning
  * the peer would make the feature the bypass it exists to avoid.
+ *
+ * Identity is resolved *before* the allowlist is consulted, and the allowlist
+ * then only decides whether a request with no identity is refused. That order
+ * matters: `GET /api/auth/session` is public, and it is the first call the
+ * dashboard makes. Answering it before delegation had been considered would
+ * report `{"authenticated":false}` to a browser the proxy had already
+ * authenticated, and show it a password form for an account whose password a
+ * proxy deployment deliberately does not hand out.
  */
 const { unauthorized } = require("./errors");
 const { timingSafeCompare } = require("../auth/passwords");
+
+/**
+ * How many delegated identities the proxy session cache remembers.
+ *
+ * The key is asserted by the proxy, so it is outside data; bounding the map
+ * keeps a misbehaving (or compromised) proxy from turning the cache into a
+ * memory sink. Evicting the oldest entry only costs that identity a fresh
+ * session record on its next request.
+ */
+const DELEGATED_IDENTITY_LIMIT = 1000;
 
 /** Name of the signed cookie carrying the opaque session identifier. */
 const SESSION_COOKIE = "tas.sid";
@@ -63,18 +81,36 @@ const normalizePath = (value) => {
 };
 
 /**
- * @param {String} method HTTP method
- * @param {String} path Path relative to the `/api` mount
+ * Is this OPTIONS request a genuine CORS preflight?
+ *
+ * A preflight is defined by the two headers the browser always sends with it.
+ * Requiring both is what keeps the exemption to preflights: a *bare* OPTIONS
+ * carries neither, and exempting it would let Express's built-in OPTIONS
+ * responder answer an anonymous caller with an `Allow` header assembled from
+ * the registered handlers — an endpoint-and-method map of the whole API, while
+ * an unrouted path 404s, which is exactly the disclosure the deliberate 401 on
+ * unknown `/api` paths exists to prevent.
+ *
+ * @param {Object} req Express request
+ * @returns {Boolean} True for a CORS preflight
+ */
+const isCorsPreflight = (req) =>
+  req.method === "OPTIONS" &&
+  typeof req.headers["origin"] === "string" &&
+  typeof req.headers["access-control-request-method"] === "string";
+
+/**
+ * @param {Object} req Express request
  * @returns {Boolean} True when the request may proceed without a session
  */
-const isPublicRoute = (method, path) => {
+const isPublicRoute = (req) => {
   // A CORS preflight carries no credentials by definition; rejecting it with a
   // 401 would make the browser report a CORS failure for a request that would
   // in fact have been authorised.
-  if (method === "OPTIONS") return true;
-  const wanted = normalizePath(path);
+  if (isCorsPreflight(req)) return true;
+  const wanted = normalizePath(req.path);
   return PUBLIC_API_ROUTES.some(
-    (route) => route.method === method && route.path === wanted
+    (route) => route.method === req.method && route.path === wanted
   );
 };
 
@@ -196,37 +232,90 @@ function createAuthMiddleware({ credential, sessions, config }) {
     return user === "" ? null : user;
   }
 
+  /**
+   * The session already issued for each delegated identity.
+   *
+   * Without this, every cookieless request from behind the proxy — a curl call,
+   * a monitoring probe, a CI script — would mint a session record of its own,
+   * and `sweep()` only reclaims records that have *expired*, so at the default
+   * one-hour idle window the table would grow with traffic rather than with
+   * users. A browser establishes its session on the first GET and carries the
+   * cookie afterwards; a cookieless client reuses this one record.
+   *
+   * Bounded like the login failure tracker, and for the same reason: the key
+   * comes from outside, so an unbounded map is a memory sink.
+   */
+  const delegatedSessions = new Map();
+
+  /**
+   * Resolve (reusing where possible) the session that stands for a delegated
+   * identity.
+   *
+   * @param {String} user The identity the trusted proxy asserted
+   * @returns {Object} A live session record for that identity
+   */
+  function delegatedSession(user) {
+    const known = delegatedSessions.get(user);
+    if (typeof known === "string") {
+      const live = sessions.touch(known);
+      // A cached identifier can be stale: the session may have expired, or
+      // `POST /auth/logout` may have destroyed it. Either way, fall through and
+      // mint a fresh one rather than hand back nothing.
+      if (live && live.user === user) {
+        delegatedSessions.delete(user);
+        delegatedSessions.set(user, known);
+        return live;
+      }
+      delegatedSessions.delete(user);
+    }
+    const created = sessions.create(user);
+    delegatedSessions.set(user, created.id);
+    while (delegatedSessions.size > DELEGATED_IDENTITY_LIMIT) {
+      delegatedSessions.delete(delegatedSessions.keys().next().value);
+    }
+    return created;
+  }
+
   return function requireAuth(req, res, next) {
-    if (isPublicRoute(req.method, req.path)) {
-      return next();
+    // Identity first, allowlist second. See the note at the top of this file:
+    // a public route still has to know who the caller is, or the endpoint the
+    // dashboard boots with cannot report a proxy-delegated login.
+    let session = resolveSession(req, sessions);
+    let via = "session";
+
+    if (!session) {
+      const delegated = proxyIdentity(req);
+      if (delegated) {
+        session = delegatedSession(delegated);
+        via = "proxy";
+      }
     }
 
-    const session = resolveSession(req, sessions);
     if (session) {
       req.auth = {
         user: session.user,
         sessionId: session.id,
         csrfToken: session.csrfToken,
-        via: "session",
+        via: via,
       };
       setSessionCookies(res, session, config);
-      return next();
     }
 
-    const delegated = proxyIdentity(req);
-    if (delegated) {
-      const created = sessions.create(delegated);
-      req.auth = {
-        user: created.user,
-        sessionId: created.id,
-        csrfToken: created.csrfToken,
-        via: "proxy",
-      };
-      setSessionCookies(res, created, config);
+    // A proxy-delegated request is deliberately NOT exempted from the CSRF
+    // check downstream. The proxy attaches the identity header to whatever
+    // reaches it, cookies or no cookies — so a cross-site forged POST from
+    // evil.com arrives in exactly the shape of a cookieless delegated request.
+    // Exempting that shape would hand an attacker authenticated, state-changing
+    // access. A non-browser client behind the proxy fetches
+    // `GET /api/auth/session` first and echoes the token back, which is what
+    // the README documents.
+    if (isPublicRoute(req)) {
       return next();
     }
-
-    return next(unauthorized("Authentication required"));
+    if (!req.auth) {
+      return next(unauthorized("Authentication required"));
+    }
+    return next();
   };
 }
 
@@ -236,9 +325,11 @@ module.exports = {
   clearSessionCookies,
   resolveSession,
   isPublicRoute,
+  isCorsPreflight,
   normalizeAddress,
   timingSafeCompare,
   PUBLIC_API_ROUTES,
+  DELEGATED_IDENTITY_LIMIT,
   SESSION_COOKIE,
   CSRF_COOKIE,
 };

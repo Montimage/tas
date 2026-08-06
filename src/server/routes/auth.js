@@ -26,11 +26,7 @@ const express = require("express");
 const Joi = require("joi");
 const { validate } = require("../middleware/validate");
 const { errorHandler, unauthorized, unavailable } = require("../middleware/errors");
-const {
-  setSessionCookies,
-  clearSessionCookies,
-  resolveSession,
-} = require("../middleware/auth");
+const { setSessionCookies, clearSessionCookies } = require("../middleware/auth");
 
 /**
  * How many client addresses the consecutive-failure counter remembers.
@@ -181,17 +177,18 @@ function createAuthRouter({ credential, sessions, config }) {
   });
 
   router.get("/session", validate(), (req, res) => {
-    const session = resolveSession(req, sessions);
-    if (!session) {
+    // The gate ahead of this router resolves identity for every request,
+    // allowlisted or not, and refreshes the cookies while it does — so this
+    // endpoint only has to report what it found. Resolving it a second time
+    // here would also miss the identity a trusted reverse proxy delegated,
+    // which arrives as a header rather than as a cookie.
+    if (!req.auth) {
       return res.json({ authenticated: false });
     }
-    // Refresh the cookies so a dashboard that only polls this endpoint keeps
-    // the browser cookie in step with the sliding server-side session.
-    setSessionCookies(res, session, config);
     return res.json({
       authenticated: true,
-      user: session.user,
-      csrfToken: session.csrfToken,
+      user: req.auth.user,
+      csrfToken: req.auth.csrfToken,
     });
   });
 

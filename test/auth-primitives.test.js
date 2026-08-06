@@ -15,7 +15,14 @@ const {
   timingSafeCompare,
 } = require("../src/server/auth/passwords");
 const { createCredential } = require("../src/server/auth/credentials");
-const { createSessionStore } = require("../src/server/auth/session-store");
+const {
+  createSessionStore,
+  DEFAULT_MAX_SESSIONS,
+} = require("../src/server/auth/session-store");
+const { loadConfig } = require("../src/server/config");
+
+const os = require("node:os");
+const path = require("node:path");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -101,6 +108,47 @@ test("a plaintext password is hashed at construction and not retained", () => {
   );
   for (const value of Object.values(credential)) {
     assert.notEqual(value, "plain-password");
+  }
+});
+
+test("the plaintext is erased from the configuration object it was read from", () => {
+  // `app.js` holds the configuration object for the lifetime of the process and
+  // hands it to the middleware, the router and the cookie helpers. A plaintext
+  // left on it would outlive its one use and be reachable from a heap dump, a
+  // debugger or a careless `console.error(config)`.
+  const config = {
+    authAdminUsername: "operator",
+    authAdminPassword: "plain-password",
+    AUTH_ADMIN_PASSWORD: "plain-password",
+    sessionIdleTtlMs: 1000,
+  };
+  const credential = createCredential(config);
+  assert.equal(credential.verify("operator", "plain-password"), true, "the hash still verifies");
+  assert.equal(config.authAdminPassword, "");
+  assert.equal(config.AUTH_ADMIN_PASSWORD, "");
+  assert.ok(
+    !JSON.stringify(config).includes("plain-password"),
+    "the plaintext must not be reachable from the config object either"
+  );
+  // Every other setting is untouched.
+  assert.equal(config.sessionIdleTtlMs, 1000);
+  assert.equal(config.authAdminUsername, "operator");
+});
+
+test("loadConfig never exposes a plaintext password once the credential is built", () => {
+  const missing = path.join(os.tmpdir(), `missing-${Date.now()}-${Math.random()}.env`);
+  const saved = process.env.AUTH_ADMIN_PASSWORD;
+  process.env.AUTH_ADMIN_PASSWORD = "bootstrap-plaintext";
+  try {
+    const config = loadConfig({ path: missing });
+    createCredential(config);
+    assert.ok(
+      !JSON.stringify(config).includes("bootstrap-plaintext"),
+      "the loaded configuration must not retain the plaintext"
+    );
+  } finally {
+    if (saved === undefined) delete process.env.AUTH_ADMIN_PASSWORD;
+    else process.env.AUTH_ADMIN_PASSWORD = saved;
   }
 });
 
@@ -206,4 +254,36 @@ test("sweep removes expired records without a timer holding the process open", a
   store.create("d");
   assert.equal(store.get(live.id), null);
   assert.equal(store.size(), 1);
+});
+
+test("the table has a hard size cap and evicts rather than growing without bound", () => {
+  // Lazy expiry alone is not a bound: a caller can mint records faster than the
+  // idle window ages them out. The cap is the defence in depth, mirroring how
+  // the login failure tracker is bounded by FAILURE_TRACKER_LIMIT.
+  const store = createSessionStore({ idleTtlMs: 60000, absoluteTtlMs: 60000, maxSessions: 5 });
+  assert.equal(store.maxSessions(), 5);
+
+  const created = [];
+  for (let i = 0; i < 50; i += 1) {
+    created.push(store.create(`user-${i}`));
+    assert.ok(store.size() <= 5, `the table must never exceed the cap, saw ${store.size()}`);
+  }
+  assert.equal(store.size(), 5);
+  // The five most recent survive; the earliest were evicted.
+  for (const session of created.slice(-5)) {
+    assert.ok(store.get(session.id), "the most recent records must be kept");
+  }
+  assert.equal(store.get(created[0].id), null, "the least recently seen record is evicted");
+
+  // Eviction is by recency, not by creation order: a record that keeps being
+  // used outlives newer, idle ones.
+  const busy = created[created.length - 1];
+  for (let i = 0; i < 4; i += 1) {
+    assert.ok(store.touch(busy.id), "the busy session stays alive");
+    store.create(`later-${i}`);
+  }
+  assert.ok(store.get(busy.id), "a session in continuous use must not be evicted");
+
+  assert.equal(DEFAULT_MAX_SESSIONS, 1000, "the shipped default is documented in the README");
+  assert.equal(createSessionStore({}).maxSessions(), DEFAULT_MAX_SESSIONS);
 });

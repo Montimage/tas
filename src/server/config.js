@@ -26,10 +26,11 @@ var SECURITY_DEFAULTS = {
   cspReportOnly: true, // report violations, do not block, until observed clean
   cspReportUri: '', // empty = browsers report to the console only
   authAdminUsername: 'admin', // the single operator account
-  authAdminPassword: '', // plaintext bootstrap; hashed at startup, never kept
+  authAdminPassword: '', // plaintext bootstrap; hashed and erased by createCredential
   authAdminPasswordHash: '', // preferred: a `scrypt$...` value from hashPassword
   sessionIdleTtlMs: 60 * 60 * 1000, // 1 hour of inactivity ends a session
   sessionAbsoluteTtlMs: 12 * 60 * 60 * 1000, // no session outlives 12 hours
+  sessionMaxRecords: 1000, // hard cap on the session table; oldest is evicted
   // Plain HTTP on loopback behind a TLS-terminating reverse proxy is the
   // documented deployment baseline, and a `Secure` cookie is simply never sent
   // over such a connection - hard-coding it on would make the shipped
@@ -215,6 +216,8 @@ function loadConfig(options) {
     sessionIdleTtlMs: Number(value('SESSION_TTL_MS')) || SECURITY_DEFAULTS.sessionIdleTtlMs,
     sessionAbsoluteTtlMs:
       Number(value('SESSION_ABSOLUTE_TTL_MS')) || SECURITY_DEFAULTS.sessionAbsoluteTtlMs,
+    sessionMaxRecords:
+      Number(value('SESSION_MAX_RECORDS')) || SECURITY_DEFAULTS.sessionMaxRecords,
     sessionCookieSecure: parseBoolean(
       value('SESSION_COOKIE_SECURE'),
       SECURITY_DEFAULTS.sessionCookieSecure

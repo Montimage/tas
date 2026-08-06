@@ -447,3 +447,39 @@ test("failed logins are rate-limited without locking out a legitimate operator",
     }
   );
 });
+
+// ---------------------------------------------------------------------------
+// 6. OPTIONS is exempt only when it is a real CORS preflight
+// ---------------------------------------------------------------------------
+
+test("a bare anonymous OPTIONS does not enumerate the routing table", async () => {
+  await withApp({}, { login: false }, async (ctx) => {
+    // Express's built-in OPTIONS responder answers with an `Allow` header built
+    // from the registered handlers, while an unrouted path 404s - so a blanket
+    // exemption tells an anonymous caller which endpoints exist and which
+    // methods they take, which is exactly what the deliberate 401 on unknown
+    // `/api` paths exists to prevent.
+    for (const path of ["/api/models", "/api/devops/status", "/api/simulation"]) {
+      const res = await call(ctx, "OPTIONS", path);
+      assert.equal(res.status, 401, `bare OPTIONS ${path} must be refused: ${res.raw}`);
+      assert.equal(res.body.error, "Authentication required");
+      assert.equal(res.res.headers.get("allow"), null, "no Allow header may leak");
+    }
+  });
+});
+
+test("a genuine CORS preflight is still answered without a session", async () => {
+  await withApp({}, { login: false }, async (ctx) => {
+    // Both headers together are what defines a preflight. Refusing it with a
+    // 401 would make the browser report a CORS failure for a request that would
+    // in fact have been authorised.
+    const res = await call(ctx, "OPTIONS", "/api/models", {
+      headers: {
+        Origin: ctx.base,
+        "Access-Control-Request-Method": "GET",
+      },
+    });
+    assert.notEqual(res.status, 401, `a preflight must not be gated: ${res.raw}`);
+    assert.ok(res.status < 400, `a preflight must be answered: ${res.status} ${res.raw}`);
+  });
+});

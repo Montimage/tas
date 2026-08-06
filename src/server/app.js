@@ -35,11 +35,17 @@ const createAuthRouter = require('./routes/auth');
  * Both are process-wide by design: there is one operator account, and the
  * session table is the thing that makes a session revocable (see
  * `auth/session-store.js`).
+ *
+ * `createCredential` hashes any plaintext bootstrap password and erases it from
+ * the configuration object as it goes, so what this module holds for the
+ * lifetime of the process — and hands to the middleware, the router and the
+ * cookie helpers — no longer carries the plaintext at all.
  */
 const credential = createCredential(config);
 const sessions = createSessionStore({
   idleTtlMs: config.sessionIdleTtlMs,
-  absoluteTtlMs: config.sessionAbsoluteTtlMs
+  absoluteTtlMs: config.sessionAbsoluteTtlMs,
+  maxSessions: config.sessionMaxRecords
 });
 
 if (!credential.configured) {

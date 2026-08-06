@@ -12,6 +12,14 @@
  * once here and the plaintext is dropped on the floor immediately, so it is
  * never stored on the returned object, never logged and never comparable by a
  * later bug.
+ *
+ * "Dropped on the floor" is meant literally, and it extends to the caller's
+ * configuration object: that object is held for the lifetime of the process and
+ * passed to the middleware, the router and the cookie helpers, so a plaintext
+ * left on it would be reachable from a heap dump, a debugger or a careless
+ * `console.error(config)` long after it was needed. This function therefore
+ * blanks the plaintext fields on the object it is handed, once it has hashed
+ * them. It is the only consumer of those fields.
  */
 const { hashPassword, verifyPassword, timingSafeCompare } = require("./passwords");
 
@@ -24,6 +32,24 @@ const { hashPassword, verifyPassword, timingSafeCompare } = require("./passwords
  * set at all.
  */
 const UNCONFIGURED_HASH = hashPassword(require("crypto").randomBytes(32).toString("hex"));
+
+/**
+ * Blank a secret field on a configuration object, tolerating a frozen or
+ * read-only object rather than failing startup over a defence-in-depth measure.
+ *
+ * @param {Object} target The object to scrub
+ * @param {String} key The field to blank
+ * @returns {void}
+ */
+function eraseSecret(target, key) {
+  if (typeof target[key] !== "string" || target[key] === "") return;
+  try {
+    target[key] = "";
+  } catch (_) {
+    // Non-writable property: the value stays, and the hash is still what the
+    // login route compares against.
+  }
+}
 
 /**
  * Build the credential the login route verifies against.
@@ -46,6 +72,12 @@ function createCredential(config) {
     hash = hashPassword(settings.authAdminPassword);
     source = "password";
   }
+
+  // Erase the plaintext from the caller's object now that it has been hashed.
+  // Deliberately unconditional: whether the hash form won, the plaintext form
+  // did, or neither was set, nothing downstream has any use for the plaintext.
+  eraseSecret(settings, "authAdminPassword");
+  eraseSecret(settings, "AUTH_ADMIN_PASSWORD");
 
   const configured = hash !== null;
   const stored = configured ? hash : UNCONFIGURED_HASH;
