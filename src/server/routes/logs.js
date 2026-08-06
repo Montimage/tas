@@ -10,8 +10,23 @@ const {
   resolveWithin,
   sendBadRequest,
 } = require("./path-safety");
+const {
+  validate,
+  fileNameParam,
+  generatedFileNameMaxLength,
+} = require("../middleware/validate");
 
 const _logsPath = `${__dirname}/../logs/`;
+
+// ---------------------------------------------------------------------------
+// Validation schemas for the log endpoints (issue #10)
+// ---------------------------------------------------------------------------
+
+// These routes address names the server generated, not names a caller supplied:
+// a log is written as `${name}_${timestamp}.log`, so it is longer than the name
+// it came from. Capping it like a plain derived filename would refuse to read or
+// delete the logs the product itself writes.
+const logFileNameParam = fileNameParam(".log", generatedFileNameMaxLength(".log"));
 
 const createRouter = (appLog = true) => {
   let router = express.Router();
@@ -21,7 +36,7 @@ const createRouter = (appLog = true) => {
   // LOG FILES
   /////////////
   // Get all the logs file
-  router.get("/", (req, res, next) => {
+  router.get("/", validate(), (req, res, next) => {
     readDir(logsPath, (err, files) => {
       if (err) {
         console.error("[SERVER]", err);
@@ -38,7 +53,7 @@ const createRouter = (appLog = true) => {
   });
 
   // Read a specific log file
-  router.get("/:fileName", function (req, res, next) {
+  router.get("/:fileName", validate({ params: { fileName: logFileNameParam } }), function (req, res, next) {
     const {
       fileName
     } = req.params;
@@ -62,7 +77,7 @@ const createRouter = (appLog = true) => {
   });
 
   // Delete a specific log file
-  router.delete("/:fileName", function (req, res, next) {
+  router.delete("/:fileName", validate({ params: { fileName: logFileNameParam } }), function (req, res, next) {
     const {
       fileName
     } = req.params;

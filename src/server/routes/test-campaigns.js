@@ -1,13 +1,47 @@
 /* Working with Test Campaign */
 const express = require("express");
+const Joi = require("joi");
 const router = express.Router();
 const {
   TestCampaignSchema,
   dbConnector
 } = require('./db-connector');
+const {
+  validate,
+  documentSchema,
+  idSchema,
+  textSchema,
+  urlSchema,
+} = require("../middleware/validate");
+
+// ---------------------------------------------------------------------------
+// Validation schemas for the test-campaign endpoints (issue #10)
+// ---------------------------------------------------------------------------
+
+const testCampaignIdParam = idSchema.required();
+
+const testCampaignFields = {
+  id: idSchema,
+  name: textSchema,
+  isDefault: Joi.boolean(),
+  description: textSchema.allow(null, ""),
+  testCaseIds: Joi.array().items(Joi.string().max(256)),
+  webhookURL: urlSchema.allow(null, ""),
+};
+
+const testCampaignCreateBody = Joi.object({
+  testCampaign: documentSchema({
+    ...testCampaignFields,
+    id: idSchema.required(),
+  }).required(),
+}).required();
+
+const testCampaignUpdateBody = Joi.object({
+  testCampaign: documentSchema(testCampaignFields).required(),
+}).required();
 
 // Get all the test campaigns
-router.get("/", dbConnector, function (req, res, next) {
+router.get("/", validate(), dbConnector, function (req, res, next) {
   TestCampaignSchema.find((err2, testCampaigns) => {
     if (err2) {
       console.error('[SERVER] Failed to get testCampaigns', err2);
@@ -23,7 +57,7 @@ router.get("/", dbConnector, function (req, res, next) {
 });
 
 // Add a new test campaign
-router.post("/", dbConnector, function (req, res, next) {
+router.post("/", validate({ body: testCampaignCreateBody }), dbConnector, function (req, res, next) {
   const {
     testCampaign
   } = req.body;
@@ -60,7 +94,7 @@ router.post("/", dbConnector, function (req, res, next) {
 /**
  * Get a test campaign by id
  */
-router.get("/:testCampaignId", dbConnector, function (req, res, next) {
+router.get("/:testCampaignId", validate({ params: { testCampaignId: testCampaignIdParam } }), dbConnector, function (req, res, next) {
   const {
     testCampaignId
   } = req.params;
@@ -82,7 +116,7 @@ router.get("/:testCampaignId", dbConnector, function (req, res, next) {
 /**
  * Update a test campaign
  */
-router.post("/:testCampaignId", dbConnector, function (req, res, next) {
+router.post("/:testCampaignId", validate({ params: { testCampaignId: testCampaignIdParam }, body: testCampaignUpdateBody }), dbConnector, function (req, res, next) {
   const {
     testCampaign
   } = req.body;
@@ -107,7 +141,7 @@ router.post("/:testCampaignId", dbConnector, function (req, res, next) {
 /**
  * Delete a test campaign by id
  */
-router.delete("/:testCampaignId", dbConnector, function (req, res, next) {
+router.delete("/:testCampaignId", validate({ params: { testCampaignId: testCampaignIdParam } }), dbConnector, function (req, res, next) {
   const {
     testCampaignId
   } = req.params;

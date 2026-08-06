@@ -1,5 +1,6 @@
 /* Working with Test Case */
 const express = require("express");
+const Joi = require("joi");
 const router = express.Router();
 const modelsPath = `${__dirname}/../data/models/`;
 const {
@@ -10,6 +11,42 @@ const {
   resolveWithin,
   sendBadRequest,
 } = require("./path-safety");
+const {
+  validate,
+  documentSchema,
+  fileNameMaxLength,
+  idSchema,
+  textSchema,
+} = require("../middleware/validate");
+
+// ---------------------------------------------------------------------------
+// Validation schemas for the test-case endpoints (issue #10)
+// ---------------------------------------------------------------------------
+
+const testCaseIdParam = idSchema.required();
+
+const testCaseFields = {
+  id: idSchema,
+  name: textSchema,
+  tags: Joi.array().items(Joi.string().max(256)),
+  description: textSchema.allow(null, ""),
+  datasetIds: Joi.array().items(Joi.string().max(256)),
+  // Declared as a string so a structured value can never reach the containment
+  // guard below, which then only has to decide whether the path is inside the
+  // models directory.
+  modelFileName: Joi.string().max(fileNameMaxLength(".json")).allow(null, ""),
+};
+
+const testCaseCreateBody = Joi.object({
+  testCase: documentSchema({
+    ...testCaseFields,
+    id: idSchema.required(),
+  }).required(),
+}).required();
+
+const testCaseUpdateBody = Joi.object({
+  testCase: documentSchema(testCaseFields).required(),
+}).required();
 
 /**
  * Contain the `modelFileName` a request wants stored on a test case.
@@ -54,7 +91,7 @@ const containModelFileName = (req, res, next) => {
 };
 
 // Get all the test cases
-router.get("/", dbConnector, function (req, res, next) {
+router.get("/", validate(), dbConnector, function (req, res, next) {
   TestCaseSchema.find((err2, testCases) => {
     if (err2) {
       console.error('[SERVER] Failed to get testcases', err2);
@@ -72,7 +109,7 @@ router.get("/", dbConnector, function (req, res, next) {
 /**
  * Get a test case by id
  */
-router.get("/:testCaseId", dbConnector, function (req, res, next) {
+router.get("/:testCaseId", validate({ params: { testCaseId: testCaseIdParam } }), dbConnector, function (req, res, next) {
   const {
     testCaseId
   } = req.params;
@@ -92,7 +129,7 @@ router.get("/:testCaseId", dbConnector, function (req, res, next) {
 });
 
 // Add a new test case
-router.post("/", containModelFileName, dbConnector, function (req, res, next) {
+router.post("/", validate({ body: testCaseCreateBody }), containModelFileName, dbConnector, function (req, res, next) {
   const {
     testCase
   } = req.body;
@@ -128,7 +165,7 @@ router.post("/", containModelFileName, dbConnector, function (req, res, next) {
 /**
  * Update a test case
  */
-router.post("/:testCaseId", containModelFileName, dbConnector, function (req, res, next) {
+router.post("/:testCaseId", validate({ params: { testCaseId: testCaseIdParam }, body: testCaseUpdateBody }), containModelFileName, dbConnector, function (req, res, next) {
   const {
     testCase
   } = req.body;
@@ -161,7 +198,7 @@ router.post("/:testCaseId", containModelFileName, dbConnector, function (req, re
 /**
  * Delete a test case by id
  */
-router.delete("/:testCaseId", dbConnector, function (req, res, next) {
+router.delete("/:testCaseId", validate({ params: { testCaseId: testCaseIdParam } }), dbConnector, function (req, res, next) {
   const {
     testCaseId
   } = req.params;

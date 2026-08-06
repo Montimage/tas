@@ -1,6 +1,7 @@
 /* Working with Data Generator */
 var express = require("express");
 var path = require("path");
+const Joi = require("joi");
 const DataRecorder = require("../../core/data-recorder");
 
 const {
@@ -15,11 +16,61 @@ const {
   resolveWithin,
   sendBadRequest,
 } = require("./path-safety");
+const {
+  validate,
+  documentSchema,
+  safeNameSchema,
+  fileNameParam,
+  fileNameMaxLength,
+  dataStorageSchema,
+  datasetSchema,
+} = require("../middleware/validate");
 const dataRecordersPath = `${__dirname}/../data/data-recorders/`;
 let router = express.Router();
 let getLogger = require("../logger");
 const { getDataStorage } = require("./db-connector");
 let logsPath = `${__dirname}/../logs/data-recorders/`;
+
+// ---------------------------------------------------------------------------
+// Validation schemas for the data-recorder endpoints (issue #10)
+// ---------------------------------------------------------------------------
+
+const recorderNameParam = fileNameParam(".json");
+
+const dataRecorderBody = documentSchema({
+  name: safeNameSchema.required(),
+  dataRecorders: Joi.array().items(Joi.object()).required(),
+  // `DataRecorder` reads both of these straight off the document it is handed:
+  // `dataStorage` becomes the database every recorded event is written to, and
+  // `dataset` is the document `saveDataset` looks up by `id`. A recorder
+  // carries plenty of other fields, so unknown keys still pass — but not these
+  // two, which `.unknown(true)` would otherwise admit with any shape at all.
+  dataStorage: dataStorageSchema.allow(null),
+  dataset: datasetSchema.allow(null),
+});
+
+const dataRecorderCreateBody = Joi.object({
+  dataRecorder: dataRecorderBody.required(),
+}).required();
+
+// As with models, the update route doubles as the duplicate route: exactly one
+// of the document and the flag arrives.
+const dataRecorderUpdateBody = Joi.object({
+  dataRecorder: dataRecorderBody,
+  isDuplicated: Joi.valid(true),
+})
+  .xor("dataRecorder", "isDuplicated")
+  .required();
+
+// A run is started either from a stored file or from an inline document, never
+// from neither.
+const dataRecorderStartBody = Joi.object({
+  model: dataRecorderBody,
+  dataRecorderFileName: Joi.string().max(fileNameMaxLength(".json")),
+})
+  .or("model", "dataRecorderFileName")
+  .required();
+
 ///////////////
 // DATA RECORDERS
 ///////////////
@@ -40,36 +91,28 @@ let allDataRecorders = {};
 /**
  * Get the running status of data recorder
  */
-router.get("/status", (req, res, next) => {
+router.get("/status", validate(), (req, res, next) => {
   res.send({
     status: allRunningStatus,
   });
 });
 
 // Stop the running data recorder
-router.get("/stop/:fileName", function (req, res, next) {
+router.get("/stop/:fileName", validate({ params: { fileName: recorderNameParam } }), function (req, res, next) {
   const { fileName } = req.params;
-  if (!fileName) {
-    console.error(`[data-recorders] Missing data recorder's name`);
-    res.send({
-      error: 'Missing data recorder name',
-      runningStatus: allRunningStatus,
-    });
-  } else {
-    const recorderId = getObjectId(fileName.replace('.json',''));
-    if (allDataRecorders[recorderId]) {
-      allDataRecorders[recorderId].stop();
-      allDataRecorders[recorderId] = null;
-    }
-    if (allRunningStatus[recorderId]) {
-      allRunningStatus[recorderId].isRunning = false;
-      allRunningStatus[recorderId].endTime = Date.now();
-    }
-    res.send({
-      error: null,
-      status: allRunningStatus,
-    });
+  const recorderId = getObjectId(fileName.replace('.json',''));
+  if (allDataRecorders[recorderId]) {
+    allDataRecorders[recorderId].stop();
+    allDataRecorders[recorderId] = null;
   }
+  if (allRunningStatus[recorderId]) {
+    allRunningStatus[recorderId].isRunning = false;
+    allRunningStatus[recorderId].endTime = Date.now();
+  }
+  res.send({
+    error: null,
+    status: allRunningStatus,
+  });
 });
 
 const startRecorder = (model, res) => {
@@ -154,7 +197,7 @@ const startRecorder = (model, res) => {
 };
 
 // Start a data recorder
-router.post("/start", (req, res, next) => {
+router.post("/start", validate({ body: dataRecorderStartBody }), (req, res, next) => {
   const { model, dataRecorderFileName } = req.body;
   if (dataRecorderFileName) {
     // start recorder by file name
@@ -181,7 +224,7 @@ router.post("/start", (req, res, next) => {
 });
 
 // Read the list of data recorders
-router.get("/models/", (req, res, next) => {
+router.get("/models/", validate(), (req, res, next) => {
   readDir(dataRecordersPath, (err, files) => {
     if (err) {
       console.error("[SERVER]", err);
@@ -198,7 +241,7 @@ router.get("/models/", (req, res, next) => {
 });
 
 // Read a specific data recorder by its name:
-router.get("/models/:fileName", function (req, res, next) {
+router.get("/models/:fileName", validate({ params: { fileName: recorderNameParam } }), function (req, res, next) {
   const { fileName } = req.params;
   const dataRecorderFile = resolveWithin(dataRecordersPath, fileName);
   if (!dataRecorderFile) {
@@ -220,23 +263,9 @@ router.get("/models/:fileName", function (req, res, next) {
 });
 
 const updateDataRecorder = (fileName, dataRecorder, res) => {
-  if (!dataRecorder) {
-    console.error("[SERVER]", "Cannot find data recorder in body");
-    return res.send({
-      error: "Cannot find data recorder in body",
-    });
-  }
-
-  const { name, dataRecorders } = dataRecorder;
-  if (!name || !dataRecorders) {
-    console.error(
-      "[SERVER]",
-      `Invalid dataRecorder ${JSON.stringify(dataRecorder)}`
-    );
-    return res.send({
-      error: `Invalid dataRecorder ${JSON.stringify(dataRecorder)}`,
-    });
-  }
+  const { name } = dataRecorder;
+  // Containment, not validation: the schema has already established that the
+  // name is well formed, but the path it derives is still checked at the sink.
   if (!isValidName(name)) {
     return sendBadRequest(res, "Invalid data recorder name");
   }
@@ -342,7 +371,7 @@ const duplicateDataRecorder = (fileName, res) => {
 };
 
 // Update a data recorder
-router.post("/models/:fileName", function (req, res, next) {
+router.post("/models/:fileName", validate({ params: { fileName: recorderNameParam }, body: dataRecorderUpdateBody }), function (req, res, next) {
   const { fileName } = req.params;
 
   const { dataRecorder, isDuplicated } = req.body;
@@ -354,25 +383,11 @@ router.post("/models/:fileName", function (req, res, next) {
 });
 
 // Save a new dataRecorder
-router.post("/models", function (req, res, next) {
+router.post("/models", validate({ body: dataRecorderCreateBody }), function (req, res, next) {
   const { dataRecorder } = req.body;
-  if (!dataRecorder) {
-    console.error("[SERVER]", "Cannot find dataRecorder in body");
-    return res.send({
-      error: "Cannot find dataRecorder in body",
-    });
-  }
-
-  const { name, dataRecorders } = dataRecorder;
-  if (!name || !dataRecorders) {
-    console.error(
-      "[SERVER]",
-      `Invalid dataRecorder ${JSON.stringify(dataRecorder)}`
-    );
-    return res.send({
-      error: `Invalid dataRecorder ${JSON.stringify(dataRecorder)}`,
-    });
-  }
+  const { name } = dataRecorder;
+  // Containment, not validation: the schema has already established that the
+  // name is well formed, but the path it derives is still checked at the sink.
   if (!isValidName(name)) {
     return sendBadRequest(res, "Invalid data recorder name");
   }
@@ -397,7 +412,7 @@ router.post("/models", function (req, res, next) {
 });
 
 // Delete a data recorder
-router.delete("/models/:fileName", function (req, res, next) {
+router.delete("/models/:fileName", validate({ params: { fileName: recorderNameParam } }), function (req, res, next) {
   const { fileName } = req.params;
   const dataRecorderFile = resolveWithin(dataRecordersPath, fileName);
   if (!dataRecorderFile) {

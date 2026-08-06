@@ -1,10 +1,80 @@
 /* Working with event */
 const express = require("express");
+const Joi = require("joi");
 const router = express.Router();
 const { EventSchema, dbConnector } = require("./db-connector");
+const {
+  validate,
+  documentSchema,
+  idSchema,
+  pageSchema,
+  textSchema,
+  timestampSchema,
+} = require("../middleware/validate");
+
+// ---------------------------------------------------------------------------
+// Validation schemas for the event endpoints (issue #10)
+// ---------------------------------------------------------------------------
+
+const eventIdParam = idSchema.required();
+
+// `datasetId` and `topic` are copied straight into the Mongo filter below, so
+// declaring them as strings is what stops `?datasetId[$ne]=x` from becoming an
+// operator document that matches every event in the collection.
+const eventQuery = Joi.object({
+  page: pageSchema.default(0),
+  startTime: timestampSchema,
+  endTime: timestampSchema,
+  datasetId: idSchema,
+  topic: textSchema,
+});
+
+// What the product actually records: the MQTT buses hand the handler
+// `message.toString()`, so a sensor reading arrives as a string, while
+// structured payloads arrive as objects — and the Mongoose path is Mixed, so it
+// stores whichever of those it is given. The dashboard round-trips whichever it
+// finds. Declared by shape rather than left as `any` so it still cannot be an
+// unbounded structure, but not narrowed to an object: `values` never reaches a
+// filter, so narrowing it buys no safety and only rejects real events. The
+// security property on this document is that `datasetId` and `topic` are typed,
+// which they are.
+//
+// Null is deliberately not among the branches: `EventSchema` declares `values`
+// as required, and mongoose's required check rejects null, so admitting it here
+// would turn a clean 400 into a save that fails behind a 200 — and the update
+// route calls `findByIdAndUpdate` without `runValidators`, which would write it
+// past the schema entirely.
+const eventValueSchema = Joi.alternatives().try(
+  Joi.object(),
+  Joi.array(),
+  Joi.string().max(8192),
+  Joi.number(),
+  Joi.boolean()
+);
+
+const eventFields = {
+  timestamp: timestampSchema,
+  topic: textSchema,
+  datasetId: idSchema,
+  isSensorData: Joi.boolean(),
+  values: eventValueSchema,
+};
+
+const eventCreateBody = Joi.object({
+  event: documentSchema({
+    ...eventFields,
+    timestamp: timestampSchema.required(),
+    topic: textSchema.required(),
+    datasetId: idSchema.required(),
+  }).required(),
+}).required();
+
+const eventUpdateBody = Joi.object({
+  event: documentSchema(eventFields).required(),
+}).required();
 
 // Get all the events
-router.get("/", dbConnector, function (req, res, next) {
+router.get("/", validate({ query: eventQuery }), dbConnector, function (req, res, next) {
   let page = Number(req.query.page);
   if (!page) page = 0;
   let filter = {};
@@ -81,7 +151,7 @@ router.get("/", dbConnector, function (req, res, next) {
 /**
  * Get a event by id
  */
-router.get("/:eventId", dbConnector, function (req, res, next) {
+router.get("/:eventId", validate({ params: { eventId: eventIdParam } }), dbConnector, function (req, res, next) {
   const { eventId } = req.params;
 
   EventSchema.findById(eventId, (err2, event) => {
@@ -99,7 +169,7 @@ router.get("/:eventId", dbConnector, function (req, res, next) {
 });
 
 // Add a new event
-router.post("/", dbConnector, function (req, res, next) {
+router.post("/", validate({ body: eventCreateBody }), dbConnector, function (req, res, next) {
   const { event } = req.body;
   const { timestamp, topic, datasetId, isSensorData, values } = event;
   const newevent = new EventSchema({
@@ -126,7 +196,7 @@ router.post("/", dbConnector, function (req, res, next) {
 /**
  * Update a event
  */
-router.post("/:eventId", dbConnector, function (req, res, next) {
+router.post("/:eventId", validate({ params: { eventId: eventIdParam }, body: eventUpdateBody }), dbConnector, function (req, res, next) {
   const { event } = req.body;
   const { eventId } = req.params;
 
@@ -147,7 +217,7 @@ router.post("/:eventId", dbConnector, function (req, res, next) {
 /**
  * Delete a event by id
  */
-router.delete("/:eventId", dbConnector, function (req, res, next) {
+router.delete("/:eventId", validate({ params: { eventId: eventIdParam } }), dbConnector, function (req, res, next) {
   const { eventId } = req.params;
 
   EventSchema.findByIdAndDelete(eventId, (err, ret) => {
