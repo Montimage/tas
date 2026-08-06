@@ -181,3 +181,92 @@ test("login itself is exempt, because it is what issues the token", async () => 
     ctx.restore();
   }
 });
+
+// ---------------------------------------------------------------------------
+// The endpoints that mutate over a safe method
+// ---------------------------------------------------------------------------
+
+/**
+ * Endpoints that change state over `GET`. They predate the method-based rule
+ * and `SameSite=Lax` does not cover them: the cookie is still attached to a
+ * top-level `GET` navigation, so a link on any page an operator visits while
+ * logged in would otherwise reach them with full authority.
+ */
+const MUTATING_GETS = [
+  "/api/devops/start",
+  "/api/devops/stop",
+  "/api/simulation/stop/anything.json",
+  "/api/data-recorders/stop/anything.json",
+];
+
+test("state-changing GET endpoints require the CSRF token too", async () => {
+  await withSession(async (ctx, session) => {
+    for (const path of MUTATING_GETS) {
+      const res = await call(ctx, "GET", path, {
+        headers: { Cookie: session.cookie },
+      });
+      assert.equal(
+        res.status,
+        403,
+        `${path} mutates, so a tokenless GET must be refused: ${res.status} ${res.raw}`
+      );
+      assert.equal(res.body.error, "Invalid CSRF token");
+    }
+  });
+});
+
+test("the same endpoints are reachable once the token is sent", async () => {
+  await withSession(async (ctx, session) => {
+    // `/api/devops/start` is left out: it reaches for the configured data
+    // storage and blocks until that connection attempt times out, which says
+    // nothing about the guard under test here. Its refusal without a token is
+    // asserted above, which is the property this pair exists to pin.
+    for (const path of MUTATING_GETS.filter((p) => p !== "/api/devops/start")) {
+      const res = await call(ctx, "GET", path, {
+        headers: { Cookie: session.cookie, "X-CSRF-Token": session.csrfToken },
+      });
+      assert.notEqual(
+        res.status,
+        403,
+        `${path} must still work for the dashboard: ${res.status} ${res.raw}`
+      );
+    }
+  });
+});
+
+test("the mutating-GET list is matched case-insensitively, as Express routes are", async () => {
+  await withSession(async (ctx, session) => {
+    // `/api/DevOps/stop` reaches the same handler, so a case-sensitive list
+    // would be a way straight around the check.
+    const res = await call(ctx, "GET", "/api/DevOps/stop", {
+      headers: { Cookie: session.cookie },
+    });
+    assert.equal(res.status, 403, `case variation must not evade the check: ${res.raw}`);
+  });
+});
+
+test("a forged CORS preflight cannot enumerate the routing table", async () => {
+  await startApp({}, { login: false }).then(async (ctx) => {
+    try {
+      // The two headers that define a preflight are trivially forged by a
+      // non-browser client. The exemption must therefore stop at answering the
+      // preflight: passing it on hands Express's own OPTIONS responder an
+      // anonymous caller, and its `Allow` header - plus the 404 an unrouted
+      // path gets - maps every endpoint and the methods it takes.
+      const probes = ["/api/models", "/api/models/x.json", "/api/devops/start", "/api/nope"];
+      const seen = new Set();
+      for (const path of probes) {
+        const res = await call(ctx, "OPTIONS", path, {
+          headers: { Origin: ctx.base, "Access-Control-Request-Method": "GET" },
+        });
+        assert.equal(res.status, 204, `${path} preflight must be answered here: ${res.raw}`);
+        assert.equal(res.res.headers.get("allow"), null, `${path} must not leak an Allow header`);
+        seen.add(res.status);
+      }
+      assert.equal(seen.size, 1, "an existing path must not be distinguishable from an unknown one");
+    } finally {
+      await new Promise((resolve) => ctx.server.close(resolve));
+      ctx.restore();
+    }
+  });
+});

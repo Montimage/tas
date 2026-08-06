@@ -15,9 +15,6 @@ const CSRF_COOKIE = "tas.csrf";
 /** The header the server expects the session's CSRF token in. */
 const CSRF_HEADER = "X-CSRF-Token";
 
-/** Methods that change nothing, and therefore carry no token. */
-const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
-
 /**
  * The message a request that fell outside a live session is reported with.
  *
@@ -100,11 +97,14 @@ const notifySessionExpired = () => {
  * @returns {Promise<Response>}
  */
 const apiFetch = (url, options = {}) => {
-  const method = String(options.method || "GET").toUpperCase();
   const headers = { ...(options.headers || {}) };
-  if (SAFE_METHODS.indexOf(method) === -1) {
-    headers[CSRF_HEADER] = readCsrfToken();
-  }
+  // Sent on every call, not only the unsafe methods: a handful of endpoints
+  // (starting and stopping a campaign, a simulation or a recorder) mutate over
+  // `GET`, and the server requires the token on those too — see
+  // `MUTATING_SAFE_METHOD_PATHS` in `src/server/middleware/csrf.js`. Attaching
+  // it unconditionally is also what keeps a route moved between methods later
+  // from silently losing its protection.
+  headers[CSRF_HEADER] = readCsrfToken();
   return fetch(url, {
     ...options,
     credentials: "same-origin",

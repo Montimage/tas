@@ -309,6 +309,16 @@ function createAuthMiddleware({ credential, sessions, config }) {
     // access. A non-browser client behind the proxy fetches
     // `GET /api/auth/session` first and echoes the token back, which is what
     // the README documents.
+    // A genuine preflight is answered here rather than passed on. Handing it to
+    // the router means Express's built-in OPTIONS responder answers an
+    // anonymous caller with an `Allow` header assembled from the registered
+    // handlers, while an unrouted path 404s — the endpoint-and-method map that
+    // the deliberate 401 on a bare OPTIONS exists to deny. The two headers that
+    // define a preflight are trivially forged by a non-browser client, so the
+    // exemption has to stop at "answer it", not "let it through".
+    if (isCorsPreflight(req)) {
+      return res.sendStatus(204);
+    }
     if (isPublicRoute(req)) {
       return next();
     }

@@ -30,6 +30,30 @@ const { timingSafeCompare } = require("../auth/passwords");
 const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
 
 /**
+ * Routes that change state over a *safe* method, and therefore need the token
+ * anyway (paths relative to the `/api` mount, lower-cased).
+ *
+ * The method-based rule above is only sound while `GET` really is safe. Four
+ * endpoints in this application predate that rule and mutate: they start and
+ * stop a test campaign, a simulation and a data recorder. `SameSite=Lax` does
+ * *not* cover them — it deliberately still attaches the cookie to a top-level
+ * `GET` navigation, so a link, a `window.open` or a redirect from any page an
+ * operator visits while logged in would reach them with full authority. They
+ * are listed here rather than left to the method check, and the dashboard's
+ * request layer sends the token on every call so the listed ones keep working.
+ *
+ * Compared case-insensitively because Express's own routing is: `/DevOps/stop`
+ * reaches the same handler, and a case-sensitive list would be a way around it.
+ */
+const MUTATING_SAFE_METHOD_PATHS = ["/devops/start", "/devops/stop"];
+
+/**
+ * Prefixes of the same kind, for the routes that carry a parameter.
+ * A path matches when it is the prefix itself or a child of it.
+ */
+const MUTATING_SAFE_METHOD_PREFIXES = ["/simulation/stop", "/data-recorders/stop"];
+
+/**
  * Paths (relative to the `/api` mount) exempt from the check.
  *
  * Login is the one state-changing request that provably cannot carry a token:
@@ -57,9 +81,25 @@ const normalizePath = (value) => {
  *
  * @returns {Function} Express middleware
  */
+/**
+ * Does this path mutate despite arriving over a safe method?
+ * @param {String} path Normalised, `/api`-relative path
+ * @returns {Boolean} True when the token is required regardless of the method
+ */
+const isMutatingSafeMethodPath = (path) => {
+  const wanted = path.toLowerCase();
+  if (MUTATING_SAFE_METHOD_PATHS.indexOf(wanted) !== -1) return true;
+  return MUTATING_SAFE_METHOD_PREFIXES.some(
+    (prefix) => wanted === prefix || wanted.startsWith(prefix + "/")
+  );
+};
+
 function createCsrfMiddleware() {
   return function csrfProtection(req, res, next) {
-    if (SAFE_METHODS.indexOf(req.method) !== -1) {
+    if (
+      SAFE_METHODS.indexOf(req.method) !== -1 &&
+      !isMutatingSafeMethodPath(normalizePath(req.path))
+    ) {
       return next();
     }
     if (EXEMPT_PATHS.indexOf(normalizePath(req.path)) !== -1) {
@@ -82,4 +122,12 @@ function createCsrfMiddleware() {
   };
 }
 
-module.exports = { createCsrfMiddleware, CSRF_HEADER, SAFE_METHODS, EXEMPT_PATHS };
+module.exports = {
+  createCsrfMiddleware,
+  isMutatingSafeMethodPath,
+  CSRF_HEADER,
+  SAFE_METHODS,
+  EXEMPT_PATHS,
+  MUTATING_SAFE_METHOD_PATHS,
+  MUTATING_SAFE_METHOD_PREFIXES,
+};

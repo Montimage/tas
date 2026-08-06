@@ -263,6 +263,17 @@ authorises a write. A cross-site page can cause the cookie to be *sent* but the
 same-origin policy stops it from *reading* it, so it can never produce the
 header. `POST /api/auth/login` is exempt, because it is what issues the token.
 
+Four endpoints change state over `GET` and therefore need the header as well:
+
+- `GET /api/devops/start` and `GET /api/devops/stop`
+- `GET /api/simulation/stop/:fileName`
+- `GET /api/data-recorders/stop/:fileName`
+
+`SameSite=Lax` does not cover these on its own — it deliberately still attaches
+the cookie to a top-level `GET` navigation, so a link on any page an operator
+visits while logged in would otherwise start or stop a campaign. The dashboard
+sends the token on every request, so nothing in the UI has to know the list.
+
 `GET` never requires the header.
 
 ### Delegating identity to a reverse proxy
