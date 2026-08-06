@@ -179,15 +179,41 @@ const safeNameSchema = Joi.string()
 const fileNameMaxLength = (extension) => NAME_MAX_LENGTH + extension.length;
 
 /**
+ * Width of the millisecond timestamp the product interpolates into the file
+ * names it generates. Derived from `Date.now()` rather than written as a
+ * literal so it cannot drift from the value actually being interpolated.
+ */
+const TIMESTAMP_LENGTH = String(Date.now()).length;
+
+/**
+ * The longest a *generated* file name may be.
+ *
+ * Log files are named `${name}_${Date.now()}${extension}` by the simulation,
+ * data recorder and devops flows, so they are longer than a plain derived
+ * filename by a separator and a timestamp. Holding those routes to
+ * `fileNameMaxLength` would reject the very names the server itself wrote —
+ * the same defect the name/filename split above exists to prevent, one step
+ * further along.
+ *
+ * @param {String} extension Extension including the dot, e.g. `.log`
+ * @returns {Number} Maximum length of the generated file name
+ */
+const generatedFileNameMaxLength = (extension) =>
+  fileNameMaxLength(extension) + "_".length + TIMESTAMP_LENGTH;
+
+/**
  * Build a schema for a filename parameter with a fixed extension.
  *
  * @param {String} extension Extension including the dot, e.g. `.json`
+ * @param {Number} [maxLength] Cap for names this route serves, when the route
+ *                             addresses generated names rather than names
+ *                             derived directly from a user-supplied one
  * @returns {Joi.Schema}
  */
-const fileNameParam = (extension) =>
+const fileNameParam = (extension, maxLength = fileNameMaxLength(extension)) =>
   Joi.string()
     .pattern(new RegExp(`^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\${extension}$`))
-    .max(fileNameMaxLength(extension))
+    .max(maxLength)
     .required()
     .messages({
       "string.pattern.base": `{{#label}} must be a safe ${extension} file name`,
@@ -237,7 +263,14 @@ const dataStorageSchema = documentSchema({
     username: Joi.string().max(256).allow(null, ""),
     password: Joi.string().max(256).allow(null, ""),
     dbname: Joi.string().max(256).allow(null, ""),
-    options: Joi.object().allow(null),
+    // The dashboard's connection form submits this field as the raw text the
+    // operator typed — `ConnectionConfig` stringifies it for display and hands
+    // back what was typed without parsing it — so a string is what actually
+    // arrives. It is destructured but never read by the connector, so admitting
+    // the string costs nothing; it stays bounded rather than becoming `any`.
+    options: Joi.alternatives()
+      .try(Joi.object(), Joi.string().max(2048))
+      .allow(null),
   }).required(),
 });
 
@@ -257,14 +290,56 @@ const datasetSchema = documentSchema({
   source: textSchema.allow(null, ""),
 });
 
+/**
+ * The fields a simulation run is configured with, wherever they arrive from.
+ *
+ * `Simulation` reads each of these straight off the model it is given and then
+ * lets `options` overwrite it, so the two carry the same values and are held to
+ * the same shapes. Every one of them reaches something that cares about its
+ * type: `datasetId` becomes the MongoDB filter the original events are read
+ * with, `newDataset.id` becomes the filter the generated ones are read back
+ * with, and `dataStorage` decides which database the whole run connects to.
+ * Left undeclared they arrive as any type at all, which is how a filter turns
+ * into `{ $ne: null }` and a connection turns towards a host of the caller's
+ * choosing.
+ *
+ * Declared here rather than in `routes/simulation.js` because a run does not
+ * only read them from a request: `POST /api/models` persists a topology and
+ * `POST /api/simulation/start` starts it from disk without revalidating, so the
+ * route that stores a model has to constrain exactly the same fields as the
+ * route that starts one. Sharing the declaration is what stops the two drifting.
+ */
+const simulationRunFields = {
+  datasetId: idSchema.allow(null),
+  // The dataset the run writes into; its `id` becomes a filter of its own.
+  newDataset: datasetSchema.allow(null),
+  replayOptions: documentSchema({
+    startTime: timestampSchema,
+    endTime: timestampSchema,
+    repeat: Joi.boolean(),
+    speedup: Joi.number().positive(),
+  }).allow(null),
+  dataStorage: dataStorageSchema.allow(null),
+  // Interpolated into a log filename by the devops flow, so it is held to the
+  // filename allowlist rather than only to being a string.
+  testCampaignId: safeNameSchema.allow(null),
+  evaluationParameters: documentSchema({
+    threshold: Joi.number(),
+    eventType: Joi.string().max(256),
+    metricType: Joi.string().max(256),
+  }).allow(null),
+};
+
 module.exports = {
   validate,
   documentSchema,
   safeNameSchema,
   fileNameParam,
   fileNameMaxLength,
+  generatedFileNameMaxLength,
   dataStorageSchema,
   datasetSchema,
+  simulationRunFields,
   textSchema,
   idSchema,
   pageSchema,

@@ -29,12 +29,31 @@ const eventQuery = Joi.object({
   topic: textSchema,
 });
 
+// What the product actually records: the MQTT buses hand the handler
+// `message.toString()`, so a sensor reading arrives as a string, while
+// structured payloads arrive as objects — and the Mongoose schema stores either
+// (`values` is a Mixed path). The dashboard round-trips whichever it finds.
+// Declared by shape rather than left as `any` so it still cannot be an
+// unbounded structure, but not narrowed to an object: `values` never reaches a
+// filter, so narrowing it buys no safety and only rejects real events. The
+// security property on this document is that `datasetId` and `topic` are typed,
+// which they are.
+const eventValueSchema = Joi.alternatives()
+  .try(
+    Joi.object(),
+    Joi.array(),
+    Joi.string().max(8192),
+    Joi.number(),
+    Joi.boolean()
+  )
+  .allow(null);
+
 const eventFields = {
   timestamp: timestampSchema,
   topic: textSchema,
   datasetId: idSchema,
   isSensorData: Joi.boolean(),
-  values: Joi.object(),
+  values: eventValueSchema,
 };
 
 const eventCreateBody = Joi.object({

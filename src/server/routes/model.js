@@ -19,6 +19,7 @@ const {
   documentSchema,
   safeNameSchema,
   fileNameParam,
+  simulationRunFields,
 } = require("../middleware/validate");
 const modelsPath = `${__dirname}/../data/models/`;
 let router = express.Router();
@@ -32,6 +33,12 @@ const modelNameParam = fileNameParam(".json");
 const modelBody = documentSchema({
   name: safeNameSchema.required(),
   devices: Joi.array().items(Joi.object()).required(),
+  // A stored topology is started later by file name, and `POST
+  // /api/simulation/start` reads it off disk without revalidating it, so the
+  // run-configuration fields reach `Simulation` exactly as they were written
+  // here. Constraining them only on the start route would leave storing them
+  // as the way around it. Every other field a topology carries still passes.
+  ...simulationRunFields,
 });
 
 // A model is created with its full document.

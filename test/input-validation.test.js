@@ -954,3 +954,177 @@ test("a well-formed devops database connection is still accepted", async () => {
     fs.writeFileSync(devopsFile, before);
   }
 });
+
+// ---------------------------------------------------------------------------
+// 9. A topology cannot be stored carrying run-configuration values the route
+//    that starts it would have refused
+// ---------------------------------------------------------------------------
+
+test("a stored topology cannot carry a database connection of its own choosing", async () => {
+  // `POST /api/simulation/start` reads a stored topology off disk and hands it
+  // to the run WITHOUT revalidating, so constraining the start route alone
+  // would leave storing the values as the way around it.
+  const name = unique("iv-hostile");
+  const fileName = `${name}.json`;
+  const filePath = path.join(modelsDir, fileName);
+  const hostile = [
+    [{ dataStorage: { protocol: "MONGODB", connConfig: { host: "evil.example.com/tas?x=1", port: 27017 } } }, "model.dataStorage.connConfig.host"],
+    [{ datasetId: { $ne: null } }, "model.datasetId"],
+    [{ newDataset: { id: { $ne: null } } }, "model.newDataset.id"],
+    [{ testCampaignId: "../../pwned" }, "model.testCampaignId"],
+  ];
+  try {
+    for (const [extra, field] of hostile) {
+      const res = await request(server, "POST", "/api/models", {
+        model: { name, devices: [], ...extra },
+      });
+      assertValidationError(res, `POST /api/models with ${JSON.stringify(extra)}`);
+      assert.ok(
+        res.body.details.some((detail) => detail.field === field),
+        `the refusal must name ${field}: ${res.raw}`
+      );
+      assert.ok(
+        !fs.existsSync(filePath),
+        "a rejected topology must never reach the disk the start route reads from"
+      );
+
+      // The update route persists the same document, so it is checked too.
+      const updated = await request(
+        server,
+        "POST",
+        `/api/models/${encodeURIComponent("202402-Temperature-Controller.json")}`,
+        { model: { name, devices: [], ...extra } }
+      );
+      assertValidationError(updated, `POST /api/models/:fileName with ${JSON.stringify(extra)}`);
+    }
+  } finally {
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+});
+
+test("the shipped topology and recorder still satisfy their tightened schemas", async () => {
+  // The tightened model schema must not refuse what the checkout already ships,
+  // nor what the dashboard sends straight back on update.
+  const model = JSON.parse(
+    fs.readFileSync(path.join(modelsDir, "202402-Temperature-Controller.json"), "utf8")
+  );
+  await assertBodyAccepted(modelRouter, "POST", "/", { model }, "the shipped topology, stored");
+  const outcome = await validateOnly(modelRouter, "POST", "/:fileName", {
+    params: { fileName: "202402-Temperature-Controller.json" },
+    body: { model },
+  });
+  assert.equal(
+    outcome.passed,
+    true,
+    `the shipped topology must still update: ${JSON.stringify(outcome.body)}`
+  );
+
+  const recorder = JSON.parse(
+    fs.readFileSync(path.join(dataRecordersDir, "TemperatureControllerRecorder.json"), "utf8")
+  );
+  await assertBodyAccepted(
+    dataRecorderRouter,
+    "POST",
+    "/models",
+    { dataRecorder: recorder },
+    "the shipped recorder, stored"
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 10. Declared shapes match what the product actually stores and the dashboard
+//     actually sends
+// ---------------------------------------------------------------------------
+
+test("an event value is accepted in every form the product records", async () => {
+  // The MQTT buses hand the handler `message.toString()`, so a sensor reading
+  // is recorded as a string; structured payloads are recorded as objects. The
+  // Mongoose path is Mixed and stores either, and the dashboard's event editor
+  // round-trips whichever it finds, so the schema has to admit both.
+  const values = ["23.5", 23.5, { temp: 20 }, [1, 2], true, null];
+  for (const value of values) {
+    await assertBodyAccepted(
+      eventRouter,
+      "POST",
+      "/",
+      { event: { timestamp: 1591971273868, topic: "enact/sensors/temp-03", datasetId: "ds-1", isSensorData: true, values: value } },
+      `a recorded event whose values are ${JSON.stringify(value)}`
+    );
+    const outcome = await validateOnly(eventRouter, "POST", "/:eventId", {
+      params: { eventId: "e-1" },
+      body: { event: { values: value } },
+    });
+    assert.equal(
+      outcome.passed,
+      true,
+      `editing an event whose values are ${JSON.stringify(value)} must succeed: ${JSON.stringify(outcome.body)}`
+    );
+  }
+  // Still bounded, rather than anything at all.
+  await assertBodyRejected(
+    eventRouter,
+    "POST",
+    "/",
+    { event: { timestamp: 1, topic: "t", datasetId: "ds-1", values: "x".repeat(9000) } },
+    "event.values",
+    "an event value beyond the declared bound"
+  );
+});
+
+test("a connection's options are accepted as the text the dashboard submits", async () => {
+  // `ConnectionConfig` stringifies the field for display and hands back exactly
+  // what was typed, without parsing it, so the value that arrives is a string.
+  const withOptions = (options) => ({
+    protocol: "MONGODB",
+    connConfig: { host: "localhost", port: 27017, dbname: "tas", options },
+  });
+  for (const options of ['{"replicaSet":"rs0"}', { replicaSet: "rs0" }, null]) {
+    await assertBodyAccepted(
+      dataStorageRouter,
+      "POST",
+      "/",
+      { dataStorage: withOptions(options) },
+      `a connection whose options are ${JSON.stringify(options)}`
+    );
+  }
+  await assertBodyRejected(
+    dataStorageRouter,
+    "POST",
+    "/",
+    { dataStorage: withOptions("x".repeat(3000)) },
+    "dataStorage.connConfig.options",
+    "connection options beyond the declared bound"
+  );
+});
+
+test("a generated log file name round-trips through the log routes", async () => {
+  // Logs are written as `${name}_${timestamp}.log`, so they are longer than the
+  // name they came from. Capping these routes like a plain derived filename
+  // refused to read or delete the logs the product itself writes.
+  const logsDir = path.join(simulationLogsDir);
+  const generated = `${unique("iv-log").padEnd(NAME_MAX_LENGTH, "x")}_${Date.now()}.log`;
+  assert.equal(
+    generated.length,
+    NAME_MAX_LENGTH + 1 + String(Date.now()).length + ".log".length,
+    "the test must exercise the longest name the product generates"
+  );
+  const logPath = path.join(logsDir, generated);
+  fs.writeFileSync(logPath, "a line the server wrote\n");
+  try {
+    const read = await request(server, "GET", `/api/logs/simulations/${encodeURIComponent(generated)}`);
+    assert.equal(read.status, 200, read.raw);
+    assert.equal(read.body.error, null, `a generated log name must be readable: ${read.raw}`);
+    assert.match(read.body.content, /a line the server wrote/);
+
+    const removed = await request(
+      server,
+      "DELETE",
+      `/api/logs/simulations/${encodeURIComponent(generated)}`
+    );
+    assert.equal(removed.status, 200, removed.raw);
+    assert.equal(removed.body.error, null, `a generated log name must be deletable: ${removed.raw}`);
+    assert.ok(!fs.existsSync(logPath), "the delete must actually remove the log");
+  } finally {
+    if (fs.existsSync(logPath)) fs.unlinkSync(logPath);
+  }
+});

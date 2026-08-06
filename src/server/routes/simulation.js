@@ -18,10 +18,7 @@ const {
   safeNameSchema,
   fileNameParam,
   fileNameMaxLength,
-  dataStorageSchema,
-  datasetSchema,
-  idSchema,
-  timestampSchema,
+  simulationRunFields,
 } = require("../middleware/validate");
 
 let router = express.Router();
@@ -36,46 +33,14 @@ const modelsPath = `${__dirname}/../data/models/`;
 // `.json` name the dashboard started it with.
 const simulationFileNameParam = fileNameParam(".json");
 
-/**
- * The fields a run is configured with, wherever they arrive from.
- *
- * `Simulation` reads each of these straight off the model it is given and then
- * lets `options` overwrite it, so the two carry the same values and are held to
- * the same shapes. Every one of them reaches something that cares about its
- * type: `datasetId` becomes the MongoDB filter the original events are read
- * with, `newDataset.id` becomes the filter the generated ones are read back
- * with, and `dataStorage` decides which database the whole run connects to.
- * Left undeclared they arrive as any type at all, which is how a filter turns
- * into `{ $ne: null }` and a connection turns towards a host of the caller's
- * choosing.
- */
-const simulationRunFields = {
-  datasetId: idSchema.allow(null),
-  // The dataset the run writes into; its `id` becomes a filter of its own.
-  newDataset: datasetSchema.allow(null),
-  replayOptions: documentSchema({
-    startTime: timestampSchema,
-    endTime: timestampSchema,
-    repeat: Joi.boolean(),
-    speedup: Joi.number().positive(),
-  }).allow(null),
-  dataStorage: dataStorageSchema.allow(null),
-  // Interpolated into a log filename by the devops flow, so it is held to the
-  // filename allowlist rather than only to being a string.
-  testCampaignId: safeNameSchema.allow(null),
-  evaluationParameters: documentSchema({
-    threshold: Joi.number(),
-    eventType: Joi.string().max(256),
-    metricType: Joi.string().max(256),
-  }).allow(null),
-};
-
 const simulationModelBody = documentSchema({
   name: safeNameSchema.required(),
   devices: Joi.array().items(Joi.object()).required(),
   // A stored topology carries many fields beyond these, so unknown keys still
-  // pass — but not these ones: they feed the sinks above, and leaving them to
-  // `.unknown(true)` is exactly what let them arrive with any type.
+  // pass — but not the run-configuration ones, which reach the filters and the
+  // connection described where they are declared. The same spread guards the
+  // model persistence route, so a topology cannot be stored with shapes this
+  // route would have refused.
   ...simulationRunFields,
 });
 

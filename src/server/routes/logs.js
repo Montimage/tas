@@ -13,6 +13,7 @@ const {
 const {
   validate,
   fileNameParam,
+  generatedFileNameMaxLength,
 } = require("../middleware/validate");
 
 const _logsPath = `${__dirname}/../logs/`;
@@ -21,7 +22,11 @@ const _logsPath = `${__dirname}/../logs/`;
 // Validation schemas for the log endpoints (issue #10)
 // ---------------------------------------------------------------------------
 
-const logFileNameParam = fileNameParam(".log");
+// These routes address names the server generated, not names a caller supplied:
+// a log is written as `${name}_${timestamp}.log`, so it is longer than the name
+// it came from. Capping it like a plain derived filename would refuse to read or
+// delete the logs the product itself writes.
+const logFileNameParam = fileNameParam(".log", generatedFileNameMaxLength(".log"));
 
 const createRouter = (appLog = true) => {
   let router = express.Router();
