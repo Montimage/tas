@@ -11,6 +11,11 @@ const {
   pageSchema,
   textSchema,
 } = require("../middleware/validate");
+const {
+  errorHandler,
+  databaseError,
+  notFound,
+} = require("../middleware/errors");
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the data-set endpoints (issue #10)
@@ -47,10 +52,7 @@ router.get("/", validate({ query: datasetQuery }), dbConnector, function (req, r
   if (!page) page = 0;
   DatasetSchema.findDatasetsWithPagingOptions(null, page, (err2, datasets) => {
     if (err2) {
-      console.error("[SERVER] Failed to get datasets", err2);
-      res.send({
-        error: "Failed to get data set",
-      });
+      next(databaseError(err2, "Failed to get data set"));
     } else {
       res.send({
         datasets,
@@ -67,10 +69,9 @@ router.get("/:datasetId", validate({ params: { datasetId: datasetIdParam } }), d
 
   DatasetSchema.findOne({ id: datasetId }, (err2, dataset) => {
     if (err2) {
-      console.error("[SERVER] Failed to get datasets", err2);
-      res.send({
-        error: "Failed to get data set",
-      });
+      next(databaseError(err2, "Failed to get data set"));
+    } else if (!dataset) {
+      next(notFound("Data set not found"));
     } else {
       res.send({
         dataset,
@@ -95,10 +96,7 @@ router.post("/", validate({ body: datasetCreateBody }), dbConnector, function (r
   });
   newdataset.save((err, _dataset) => {
     if (err) {
-      console.error("[SERVER] Failed to save the data sets", err);
-      res.send({
-        error: "Failed to save the data set",
-      });
+      next(databaseError(err, "Failed to save the data set"));
     } else {
       res.send({
         dataset: _dataset,
@@ -119,10 +117,7 @@ router.post("/:datasetId", validate({ params: { datasetId: datasetIdParam }, bod
     { ...dataset, lastModified: Date.now() },
     (err, ts) => {
       if (err) {
-        console.error("[SERVER] Failed to save the data sets", err);
-        res.send({
-          error: "Failed to save the data set",
-        });
+        next(databaseError(err, "Failed to save the data set"));
       } else {
         res.send({
           dataset: ts,
@@ -140,21 +135,16 @@ router.delete("/:datasetId", validate({ params: { datasetId: datasetIdParam } })
 
   DatasetSchema.findOneAndDelete({ id: datasetId }, (err, ret) => {
     if (err) {
-      console.error("[SERVER] Failed to delete the data sets");
-      console.error(err);
-      res.send({
-        error: "Failed to save the data set",
-      });
+      next(databaseError(err, "Failed to delete the data set"));
     } else {
       EventSchema.deleteMany({ datasetId }, (err2) => {
         if (err2) {
-          console.error(
-            "[SERVER] Failed to delete all the event of the deleted dataset"
+          next(
+            databaseError(
+              err2,
+              "Failed to delete all the event of the deleted dataset"
+            )
           );
-          console.error(err2);
-          res.send({
-            error: "Failed to delete all the event of the deleted dataset",
-          });
         } else {
           res.send({
             result: ret,
@@ -164,5 +154,9 @@ router.delete("/:datasetId", validate({ params: { datasetId: datasetIdParam } })
     }
   });
 });
+
+// Attached to the router itself as well as to the application: see the note in
+// `routes/model.js`.
+router.use(errorHandler);
 
 module.exports = router;

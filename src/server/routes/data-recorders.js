@@ -25,6 +25,14 @@ const {
   dataStorageSchema,
   datasetSchema,
 } = require("../middleware/validate");
+const {
+  errorHandler,
+  badRequest,
+  conflict,
+  fileError,
+  internal,
+  unavailable,
+} = require("../middleware/errors");
 const dataRecordersPath = `${__dirname}/../data/data-recorders/`;
 let router = express.Router();
 let getLogger = require("../logger");
@@ -115,31 +123,21 @@ router.get("/stop/:fileName", validate({ params: { fileName: recorderNameParam }
   });
 });
 
-const startRecorder = (model, res) => {
+const startRecorder = (model, res, next) => {
   if (!model) {
-    console.error("[data-recorders] Cannot find data recorder configuration");
-    res.send({
-      error: "Cannot find data recorder configuration",
-    });
+    next(badRequest("Cannot find data recorder configuration"));
   } else {
     const { name, dataRecorders, dataStorage } = model;
     if (!name || !dataRecorders) {
-      console.error("[data-recorders] Invalid data recorder model");
-      res.send({
-        error: " Invalid data recorder model",
-      });
+      next(badRequest("Invalid data recorder model"));
     } else if (!isValidName(name)) {
-      res.status(400).send({
-        error: "Invalid data recorder name",
-      });
+      next(badRequest("Invalid data recorder name"));
     } else {
       const recorderId = getObjectId(name);
       if (allDataRecorders[recorderId]) {
-        console.error("[data-recorders] Recorder has already started");
-        console.error(name);
-        res.send({
-          error: `Recorder has already started ${name}`,
-        });
+        // The recorder is already running: the request cannot be applied to the
+        // state the resource is in, which is a conflict rather than a fault.
+        next(conflict("Recorder has already started"));
       } else {
         const startedTime = Date.now();
         const logFile = `${name}_${startedTime}.log`;
@@ -148,9 +146,7 @@ const startRecorder = (model, res) => {
           // use default data storage
           getDataStorage((err, ds) => {
             if (err) {
-              res.send({
-                error: "No data storage",
-              });
+              next(unavailable("No data storage", err));
             } else {
               const dataRecorder = new DataRecorder({
                 ...model,
@@ -207,19 +203,20 @@ router.post("/start", validate({ body: dataRecorderStartBody }), (req, res, next
     }
     readJSONFile(dataRecorderFile, (err, data) => {
       if (err) {
-        console.error(
-          `[data-recorders] Cannot find data recorder ${dataRecorderFileName}`
+        next(
+          fileError(
+            err,
+            "Data recorder not found",
+            "Cannot read the data recorder file"
+          )
         );
-        res.send({
-          error: `[data-recorders] Cannot find data recorder ${dataRecorderFileName}`,
-        });
       } else {
-        startRecorder(data, res);
+        startRecorder(data, res, next);
       }
     });
   } else {
     // Start recorder by model
-    startRecorder(model, res);
+    startRecorder(model, res, next);
   }
 });
 
@@ -227,10 +224,7 @@ router.post("/start", validate({ body: dataRecorderStartBody }), (req, res, next
 router.get("/models/", validate(), (req, res, next) => {
   readDir(dataRecordersPath, (err, files) => {
     if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot read the data recorders directory",
-      });
+      next(internal("Cannot read the data recorders directory", err));
     } else {
       res.send({
         error: null,
@@ -249,10 +243,13 @@ router.get("/models/:fileName", validate({ params: { fileName: recorderNameParam
   }
   readJSONFile(dataRecorderFile, (err, data) => {
     if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot read the data recorder file",
-      });
+      next(
+        fileError(
+          err,
+          "Data recorder not found",
+          "Cannot read the data recorder file"
+        )
+      );
     } else {
       res.send({
         error: null,
@@ -262,7 +259,7 @@ router.get("/models/:fileName", validate({ params: { fileName: recorderNameParam
   });
 });
 
-const updateDataRecorder = (fileName, dataRecorder, res) => {
+const updateDataRecorder = (fileName, dataRecorder, res, next) => {
   const { name } = dataRecorder;
   // Containment, not validation: the schema has already established that the
   // name is well formed, but the path it derives is still checked at the sink.
@@ -281,10 +278,7 @@ const updateDataRecorder = (fileName, dataRecorder, res) => {
       JSON.stringify(dataRecorder),
       (err, data) => {
         if (err) {
-          console.error("[SERVER]", err);
-          res.send({
-            error: "Cannot save the new configuration",
-          });
+          next(internal("Cannot save the new configuration", err));
         } else {
           res.send({
             dataRecorderFileName: fileName,
@@ -300,17 +294,11 @@ const updateDataRecorder = (fileName, dataRecorder, res) => {
       JSON.stringify(dataRecorder),
       (err, data) => {
         if (err) {
-          console.error("[SERVER]", err);
-          res.send({
-            error: "Cannot save the new configuration",
-          });
+          next(internal("Cannot save the new configuration", err));
         } else {
           deleteFile(oldDataRecorderFile, (err2) => {
             if (err2) {
-              console.error("[SERVER]", err2);
-              res.send({
-                error: `Cannot remove the old data recorder file: ${fileName}`,
-              });
+              next(internal("Cannot remove the old data recorder file", err2));
             } else {
               res.send({
                 dataRecorderFileName: fileName,
@@ -324,17 +312,20 @@ const updateDataRecorder = (fileName, dataRecorder, res) => {
   }
 };
 
-const duplicateDataRecorder = (fileName, res) => {
+const duplicateDataRecorder = (fileName, res, next) => {
   const dataRecorderFile = resolveWithin(dataRecordersPath, fileName);
   if (!dataRecorderFile) {
     return sendBadRequest(res, "Invalid data recorder name");
   }
   readJSONFile(dataRecorderFile, (err, data) => {
     if (err) {
-      console.error("[SERVER] Cannot read data recorder: ", err);
-      res.send({
-        error: `Cannot read model ${fileName}`,
-      });
+      next(
+        fileError(
+          err,
+          "Data recorder not found",
+          "Cannot read the data recorder file"
+        )
+      );
     } else {
       const newName = `${data.name} [Duplicated]`;
       const newDataRecorder = {
@@ -354,10 +345,7 @@ const duplicateDataRecorder = (fileName, res) => {
         JSON.stringify(newDataRecorder),
         (err, dupDataRecorder) => {
           if (err) {
-            console.error("[SERVER]", err);
-            res.send({
-              error: "Cannot save the duplicated model",
-            });
+            next(internal("Cannot save the duplicated data recorder", err));
           } else {
             res.send({
               dataRecorderFileName: newFileName,
@@ -376,9 +364,9 @@ router.post("/models/:fileName", validate({ params: { fileName: recorderNamePara
 
   const { dataRecorder, isDuplicated } = req.body;
   if (isDuplicated) {
-    duplicateDataRecorder(fileName, res);
+    duplicateDataRecorder(fileName, res, next);
   } else {
-    updateDataRecorder(fileName, dataRecorder, res);
+    updateDataRecorder(fileName, dataRecorder, res, next);
   }
 });
 
@@ -398,10 +386,7 @@ router.post("/models", validate({ body: dataRecorderCreateBody }), function (req
   }
   writeToFile(dataRecorderFile, JSON.stringify(dataRecorder), (err, data) => {
     if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot save the new configuration",
-      });
+      next(internal("Cannot save the new configuration", err));
     } else {
       res.send({
         error: null,
@@ -420,10 +405,13 @@ router.delete("/models/:fileName", validate({ params: { fileName: recorderNamePa
   }
   deleteFile(dataRecorderFile, (err) => {
     if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot delete the data recorder file",
-      });
+      next(
+        fileError(
+          err,
+          "Data recorder not found",
+          "Cannot delete the data recorder file"
+        )
+      );
     } else {
       res.send({
         error: null,
@@ -432,5 +420,9 @@ router.delete("/models/:fileName", validate({ params: { fileName: recorderNamePa
     }
   });
 });
+
+// Attached to the router itself as well as to the application: see the note in
+// `routes/model.js`.
+router.use(errorHandler);
 
 module.exports = router;

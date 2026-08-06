@@ -10,6 +10,11 @@ const {
   idSchema,
   textSchema,
 } = require("../middleware/validate");
+const {
+  errorHandler,
+  databaseError,
+  notFound,
+} = require("../middleware/errors");
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the report endpoints (issue #10)
@@ -55,11 +60,7 @@ router.get("/", validate({ query: reportQuery }), dbConnector, function (req, re
 
   ReportSchema.findReportsWithOptions(options, (err2, reports) => {
     if (err2) {
-      console.error("[SERVER] Failed to get reports");
-      console.error(err2);
-      res.send({
-        error: "Failed to get reports",
-      });
+      next(databaseError(err2, "Failed to get reports"));
     } else {
       res.send({
         reports,
@@ -68,7 +69,7 @@ router.get("/", validate({ query: reportQuery }), dbConnector, function (req, re
   });
 });
 
-const updateReportScore = (report, res) => {
+const updateReportScore = (report, res, next) => {
   const {
     originalDatasetId,
     newDatasetId,
@@ -84,17 +85,13 @@ const updateReportScore = (report, res) => {
     endTime,
     (err3, originalEvents) => {
       if (err3) {
-        res.send({
-          error: `Cannot get original events of dataset ${originalDatasetId}`,
-        });
+        next(databaseError(err3, "Cannot get the original events of the report"));
       } else {
         EventSchema.findEventsWithOptions(
           { datasetId: newDatasetId },
           (err4, newEvents) => {
             if (err4) {
-              res.send({
-                error: `Cannot get new events of dataset ${newDatasetId}`,
-              });
+              next(databaseError(err4, "Cannot get the new events of the report"));
             } else {
               let newScore = score;
               if (evaluationParameters) {
@@ -121,12 +118,7 @@ const updateReportScore = (report, res) => {
                 {new: true},
                 (err5, ret) => {
                   if (err5) {
-                    console.error(
-                      `Cannot update the score for report ${report._id}`
-                    );
-                    res.send({
-                      error: `Cannot update the score for report ${report._id}`,
-                    });
+                    next(databaseError(err5, "Cannot update the score of the report"));
                   } else {
                     console.log(
                       `Report ${report._id} has score of ${newScore}`
@@ -152,12 +144,11 @@ router.get("/:reportId", validate({ params: { reportId: reportIdParam } }), dbCo
   const { reportId } = req.params;
 
   ReportSchema.findOne({ id: reportId }, (err2, report) => {
-    if (err2 || !report) {
-      console.error("[SERVER] Failed to get reports");
-      console.error(err2);
-      return res.send({
-        error: "Failed to get report",
-      });
+    if (err2) {
+      return next(databaseError(err2, "Failed to get report"));
+    }
+    if (!report) {
+      return next(notFound("Report not found"));
     }
     const { score } = report;
     if (score > -1) {
@@ -165,7 +156,7 @@ router.get("/:reportId", validate({ params: { reportId: reportIdParam } }), dbCo
         report,
       });
     }
-    return updateReportScore(report, res);
+    return updateReportScore(report, res, next);
   });
 });
 
@@ -177,17 +168,17 @@ router.post("/:reportId", validate({ params: { reportId: reportIdParam }, body: 
   const { reportId } = req.params;
   ReportSchema.findByIdAndUpdate(reportId, report, {new: true},(err, ts) => {
     if (err) {
-      console.error("[SERVER] Failed to save a report", err);
-      return res.send({
-        error: "Failed to save a report",
-      });
+      return next(databaseError(err, "Failed to save a report"));
+    }
+    if (!ts) {
+      return next(notFound("Report not found"));
     }
     if (!newScore) {
       return res.send({
         report: ts,
       });
     }
-    return updateReportScore(ts, res);
+    return updateReportScore(ts, res, next);
   });
 });
 
@@ -199,10 +190,7 @@ router.delete("/:reportId", validate({ params: { reportId: reportIdParam } }), d
 
   ReportSchema.findByIdAndDelete(reportId, (err, ret) => {
     if (err) {
-      console.error("[SERVER] Failed to delete a report", err);
-      res.send({
-        error: "Failed to delete a report",
-      });
+      next(databaseError(err, "Failed to delete a report"));
     } else {
       res.send({
         result: ret,
@@ -210,5 +198,9 @@ router.delete("/:reportId", validate({ params: { reportId: reportIdParam } }), d
     }
   });
 });
+
+// Attached to the router itself as well as to the application: see the note in
+// `routes/model.js`.
+router.use(errorHandler);
 
 module.exports = router;

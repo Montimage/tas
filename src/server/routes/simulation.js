@@ -20,6 +20,13 @@ const {
   fileNameMaxLength,
   simulationRunFields,
 } = require("../middleware/validate");
+const {
+  errorHandler,
+  badRequest,
+  conflict,
+  fileError,
+  unavailable,
+} = require("../middleware/errors");
 
 let router = express.Router();
 const logsPath = `${__dirname}/../logs/simulations/`;
@@ -84,34 +91,31 @@ let allSimulationStatus = {};
 let allSimulations = {};
 // Start simulating a model
 
-const startSimulation = (model, options = {}, res, modelFileName = null) => {
+const startSimulation = (model, options = {}, res, next, modelFileName = null) => {
   // Check if there is a configuration
   if (!model) {
-    console.error("[SERVER]", "Cannot simulate a null model");
-    return res.send({
-      error: "Cannot simulate a null model",
-    });
+    return next(badRequest("Cannot simulate a null model"));
   }
   const { name, devices } = model;
   if (!name || !devices) {
-    return res.send({
-      error: "Invalid model",
-      model: model,
-    });
+    return next(badRequest("Invalid model"));
   }
   if (!isValidName(name)) {
     return sendBadRequest(res, "Invalid model name");
   }
 
   const simId = getObjectId(name);
-  if (allSimulations[simId] && allSimulations[simId].isRunning) {
-    console.error(
-      `[simulation] A running simulation is using this topology (${name}). A topology can be used only in one running simulation`
+  // `Simulation` tracks running-ness as `status`, which `start()` sets
+  // synchronously; it has no `isRunning`, so the guard this replaces was never
+  // true and a topology could be started twice, orphaning the first run.
+  if (allSimulations[simId] && allSimulations[simId].status !== OFFLINE) {
+    // The topology is already in use: the request cannot be applied to the
+    // state the resource is in, which is a conflict rather than a fault.
+    next(
+      conflict(
+        "A running simulation is using this topology. A topology can be used only in one running simulation"
+      )
     );
-    res.send({
-      error:
-        "A running simulation is using this topology. A topology can be used only in one running simulation",
-    });
   } else {
     const startedTime = Date.now();
     const logFile = `${name}_${Date.now()}.log`;
@@ -120,7 +124,7 @@ const startSimulation = (model, options = {}, res, modelFileName = null) => {
       // Use default data storage
       getDataStorage((err, ds) => {
         if (err) {
-          res.send({ error: "No data storage" });
+          next(unavailable("No data storage", err));
         } else {
           const simulation = new Simulation(
             { ...model, dataStorage: ds },
@@ -169,8 +173,6 @@ const startSimulation = (model, options = {}, res, modelFileName = null) => {
 };
 
 router.post("/start", validate({ body: simulationStartBody }), function (req, res, next) {
-  stats = null;
-  simulationStatus = null;
   const { model, modelFileName, options } = req.body;
   if (modelFileName) {
     const modelFilePath = resolveWithin(modelsPath, modelFileName);
@@ -179,14 +181,13 @@ router.post("/start", validate({ body: simulationStartBody }), function (req, re
     }
     readJSONFile(modelFilePath, (err, myModel) => {
       if (err) {
-        console.error(`Cannot read model ${modelFileName}`, err);
-        res.send({ error: `Cannot read model ${modelFileName}` });
+        next(fileError(err, "Model not found", "Cannot read the model file"));
       } else {
-        startSimulation(myModel, options, res, modelFileName);
+        startSimulation(myModel, options, res, next, modelFileName);
       }
     });
   } else {
-    startSimulation(model, options, res);
+    startSimulation(model, options, res, next);
   }
 });
 
@@ -221,12 +222,22 @@ router.get("/status", validate(), (req, res, next) => {
 });
 
 router.get("/stats", validate(), (req, res, next) => {
-  if (!simulation) return res.send({ error: null, stats: null });
-  stats = simulation.getStats();
+  // Read from the registry the rest of this router keeps. It used to read a
+  // `simulation` binding that is never assigned, so every call threw a
+  // ReferenceError and was answered with a stack trace. With more than one run
+  // in progress this reports the first of them, which is as much as the
+  // single-valued response shape can say.
+  const running = Object.keys(allSimulations)
+    .map((simId) => allSimulations[simId])
+    .find((simulation) => simulation && simulation.status !== OFFLINE);
   res.send({
     error: null,
-    stats,
+    stats: running ? running.getStats() : null,
   });
 });
+
+// Attached to the router itself as well as to the application: see the note in
+// `routes/model.js`.
+router.use(errorHandler);
 
 module.exports = router;

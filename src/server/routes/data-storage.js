@@ -11,6 +11,7 @@ const {
   validate,
   dataStorageSchema,
 } = require("../middleware/validate");
+const { errorHandler, internal } = require("../middleware/errors");
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the data-storage endpoints (issue #10)
@@ -27,9 +28,7 @@ const dataStorageBody = Joi.object({
 router.get("/", validate(), function (req, res, next) {
   getDataStorage((err, dataStorage) => {
     if (err) {
-      res.send({
-        error: 'Cannot get data storage'
-      });
+      next(internal('Cannot get data storage', err));
     } else {
       res.send({
         dataStorage
@@ -45,10 +44,7 @@ router.post("/", validate({ body: dataStorageBody }), function (req, res, next) 
   } = req.body;
   updateDataStorage(dataStorage, (err, ds) => {
     if (err) {
-      console.error('[data-storage] Failed to update data storage',err);
-      res.send({
-        error: 'Failed to update data storage'
-      });
+      next(internal('Failed to update data storage', err));
     } else {
       res.send({
         dataStorage: ds
@@ -62,5 +58,9 @@ router.get('/test', validate(), dbConnector, (req, res, next) => {
   res.send({connectionStatus: true});
 });
 
+
+// Attached to the router itself as well as to the application: see the note in
+// `routes/model.js`.
+router.use(errorHandler);
 
 module.exports = router;

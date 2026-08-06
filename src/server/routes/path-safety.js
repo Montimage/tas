@@ -1,4 +1,5 @@
 const path = require("path");
+const { ApiError, sendError } = require("../middleware/errors");
 
 const NAME_MAX_LENGTH = 128;
 
@@ -48,11 +49,13 @@ const resolveWithin = (baseDir, relativePath) => {
 /**
  * Reject a request with a 400-class status and a message that never
  * discloses server-side paths.
+ *
+ * The containment guards are handed a response object alone, with no `next` to
+ * report through, so the refusal is routed to the central error handler
+ * directly. It is still that handler that decides what the body looks like.
  */
 const sendBadRequest = (res, message) => {
-  return res.status(400).send({
-    error: message || "Invalid request",
-  });
+  return sendError(res, new ApiError(400, message || "Invalid request"));
 };
 
 module.exports = {

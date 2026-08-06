@@ -11,6 +11,11 @@ const {
   textSchema,
   timestampSchema,
 } = require("../middleware/validate");
+const {
+  errorHandler,
+  databaseError,
+  notFound,
+} = require("../middleware/errors");
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the event endpoints (issue #10)
@@ -60,12 +65,19 @@ const eventFields = {
   values: eventValueSchema,
 };
 
+// `values` and `isSensorData` are declared `required: true` by `EventSchema`,
+// so a create that omits either is refused by mongoose after the request has
+// been accepted. Requiring them here is what turns that into a 400 naming the
+// field, instead of a save failure reported behind a success status. They stay
+// optional on the update body below, which is a partial document.
 const eventCreateBody = Joi.object({
   event: documentSchema({
     ...eventFields,
     timestamp: timestampSchema.required(),
     topic: textSchema.required(),
     datasetId: idSchema.required(),
+    isSensorData: Joi.boolean().required(),
+    values: eventValueSchema.required(),
   }).required(),
 }).required();
 
@@ -112,17 +124,11 @@ router.get("/", validate({ query: eventQuery }), dbConnector, function (req, res
   if (page === 0) {
     EventSchema.countDocuments(filter, (err3, totalNbEvents) => {
       if (err3) {
-        console.error("[SERVER] Failed to count number of event", err3);
-        res.send({
-          error: "Failed to count number of event",
-        });
+        next(databaseError(err3, "Failed to count number of event"));
       } else {
         EventSchema.findEventsWithPagingOptions(filter, page, (err2, events) => {
           if (err2) {
-            console.error("[SERVER] Failed to get events", err2);
-            res.send({
-              error: "Failed to get event",
-            });
+            next(databaseError(err2, "Failed to get event"));
           } else {
             res.send({
               totalNbEvents,
@@ -135,10 +141,7 @@ router.get("/", validate({ query: eventQuery }), dbConnector, function (req, res
   } else {
     EventSchema.findEventsWithPagingOptions(filter, page, (err2, events) => {
       if (err2) {
-        console.error("[SERVER] Failed to get events", err2);
-        res.send({
-          error: "Failed to get event",
-        });
+        next(databaseError(err2, "Failed to get event"));
       } else {
         res.send({
           events,
@@ -156,10 +159,9 @@ router.get("/:eventId", validate({ params: { eventId: eventIdParam } }), dbConne
 
   EventSchema.findById(eventId, (err2, event) => {
     if (err2) {
-      console.error("[SERVER] Failed to get events", err2);
-      res.send({
-        error: "Failed to get event",
-      });
+      next(databaseError(err2, "Failed to get event"));
+    } else if (!event) {
+      next(notFound("Event not found"));
     } else {
       res.send({
         event,
@@ -181,10 +183,7 @@ router.post("/", validate({ body: eventCreateBody }), dbConnector, function (req
   });
   newevent.save((err, _event) => {
     if (err) {
-      console.error("[SERVER] Failed to save the events", err);
-      res.send({
-        error: "Failed to save the event",
-      });
+      next(databaseError(err, "Failed to save the event"));
     } else {
       res.send({
         event: _event,
@@ -202,10 +201,7 @@ router.post("/:eventId", validate({ params: { eventId: eventIdParam }, body: eve
 
   EventSchema.findByIdAndUpdate(eventId, event, (err, ts) => {
     if (err) {
-      console.error("[SERVER] Failed to save the events", err);
-      res.send({
-        error: "Failed to save the event",
-      });
+      next(databaseError(err, "Failed to save the event"));
     } else {
       res.send({
         event: ts,
@@ -222,10 +218,7 @@ router.delete("/:eventId", validate({ params: { eventId: eventIdParam } }), dbCo
 
   EventSchema.findByIdAndDelete(eventId, (err, ret) => {
     if (err) {
-      console.error("[SERVER] Failed to delete a event", err);
-      res.send({
-        error: "Failed to delete a event",
-      });
+      next(databaseError(err, "Failed to delete a event"));
     } else {
       res.send({
         result: ret,
@@ -233,5 +226,9 @@ router.delete("/:eventId", validate({ params: { eventId: eventIdParam } }), dbCo
     }
   });
 });
+
+// Attached to the router itself as well as to the application: see the note in
+// `routes/model.js`.
+router.use(errorHandler);
 
 module.exports = router;

@@ -21,6 +21,11 @@ const {
   fileNameParam,
   simulationRunFields,
 } = require("../middleware/validate");
+const {
+  errorHandler,
+  fileError,
+  internal,
+} = require("../middleware/errors");
 const modelsPath = `${__dirname}/../data/models/`;
 let router = express.Router();
 
@@ -65,10 +70,7 @@ const modelUpdateBody = Joi.object({
 router.get("/", validate(), (req, res, next) => {
   readDir(modelsPath, (err, files) => {
     if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot read the models directory"
-      });
+      next(internal("Cannot read the models directory", err));
     } else {
       res.send({
         error: null,
@@ -89,10 +91,7 @@ router.get("/:fileName", validate({ params: { fileName: modelNameParam } }), fun
   }
   readJSONFile(modelFile, (err, data) => {
     if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot read the model file"
-      });
+      next(fileError(err, "Model not found", "Cannot read the model file"));
     } else {
       res.send({
         error: null,
@@ -102,17 +101,14 @@ router.get("/:fileName", validate({ params: { fileName: modelNameParam } }), fun
   });
 });
 
-const duplicateModel = (fileName, res) => {
+const duplicateModel = (fileName, res, next) => {
   const modelFile = resolveWithin(modelsPath, fileName);
   if (!modelFile) {
     return sendBadRequest(res, "Invalid model name");
   }
   readJSONFile(modelFile, (err, data) => {
     if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: `Cannot read model ${fileName}`
-      });
+      next(fileError(err, "Model not found", "Cannot read the model file"));
     } else {
       const newName = `${data.name} [Duplicated]`;
       const newModel = {...data, name: newName};
@@ -126,10 +122,7 @@ const duplicateModel = (fileName, res) => {
       }
       writeToFile(newFile, JSON.stringify(newModel), (err, dupModel) => {
         if (err) {
-          console.error("[SERVER]", err);
-          res.send({
-            error: "Cannot save the duplicated model"
-          });
+          next(internal("Cannot save the duplicated model", err));
         } else {
           res.send({
             modelFileName: newFileName
@@ -140,7 +133,7 @@ const duplicateModel = (fileName, res) => {
   });
 }
 
-const updateModel = (model, fileName, res) => {
+const updateModel = (model, fileName, res, next) => {
   const {
     name
   } = model;
@@ -161,10 +154,7 @@ const updateModel = (model, fileName, res) => {
   if (fileName === newName) {
     writeToFile(modelFile, JSON.stringify(model), (err, data) => {
       if (err) {
-        console.error("[SERVER]", err);
-        res.send({
-          error: "Cannot save the new configuration"
-        });
+        next(internal("Cannot save the new configuration", err));
       } else {
         res.send({
           modelFileName: fileName
@@ -175,15 +165,14 @@ const updateModel = (model, fileName, res) => {
   else {
     writeToFile(modelFile, JSON.stringify(model), (err, data) => {
       if (err) {
-        console.error("[SERVER]", err);
-        res.send({
-          error: "Cannot save the new configuration"
-        });
+        next(internal("Cannot save the new configuration", err));
       } else {
         // Delete the old model
         deleteFile(oldModelFile, (err2) => {
           if (err2) {
-            console.error(err2);
+            // The new file is already written, so the rename succeeded from the
+            // caller's point of view; the leftover is a server-side problem.
+            console.error(`[SERVER] Cannot remove the renamed model file | ${err2.stack || err2}`);
           }
           res.send({
             modelFileName: newName
@@ -205,10 +194,10 @@ router.post("/:fileName", validate({ params: { fileName: modelNameParam }, body:
   } = req.body;
   if (isDuplicated) {
     // Duplicate the model
-    duplicateModel(fileName, res);
+    duplicateModel(fileName, res, next);
   } else {
     // Update model
-    updateModel(model, fileName, res);
+    updateModel(model, fileName, res, next);
   }  
 });
 
@@ -232,10 +221,7 @@ router.post("/", validate({ body: modelCreateBody }), function (req, res, next) 
   }
   writeToFile(modelFilePath, JSON.stringify(model), (err, data) => {
     if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot save the new configuration"
-      });
+      next(internal("Cannot save the new configuration", err));
     } else {
       res.send({
         modelFileName
@@ -255,10 +241,7 @@ router.delete("/:fileName", validate({ params: { fileName: modelNameParam } }), 
   }
   deleteFile(modelFile, (err) => {
     if (err) {
-      console.error("[SERVER]", err);
-      res.send({
-        error: "Cannot delete the model file"
-      });
+      next(fileError(err, "Model not found", "Cannot delete the model file"));
     } else {
       res.send({
         result: true
@@ -266,5 +249,10 @@ router.delete("/:fileName", validate({ params: { fileName: modelNameParam } }), 
     }
   });
 });
+
+// The shared handler is attached to the router itself, not only to the
+// application: a router mounted on its own would otherwise fall through to
+// Express's default error handler, which answers with an HTML stack trace.
+router.use(errorHandler);
 
 module.exports = router;

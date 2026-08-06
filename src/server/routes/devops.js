@@ -30,6 +30,12 @@ const {
   urlSchema,
   dataStorageSchema,
 } = require("../middleware/validate");
+const {
+  errorHandler,
+  badRequest,
+  internal,
+  unavailable,
+} = require("../middleware/errors");
 let logsPath = `${__dirname}/../logs/test-campaigns/`;
 
 let runningStatus = null;
@@ -71,10 +77,7 @@ const getDevops = (callback) => {
   if (_devops) return callback(null, _devops);
   readJSONFile(devopsFilePath, (err, data) => {
     if (err) {
-      console.error('[SERVER] Cannot get devops.json file', err);
-      return callback(
-        err
-      );
+      return callback(err);
     } else {
       _devops = data;
       return callback(
@@ -88,14 +91,10 @@ const getDevops = (callback) => {
 router.get("/", validate(), function (req, res, next) {
   getDevops((err, devO) => {
     if (err) {
-      // Same reasoning as in `loadValidatedDevops` below: the raw fs error
-      // carries the absolute path of devops.json in its own enumerable
-      // properties, which JSON.stringify would serialise straight into the
-      // response. Keep the detail server-side and answer with a constant.
-      console.error('[SERVER] Cannot get devops configuration', err);
-      res.send({
-        error: "Cannot get devops configuration"
-      });
+      // The raw fs error carries the absolute path of devops.json in its own
+      // enumerable properties. Reporting it through the central handler is what
+      // keeps that detail in the log and out of the response.
+      next(internal("Cannot get devops configuration", err));
     } else {
       res.send({
         devops: devO
@@ -117,10 +116,7 @@ router.post("/", validate({ body: devopsBody }), function (req, res, next) {
   // may have written.
   writeToFile(devopsFilePath, JSON.stringify(devops), (err, data) => {
     if (err) {
-      console.error("[SERVER] Cannot save devops.json file", err);
-      res.send({
-        error: "Cannot save devops.json file"
-      });
+      next(internal("Cannot save the devops configuration", err));
     } else {
       _devops = devops;
       res.send({
@@ -142,20 +138,13 @@ const loadValidatedDevops = (req, res, next) => {
   getDevops((err, devops) => {
     if (err) {
       // The raw fs error carries the absolute path of devops.json in its own
-      // enumerable properties, which JSON.stringify would serialise straight
-      // into the response. Keep the detail server-side and answer with a
-      // constant message.
-      console.error('[SERVER] Cannot get devops configuration', err);
-      return res.send({
-        error: "Cannot get devops configuration"
-      });
+      // enumerable properties. Reporting it through the central handler is what
+      // keeps that detail in the log and out of the response.
+      return next(internal("Cannot get devops configuration", err));
     }
     const { testCampaignId } = devops || {};
     if (!testCampaignId) {
-      console.error('Test campaign Id must not be NULL');
-      return res.send({
-        error: `Test campaign Id must not be null`
-      });
+      return next(badRequest("Test campaign Id must not be null"));
     }
     // A configuration written by an older, unvalidated build can still hold a
     // hostile id, so read-back is checked as well as write.
@@ -205,10 +194,7 @@ router.get('/start', validate(), loadValidatedDevops, dbConnector, (req, res, ne
   } else {
     getDataStorage((err, ds) => {
       if (err) {
-        console.log('[devops] Cannot get data storage');
-        res.send({
-          error: 'Cannot get data storage'
-        });
+        next(unavailable("Cannot get data storage", err));
       } else {
         runningStatus = {
           isRunning: true,
@@ -241,5 +227,9 @@ router.get('/stop', validate(), (req, res, next) => {
     runningStatus: copiedStatus
   });
 });
+
+// Attached to the router itself as well as to the application: see the note in
+// `routes/model.js`.
+router.use(errorHandler);
 
 module.exports = router;

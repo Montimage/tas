@@ -6,6 +6,7 @@ var compression = require('compression');
 var helmet = require('helmet');
 var rateLimit = require('express-rate-limit');
 var { loadConfig } = require('./config');
+var { errorHandler, apiNotFound, forbidden, ApiError, sendError } = require('./middleware/errors');
 
 // Read the environment configuration once at startup.
 const config = loadConfig();
@@ -74,8 +75,9 @@ app.use(function corsControl(req, res, next) {
   const isAllowed = config.corsAllowedOrigins.indexOf(origin) !== -1;
 
   if (!isAllowed) {
-    // Reject cross-origin requests from unlisted origins.
-    return res.status(403).json({ error: 'Origin not allowed' });
+    // Reject cross-origin requests from unlisted origins. Reported through the
+    // central handler like every other refusal, so the API has one error shape.
+    return sendError(res, forbidden('Origin not allowed'));
   }
 
   res.setHeader('Vary', 'Origin');
@@ -107,7 +109,11 @@ const apiLimiter = rateLimit({
   max: config.rateLimitMax,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many requests, please try again later.' }
+  // Reported through the central handler rather than written here, so a client
+  // that is over the limit reads the same error shape as every other refusal.
+  handler: function (req, res, next) {
+    next(new ApiError(429, 'Too many requests, please try again later.'));
+  }
 });
 
 app.use('/api', apiLimiter);
@@ -125,18 +131,25 @@ app.use('/api/events', eventRouter);
 app.use('/api/reports', reportRouter);
 app.use('/api/simulation', simulationRouter);
 app.use('/api/devops', devopsRouter);
+// An API path no router claimed is a missing resource, not the dashboard: it
+// must not fall through to the single-page app below, which would answer 200
+// with an HTML page a client cannot tell from a successful call.
+app.use('/api', apiNotFound);
+
 app.get('/*', function (req, res) {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-// Error handler: surface body-parser limit errors as JSON 413 without
-// unbounded buffering.
-app.use(function (err, req, res, next) {
-  if (err && err.type === 'entity.too.large') {
-    return res.status(413).json({ error: 'Request entity too large' });
-  }
-  next(err);
-});
+/**
+ * The central error handler.
+ *
+ * Every failure the API reports is rendered here, in one shape, with the
+ * underlying error kept server-side (`middleware/errors.js`). Registered last
+ * so it also catches what happens before any route runs — a body over the
+ * configured limit, a malformed JSON body — which would otherwise reach
+ * Express's default handler and be answered with an HTML stack trace.
+ */
+app.use(errorHandler);
 
 module.exports = app;
 

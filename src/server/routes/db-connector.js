@@ -12,6 +12,7 @@ const {
   readJSONFile,
   writeToFile,
 } = require("../../core/utils");
+const { unavailable } = require("../middleware/errors");
 
 const dataStoragePath = `${__dirname}/../data/data-storage.json`;
 
@@ -124,30 +125,38 @@ const updateDataStorage = (dataStorage, callback) => {
         dbClient.close();
         dbClient = null;
       }
-      getDBClient((err2, dbClient) => {
-        if (err) {
-          console.error('[SERVER] Failed to get database client', err);
-          res.send({
-            error: 'Failed to get database client!'
-          });
-        } else {
-          return callback(null,
-            dataStorage
+      getDBClient((err2) => {
+        if (err2) {
+          // The configuration asked for *was* written, so the update itself
+          // succeeded; only the connection it names is not answering. Report
+          // the save as done and keep the connection failure in the log —
+          // `GET /api/data-storage/test` is what probes the connection.
+          // (This branch used to test the wrong variable and then reference an
+          // `res` that does not exist here, so it could only ever have thrown.)
+          console.error(
+            `[SERVER] Data storage saved, but its connection is not reachable | ${
+              err2 && err2.stack ? err2.stack : err2
+            }`
           );
         }
+        return callback(null, dataStorage);
       }, true);
     }
   }, true);
 };
 
 
+/**
+ * Establish the database connection a route needs, or refuse the request.
+ *
+ * A database that is not answering is a dependency being unavailable, not a
+ * successful call: it is reported as 503 so a client, a proxy and a monitor can
+ * all tell it apart from a served request without reading the body.
+ */
 const dbConnector = (req, res, next) => {
-  getDBClient((err, dbClient) => {
+  getDBClient((err) => {
     if (err) {
-      console.error('[SERVER] Failed to get database client', err);
-      res.send({
-        error: 'Failed to get database client!'
-      });
+      next(unavailable('Database is unavailable', err));
     } else {
       next();
     }
