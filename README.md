@@ -202,7 +202,7 @@ tighten a limit.
 | `RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | Length of the rate-limiting window applied to `/api`.                                                                                                                            |
 | `RATE_LIMIT_MAX`       | `1000`            | Requests allowed per window per client. Going over returns `429`.                                                                                                                |
 | `CSP_REPORT_ONLY`      | `true`            | Ship the Content Security Policy as `Content-Security-Policy-Report-Only`, so browsers report violations without blocking. Set to `false` to enforce the policy.                 |
-| `CSP_REPORT_URI`       | _(empty)_         | Endpoint browsers should POST policy violation reports to. Empty means violations are only visible in the browser console.                                                        |
+| `CSP_REPORT_URI`       | _(empty)_         | Endpoint browsers should POST policy violation reports to. Empty means violations are only visible in the browser console. Must be a single URL: `;`, `,`, whitespace and control characters are refused at startup.                                                        |
 
 Values are read from the process environment first, then from `.env`, then from
 these defaults — so a container or a CI job can override a setting without

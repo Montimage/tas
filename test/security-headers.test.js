@@ -159,6 +159,53 @@ test('a configured report endpoint is added to the policy', async () => {
   });
 });
 
+test('the served policy is exactly the one declared, source for source', async () => {
+  // The directive *names* are checked above; this pins the sources too. Without
+  // it, widening any directive to `*` - the regression the explicit policy
+  // exists to prevent - passes every other test in this file.
+  const inlineHashes = inlineScriptHashes(INDEX_HTML);
+  const expected = {
+    'default-src': ["'self'"],
+    'base-uri': ["'self'"],
+    'object-src': ["'none'"],
+    'frame-src': ["'none'"],
+    'frame-ancestors': ["'self'"],
+    'form-action': ["'self'"],
+    'script-src': ["'self'", ...inlineHashes],
+    'script-src-attr': ["'none'"],
+    'style-src': ["'self'", "'unsafe-inline'"],
+    'img-src': ["'self'", 'data:'],
+    'font-src': ["'self'"],
+    'connect-src': ["'self'"],
+    'worker-src': ["'self'", 'blob:'],
+    'manifest-src': ["'self'"],
+    'media-src': ["'self'"]
+  };
+
+  await withServer({}, async (ctx) => {
+    const res = await head(ctx.base, '/');
+    const policy = parsePolicy(res.headers['content-security-policy-report-only']);
+    assert.deepEqual(policy, expected, 'the served policy drifted from the declared one');
+  });
+});
+
+test('a report endpoint that cannot go into a header is rejected at startup', () => {
+  // A newline survives `.trim()`, so without this check the server starts fine
+  // and then answers every request with a 500 from inside the HTTP layer.
+  for (const value of ['https://collector.example.com/csp\nX-Injected: 1', 'https://collector.example.com /csp']) {
+    process.env.CSP_REPORT_URI = value;
+    try {
+      assert.throws(
+        () => loadConfig({ path: MISSING_ENV }),
+        /CSP_REPORT_URI/,
+        `${JSON.stringify(value)} should be refused by name at startup`
+      );
+    } finally {
+      delete process.env.CSP_REPORT_URI;
+    }
+  }
+});
+
 test('a report endpoint that would inject directives is rejected by name', () => {
   process.env.CSP_REPORT_URI = 'https://collector.example.com/csp; script-src *';
   try {

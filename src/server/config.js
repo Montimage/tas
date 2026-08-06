@@ -77,6 +77,14 @@ function parseReportUri(value) {
   if (/[;,]/.test(uri)) {
     throw new Error('CSP_REPORT_URI must not contain ";" or "," - they would inject CSP directives');
   }
+  // Interior whitespace would add a second, bogus report endpoint to the
+  // directive; a control character (a newline pasted out of a config file, say)
+  // cannot go into a header at all, and would turn every single response into a
+  // 500 with a stack trace from inside the HTTP layer - long after startup,
+  // where an operator has nothing to connect it to. Fail here instead.
+  if (/[\s\u0000-\u001f\u007f]/.test(uri)) {
+    throw new Error('CSP_REPORT_URI must not contain whitespace or control characters');
+  }
   return uri;
 }
 
