@@ -34,10 +34,20 @@ const readJSONFile = (filePath, callback) => {
   try {
     fs.readFile(filePath, (err, data) => {
       if (err) return callback(err);
-      const jsonData = JSON.parse(data);
+      // The outer catch cannot see a throw from in here: this callback runs on
+      // a later tick, so a malformed file used to take the process down rather
+      // than reach the caller's error branch. Report a parse failure the same
+      // way a read failure is reported - every caller already handles it.
+      let jsonData;
+      try {
+        jsonData = JSON.parse(data);
+      } catch (parseError) {
+        return callback(parseError);
+      }
       return callback(null, jsonData);
     })
   } catch (error) {
+    // Only a synchronous throw from the fs.readFile call itself lands here.
     return callback(error);
   }
 }
@@ -65,7 +75,11 @@ const writeToFile = (_filePath, data, callback, isOverwrite = false) => {
       return callback(null, result);
     });
   } catch (error) {
-
+    // A synchronous throw from fs.writeFile (invalid path or data) used to be
+    // swallowed here without calling back at all, so the request that asked for
+    // the write hung until its client gave up. Route it to the callback like
+    // every other function in this file does.
+    return callback(error);
   }
 }
 

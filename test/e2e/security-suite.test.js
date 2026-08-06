@@ -10,15 +10,19 @@
 const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const path = require("node:path");
 const {
   startServer,
   request,
   unique,
   repoPackageJson,
+  devopsConfigPath,
+  campaignLogsDir,
   modelsDir,
   recordersDir,
   inModelsDir,
   escapeArtifacts,
+  escapedCampaignLogs,
   removeIfPresent,
   listDir,
   allowedOrigin,
@@ -28,9 +32,16 @@ const {
 /** Hostile base names this suite tries to write outside the storage root. */
 const escapeNames = ["escape", "pwned"];
 
+/** Hostile test campaign id used to probe the devops log path (issue #55). */
+const hostileCampaignId = "../../../pwned-campaign";
+
 let server;
+let originalDevops;
 
 before(async () => {
+  // The devops tests below overwrite the shipped configuration, so snapshot it
+  // and restore it in `after` - a failing run must not leave the checkout dirty.
+  originalDevops = fs.readFileSync(devopsConfigPath, "utf8");
   // Configure the real instance with the trusted origin shipped in tests.
   server = await startServer({ CORS_ALLOWED_ORIGINS: allowedOrigin });
 });
@@ -42,6 +53,11 @@ after(async () => {
   // them so a failing run never leaves the checkout dirty.
   for (const name of escapeNames) {
     escapeArtifacts(name).forEach(removeIfPresent);
+  }
+  escapedCampaignLogs("pwned-campaign").forEach(removeIfPresent);
+  // Guarded: if the snapshot itself failed, restoring would mask the real error.
+  if (originalDevops !== undefined) {
+    fs.writeFileSync(devopsConfigPath, originalDevops);
   }
 });
 
@@ -58,6 +74,9 @@ test("suite drives a real running instance over HTTP", async () => {
   );
   const api = await request(server.baseUrl, "GET", "/api/models/");
   assert.equal(api.status, 200, "API must be reachable over HTTP");
+  // Assert the response parsed before reading through it, so a non-JSON body
+  // reports the real failure instead of a TypeError.
+  assert.ok(api.body, `API must answer with JSON, got: ${api.raw}`);
   assert.equal(api.body.error, null);
 });
 
@@ -194,6 +213,174 @@ test("path containment: data-recorders start rejects a hostile dataRecorderFileN
     "hostile recorder dataRecorderFileName must be rejected"
   );
   assert.ok(fs.existsSync(repoPackageJson));
+});
+
+// ---------------------------------------------------------------------------
+// Issue #55 - the remaining name-derived paths (devops, test-cases).
+//
+// Both sinks sit behind the database connector, and the containment guards run
+// ahead of it on purpose: a rejection must not depend on a reachable database.
+// Every assertion below therefore returns immediately, and a regression that
+// moves a guard back behind the connector shows up as a non-400 response.
+// ---------------------------------------------------------------------------
+
+test("path containment: devops POST rejects a hostile testCampaignId and persists nothing", async () => {
+  const before = fs.readFileSync(devopsConfigPath, "utf8");
+  const hostile = [hostileCampaignId, "../../pwned-campaign", "a/b", "..", "."];
+  for (const testCampaignId of hostile) {
+    const res = await request(server.baseUrl, "POST", "/api/devops", {
+      body: {
+        devops: { webhookURL: "http://localhost:3333/webhook", testCampaignId },
+      },
+    });
+    assert.equal(
+      res.status,
+      400,
+      `expected 400 for testCampaignId ${JSON.stringify(testCampaignId)}, got ${res.status} (${res.raw})`
+    );
+    assert.ok(!res.raw.includes("/home/"), `must not leak server paths: ${res.raw}`);
+    assert.ok(!res.raw.includes("workspace"), `must not leak server paths: ${res.raw}`);
+  }
+  assert.equal(
+    fs.readFileSync(devopsConfigPath, "utf8"),
+    before,
+    "a rejected configuration must never reach devops.json"
+  );
+});
+
+test("path containment: a persisted hostile testCampaignId is rejected on read-back and writes no log", async () => {
+  // An unvalidated build could already have written a hostile id, so the read
+  // side is a distinct gate. A dedicated instance is used because the running
+  // server caches the configuration it has already loaded.
+  fs.writeFileSync(
+    devopsConfigPath,
+    JSON.stringify({
+      webhookURL: "http://localhost:3333/webhook",
+      testCampaignId: hostileCampaignId,
+    })
+  );
+  const poisoned = await startServer({ CORS_ALLOWED_ORIGINS: allowedOrigin });
+  try {
+    const res = await request(poisoned.baseUrl, "GET", "/api/devops/start");
+    assert.equal(
+      res.status,
+      400,
+      `a persisted hostile id must be rejected (${res.raw})`
+    );
+    assert.ok(!res.raw.includes("/home/"), `must not leak server paths: ${res.raw}`);
+    assert.ok(!res.raw.includes("workspace"), `must not leak server paths: ${res.raw}`);
+    assert.deepEqual(
+      escapedCampaignLogs("pwned-campaign"),
+      [],
+      "no log file may be created outside the test-campaign log root"
+    );
+  } finally {
+    await poisoned.stop();
+    fs.writeFileSync(devopsConfigPath, originalDevops);
+  }
+});
+
+test("path containment: test-cases POST rejects a hostile modelFileName", async () => {
+  const hostile = [
+    "../../../package.json",
+    "../package.json",
+    "/etc/passwd",
+    "a/../../../package.json",
+  ];
+  for (const modelFileName of hostile) {
+    const res = await request(server.baseUrl, "POST", "/api/test-cases", {
+      body: { testCase: { id: unique("tc"), name: "tc", modelFileName } },
+    });
+    assert.equal(
+      res.status,
+      400,
+      `expected 400 for modelFileName ${JSON.stringify(modelFileName)}, got ${res.status} (${res.raw})`
+    );
+    assert.ok(!res.raw.includes("/home/"), `must not leak server paths: ${res.raw}`);
+    assert.ok(!res.raw.includes("workspace"), `must not leak server paths: ${res.raw}`);
+  }
+  assert.ok(fs.existsSync(repoPackageJson), "canary must be untouched");
+});
+
+test("path containment: test-cases POST /:id rejects a hostile modelFileName", async () => {
+  const res = await request(server.baseUrl, "POST", "/api/test-cases/any-id", {
+    body: { testCase: { modelFileName: "../../../package.json" } },
+  });
+  assert.equal(
+    res.status,
+    400,
+    `the update path must not be a way around the create-time check (${res.raw})`
+  );
+  assert.ok(fs.existsSync(repoPackageJson));
+});
+
+test("legitimate devops starts and test-case creations pass containment", async () => {
+  // Containment is the only thing this change can break on the happy path, so
+  // that is what is asserted: a legitimate request must not be rejected. The
+  // requests are issued together because neither route can answer without a
+  // database, and the suite does not provision one - apart, each would wait
+  // out the full connect timeout in turn.
+  const withModel = unique("tc");
+  const withoutModel = unique("tc");
+  const [start, create, noModel] = await Promise.all([
+    request(server.baseUrl, "GET", "/api/devops/start"),
+    request(server.baseUrl, "POST", "/api/test-cases", {
+      body: {
+        testCase: {
+          id: withModel,
+          name: "legitimate test case",
+          modelFileName: "202402-Temperature-Controller.json",
+        },
+      },
+    }),
+    request(server.baseUrl, "POST", "/api/test-cases", {
+      body: {
+        testCase: { id: withoutModel, name: "no model selected", modelFileName: null },
+      },
+    }),
+  ]);
+  try {
+    assert.notEqual(
+      start.status,
+      400,
+      `the shipped devops configuration must not be rejected (${start.raw})`
+    );
+    assert.notEqual(
+      create.status,
+      400,
+      `a legitimate modelFileName must not be rejected (${create.raw})`
+    );
+    assert.notEqual(
+      noModel.status,
+      400,
+      `an absent modelFileName is not hostile (${noModel.raw})`
+    );
+    // When a database *is* reachable the containment gate let a real write
+    // through, which is the point - assert the stored path is the contained
+    // one rather than the raw name.
+    if (create.body && create.body.testCase) {
+      assert.ok(
+        create.body.testCase.modelFileName.endsWith(
+          "/data/models/202402-Temperature-Controller.json"
+        ),
+        `expected a contained model path, got ${create.body.testCase.modelFileName}`
+      );
+    }
+  } finally {
+    // Only reachable when a database answered, so this costs nothing in CI.
+    // Without one the requests above created nothing to clean up.
+    if (start.body && start.body.runningStatus) {
+      await request(server.baseUrl, "GET", "/api/devops/stop");
+      removeIfPresent(
+        path.join(campaignLogsDir, start.body.runningStatus.logFile)
+      );
+    }
+    for (const [res, id] of [[create, withModel], [noModel, withoutModel]]) {
+      if (res.body && res.body.testCase) {
+        await request(server.baseUrl, "DELETE", `/api/test-cases/${id}`);
+      }
+    }
+  }
 });
 
 // ---------------------------------------------------------------------------
