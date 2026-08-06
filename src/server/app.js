@@ -2,10 +2,10 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-const dotenv = require('dotenv');
+const { loadConfig } = require('./config');
 
 // read and pass the environment variables into reactjs application
-const env = dotenv.config().parsed;
+const env = loadConfig();
 
 const simulationRouter = require('./routes/simulation');
 const modelRouter = require('./routes/model');

@@ -5,7 +5,7 @@
   "scripts": {
     "start": "NODE_ENV=production node src/server/app.js",
     "server": "nodemon src/server/app.js",
-    "test": "node --test \"test/*.test.js\""
+    "test": "node --test \"test/**/*.test.js\""
   },
   "nodemonConfig": {
     "verbose": true,
@@ -35,38 +35,33 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.3",
-    "child_process": "~1.0.2",
     "compression": "^1.7.4",
     "cookie-parser": "~1.4.3",
-    "crypto": "^1.0.1",
     "debug": "~2.6.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "file-loader": "^5.1.0",
-    "fs": "0.0.1-security",
     "fstream": "^1.0.12",
     "geolib": "^3.2.1",
     "helmet": "^3.21.3",
     "ip": "^1.1.5",
-    "jshint": "^2.12.0",
     "lodash": "^4.17.20",
     "mongoose": "^5.9.4",
     "morgan": "^1.9.1",
     "mqtt": "^3.0.0",
     "mqtt-regex": "^1.0.5",
     "node-fetch": "^2.6.1",
-    "nodemon": "^2.0.3",
-    "path": "~0.12.7",
     "stompit": "^0.26.0",
     "winston": "^3.2.1",
-    "ws": "^7.2.1",
-    "zlib": "1.0.5"
+    "ws": "^7.2.1"
   },
   "devDependencies": {
     "eslint": "^7.6.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-react": "^7.20.5",
+    "file-loader": "^5.1.0",
+    "jshint": "^2.12.0",
+    "nodemon": "^2.0.3",
     "prettier": "^2.0.5"
   }
 }
