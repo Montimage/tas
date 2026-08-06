@@ -89,6 +89,14 @@ null
  */
 let allSimulationStatus = {};
 let allSimulations = {};
+// The ids whose start is under way. On the default data storage path the run is
+// only registered inside the `getDataStorage` callback, an event-loop turn after
+// the guard below read the registry, so without something held across that turn
+// two concurrent starts of one topology both pass the guard and the first run is
+// left publishing with no handle to stop it. A reservation rather than a
+// placeholder in `allSimulations`: `/stop` calls `stop()` on whatever it finds
+// there.
+const startingSimulations = new Set();
 // Start simulating a model
 
 const startSimulation = (model, options = {}, res, next, modelFileName = null) => {
@@ -108,7 +116,10 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
   // `Simulation` tracks running-ness as `status`, which `start()` sets
   // synchronously; it has no `isRunning`, so the guard this replaces was never
   // true and a topology could be started twice, orphaning the first run.
-  if (allSimulations[simId] && allSimulations[simId].status !== OFFLINE) {
+  if (
+    startingSimulations.has(simId) ||
+    (allSimulations[simId] && allSimulations[simId].status !== OFFLINE)
+  ) {
     // The topology is already in use: the request cannot be applied to the
     // state the resource is in, which is a conflict rather than a fault.
     next(
@@ -122,7 +133,11 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
     getLogger("SIMULATION", `${logsPath}${logFile}`);
     if (!model.dataStorage && !options.dataStorage) {
       // Use default data storage
+      startingSimulations.add(simId);
       getDataStorage((err, ds) => {
+        // Released first, so the reservation cannot outlive the start on either
+        // path, nor if registering the run throws.
+        startingSimulations.delete(simId);
         if (err) {
           next(unavailable("No data storage", err));
         } else {

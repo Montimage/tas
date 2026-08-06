@@ -95,6 +95,14 @@ const dataRecorderStartBody = Joi.object({
  */
 let allRunningStatus = {};
 let allDataRecorders = {};
+// The ids whose start is under way. On the default data storage path the
+// recorder is only registered inside the `getDataStorage` callback, an
+// event-loop turn after the guard below read the registry, so without something
+// held across that turn two concurrent starts of one recorder both pass the
+// guard and the first one is left recording with no handle to stop it. A
+// reservation rather than a placeholder in `allDataRecorders`: `/stop` calls
+// `stop()` on whatever it finds there.
+const startingDataRecorders = new Set();
 
 /**
  * Get the running status of data recorder
@@ -134,7 +142,7 @@ const startRecorder = (model, res, next) => {
       next(badRequest("Invalid data recorder name"));
     } else {
       const recorderId = getObjectId(name);
-      if (allDataRecorders[recorderId]) {
+      if (startingDataRecorders.has(recorderId) || allDataRecorders[recorderId]) {
         // The recorder is already running: the request cannot be applied to the
         // state the resource is in, which is a conflict rather than a fault.
         next(conflict("Recorder has already started"));
@@ -144,7 +152,11 @@ const startRecorder = (model, res, next) => {
         getLogger("DATA-RECORDER", `${logsPath}${logFile}`);
         if (!dataStorage) {
           // use default data storage
+          startingDataRecorders.add(recorderId);
           getDataStorage((err, ds) => {
+            // Released first, so the reservation cannot outlive the start on
+            // either path, nor if registering the recorder throws.
+            startingDataRecorders.delete(recorderId);
             if (err) {
               next(unavailable("No data storage", err));
             } else {

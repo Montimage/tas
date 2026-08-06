@@ -121,11 +121,45 @@ const BODY_PARSER_FAILURES = {
 };
 
 /**
+ * What a failure that already knows it is the caller's fault is answered with.
+ *
+ * Express's own router raises a `URIError` carrying `status: 400` when a path
+ * segment's percent-encoding cannot be decoded, and anything built on
+ * `http-errors` stamps the same field. The status such a failure carries is
+ * worth keeping — the message it comes with is not, because that is the part
+ * that names internals — so the caller is told one of these instead.
+ */
+const CALLER_FAILURES = {
+  400: "Bad request",
+  404: "Not found",
+  415: "Unsupported media type",
+};
+const CALLER_FAILURE = "Request refused";
+
+/**
+ * The status a failure already carries, when it is one only the caller can fix.
+ *
+ * Deliberately 4xx alone: a 5xx a library chose says nothing more than the bare
+ * 500 already does, and a status that is not an integer in that range is not a
+ * classification at all.
+ *
+ * @param {*} err The value handed to `next`
+ * @returns {Number|null}
+ */
+const callerStatus = (err) => {
+  const status = err && (err.status || err.statusCode);
+  return Number.isInteger(status) && status >= 400 && status < 500 ? status : null;
+};
+
+/**
  * Normalise anything thrown or passed to `next` into an `ApiError`.
  *
  * Only an `ApiError` describes itself to the caller. Everything else is a
  * failure nobody classified, so it is reported as a bare 500 — which is what
  * keeps raw error objects, and the server paths they carry, out of responses.
+ * The one thing read off an unclassified failure is a 4xx it already carries:
+ * answering 500 for a malformed request tells a monitor the server broke when
+ * the caller did, which is the inverse of what these statuses are for.
  *
  * @param {*} err The value handed to `next`
  * @returns {ApiError}
@@ -134,6 +168,12 @@ const toApiError = (err) => {
   if (err instanceof ApiError) return err;
   const mapped = err && err.type ? BODY_PARSER_FAILURES[err.type] : null;
   if (mapped) return new ApiError(mapped[0], mapped[1], { cause: err });
+  const status = callerStatus(err);
+  if (status) {
+    return new ApiError(status, CALLER_FAILURES[status] || CALLER_FAILURE, {
+      cause: err,
+    });
+  }
   return new ApiError(500, INTERNAL_MESSAGE, { cause: err });
 };
 

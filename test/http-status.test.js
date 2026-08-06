@@ -45,6 +45,7 @@ const {
 
 const devopsFile = path.resolve(__dirname, "../src/server/data/devops.json");
 const simulationLogsDir = path.resolve(__dirname, "../src/server/logs/simulations");
+const recorderLogsDir = path.resolve(__dirname, "../src/server/logs/data-recorders");
 
 let server;
 let app;
@@ -57,6 +58,7 @@ before(() => {
   // directory does not exist and a missing *file* would be indistinguishable
   // from a missing directory.
   fs.mkdirSync(simulationLogsDir, { recursive: true });
+  fs.mkdirSync(recorderLogsDir, { recursive: true });
 
   app = express();
   app.use(express.json());
@@ -80,6 +82,25 @@ after(() => {
 });
 
 const unique = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+
+/**
+ * Remove the run log a start leaves behind.
+ *
+ * Every start opens `<name>_<timestamp>.log` through `getLogger`, and nothing in
+ * the server ever removes it, so a test that starts something has to take its
+ * own files away again.
+ */
+const removeRunLogs = (dir, name) => {
+  let entries;
+  try {
+    entries = fs.readdirSync(dir);
+  } catch (e) {
+    return;
+  }
+  for (const entry of entries) {
+    if (entry.startsWith(`${name}_`)) fs.unlinkSync(path.join(dir, entry));
+  }
+};
 
 /**
  * Text that must never appear in a response body: this checkout's own location
@@ -152,6 +173,24 @@ const probeApp = () => {
   probe.get("/thrown", () => {
     throw new Error("boom at /home/secret/src/server/routes/model.js");
   });
+  // Failures that arrive already carrying a status, the way Express's router
+  // and anything built on `http-errors` report one.
+  probe.get("/carries-400", (req, res, next) =>
+    next(
+      Object.assign(new URIError("Failed to decode param '%zz' at /home/secret/x"), {
+        status: 400,
+      })
+    )
+  );
+  probe.get("/carries-415", (req, res, next) =>
+    next(Object.assign(new Error("unsupported at /home/secret/x"), { statusCode: 415 }))
+  );
+  probe.get("/carries-503", (req, res, next) =>
+    next(Object.assign(new Error("upstream down at /home/secret/x"), { status: 503 }))
+  );
+  probe.get("/carries-nonsense", (req, res, next) =>
+    next(Object.assign(new Error("nonsense at /home/secret/x"), { status: "400" }))
+  );
   probe.use(errorHandler);
   return probe;
 };
@@ -212,6 +251,54 @@ test("an unclassified failure is reported as a bare 500 that discloses nothing",
     }
   } finally {
     probe.close();
+  }
+});
+
+test("a failure that already carries a 4xx keeps it, with a message of ours", async () => {
+  // The status is the only thing an unclassified failure is trusted about, and
+  // only when it is a 4xx: reporting a caller's mistake as a server fault is
+  // what makes a monitor alert on client garbage. Everything else - the message
+  // above all, which is where the internals are named - is still ours to choose.
+  const probe = probeApp().listen(0);
+  try {
+    const kept = [
+      ["/carries-400", 400, "Bad request"],
+      ["/carries-415", 415, "Unsupported media type"],
+    ];
+    for (const [routePath, status, message] of kept) {
+      const res = await request(probe, "GET", routePath);
+      assertErrorShape(res, status, `GET ${routePath}`);
+      assert.equal(res.body.error, message, `GET ${routePath} must not echo its own message`);
+      assert.ok(!res.raw.includes("secret"), `must not echo the underlying error: ${res.raw}`);
+    }
+    // A 5xx a library chose says no more than the bare 500 already does, and a
+    // status that is not an integer in the 4xx range is not a classification.
+    for (const routePath of ["/carries-503", "/carries-nonsense"]) {
+      const res = await request(probe, "GET", routePath);
+      assertErrorShape(res, 500, `GET ${routePath}`);
+      assert.equal(
+        res.body.error,
+        INTERNAL_MESSAGE,
+        `only a 4xx may be taken from an unclassified failure: ${res.raw}`
+      );
+    }
+  } finally {
+    probe.close();
+  }
+});
+
+test("a path whose percent-encoding cannot be decoded answers 400, not 500", async () => {
+  // Express's router raises a `URIError` carrying `status: 400` when a path
+  // segment cannot be decoded. It never reaches a route, so the shared handler
+  // is the only thing that can answer it - and what the caller sent is
+  // unambiguously the caller's fault.
+  for (const routePath of [
+    "/api/models/%E0%A4%A",
+    "/api/models/%",
+    "/api/models/%zz.json",
+  ]) {
+    const res = await request(server, "GET", routePath);
+    assertErrorShape(res, 400, `GET ${routePath}`);
   }
 });
 
@@ -612,4 +699,95 @@ test("the error class never lets an unsafe message through by accident", () => {
     err.cause.message,
     "the caller-facing message must not be the underlying one"
   );
+});
+
+// ---------------------------------------------------------------------------
+// 8. A start that would orphan a run is refused, however the two arrive
+// ---------------------------------------------------------------------------
+
+test("a topology already running refuses a second start, and starts again once stopped", async () => {
+  const name = unique("running-topology");
+  const body = { model: { name, devices: [] }, options: {} };
+  try {
+    const first = await request(server, "POST", "/api/simulation/start", body);
+    assert.equal(first.status, 200, `the first start must be served (${first.raw})`);
+
+    const second = await request(server, "POST", "/api/simulation/start", body);
+    assertErrorShape(second, 409, "starting a topology that is already running");
+
+    const stopped = await request(server, "GET", `/api/simulation/stop/${name}.json`);
+    assert.equal(stopped.status, 200, `the run must be stoppable (${stopped.raw})`);
+
+    // The guard refuses a second run, not the topology: once the first one is
+    // stopped the same model must be startable again.
+    const third = await request(server, "POST", "/api/simulation/start", body);
+    assert.equal(third.status, 200, `a stopped topology must start again (${third.raw})`);
+  } finally {
+    await request(server, "GET", `/api/simulation/stop/${name}.json`);
+    removeRunLogs(simulationLogsDir, name);
+  }
+});
+
+test("two concurrent starts of one topology cannot both be served", async () => {
+  // The run is registered inside the `getDataStorage` callback, so the window
+  // this pins open exists only while the default data storage has not been read
+  // yet - it is cached from the first read onwards and answers synchronously
+  // after that. A freshly required router and connector put the pair back in
+  // the state a running server is in when the first start of the day arrives.
+  const routerPath = require.resolve("../src/server/routes/simulation");
+  const connectorPath = require.resolve("../src/server/routes/db-connector");
+  delete require.cache[routerPath];
+  delete require.cache[connectorPath];
+  const coldRouter = require(routerPath);
+  delete require.cache[routerPath];
+  delete require.cache[connectorPath];
+
+  const coldApp = express();
+  coldApp.use(express.json());
+  coldApp.use("/api/simulation", coldRouter);
+  const coldServer = coldApp.listen(0);
+  const name = unique("race-topology");
+  const body = { model: { name, devices: [] }, options: {} };
+  try {
+    const answers = await Promise.all([
+      request(coldServer, "POST", "/api/simulation/start", body),
+      request(coldServer, "POST", "/api/simulation/start", body),
+    ]);
+    assert.deepEqual(
+      answers.map((answer) => answer.status).sort(),
+      [200, 409],
+      `exactly one of two concurrent starts may be served: ${answers
+        .map((answer) => answer.raw)
+        .join(" | ")}`
+    );
+    const refused = answers.find((answer) => answer.status === 409);
+    assertErrorShape(refused, 409, "the second of two concurrent starts");
+  } finally {
+    await request(coldServer, "GET", `/api/simulation/stop/${name}.json`);
+    coldServer.close();
+    removeRunLogs(simulationLogsDir, name);
+  }
+});
+
+test("a data recorder already running refuses a second start", async () => {
+  const name = unique("running-recorder");
+  const body = { model: { name, dataRecorders: [] } };
+  try {
+    const first = await request(server, "POST", "/api/data-recorders/start", body);
+    assert.equal(first.status, 200, `the first start must be served (${first.raw})`);
+
+    const second = await request(server, "POST", "/api/data-recorders/start", body);
+    assertErrorShape(second, 409, "starting a recorder that is already running");
+  } finally {
+    await request(server, "GET", `/api/data-recorders/stop/${name}.json`);
+    removeRunLogs(recorderLogsDir, name);
+    // A recorder connects to the configured data storage as it starts, and
+    // `DataRecorder.stop()` closes only a client that finished connecting.
+    // There is no database here, so the attempt is still outstanding and holds
+    // this process open for the driver's whole server-selection timeout.
+    // Closed through the driver's client rather than `mongoose.disconnect()`,
+    // which waits for the very connection it is trying to close.
+    const client = require("mongoose").connection.client;
+    if (client) client.close(true, () => {});
+  }
 });
