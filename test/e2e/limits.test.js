@@ -32,8 +32,10 @@ test("oversized bodies are rejected (413) rather than served", async () => {
 });
 
 test("burst traffic is rate-limited (429) rather than served", async () => {
+  // One over the three requests asserted below: the helper's login (issue #9)
+  // is itself an /api request and consumes a slot before the loop starts.
   const server = await startServer({
-    RATE_LIMIT_MAX: "3",
+    RATE_LIMIT_MAX: "4",
     RATE_LIMIT_WINDOW_MS: String(60 * 1000),
   });
   servers.push(server);

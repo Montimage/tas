@@ -44,6 +44,9 @@ class ApiError extends Error {
 const badRequest = (message, details) =>
   new ApiError(400, message || "Invalid request", { details });
 
+/** The caller has not proved who it is (or the proof it had has expired). */
+const unauthorized = (message) => new ApiError(401, message || "Unauthorized");
+
 /** The caller may not have what it asked for. */
 const forbidden = (message) => new ApiError(403, message || "Forbidden");
 
@@ -265,6 +268,7 @@ const apiNotFound = (req, res, next) => next(notFound("Not found"));
 module.exports = {
   ApiError,
   badRequest,
+  unauthorized,
   forbidden,
   notFound,
   conflict,

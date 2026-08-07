@@ -166,3 +166,11 @@ export const requestOriginalEvents = createAction('REQUEST_ORIGINAL_EVENTS');
 export const setOriginalEvents = createAction('SET_ORIGINAL_EVENTS');
 export const requestNewEvents = createAction('REQUEST_NEW_EVENTS');
 export const setNewEvents = createAction('SET_NEW_EVENTS');
+
+// Authentication
+export const checkSession = createAction('CHECK_SESSION');
+export const setSession = createAction('SET_SESSION');
+export const login = createAction('LOGIN');
+export const setLoginError = createAction('SET_LOGIN_ERROR');
+export const logout = createAction('LOGOUT');
+export const sessionExpired = createAction('SESSION_EXPIRED');

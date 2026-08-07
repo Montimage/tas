@@ -1,3 +1,4 @@
+var crypto = require('crypto');
 var dotenv = require('dotenv');
 var fs = require('fs');
 var path = require('path');
@@ -23,8 +24,76 @@ var SECURITY_DEFAULTS = {
   rateLimitMax: 1000, // requests per window per client
   corsAllowedOrigins: [], // empty = same-origin only
   cspReportOnly: true, // report violations, do not block, until observed clean
-  cspReportUri: '' // empty = browsers report to the console only
+  cspReportUri: '', // empty = browsers report to the console only
+  authAdminUsername: 'admin', // the single operator account
+  authAdminPassword: '', // plaintext bootstrap; hashed and erased by createCredential
+  authAdminPasswordHash: '', // preferred: a `scrypt$...` value from hashPassword
+  sessionIdleTtlMs: 60 * 60 * 1000, // 1 hour of inactivity ends a session
+  sessionAbsoluteTtlMs: 12 * 60 * 60 * 1000, // no session outlives 12 hours
+  sessionMaxRecords: 1000, // hard cap on the session table; oldest is evicted
+  // Plain HTTP on loopback behind a TLS-terminating reverse proxy is the
+  // documented deployment baseline, and a `Secure` cookie is simply never sent
+  // over such a connection - hard-coding it on would make the shipped
+  // `docker run` unable to log in at all. Operators whose TLS reaches the
+  // application itself must set SESSION_COOKIE_SECURE=true; the README says so.
+  sessionCookieSecure: false,
+  authTrustProxyHeader: false, // identity delegation is opt-in, and off by default
+  authProxyUserHeader: 'x-forwarded-user',
+  authTrustedProxies: [], // empty = delegation stays off, whatever the flag says
+  authLoginRateLimitWindowMs: 15 * 60 * 1000,
+  authLoginRateLimitMax: 10 // failed logins per window per client
 };
+
+/**
+ * Emitted once per process, so a restart loop does not bury the rest of the log.
+ */
+var warnedAboutSessionSecret = false;
+
+/**
+ * Read the secret the session cookie is signed with.
+ *
+ * There is deliberately no default value. A hardcoded fallback would ship in
+ * the image, be identical in every deployment, and be readable by anyone with
+ * the source - which is to say it would let anyone mint a valid session cookie.
+ *
+ * Refusing to start instead would turn a missing hardening knob into an outage
+ * for every existing deployment, container healthcheck and smoke test that has
+ * never heard of this setting. An ephemeral per-process secret is the fail-safe
+ * middle: it cannot be guessed, it is never shared, it degrades only in that
+ * sessions do not survive a restart - and it says so, loudly, at startup. The
+ * value itself is never logged.
+ *
+ * @param {String} configured Raw configuration value
+ * @returns {String} The secret to sign session cookies with
+ */
+function resolveSessionSecret(configured) {
+  var secret = String(configured || '').trim();
+  if (secret !== '') {
+    return secret;
+  }
+  if (!warnedAboutSessionSecret) {
+    warnedAboutSessionSecret = true;
+    console.error('[AUTH] SESSION_SECRET is not set — generated an ephemeral secret; all sessions will be invalidated when this process restarts. Set SESSION_SECRET in production.');
+  }
+  return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * Split a comma/whitespace separated list into trimmed, non-empty entries.
+ * @param {String} value Raw configuration value
+ * @returns {String[]} The entries
+ */
+function normalizeList(value) {
+  if (!value) {
+    return [];
+  }
+  return value
+    .split(/[,\s]+/)
+    .map(function (entry) {
+      return entry.trim();
+    })
+    .filter(Boolean);
+}
 
 /**
  * Split a comma/whitespace separated origin list into normalised origins.
@@ -138,7 +207,33 @@ function loadConfig(options) {
     rateLimitMax: Number(value('RATE_LIMIT_MAX')) || SECURITY_DEFAULTS.rateLimitMax,
     corsAllowedOrigins: normalizeOrigins(value('CORS_ALLOWED_ORIGINS')),
     cspReportOnly: parseBoolean(value('CSP_REPORT_ONLY'), SECURITY_DEFAULTS.cspReportOnly),
-    cspReportUri: parseReportUri(value('CSP_REPORT_URI') || SECURITY_DEFAULTS.cspReportUri)
+    cspReportUri: parseReportUri(value('CSP_REPORT_URI') || SECURITY_DEFAULTS.cspReportUri),
+    authAdminUsername: value('AUTH_ADMIN_USERNAME') || SECURITY_DEFAULTS.authAdminUsername,
+    authAdminPassword: value('AUTH_ADMIN_PASSWORD') || SECURITY_DEFAULTS.authAdminPassword,
+    authAdminPasswordHash:
+      value('AUTH_ADMIN_PASSWORD_HASH') || SECURITY_DEFAULTS.authAdminPasswordHash,
+    sessionSecret: resolveSessionSecret(value('SESSION_SECRET')),
+    sessionIdleTtlMs: Number(value('SESSION_TTL_MS')) || SECURITY_DEFAULTS.sessionIdleTtlMs,
+    sessionAbsoluteTtlMs:
+      Number(value('SESSION_ABSOLUTE_TTL_MS')) || SECURITY_DEFAULTS.sessionAbsoluteTtlMs,
+    sessionMaxRecords:
+      Number(value('SESSION_MAX_RECORDS')) || SECURITY_DEFAULTS.sessionMaxRecords,
+    sessionCookieSecure: parseBoolean(
+      value('SESSION_COOKIE_SECURE'),
+      SECURITY_DEFAULTS.sessionCookieSecure
+    ),
+    authTrustProxyHeader: parseBoolean(
+      value('AUTH_TRUST_PROXY_HEADER'),
+      SECURITY_DEFAULTS.authTrustProxyHeader
+    ),
+    authProxyUserHeader:
+      value('AUTH_PROXY_USER_HEADER') || SECURITY_DEFAULTS.authProxyUserHeader,
+    authTrustedProxies: normalizeList(value('AUTH_TRUSTED_PROXIES')),
+    authLoginRateLimitWindowMs:
+      Number(value('AUTH_LOGIN_RATE_LIMIT_WINDOW_MS')) ||
+      SECURITY_DEFAULTS.authLoginRateLimitWindowMs,
+    authLoginRateLimitMax:
+      Number(value('AUTH_LOGIN_RATE_LIMIT_MAX')) || SECURITY_DEFAULTS.authLoginRateLimitMax
   });
 }
 

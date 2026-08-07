@@ -56,13 +56,18 @@ test('cross-origin mutating requests from unlisted origins are rejected with 403
 test('explicitly allowed origins receive CORS headers and pass', async function () {
   var ctx = await startApp({ CORS_ALLOWED_ORIGINS: 'https://ops.example.com' });
   try {
+    // The API requires a session (issue #9); the CORS decision is what is under
+    // test here, so the request is made as an authenticated client would.
     var res = await fetch(ctx.base + '/api/devops/status', {
-      headers: { Origin: 'https://ops.example.com' }
+      headers: Object.assign({ Origin: 'https://ops.example.com' }, ctx.authHeaders)
     });
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.headers.get('Access-Control-Allow-Origin'), 'https://ops.example.com');
     assert.strictEqual(res.headers.get('Access-Control-Allow-Methods'), 'GET, POST, DELETE, OPTIONS');
-    assert.strictEqual(res.headers.get('Access-Control-Allow-Headers'), 'Content-Type');
+    // X-CSRF-Token joined the allowed headers with authentication: a
+    // cross-origin dashboard cannot send it otherwise, and every state-changing
+    // request carries it.
+    assert.strictEqual(res.headers.get('Access-Control-Allow-Headers'), 'Content-Type, X-CSRF-Token');
     assert.strictEqual(res.headers.get('Access-Control-Allow-Credentials'), 'true');
   } finally {
     ctx.server.close();
@@ -109,7 +114,7 @@ test('the wildcard origin is never emitted', async function () {
   var ctx = await startApp({ CORS_ALLOWED_ORIGINS: 'https://ops.example.com' });
   try {
     var res = await fetch(ctx.base + '/api/devops/status', {
-      headers: { Origin: 'https://ops.example.com' }
+      headers: Object.assign({ Origin: 'https://ops.example.com' }, ctx.authHeaders)
     });
     assert.notStrictEqual(res.headers.get('Access-Control-Allow-Origin'), '*');
     assert.notStrictEqual(res.headers.get('Access-Control-Allow-Origin'), null);

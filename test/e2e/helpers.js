@@ -26,6 +26,29 @@ const allowedOrigin = "http://allowed.example";
 const hostileOrigin = "http://evil.example";
 
 /**
+ * Credentials every spawned instance in this directory boots with.
+ *
+ * The API is closed by default (issue #9), so a suite that drives a real
+ * instance needs an account. Passed through the child's environment and used by
+ * `startServer` to log in once, so the existing assertions keep driving the API
+ * the way they always have.
+ */
+const testCredentials = {
+  AUTH_ADMIN_USERNAME: "e2e-admin",
+  AUTH_ADMIN_PASSWORD: "e2e-password",
+  SESSION_SECRET: "e2e-session-secret",
+};
+
+/**
+ * Session headers per running instance, keyed by base URL.
+ *
+ * `request` attaches them by default so every call site written before the API
+ * was closed keeps working unchanged; pass `{ anonymous: true }` to send a
+ * request with no credentials.
+ */
+const sessions = new Map();
+
+/**
  * Make an HTTP request against a running instance.
  * @param {String} baseUrl e.g. http://127.0.0.1:3004
  * @param {String} method  HTTP method
@@ -33,12 +56,14 @@ const hostileOrigin = "http://evil.example";
  * @param {Object} [options]
  * @param {Object} [options.body] JSON body to send
  * @param {Object} [options.headers] Extra request headers (e.g. Origin)
+ * @param {Boolean} [options.anonymous] Send no session credentials
  * @returns {Promise<{status:Number,headers:Object,raw:String,body:Object|null}>}
  */
-function request(baseUrl, method, requestPath, { body, headers = {} } = {}) {
+function request(baseUrl, method, requestPath, { body, headers = {}, anonymous = false } = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(baseUrl);
     const data = body ? JSON.stringify(body) : null;
+    const auth = anonymous ? {} : sessions.get(baseUrl) || {};
     const req = http.request(
       {
         hostname: u.hostname,
@@ -47,6 +72,7 @@ function request(baseUrl, method, requestPath, { body, headers = {} } = {}) {
         method,
         headers: {
           ...(data ? { "Content-Type": "application/json" } : {}),
+          ...auth,
           ...headers,
         },
       },
@@ -78,6 +104,31 @@ function request(baseUrl, method, requestPath, { body, headers = {} } = {}) {
   });
 }
 
+/**
+ * Log in against a running instance and return the headers every later request
+ * needs: the session cookie and the CSRF token bound to it.
+ * @param {String} baseUrl Instance base URL
+ * @param {Object} credentials {username, password}
+ * @returns {Promise<{cookie:String,csrfToken:String,authHeaders:Object}>}
+ */
+async function logIn(baseUrl, credentials) {
+  const res = await request(baseUrl, "POST", "/api/auth/login", {
+    anonymous: true,
+    body: { username: credentials.username, password: credentials.password },
+  });
+  if (res.status !== 200 || !res.body || !res.body.csrfToken) {
+    throw new Error(`e2e login failed (${res.status}): ${res.raw}`);
+  }
+  const cookie = (res.headers["set-cookie"] || [])
+    .map((value) => value.split(";")[0])
+    .join("; ");
+  return {
+    cookie,
+    csrfToken: res.body.csrfToken,
+    authHeaders: { Cookie: cookie, "X-CSRF-Token": res.body.csrfToken },
+  };
+}
+
 /** Return a currently-free localhost port (small race window, fine for E2E). */
 function getFreePort() {
   return new Promise((resolve, reject) => {
@@ -106,6 +157,7 @@ async function startServer(env = {}) {
       ...process.env,
       SERVER_HOST: "127.0.0.1",
       SERVER_PORT: String(seedPort),
+      ...testCredentials,
       ...env,
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -135,10 +187,18 @@ async function startServer(env = {}) {
       try {
         const res = await request(baseUrl, "GET", "/");
         if (res.status >= 200 && res.status < 500) {
+          const session = await logIn(baseUrl, {
+            username: env.AUTH_ADMIN_USERNAME || testCredentials.AUTH_ADMIN_USERNAME,
+            password: env.AUTH_ADMIN_PASSWORD || testCredentials.AUTH_ADMIN_PASSWORD,
+          });
+          sessions.set(baseUrl, session.authHeaders);
           return {
             baseUrl,
             port,
             child,
+            cookie: session.cookie,
+            csrfToken: session.csrfToken,
+            authHeaders: session.authHeaders,
             stop: () =>
               new Promise((resolveStop) => {
                 if (child.exitCode !== null) return resolveStop();
@@ -248,6 +308,8 @@ module.exports = {
   hostileOrigin,
   request,
   startServer,
+  logIn,
+  testCredentials,
   unique,
   inModelsDir,
   inRecordersDir,
