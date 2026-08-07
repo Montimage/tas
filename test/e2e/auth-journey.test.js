@@ -33,7 +33,7 @@ const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { execFileSync } = require("node:child_process");
+const { createHash } = require("node:crypto");
 
 const { startApp } = require("../helpers/start-app");
 const { collectRoutes } = require("../helpers/route-table");
@@ -133,18 +133,50 @@ after(async () => {
   }
 });
 
+/**
+ * Structurally distinct mounts, one per router, that the walk must find.
+ *
+ * A bare count cannot tell "the API shrank by four endpoints" from "a whole
+ * router stopped being mounted" - and an unmounted router is the regression
+ * that would make the enumeration below report a clean bill of health for
+ * endpoints it never probed. These anchors span the routers independently, so
+ * losing any one of them is named rather than absorbed into the total.
+ */
+const REQUIRED_API_PAIRS = [
+  "GET /api/health",
+  "POST /api/auth/login",
+  "GET /api/models",
+  "POST /api/test-cases",
+  "GET /api/reports",
+  "GET /api/simulation/status",
+  "POST /api/data-storage",
+  "GET /api/devops",
+];
+
 test("the live route table yields a plausible number of API endpoints", () => {
   // Without this, a walker that stopped finding routes would make every
   // enumeration below pass vacuously - the failure mode that matters most here,
   // because "no endpoint was reachable anonymously" is also what a broken walk
   // reports.
   assert.ok(
-    apiRouteCount > 20,
-    `the walk must find the real route table, found ${apiRouteCount} routes`
+    apiRouteCount >= 55,
+    `the walk must find the real route table: it currently holds 62 /api routes, ` +
+      `and this walk found only ${apiRouteCount}. A drop of this size means a ` +
+      "router stopped being mounted, not that the API shrank - fix the mount " +
+      "(or, if the removal was deliberate and reviewed, lower this floor)"
   );
   assert.ok(
     apiPairs.length >= apiRouteCount,
     `every route must expand to at least one method, got ${apiPairs.length} pairs`
+  );
+
+  const enumerated = apiPairs.map((pair) => `${pair.method} ${pair.path}`);
+  const missing = REQUIRED_API_PAIRS.filter((pair) => !enumerated.includes(pair));
+  assert.deepEqual(
+    missing,
+    [],
+    `these mounts are absent from the walk, so the router carrying each of them ` +
+      `is no longer mounted:\n${missing.join("\n")}`
   );
 });
 
@@ -708,78 +740,65 @@ test("the database-unavailable refusal is a documented 503 that discloses nothin
 // ---------------------------------------------------------------------------
 
 /**
- * The Phase 0 end-to-end suite (issue #8) and the helper it is built on.
+ * The Phase 0 end-to-end suite (issue #8) and the helper it is built on, pinned
+ * by content digest.
  *
- * The actual proof that Phase 0 still passes is the full `npm test` run, which
- * executes these files unchanged alongside this one. What is asserted here is
- * the other half: that they were not quietly edited to make Phase 1 green. A
- * future change to this suite that weakens the earlier gate fails loudly.
+ * The contract these digests express: these four files ARE the Phase 0 gate.
+ * Changing any of them must be a deliberate, reviewed act that also updates the
+ * digest below in the same change - so the edit is visible in the diff and has
+ * to be argued for, rather than slipping through as a line removed from a file
+ * nobody re-read. This test exists so that a future edit to the Phase 1 suite
+ * cannot silently weaken the Phase 0 one.
+ *
+ * The actual proof that Phase 0 still PASSES is the full `npm test` run, which
+ * executes these files unchanged alongside this one. This test asserts only the
+ * other half: that they are still the files that were reviewed.
+ *
+ * Deliberately git-free. An earlier version resolved a fork point with
+ * `git merge-base` and diffed against it, which does not gate in CI: the
+ * workflow checks out at depth 1, so no base ref exists, the comparison cannot
+ * be made, and the run goes green having asserted nothing. A digest of the
+ * bytes on disk needs no repository, no network and no environment, so it
+ * always runs and always means the same thing.
+ *
+ * Line endings are normalised to LF before hashing so a CRLF checkout on
+ * Windows does not report a difference that is not there.
  */
-const PHASE_0_FILES = [
-  "test/e2e/security-suite.test.js",
-  "test/e2e/limits.test.js",
-  "test/e2e/container-nonroot.test.js",
-  "test/e2e/helpers.js",
-];
-
-/** The refs this branch may have been cut from, most specific first. */
-const BASE_REFS = ["origin/master", "master", "origin/main", "main"];
-
-/**
- * The commit this branch forked from.
- *
- * Comparing against `HEAD` would be worthless: on any clean checkout - which is
- * every CI run - the working tree equals HEAD by definition, so the test would
- * pass whatever the branch did to the Phase 0 files. The fork point is what
- * makes an edit made *inside this pull request* visible.
- *
- * @returns {String|null} The base commit, or null where none can be resolved
- *   (a shallow clone or a fork with no base ref fetched)
- */
-const resolveBaseCommit = () => {
-  for (const ref of BASE_REFS) {
-    try {
-      const base = execFileSync("git", ["merge-base", "HEAD", ref], {
-        cwd: repoRoot,
-        stdio: ["ignore", "pipe", "ignore"],
-      })
-        .toString()
-        .trim();
-      if (base.length > 0) return base;
-    } catch (_) {
-      // That ref is absent here; try the next one.
-    }
-  }
-  return null;
+const PHASE_0_DIGESTS = {
+  "test/e2e/security-suite.test.js":
+    "e4771a52ea818735f491515c18589e17feb34bdb8ba22ef8ad7b6fd1ca91c5cb",
+  "test/e2e/limits.test.js": "50843edc10bed9cf6572caa79a3a1642468a9d4acfcaca27ebd50094b3dc5153",
+  "test/e2e/container-nonroot.test.js":
+    "a9da0cd421cc3fcbcf0178a380b26e6c91d7f377a2a01bbd0b18836692bf42d6",
+  "test/e2e/helpers.js": "6e90734d5059a64aa4a9ef7dab6a15a0cb63b315e19208ff76c24374aa0ded69",
 };
 
-test("the Phase 0 end-to-end suite is byte-identical to the base branch's content", (t) => {
-  const base = resolveBaseCommit();
-  if (base === null) {
-    // Never a silent pass: the reason the gate could not run is stated.
-    return t.skip(
-      `no base commit could be resolved (tried ${BASE_REFS.join(", ")}), so the ` +
-        "Phase 0 files cannot be compared against the branch point"
-    );
-  }
+/**
+ * The SHA-256 of a file's content with line endings normalised to LF.
+ * @param {String} file Repo-relative path
+ * @returns {String} Lowercase hex digest
+ */
+const phase0Digest = (file) =>
+  createHash("sha256")
+    .update(fs.readFileSync(path.resolve(repoRoot, file), "utf8").replace(/\r\n/g, "\n"))
+    .digest("hex");
 
-  for (const file of PHASE_0_FILES) {
-    let committed;
-    try {
-      committed = execFileSync("git", ["show", `${base}:${file}`], {
-        cwd: repoRoot,
-        maxBuffer: 8 * 1024 * 1024,
-      });
-    } catch (err) {
-      return t.skip(
-        `${file} is not in the base commit ${base} yet, so there is nothing to compare: ${err.message}`
-      );
+test("the Phase 0 end-to-end suite is byte-identical to its reviewed content", () => {
+  // Collected rather than thrown on the first mismatch: a reviewer has to see
+  // every Phase 0 file that moved, not just the first one in the list.
+  const drifted = [];
+  for (const [file, expected] of Object.entries(PHASE_0_DIGESTS)) {
+    const actual = phase0Digest(file);
+    if (actual !== expected) {
+      drifted.push(`${file}\n  expected sha256 ${expected}\n  actual   sha256 ${actual}`);
     }
-    const working = fs.readFileSync(path.resolve(repoRoot, file));
-    assert.ok(
-      Buffer.compare(committed, working) === 0,
-      `${file} differs from its content at the base commit ${base} - the Phase 0 ` +
-        "gate must not be weakened to make the Phase 1 suite pass"
-    );
   }
+  assert.deepEqual(
+    drifted,
+    [],
+    "the Phase 0 gate must not be weakened to make the Phase 1 suite pass - " +
+      "these files no longer match their reviewed content. If the change is " +
+      "deliberate, update PHASE_0_DIGESTS in this file in the same commit:\n" +
+      drifted.join("\n")
+  );
 });
