@@ -81,7 +81,13 @@ const DISCLOSURES = [
   "mongodb+srv://",
   "Mongoose",
   "MongoServerError",
+  // The two shapes an unreachable connector actually fails with: a name that
+  // will not resolve (`EAI_AGAIN mongodb`) and a port nothing is listening on
+  // (`ECONNREFUSED 127.0.0.1:27017`). Both name the host the server was
+  // configured with, which is the disclosure this list exists to catch.
   "EAI_AGAIN",
+  "ECONNREFUSED",
+  "27017",
 ];
 
 // ---------------------------------------------------------------------------
@@ -147,22 +153,36 @@ after(async () => {
 });
 
 /**
- * Structurally distinct mounts, one per router, that the walk must find.
+ * One anchor per `/api` mount in `src/server/app.js`, that the walk must find.
  *
  * A bare count cannot tell "the API shrank by four endpoints" from "a whole
  * router stopped being mounted" - and an unmounted router is the regression
  * that would make the enumeration below report a clean bill of health for
- * endpoints it never probed. These anchors span the routers independently, so
- * losing any one of them is named rather than absorbed into the total.
+ * endpoints it never probed. Unmounting one router leaves the total well above
+ * any floor worth setting (the largest router here is 8 routes of 62), so the
+ * floor cannot be what catches it.
+ *
+ * Every mount is anchored, deliberately: an anchor set that covered only some
+ * of them would leave the uncovered ones able to disappear silently, which is
+ * the same hole one level down. `app.use('/api', ...)` is mounted three times
+ * for `logs/*`, and each mount is anchored separately, because they are three
+ * independent registrations that can be lost independently.
  */
 const REQUIRED_API_PAIRS = [
   "GET /api/health",
   "POST /api/auth/login",
   "GET /api/models",
+  "GET /api/data-recorders/status",
+  "POST /api/data-storage",
+  "GET /api/logs/data-recorders",
+  "GET /api/logs/simulations",
+  "GET /api/logs/test-campaigns",
+  "GET /api/data-sets",
   "POST /api/test-cases",
+  "GET /api/test-campaigns",
+  "GET /api/events",
   "GET /api/reports",
   "GET /api/simulation/status",
-  "POST /api/data-storage",
   "GET /api/devops",
 ];
 
@@ -175,10 +195,10 @@ test("the live route table yields a plausible number of API endpoints", () => {
     apiRouteCount >= 55,
     `the walk must find the real route table: it currently holds 62 /api routes, ` +
       `and this walk found only ${apiRouteCount}. This floor catches a walker ` +
-      "that stopped finding routes; a router that stopped being MOUNTED is " +
-      "caught by the anchors below, which name it rather than leaving it to be " +
-      "absorbed into a total. If a removal was deliberate and reviewed, lower " +
-      "this floor in the same change"
+      "that stopped finding routes at all; a router that stopped being MOUNTED " +
+      "is caught by the per-mount anchors below, which name it rather than " +
+      "leaving it to be absorbed into a total. If a removal was deliberate and " +
+      "reviewed, lower this floor in the same change"
   );
   assert.ok(
     apiPairs.length >= apiRouteCount,
@@ -341,6 +361,11 @@ test("journey step 4: an authenticated caller is authorised to run a simulation"
   // mean the journey's central step never happened. An accepted-status set wide
   // enough to absorb those would let this test stay green with no simulation
   // ever running, which is exactly the vacuity this suite exists to prevent.
+  //
+  // The run stays running until it is stopped because step 2 creates the
+  // topology with no devices, and a run only returns to OFFLINE when a device
+  // reports finished. Giving step 2 a real device would make the `isRunning`
+  // assertions below timing-dependent.
   assert.notEqual(start.status, 401, `an authenticated caller must not be refused: ${start.raw}`);
   assert.notEqual(start.status, 403, `a correctly tokened start must not be refused: ${start.raw}`);
   assert.equal(start.status, 200, `the run must start, not merely be authorised: ${start.raw}`);
