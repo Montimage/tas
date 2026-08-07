@@ -109,10 +109,13 @@ before(async () => {
   );
   apiRouteCount = apiRoutes.length;
   for (const route of apiRoutes) {
-    for (const method of Object.keys(route.methods)) {
-      // Express records `_all` as a pseudo-method for `router.all(...)`; it is
-      // not something a client can send.
-      if (method === "_all") continue;
+    // Express records `_all` as a pseudo-method for `router.all(...)`; it is not
+    // something a client can send. Dropping it would drop the whole route from
+    // the enumeration, so it is expanded into a concrete GET probe instead - a
+    // `router.all(...)` endpoint added later is then still covered.
+    const methods = Object.keys(route.methods).filter((method) => method !== "_all");
+    if (route.methods._all && !methods.includes("get")) methods.push("get");
+    for (const method of methods) {
       apiPairs.push({
         method: method.toUpperCase(),
         // The gate matches a concrete request path at runtime, so the
@@ -367,8 +370,12 @@ test("the journey leaves the topology directory exactly as it found it", async (
 // ---------------------------------------------------------------------------
 
 test("a session that has been idle past SESSION_TTL_MS is refused", async () => {
+  // The TTL has to outlast spawning a process and issuing the first request, or
+  // a loaded runner turns the pre-expiry assertion red for reasons that have
+  // nothing to do with session expiry. The property under test - that an idle
+  // session past its TTL is refused - is unchanged by the wider window.
   const expiring = await startServer({
-    SESSION_TTL_MS: "60",
+    SESSION_TTL_MS: "500",
     RATE_LIMIT_MAX: NO_RATE_LIMIT,
   });
   try {
@@ -378,7 +385,7 @@ test("a session that has been idle past SESSION_TTL_MS is refused", async () => 
     });
     assert.equal(before.status, 200, `the fresh session must be served: ${before.raw}`);
 
-    await sleep(250);
+    await sleep(1200);
 
     const after = await request(expiring.baseUrl, "GET", "/api/models", {
       anonymous: true,
@@ -715,30 +722,64 @@ const PHASE_0_FILES = [
   "test/e2e/helpers.js",
 ];
 
-test("the Phase 0 end-to-end suite is byte-identical to its committed content", (t) => {
-  let head;
-  try {
-    head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot }).toString().trim();
-  } catch (err) {
-    return t.skip(`git is not available here, so the Phase 0 files cannot be compared: ${err.message}`);
+/** The refs this branch may have been cut from, most specific first. */
+const BASE_REFS = ["origin/master", "master", "origin/main", "main"];
+
+/**
+ * The commit this branch forked from.
+ *
+ * Comparing against `HEAD` would be worthless: on any clean checkout - which is
+ * every CI run - the working tree equals HEAD by definition, so the test would
+ * pass whatever the branch did to the Phase 0 files. The fork point is what
+ * makes an edit made *inside this pull request* visible.
+ *
+ * @returns {String|null} The base commit, or null where none can be resolved
+ *   (a shallow clone or a fork with no base ref fetched)
+ */
+const resolveBaseCommit = () => {
+  for (const ref of BASE_REFS) {
+    try {
+      const base = execFileSync("git", ["merge-base", "HEAD", ref], {
+        cwd: repoRoot,
+        stdio: ["ignore", "pipe", "ignore"],
+      })
+        .toString()
+        .trim();
+      if (base.length > 0) return base;
+    } catch (_) {
+      // That ref is absent here; try the next one.
+    }
   }
-  assert.ok(head.length > 0, "HEAD must resolve to a commit");
+  return null;
+};
+
+test("the Phase 0 end-to-end suite is byte-identical to the base branch's content", (t) => {
+  const base = resolveBaseCommit();
+  if (base === null) {
+    // Never a silent pass: the reason the gate could not run is stated.
+    return t.skip(
+      `no base commit could be resolved (tried ${BASE_REFS.join(", ")}), so the ` +
+        "Phase 0 files cannot be compared against the branch point"
+    );
+  }
 
   for (const file of PHASE_0_FILES) {
     let committed;
     try {
-      committed = execFileSync("git", ["show", `HEAD:${file}`], {
+      committed = execFileSync("git", ["show", `${base}:${file}`], {
         cwd: repoRoot,
         maxBuffer: 8 * 1024 * 1024,
       });
     } catch (err) {
-      return t.skip(`${file} is not in HEAD yet, so there is nothing to compare: ${err.message}`);
+      return t.skip(
+        `${file} is not in the base commit ${base} yet, so there is nothing to compare: ${err.message}`
+      );
     }
     const working = fs.readFileSync(path.resolve(repoRoot, file));
     assert.ok(
       Buffer.compare(committed, working) === 0,
-      `${file} differs from its committed content - the Phase 0 gate must not be ` +
-        "weakened to make the Phase 1 suite pass"
+      `${file} differs from its content at the base commit ${base} - the Phase 0 ` +
+        "gate must not be weakened to make the Phase 1 suite pass"
     );
   }
 });
