@@ -57,8 +57,16 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * Text that must never appear in a response body: this checkout's own location
  * (derived, so the check still means something wherever CI puts it), the shape
- * of a raw fs error, and the shape of a stack trace. Mirrors the canary list in
- * `test/http-status.test.js`.
+ * of a raw fs error, and the shape of a stack trace.
+ *
+ * The first eight are the canary list from `test/http-status.test.js`, which
+ * was written against the filesystem-backed routes. This suite additionally
+ * drives the DATABASE-backed ones and asserts the shape of the 503 they answer
+ * with, and a Mongoose connection failure carries its own disclosures the fs
+ * list has no entry for: the connection string (host, port and, where one is
+ * configured, credentials) and the error class names that name the driver. A
+ * regression that echoed the raw connector error into the 503 body would pass
+ * every fs canary, so the database ones are added here.
  */
 const DISCLOSURES = [
   repoRoot,
@@ -69,6 +77,11 @@ const DISCLOSURES = [
   "at Function.",
   "node_modules",
   "node:internal",
+  "mongodb://",
+  "mongodb+srv://",
+  "Mongoose",
+  "MongoServerError",
+  "EAI_AGAIN",
 ];
 
 // ---------------------------------------------------------------------------
@@ -161,9 +174,11 @@ test("the live route table yields a plausible number of API endpoints", () => {
   assert.ok(
     apiRouteCount >= 55,
     `the walk must find the real route table: it currently holds 62 /api routes, ` +
-      `and this walk found only ${apiRouteCount}. A drop of this size means a ` +
-      "router stopped being mounted, not that the API shrank - fix the mount " +
-      "(or, if the removal was deliberate and reviewed, lower this floor)"
+      `and this walk found only ${apiRouteCount}. This floor catches a walker ` +
+      "that stopped finding routes; a router that stopped being MOUNTED is " +
+      "caught by the anchors below, which name it rather than leaving it to be " +
+      "absorbed into a total. If a removal was deliberate and reviewed, lower " +
+      "this floor in the same change"
   );
   assert.ok(
     apiPairs.length >= apiRouteCount,
@@ -319,20 +334,40 @@ test("journey step 4: an authenticated caller is authorised to run a simulation"
   const start = await request(journey.baseUrl, "POST", "/api/simulation/start", {
     body: { modelFileName: journeyFileName },
   });
-  // Authorisation is what this step asserts. Whether the run itself completes
-  // depends on a reachable data storage, which this suite does not provision -
-  // so the accepted statuses are the documented ones the route can answer
-  // without one, and 401/403 is a failure however the run went.
+  // The run has to actually START, not merely be authorised. The route reads
+  // its data-storage configuration off disk and registers the run without
+  // needing a reachable database, so 200 is the outcome here - a 409 (topology
+  // already in use, impossible for a name minted for this run) or a 503 would
+  // mean the journey's central step never happened. An accepted-status set wide
+  // enough to absorb those would let this test stay green with no simulation
+  // ever running, which is exactly the vacuity this suite exists to prevent.
   assert.notEqual(start.status, 401, `an authenticated caller must not be refused: ${start.raw}`);
   assert.notEqual(start.status, 403, `a correctly tokened start must not be refused: ${start.raw}`);
-  assert.ok(
-    [200, 409, 503].includes(start.status),
-    `expected a documented start outcome, got ${start.status}: ${start.raw}`
+  assert.equal(start.status, 200, `the run must start, not merely be authorised: ${start.raw}`);
+
+  // The registry entry is the evidence the run exists; the status code alone is
+  // not, because the route answers before the registry is consulted.
+  const started = Object.values(start.body.simulationStatus || {}).find(
+    (entry) => entry && entry.model === journeyName
   );
+  assert.ok(started, `the run must be registered under ${journeyName}: ${start.raw}`);
+  assert.equal(
+    started.modelFileName,
+    journeyFileName,
+    `the registered run must name the topology it was started from: ${start.raw}`
+  );
+  assert.equal(started.isRunning, true, `the registered run must be running: ${start.raw}`);
 
   const status = await request(journey.baseUrl, "GET", "/api/simulation/status");
   assert.equal(status.status, 200, `the simulation status must be readable: ${status.raw}`);
-  assert.ok(status.body.simulationStatus, `expected a status map: ${status.raw}`);
+  // `assert.ok(status.body.simulationStatus)` would be a tautology: the route
+  // sends an empty object when nothing ran, and `{}` is truthy. The run this
+  // journey started has to be in it.
+  const reported = Object.values(status.body.simulationStatus || {}).find(
+    (entry) => entry && entry.model === journeyName
+  );
+  assert.ok(reported, `the status map must report the run this journey started: ${status.raw}`);
+  assert.equal(reported.isRunning, true, `the run must be reported as running: ${status.raw}`);
 });
 
 test("journey step 5: the report endpoint is authorised, and answers 503 when no database is reachable", async () => {
@@ -369,6 +404,21 @@ test("journey step 6: stopping the simulation is accepted with the CSRF token", 
   });
   assert.notEqual(res.status, 403, `a correctly tokened stop must not be refused: ${res.raw}`);
   assert.equal(res.status, 200, `stopping the run must succeed: ${res.raw}`);
+
+  // 200 on its own proves nothing about stopping: the route answers it whether
+  // or not the topology names a live run. What proves the stop reached the
+  // registry is the run this journey started being marked stopped in the
+  // response the route sends back.
+  const stopped = Object.values(res.body.simulationStatus || {}).find(
+    (entry) => entry && entry.model === journeyName
+  );
+  assert.ok(stopped, `the stopped run must still be reported: ${res.raw}`);
+  assert.equal(stopped.isRunning, false, `the run must be marked stopped: ${res.raw}`);
+  assert.equal(
+    typeof stopped.endTime,
+    "number",
+    `a stopped run must carry the time it stopped: ${res.raw}`
+  );
 });
 
 test("journey step 7: logging out ends the session, and replaying its cookie fails", async () => {
