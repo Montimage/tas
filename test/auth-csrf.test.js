@@ -11,6 +11,7 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { startApp, TEST_CREDENTIALS } = require("./helpers/start-app");
 const { isMutatingSafeMethodPath } = require("../src/server/middleware/csrf");
+const { collectRoutes } = require("./helpers/route-table");
 
 const USERNAME = TEST_CREDENTIALS.AUTH_ADMIN_USERNAME;
 const PASSWORD = TEST_CREDENTIALS.AUTH_ADMIN_PASSWORD;
@@ -324,51 +325,6 @@ const READ_ONLY_SAFE_ROUTES = new Set([
   "/test-cases",
   "/test-cases/:testCaseId",
 ]);
-
-/**
- * Recover the path a layer was mounted at from the regexp Express compiled for
- * it. Express keeps no copy of the original string, and reading the live stack
- * is the only way to see what the guard actually sees: a source-text scan would
- * miss a computed path, a `router.route(...)`, a route registered outside
- * `src/server/routes/`, and every extra mount of a router mounted more than
- * once — each of which is a way for an unprotected route to ship green.
- *
- * @param {Object} layer An Express router-stack layer
- * @returns {String} The mount path, or "" for a layer that matches everything
- */
-function layerPath(layer) {
-  if (layer.regexp && layer.regexp.fast_slash) return "";
-  const source = String((layer.regexp && layer.regexp.source) || "");
-  const trimmed = source
-    .replace(/^\^/, "")
-    .replace(/\\\/\?\(\?=\\\/\|\$\)$/, "")
-    .replace(/\\\/\?\$$/, "")
-    .replace(/\$$/, "");
-  return trimmed.replace(/\\(.)/g, "$1");
-}
-
-/**
- * Walk a mounted Express application and yield every route it can reach.
- *
- * @param {Object} stack A router stack
- * @param {String} prefix The path this stack is mounted at
- * @returns {Array<{path: String, methods: Object}>} The routes found
- */
-function collectRoutes(stack, prefix) {
-  const found = [];
-  for (const layer of stack || []) {
-    if (layer.route) {
-      const routePath = layer.route.path === "/" ? "" : layer.route.path;
-      found.push({
-        path: (prefix + routePath).replace(/\/+$/, "") || "/",
-        methods: layer.route.methods || {},
-      });
-    } else if (layer.handle && layer.handle.stack) {
-      found.push(...collectRoutes(layer.handle.stack, prefix + layerPath(layer)));
-    }
-  }
-  return found;
-}
 
 test("every safe-method route under /api is classified read-only or token-bearing", async () => {
   // Boot the real application so the route table is the one the guard sees.
