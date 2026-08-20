@@ -30,6 +30,23 @@ cd tas/
 npm install
 ```
 
+### Build the dashboard
+
+The web dashboard under `src/client/` is built with Vite and emitted to
+`src/public/`, which the server serves at `/`. The compiled bundle is **not**
+committed (see issue #42) — build it after installing dependencies, and
+whenever the client source changes:
+
+```
+cd src/client
+npm install
+npm run build      # emits to ../public (i.e. src/public)
+```
+
+For local development with hot reloading, use `npm run dev` instead of
+`npm run build`. The published Docker image builds the dashboard automatically
+during `docker build`, so no manual step is needed there.
+
 ### Usage
 
 #### Start application

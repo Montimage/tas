@@ -15,6 +15,13 @@ RUN npm ci --omit=dev
 # Bundle app source
 COPY . .
 
+# Build the dashboard client (issue #42: the compiled bundle is no longer
+# committed, so it is produced here from src/client/ and emitted to src/public,
+# which the server serves). This keeps the deployed UI in lock-step with the
+# client source instead of a drifted committed artefact.
+RUN cd src/client && npm install && npm run build \
+    && echo 'Built dashboard client into src/public'
+
 # Copy supervisord.conf file
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
