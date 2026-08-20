@@ -40,6 +40,13 @@ const getDBClient = (callback, reload = false) => {
         return callback(err);
       } else {
         const { protocol, connConfig } = dataStorage;
+        // A malformed configuration (connConfig missing or not an object) must
+        // be reported as an unavailable database (503), not destructured and
+        // thrown as a TypeError. (F-BUG-002)
+        if (!connConfig || typeof connConfig !== 'object') {
+          console.error('[db-connector] data-storage configuration is missing connConfig');
+          return callback(new Error('data-storage configuration is missing connConfig'));
+        }
         if (protocol === 'MONGODB') {
           const { host, port, dbname, username, password, _options } = connConfig;
           console.log(`MongoDB configuration: ${JSON.stringify(connConfig)}`);
@@ -78,14 +85,21 @@ const getDataStorage = (callback, reload = false) => {
   return readJSONFile(dataStoragePath, (err, data) => {
     if (err) {
       console.error('[SERVER] reading data storage', err);
+      // The default MUST use the same nested { protocol, connConfig: {…} }
+      // shape as the committed data-storage.json, otherwise getDBClient
+      // destructures connConfig (undefined) and throws a TypeError inside this
+      // fs callback — an uncaught exception on the fresh-volume / first-run
+      // path instead of a clean 503. (F-BUG-002)
       const defaultDataStorage = {
         protocol: 'MONGODB',
-        host: 'localhost',
-        port: 27017,
-        username: null,
-        password: null,
-        dbname: null,
-        options: null,
+        connConfig: {
+          host: 'localhost',
+          port: 27017,
+          username: null,
+          password: null,
+          dbname: null,
+          options: null,
+        },
       };
       writeToFile(
         dataStoragePath,
