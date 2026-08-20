@@ -6,6 +6,7 @@
     "start": "NODE_ENV=production node src/server/app.js",
     "server": "nodemon src/server/app.js",
     "test": "node --test-concurrency=1 --test \"test/**/*.test.js\"",
+    "coverage": "node --test-concurrency=1 --experimental-test-coverage --test \"test/**/*.test.js\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
