@@ -1,5 +1,11 @@
 # TaS — Test and Simulation Enabler
 
+> **Two-manifest layout.** This file (`CLAUDE.md`) covers build commands, architecture, and hard rules. `AGENTS.md` complements it with subagent definitions for automated workflows. Together they let an agent or new contributor reach a running server from the repo alone.
+
+## Environment
+
+- **Node.js:** v24.11.1 (system default). The project has **no version pinning** — no `.nvmrc`, `.node-version`, or `engines` field in `package.json`. Use a compatible Node 18+ runtime.
+
 ## Critical Commands
 
 ```
