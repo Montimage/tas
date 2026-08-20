@@ -35,7 +35,7 @@ defect (F-BUG-001).
 
 - **`src/public/` is generated.** It is the build output of `src/client`. Never edit files
   here by hand — rebuild from `src/client/src` instead.
-- **`src/core/**/*.test.js` are NOT real tests.** They are ad-hoc scripts that open a live MongoDB and use no assertion framework. The `npm test` glob (`test/**/*.test.js`) never
+- **`src/core/**/_.test.js`are NOT real tests.** They are ad-hoc scripts that open a live MongoDB and use no assertion framework. The`npm test` glob (`test/\*\*/_.test.js`) never
   runs them. Do not treat them as coverage.
 - **Lint is currently inoperable.** `.eslintrc.json` extends `"airbnb"` which is not installed.
   `npm run lint` will fail with a config error. Do not assume lint passes.

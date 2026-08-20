@@ -9,39 +9,27 @@
  *
  * CI builds the image and passes TAS_IMAGE so the runtime assertion executes.
  */
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const { execFileSync } = require("node:child_process");
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 
-const dockerfile = path.resolve(__dirname, "../../Dockerfile");
+const dockerfile = path.resolve(__dirname, '../../Dockerfile');
 const image = process.env.TAS_IMAGE;
 
-test("Dockerfile runs the application as the unprivileged `node` user", () => {
-  const content = fs.readFileSync(dockerfile, "utf8");
-  assert.match(
-    content,
-    /^\s*USER\s+node\s*$/m,
-    "Dockerfile must declare USER node"
-  );
+test('Dockerfile runs the application as the unprivileged `node` user', () => {
+  const content = fs.readFileSync(dockerfile, 'utf8');
+  assert.match(content, /^\s*USER\s+node\s*$/m, 'Dockerfile must declare USER node');
 });
 
 test(
-  "built image runs its process as a non-root user",
-  { skip: !image && "TAS_IMAGE not set; runtime inspect skipped" },
+  'built image runs its process as a non-root user',
+  { skip: !image && 'TAS_IMAGE not set; runtime inspect skipped' },
   () => {
-    const user = execFileSync(
-      "docker",
-      ["inspect", "--format", "{{.Config.User}}", image],
-      {
-        encoding: "utf8",
-      }
-    ).trim();
-    assert.equal(
-      user,
-      "node",
-      `expected container user 'node', got '${user || "<root>"}'`
-    );
+    const user = execFileSync('docker', ['inspect', '--format', '{{.Config.User}}', image], {
+      encoding: 'utf8',
+    }).trim();
+    assert.equal(user, 'node', `expected container user 'node', got '${user || '<root>'}'`);
   }
 );

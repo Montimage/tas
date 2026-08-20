@@ -6,24 +6,24 @@
  * handlers in-process. This mirrors a deployed deployment and proves that the
  * containment fixes hold against a running server.
  */
-const http = require("node:http");
-const net = require("node:net");
-const path = require("node:path");
-const fs = require("node:fs");
-const { spawn } = require("node:child_process");
+const http = require('node:http');
+const net = require('node:net');
+const path = require('node:path');
+const fs = require('node:fs');
+const { spawn } = require('node:child_process');
 
-const repoRoot = path.resolve(__dirname, "../..");
-const modelsDir = path.resolve(repoRoot, "src/server/data/models");
-const recordersDir = path.resolve(repoRoot, "src/server/data/data-recorders");
-const repoPackageJson = path.resolve(repoRoot, "package.json");
-const devopsConfigPath = path.resolve(repoRoot, "src/server/data/devops.json");
-const campaignLogsDir = path.resolve(repoRoot, "src/server/logs/test-campaigns");
+const repoRoot = path.resolve(__dirname, '../..');
+const modelsDir = path.resolve(repoRoot, 'src/server/data/models');
+const recordersDir = path.resolve(repoRoot, 'src/server/data/data-recorders');
+const repoPackageJson = path.resolve(repoRoot, 'package.json');
+const devopsConfigPath = path.resolve(repoRoot, 'src/server/data/devops.json');
+const campaignLogsDir = path.resolve(repoRoot, 'src/server/logs/test-campaigns');
 
 /** An origin the server will be configured to allow via CORS_ALLOWED_ORIGINS. */
-const allowedOrigin = "http://allowed.example";
+const allowedOrigin = 'http://allowed.example';
 
 /** An origin that is never listed, used to prove unlisted origins are rejected. */
-const hostileOrigin = "http://evil.example";
+const hostileOrigin = 'http://evil.example';
 
 /**
  * Credentials every spawned instance in this directory boots with.
@@ -34,9 +34,9 @@ const hostileOrigin = "http://evil.example";
  * the way they always have.
  */
 const testCredentials = {
-  AUTH_ADMIN_USERNAME: "e2e-admin",
-  AUTH_ADMIN_PASSWORD: "e2e-password",
-  SESSION_SECRET: "e2e-session-secret",
+  AUTH_ADMIN_USERNAME: 'e2e-admin',
+  AUTH_ADMIN_PASSWORD: 'e2e-password',
+  SESSION_SECRET: 'e2e-session-secret',
 };
 
 /**
@@ -71,18 +71,18 @@ function request(baseUrl, method, requestPath, { body, headers = {}, anonymous =
         path: requestPath,
         method,
         headers: {
-          ...(data ? { "Content-Type": "application/json" } : {}),
+          ...(data ? { 'Content-Type': 'application/json' } : {}),
           ...auth,
           ...headers,
         },
       },
       (res) => {
-        let raw = "";
-        res.setEncoding("utf8");
-        res.on("data", (chunk) => {
+        let raw = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
           raw += chunk;
         });
-        res.on("end", () => {
+        res.on('end', () => {
           let parsed = null;
           try {
             parsed = JSON.parse(raw);
@@ -98,7 +98,7 @@ function request(baseUrl, method, requestPath, { body, headers = {}, anonymous =
         });
       }
     );
-    req.on("error", reject);
+    req.on('error', reject);
     if (data) req.write(data);
     req.end();
   });
@@ -112,20 +112,18 @@ function request(baseUrl, method, requestPath, { body, headers = {}, anonymous =
  * @returns {Promise<{cookie:String,csrfToken:String,authHeaders:Object}>}
  */
 async function logIn(baseUrl, credentials) {
-  const res = await request(baseUrl, "POST", "/api/auth/login", {
+  const res = await request(baseUrl, 'POST', '/api/auth/login', {
     anonymous: true,
     body: { username: credentials.username, password: credentials.password },
   });
   if (res.status !== 200 || !res.body || !res.body.csrfToken) {
     throw new Error(`e2e login failed (${res.status}): ${res.raw}`);
   }
-  const cookie = (res.headers["set-cookie"] || [])
-    .map((value) => value.split(";")[0])
-    .join("; ");
+  const cookie = (res.headers['set-cookie'] || []).map((value) => value.split(';')[0]).join('; ');
   return {
     cookie,
     csrfToken: res.body.csrfToken,
-    authHeaders: { Cookie: cookie, "X-CSRF-Token": res.body.csrfToken },
+    authHeaders: { Cookie: cookie, 'X-CSRF-Token': res.body.csrfToken },
   };
 }
 
@@ -133,8 +131,8 @@ async function logIn(baseUrl, credentials) {
 function getFreePort() {
   return new Promise((resolve, reject) => {
     const srv = net.createServer();
-    srv.on("error", reject);
-    srv.listen(0, "127.0.0.1", () => {
+    srv.on('error', reject);
+    srv.listen(0, '127.0.0.1', () => {
       const { port } = srv.address();
       srv.close(() => resolve(port));
     });
@@ -151,23 +149,23 @@ function getFreePort() {
  */
 async function startServer(env = {}) {
   const seedPort = await getFreePort();
-  const child = spawn(process.execPath, ["src/server/app.js"], {
+  const child = spawn(process.execPath, ['src/server/app.js'], {
     cwd: repoRoot,
     env: {
       ...process.env,
-      SERVER_HOST: "127.0.0.1",
+      SERVER_HOST: '127.0.0.1',
       SERVER_PORT: String(seedPort),
       ...testCredentials,
       ...env,
     },
-    stdio: ["ignore", "pipe", "pipe"],
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
-  let stdout = "";
-  let stderr = "";
-  child.stdout.on("data", (d) => {
+  let stdout = '';
+  let stderr = '';
+  child.stdout.on('data', (d) => {
     stdout += d;
   });
-  child.stderr.on("data", (d) => {
+  child.stderr.on('data', (d) => {
     stderr += d;
   });
 
@@ -175,17 +173,15 @@ async function startServer(env = {}) {
   let port = null;
   while (Date.now() < deadline) {
     if (child.exitCode !== null) {
-      child.kill("SIGKILL");
-      throw new Error(
-        `server exited early (code ${child.exitCode}): ${stderr.trim()}`
-      );
+      child.kill('SIGKILL');
+      throw new Error(`server exited early (code ${child.exitCode}): ${stderr.trim()}`);
     }
     const match = stdout.match(/http:\/\/[^:/\s]+:(\d+)/);
     if (match) {
       port = Number(match[1]);
       const baseUrl = `http://127.0.0.1:${port}`;
       try {
-        const res = await request(baseUrl, "GET", "/");
+        const res = await request(baseUrl, 'GET', '/');
         if (res.status >= 200 && res.status < 500) {
           const session = await logIn(baseUrl, {
             username: env.AUTH_ADMIN_USERNAME || testCredentials.AUTH_ADMIN_USERNAME,
@@ -202,10 +198,10 @@ async function startServer(env = {}) {
             stop: () =>
               new Promise((resolveStop) => {
                 if (child.exitCode !== null) return resolveStop();
-                child.once("exit", resolveStop);
-                child.kill("SIGTERM");
+                child.once('exit', resolveStop);
+                child.kill('SIGTERM');
                 setTimeout(() => {
-                  if (child.exitCode === null) child.kill("SIGKILL");
+                  if (child.exitCode === null) child.kill('SIGKILL');
                 }, 3000).unref();
               }),
           };
@@ -216,15 +212,12 @@ async function startServer(env = {}) {
     }
     await new Promise((r) => setTimeout(r, 200));
   }
-  child.kill("SIGKILL");
-  throw new Error(
-    `server did not become ready (last bound port ${port}): ${stderr.trim()}`
-  );
+  child.kill('SIGKILL');
+  throw new Error(`server did not become ready (last bound port ${port}): ${stderr.trim()}`);
 }
 
 /** A unique, filesystem-safe identifier for created test artifacts. */
-const unique = (prefix) =>
-  `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+const unique = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
 const inModelsDir = (fileName) => path.join(modelsDir, fileName);
 const inRecordersDir = (fileName) => path.join(recordersDir, fileName);
@@ -266,9 +259,9 @@ const removeIfPresent = (filePath) => {
  * canaries must look where the payload actually lands.
  */
 const campaignLogEscapeDirs = [
-  path.resolve(campaignLogsDir, ".."),
-  path.resolve(campaignLogsDir, "../.."),
-  path.resolve(campaignLogsDir, "../../.."),
+  path.resolve(campaignLogsDir, '..'),
+  path.resolve(campaignLogsDir, '../..'),
+  path.resolve(campaignLogsDir, '../../..'),
   repoRoot,
 ];
 
@@ -293,9 +286,7 @@ const escapedCampaignLogs = (prefix) =>
 
 /** Snapshot the list of files in a directory (for "nothing written/removed" asserts). */
 const listDir = (dir) =>
-  new Promise((resolve) =>
-    fs.readdir(dir, (err, files) => resolve(err ? null : files.sort()))
-  );
+  new Promise((resolve) => fs.readdir(dir, (err, files) => resolve(err ? null : files.sort())));
 
 module.exports = {
   repoRoot,

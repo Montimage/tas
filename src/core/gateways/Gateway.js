@@ -25,7 +25,7 @@ class Gateway {
    * @param {String} message The payload of the packet
    * @param {Object} packet The packet
    */
-  handleUpStreamData (thingID, topic, message, packet) {
+  handleUpStreamData(thingID, topic, message, packet) {
     if (this.upstreams.length > 0) {
       const filteredUpstreams = this.upstreams.filter((r) => r.in === thingID);
       if (!filteredUpstreams || filteredUpstreams.length === 0) {
@@ -59,11 +59,11 @@ class Gateway {
    * @param {String} message The payload of the packet
    * @param {Object} packet The packet
    */
-  handleDownStreamData (extId, topic, message, packet) {
+  handleDownStreamData(extId, topic, message, packet) {
     console.log(`[${this.id}] Handle message from ${extId}: ${topic}`);
     const externalComm = this.extComms[extId];
-    const downstreamTopic = externalComm.subTopic.replace('#','');
-    const subTopic = topic.replace(downstreamTopic,'');
+    const downstreamTopic = externalComm.subTopic.replace('#', '');
+    const subTopic = topic.replace(downstreamTopic, '');
     const array = subTopic.split('/');
     // Remove duplicated token to avoid forward the message more than 1 time to 1 THING
     const pubIDs = [];
@@ -94,7 +94,7 @@ class Gateway {
    * @param {String} thingID The ThingID
    * @param {Object} mqttConfig The configuration to create a mqtt client
    */
-  addNewThing ( thingID, mqttConfig ) {
+  addNewThing(thingID, mqttConfig) {
     const newThingComm = new Communication(thingID, mqttConfig, (id, topic, message, packet) => {
       this.handleUpStreamData(id, topic, message, packet);
     });
@@ -111,7 +111,7 @@ class Gateway {
    * @param {Object} mqttConfig the configuration to create a mqtt client
    * @param {String} subTopic the topic to listen on
    */
-  addNewExternalComponent ( extId, mqttConfig, subTopic ) {
+  addNewExternalComponent(extId, mqttConfig, subTopic) {
     const newExtComm = new Communication(extId, mqttConfig, (id, topic, message, packet) => {
       this.handleDownStreamData(id, topic, message, packet);
     });
@@ -125,7 +125,7 @@ class Gateway {
    * Add new rule to upstream
    * @param {Object} usr upstream rule {in: 'in-id', 'out':['out-id-1','out-id-2']}
    */
-  addUpstreamRule( usr) {
+  addUpstreamRule(usr) {
     this.upstreams.push(usr);
   }
 
@@ -136,7 +136,7 @@ class Gateway {
     console.log(`\n---------\nGateway: ${this.id}`);
     console.log('Things: \n', this.thingComms);
     console.log('External Components: \n', this.extComms);
-    console.log('upstreams: \n',this.upstreams );
+    console.log('upstreams: \n', this.upstreams);
     console.log('\n---------\n');
   }
 }

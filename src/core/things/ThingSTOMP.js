@@ -1,9 +1,6 @@
-const stompit = require("stompit");
+const stompit = require('stompit');
 const Thing = require('./Thing');
-const {
-  ONLINE,
-  SIMULATING,
-} = require('../DeviceStatus');
+const { ONLINE, SIMULATING } = require('../DeviceStatus');
 /**
  * The Thing class presents a THING component:
  * - List of sensors
@@ -32,9 +29,9 @@ class ThingSTOMP extends Thing {
     this.lastActivity = Date.now();
     this.numberOfReceivedData++;
     const topic = message.headers.destination;
-    message.readString("UTF-8", (err, body) => {
+    message.readString('UTF-8', (err, body) => {
       if (err) {
-        console.error("Failed to read message", err);
+        console.error('Failed to read message', err);
       } else {
         if (this.stompTopics[topic]) {
           // Check for the custom topic first
@@ -46,8 +43,8 @@ class ThingSTOMP extends Thing {
           }
         } else {
           if (topic.startsWith(this.actuatedTopic)) {
-            const subTopic = topic.replace(this.actuatedTopic, "");
-            const array = subTopic.split("/");
+            const subTopic = topic.replace(this.actuatedTopic, '');
+            const array = subTopic.split('/');
             // find the actuator id in the subtopic
             for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
               const actuator = this.actuators[aIndex];
@@ -56,9 +53,7 @@ class ThingSTOMP extends Thing {
                 return actuator.showStatus();
               }
             }
-            console.error(
-              `[${this.thingId}] ERROR: cannot find the actuator ${array[4]}`
-            );
+            console.error(`[${this.thingId}] ERROR: cannot find the actuator ${array[4]}`);
           } else {
             console.log(`[${this.thingId}] Ignore message: `, topic, body);
           }
@@ -75,22 +70,16 @@ class ThingSTOMP extends Thing {
     this.stompConfig = stompConfig;
     const stompClient = stompit.connect(stompConfig, (err, client) => {
       if (err) {
-        console.error(
-          `[${this.thingId}] ERROR: cannot connect to STOMP broker`,
-          err
-        );
+        console.error(`[${this.thingId}] ERROR: cannot connect to STOMP broker`, err);
       } else {
         this.stompClient = stompClient;
-        this.stompClient.subscribe(
-          { destination: `${this.actuatedTopic}#` },
-          (err2, message) => {
-            if (err2) {
-              console.error("Failed to read message", err2);
-            } else {
-              this.handleSTOMPMessage(message);
-            }
+        this.stompClient.subscribe({ destination: `${this.actuatedTopic}#` }, (err2, message) => {
+          if (err2) {
+            console.error('Failed to read message', err2);
+          } else {
+            this.handleSTOMPMessage(message);
           }
-        );
+        });
         super.initThing(callback);
         this.setStatus(ONLINE);
       }
@@ -109,9 +98,9 @@ class ThingSTOMP extends Thing {
     }
 
     const newActuator = super.addActuator(id, actuatorData, objectId);
-    this.stompClient.subscribe({destination: newActuator.topic},(err2, message) => {
+    this.stompClient.subscribe({ destination: newActuator.topic }, (err2, message) => {
       if (err2) {
-        console.error("Failed to read message", err2);
+        console.error('Failed to read message', err2);
       } else {
         message.ack();
         this.handleSTOMPMessage(message);
@@ -140,24 +129,24 @@ class ThingSTOMP extends Thing {
    * @param {Object} sensor The publisher
    */
   publishData(data, sensor) {
-    super.publishData(data,sensor);
+    super.publishData(data, sensor);
     if (!data) return;
     let publishTopic = null;
     if (sensor.topic) {
       publishTopic = sensor.topic;
-  } else {
-    publishTopic = `things/${this.thingId}/sensors/${sensor.topicEnd}`;
-  }
+    } else {
+      publishTopic = `things/${this.thingId}/sensors/${sensor.topicEnd}`;
+    }
     console.log(`[${this.thingId}] Going to publish data on topic: ${topic}`, data);
-    const frame = this.stompClient.send({destination: topic});
+    const frame = this.stompClient.send({ destination: topic });
     frame.write(JSON.stringify(data));
     frame.end();
   }
 
   getStats() {
     const stats = super.getStats();
-    const {host, port} = this.stompConfig;
-    return {...stats, protocol: "STOMP", host, port};
+    const { host, port } = this.stompConfig;
+    return { ...stats, protocol: 'STOMP', host, port };
   }
 }
 

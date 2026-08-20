@@ -1,5 +1,5 @@
-const FIX_STRING_VALUE = "invalid-value-string-value";
-const FIX_OBJECT_VALUE = { key: "invalid-object-value" };
+const FIX_STRING_VALUE = 'invalid-value-string-value';
+const FIX_OBJECT_VALUE = { key: 'invalid-object-value' };
 
 //////////////////////////////
 // BOOLEAN DATA             //
@@ -31,15 +31,13 @@ const getNotBoolean = () => (Math.random() < 0.5 ? 2 : FIX_STRING_VALUE);
  * @param {Number} max The biggest possible number
  * @returns number: min <= number <= max
  */
-const getRandomInteger = (min, max) =>
-  min + Math.round(Math.random() * (max - min));
+const getRandomInteger = (min, max) => min + Math.round(Math.random() * (max - min));
 
 /**
  * Get a random not integer number
  * @returns an object or a string value
  */
-const getNotInteger = () =>
-  Math.random() < 0.5 ? FIX_OBJECT_VALUE : FIX_STRING_VALUE;
+const getNotInteger = () => (Math.random() < 0.5 ? FIX_OBJECT_VALUE : FIX_STRING_VALUE);
 
 /**
  * Get a random integer number with the constraint of the step of change
@@ -111,7 +109,7 @@ const getIntegerOutOfRegularStep = (rmin, rmax, step, lastValue) => {
 
   if (lastValue + step + 1 >= rmax) {
     fmax = lastValue - step - 1;
-  } else if (lastValue - step -1 <= rmin) {
+  } else if (lastValue - step - 1 <= rmin) {
     fmin = lastValue + step + 1;
   } else {
     if (Math.random() < 0.5) {
@@ -168,8 +166,7 @@ const getRandomFloat = (min, max) => min + Math.random() * (max - min);
  * Get a random not float number
  * @returns an object or a string value
  */
-const getNotFloat = () =>
-  Math.random() < 0.5 ? FIX_OBJECT_VALUE : FIX_STRING_VALUE;
+const getNotFloat = () => (Math.random() < 0.5 ? FIX_OBJECT_VALUE : FIX_STRING_VALUE);
 
 /**
  * Get a random float number with the constraint of the step of change
@@ -239,7 +236,7 @@ const getFloatOutOfRegularStep = (rmin, rmax, step, lastValue) => {
     return (rmin + rmax) / 2;
   }
 
-  if (lastValue + step + step / 10> rmax) {
+  if (lastValue + step + step / 10 > rmax) {
     fmax = lastValue - step - step / 10;
   } else if (lastValue - step - step / 10 < rmin) {
     fmin = lastValue + step + step / 10;
@@ -292,15 +289,14 @@ const getNextDownFloat = (min, step, lastValue) => {
  */
 const getRandomEnum = (values) => {
   if (!values || values.length === 0) return null;
-  return values[getRandomInteger(0, values.length-1)];
+  return values[getRandomInteger(0, values.length - 1)];
 };
 
 /**
  * Get a random value not in an array
  * @returns an object or a string value
  */
-const getNotEnum = () =>
-  Math.random() < 0.5 ? FIX_OBJECT_VALUE : FIX_STRING_VALUE;
+const getNotEnum = () => (Math.random() < 0.5 ? FIX_OBJECT_VALUE : FIX_STRING_VALUE);
 
 module.exports = {
   getRandomBoolean,

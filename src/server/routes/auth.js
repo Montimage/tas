@@ -22,11 +22,11 @@
  * would make a normal cold start indistinguishable from a real failure, and
  * would bury genuine 401s in the log.
  */
-const express = require("express");
-const Joi = require("joi");
-const { validate } = require("../middleware/validate");
-const { errorHandler, unauthorized, unavailable } = require("../middleware/errors");
-const { setSessionCookies, clearSessionCookies } = require("../middleware/auth");
+const express = require('express');
+const Joi = require('joi');
+const { validate } = require('../middleware/validate');
+const { errorHandler, unauthorized, unavailable } = require('../middleware/errors');
+const { setSessionCookies, clearSessionCookies } = require('../middleware/auth');
 
 /**
  * How many client addresses the consecutive-failure counter remembers.
@@ -50,11 +50,11 @@ const LOG_FIELD_MAX = 200;
  * @returns {String} One line's worth of printable text
  */
 const sanitizeForLog = (value) =>
-  String(value === undefined || value === null ? "" : value)
-    .replace(/[\r\n]+/g, " ")
+  String(value === undefined || value === null ? '' : value)
+    .replace(/[\r\n]+/g, ' ')
     // Control characters cannot appear in a log line at all; a quote would end
     // the quoted field early and let a caller fake the fields after it.
-    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/[\u0000-\u001f\u007f]/g, '')
     .replace(/"/g, "'")
     .slice(0, LOG_FIELD_MAX);
 
@@ -70,7 +70,7 @@ function createFailureTracker() {
      * @returns {Number} Consecutive failures from that address, this one included
      */
     fail: function (ip) {
-      const key = String(ip || "unknown");
+      const key = String(ip || 'unknown');
       const count = (failures.get(key) || 0) + 1;
       // Re-insert so the map stays ordered by recency, then evict the oldest.
       failures.delete(key);
@@ -82,14 +82,14 @@ function createFailureTracker() {
     },
     /** @param {String} ip Client address */
     reset: function (ip) {
-      failures.delete(String(ip || "unknown"));
+      failures.delete(String(ip || 'unknown'));
     },
     /**
      * @param {String} ip Client address
      * @returns {Number} Current consecutive failure count
      */
     get: function (ip) {
-      return failures.get(String(ip || "unknown")) || 0;
+      return failures.get(String(ip || 'unknown')) || 0;
     },
   };
 }
@@ -126,7 +126,7 @@ function createAuthRouter({ credential, sessions, config }) {
    */
   function logAttempt(req, username, reason, failures) {
     const ip = sanitizeForLog(req.ip);
-    const ua = sanitizeForLog(req.get("user-agent") || "-");
+    const ua = sanitizeForLog(req.get('user-agent') || '-');
     const user = sanitizeForLog(username);
     if (reason === null) {
       console.error(`[AUTH] login succeeded user="${user}" ip=${ip} ua="${ua}"`);
@@ -137,20 +137,20 @@ function createAuthRouter({ credential, sessions, config }) {
     );
   }
 
-  router.post("/login", validate({ body: loginBody }), (req, res, next) => {
+  router.post('/login', validate({ body: loginBody }), (req, res, next) => {
     const username = req.body.username;
     const password = req.body.password;
 
     if (!credential.configured) {
-      logAttempt(req, username, "not_configured", tracker.fail(req.ip));
-      return next(unavailable("Authentication is not configured"));
+      logAttempt(req, username, 'not_configured', tracker.fail(req.ip));
+      return next(unavailable('Authentication is not configured'));
     }
 
     if (!credential.verify(username, password)) {
-      logAttempt(req, username, "invalid_credentials", tracker.fail(req.ip));
+      logAttempt(req, username, 'invalid_credentials', tracker.fail(req.ip));
       // One message for both halves: naming which one was wrong turns the login
       // form into a username oracle.
-      return next(unauthorized("Invalid credentials"));
+      return next(unauthorized('Invalid credentials'));
     }
 
     tracker.reset(req.ip);
@@ -166,7 +166,7 @@ function createAuthRouter({ credential, sessions, config }) {
     });
   });
 
-  router.post("/logout", validate(), (req, res) => {
+  router.post('/logout', validate(), (req, res) => {
     // Not on the public allowlist, so both the session gate and the CSRF guard
     // have already run: `req.auth` is present and its token was verified.
     if (req.auth && req.auth.sessionId) {
@@ -176,7 +176,7 @@ function createAuthRouter({ credential, sessions, config }) {
     return res.json({ authenticated: false });
   });
 
-  router.get("/session", validate(), (req, res) => {
+  router.get('/session', validate(), (req, res) => {
     // The gate ahead of this router resolves identity for every request,
     // allowlisted or not, and refreshes the cookies while it does — so this
     // endpoint only has to report what it found. Resolving it a second time

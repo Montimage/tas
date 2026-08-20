@@ -1,1 +1,11 @@
-{"protocol":"MONGODB","connConfig":{"host":"mongodb","port":27017,"username":"","password":"","dbname":"tas_db","options":null}}
+{
+  "protocol": "MONGODB",
+  "connConfig": {
+    "host": "mongodb",
+    "port": 27017,
+    "username": "",
+    "password": "",
+    "dbname": "tas_db",
+    "options": null
+  }
+}

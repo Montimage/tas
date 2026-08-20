@@ -1,41 +1,26 @@
 /* Working with Data Generator */
-var express = require("express");
-const Joi = require("joi");
-const {
-  dbConnector,
-  getDataStorage,
-} = require('./db-connector');
+var express = require('express');
+const Joi = require('joi');
+const { dbConnector, getDataStorage } = require('./db-connector');
 const {
   startTestCampaign,
   stopTestCampaign,
-  getTestCampainStatus
+  getTestCampainStatus,
 } = require('../../core/devops-flow');
 let router = express.Router();
 const devopsFilePath = `${__dirname}/../data/devops.json`;
-let getLogger = require("../logger");
-const {
-  readJSONFile,
-  writeToFile
-} = require("../../core/utils");
-const { OFFLINE } = require("../../core/DeviceStatus");
-const {
-  isValidName,
-  resolveWithin,
-  sendBadRequest,
-} = require("./path-safety");
+let getLogger = require('../logger');
+const { readJSONFile, writeToFile } = require('../../core/utils');
+const { OFFLINE } = require('../../core/DeviceStatus');
+const { isValidName, resolveWithin, sendBadRequest } = require('./path-safety');
 const {
   validate,
   documentSchema,
   safeNameSchema,
   urlSchema,
   dataStorageSchema,
-} = require("../middleware/validate");
-const {
-  errorHandler,
-  badRequest,
-  internal,
-  unavailable,
-} = require("../middleware/errors");
+} = require('../middleware/validate');
+const { errorHandler, badRequest, internal, unavailable } = require('../middleware/errors');
 let logsPath = `${__dirname}/../logs/test-campaigns/`;
 
 let runningStatus = null;
@@ -51,7 +36,7 @@ let runningStatus = null;
 // filename as nothing, so `null` is accepted and `""` is not.
 const devopsBody = Joi.object({
   devops: documentSchema({
-    webhookURL: urlSchema.allow(null, ""),
+    webhookURL: urlSchema.allow(null, ''),
     testCampaignId: safeNameSchema.allow(null),
     // Persisted, then handed to the test campaign flow, which builds a
     // `DataStorage` from it — the same sink a simulation's own connection
@@ -64,10 +49,10 @@ const devopsBody = Joi.object({
 /**
  * Get the running status of test campaign
  */
-router.get("/status", validate(), (req, res, next) => {
+router.get('/status', validate(), (req, res, next) => {
   if (runningStatus) runningStatus.isRunning = getTestCampainStatus() !== OFFLINE;
   res.send({
-    runningStatus
+    runningStatus,
   });
 });
 
@@ -80,50 +65,50 @@ const getDevops = (callback) => {
       return callback(err);
     } else {
       _devops = data;
-      return callback(
-        null,
-        data
-      );
+      return callback(null, data);
     }
   });
 };
 
-router.get("/", validate(), function (req, res, next) {
+router.get('/', validate(), function (req, res, next) {
   getDevops((err, devO) => {
     if (err) {
       // The raw fs error carries the absolute path of devops.json in its own
       // enumerable properties. Reporting it through the central handler is what
       // keeps that detail in the log and out of the response.
-      next(internal("Cannot get devops configuration", err));
+      next(internal('Cannot get devops configuration', err));
     } else {
       res.send({
-        devops: devO
+        devops: devO,
       });
     }
   });
 });
 
 // Save the default devops
-router.post("/", validate({ body: devopsBody }), function (req, res, next) {
-  const {
-    devops
-  } = req.body;
+router.post('/', validate({ body: devopsBody }), function (req, res, next) {
+  const { devops } = req.body;
   // The test campaign id becomes part of a log filename in GET /start, so a
   // hostile value must never reach the persisted configuration in the first
   // place. That is now the schema's job: `devopsBody` holds the id to the same
   // filename allowlist, so nothing hostile gets this far. The read-back guard
   // in `loadValidatedDevops` still stands, for configurations an older build
   // may have written.
-  writeToFile(devopsFilePath, JSON.stringify(devops), (err, data) => {
-    if (err) {
-      next(internal("Cannot save the devops configuration", err));
-    } else {
-      _devops = devops;
-      res.send({
-        devops
-      });
-    }
-  }, true);
+  writeToFile(
+    devopsFilePath,
+    JSON.stringify(devops),
+    (err, data) => {
+      if (err) {
+        next(internal('Cannot save the devops configuration', err));
+      } else {
+        _devops = devops;
+        res.send({
+          devops,
+        });
+      }
+    },
+    true
+  );
 });
 
 /**
@@ -140,16 +125,16 @@ const loadValidatedDevops = (req, res, next) => {
       // The raw fs error carries the absolute path of devops.json in its own
       // enumerable properties. Reporting it through the central handler is what
       // keeps that detail in the log and out of the response.
-      return next(internal("Cannot get devops configuration", err));
+      return next(internal('Cannot get devops configuration', err));
     }
     const { testCampaignId } = devops || {};
     if (!testCampaignId) {
-      return next(badRequest("Test campaign Id must not be null"));
+      return next(badRequest('Test campaign Id must not be null'));
     }
     // A configuration written by an older, unvalidated build can still hold a
     // hostile id, so read-back is checked as well as write.
     if (!isValidName(testCampaignId)) {
-      return sendBadRequest(res, "Invalid test campaign id");
+      return sendBadRequest(res, 'Invalid test campaign id');
     }
     req.devops = devops;
     return next();
@@ -158,21 +143,16 @@ const loadValidatedDevops = (req, res, next) => {
 
 router.get('/start', validate(), loadValidatedDevops, dbConnector, (req, res, next) => {
   const devops = req.devops;
-  const {
-    webhookURL,
-    testCampaignId,
-    dataStorage,
-    evaluationParameters,
-  } = devops;
+  const { webhookURL, testCampaignId, dataStorage, evaluationParameters } = devops;
   const startedTime = Date.now();
   const logFile = `${testCampaignId}_${startedTime}.log`;
   // The logger creates missing parent directories, so an escaping filename
   // would write outside the log root rather than fail. Resolve and contain it.
   const logFilePath = resolveWithin(logsPath, logFile);
   if (!logFilePath) {
-    return sendBadRequest(res, "Invalid test campaign id");
+    return sendBadRequest(res, 'Invalid test campaign id');
   }
-  getLogger("TEST-CAMPAIGN", logFilePath);
+  getLogger('TEST-CAMPAIGN', logFilePath);
   console.log('[devops] A test campaign is going to be started ...');
 
   if (dataStorage) {
@@ -183,18 +163,18 @@ router.get('/start', validate(), loadValidatedDevops, dbConnector, (req, res, ne
       webhookURL,
       startedTime,
       endTime: null,
-      logFile
+      logFile,
     };
     startTestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters);
     res.send({
       error: null,
       devops,
-      runningStatus
+      runningStatus,
     });
   } else {
     getDataStorage((err, ds) => {
       if (err) {
-        next(unavailable("Cannot get data storage", err));
+        next(unavailable('Cannot get data storage', err));
       } else {
         runningStatus = {
           isRunning: true,
@@ -203,12 +183,12 @@ router.get('/start', validate(), loadValidatedDevops, dbConnector, (req, res, ne
           webhookURL,
           startedTime,
           endTime: null,
-          logFile
+          logFile,
         };
         startTestCampaign(testCampaignId, ds, webhookURL, evaluationParameters);
         res.send({
           error: null,
-          runningStatus
+          runningStatus,
         });
       }
     });
@@ -224,7 +204,7 @@ router.get('/stop', validate(), (req, res, next) => {
   }
   res.send({
     error: null,
-    runningStatus: copiedStatus
+    runningStatus: copiedStatus,
   });
 });
 

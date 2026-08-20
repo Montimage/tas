@@ -1,6 +1,6 @@
-const mqtt = require("mqtt");
-const Thing = require("./Thing");
-const { ONLINE, OFFLINE, SIMULATING } = require("../DeviceStatus");
+const mqtt = require('mqtt');
+const Thing = require('./Thing');
+const { ONLINE, OFFLINE, SIMULATING } = require('../DeviceStatus');
 /**
  * The Thing class presents a THING component:
  * - List of sensors
@@ -27,10 +27,7 @@ class ThingMQTT extends Thing {
   handleMQTTMessage(topic, message, packet) {
     this.lastActivity = Date.now();
     this.numberOfReceivedData++;
-    console.log(
-      `[${this.thingId}] received: ${this.mqttClient.options.href} ${topic}`,
-      message
-    );
+    console.log(`[${this.thingId}] received: ${this.mqttClient.options.href} ${topic}`, message);
     if (this.mqttTopics[topic]) {
       // Check for the custom topic first
       const actuators = this.mqttTopics[topic];
@@ -41,8 +38,8 @@ class ThingMQTT extends Thing {
       }
     } else {
       if (topic.startsWith(this.actuatedTopic)) {
-        const subTopic = topic.replace(this.actuatedTopic, "");
-        const array = subTopic.split("/");
+        const subTopic = topic.replace(this.actuatedTopic, '');
+        const array = subTopic.split('/');
         // find the actuator id in the subtopic
         for (let aIndex = 0; aIndex < this.actuators.length; aIndex++) {
           const actuator = this.actuators[aIndex];
@@ -51,9 +48,7 @@ class ThingMQTT extends Thing {
             return actuator.showStatus();
           }
         }
-        console.error(
-          `[${this.thingId}] ERROR: cannot find the actuator ${array[4]}`
-        );
+        console.error(`[${this.thingId}] ERROR: cannot find the actuator ${array[4]}`);
       } else {
         console.log(`[${this.thingId}] Ignore message: `, topic, message);
       }
@@ -74,33 +69,26 @@ class ThingMQTT extends Thing {
       mqttClient = mqtt.connect(mqttBrokerURL);
     }
 
-    mqttClient.on("connect", () => {
-      console.log(
-        `[${this.thingId}] connected to MQTT broker ${mqttBrokerURL}`
-      );
+    mqttClient.on('connect', () => {
+      console.log(`[${this.thingId}] connected to MQTT broker ${mqttBrokerURL}`);
       this.mqttClient = mqttClient;
       this.setStatus(ONLINE);
       // Subscribe to get the downstream data for actuators
       this.mqttClient.subscribe(`${this.actuatedTopic}#`);
-      console.log(
-        `[${this.thingId}] listening actuated data on channel: ${this.actuatedTopic}#`
-      );
+      console.log(`[${this.thingId}] listening actuated data on channel: ${this.actuatedTopic}#`);
       super.initThing(callback);
     });
 
-    mqttClient.on("error", (err) => {
-      console.error(
-        `[${this.thingId}] ERROR: cannot connect to MQTT broker`,
-        err
-      );
+    mqttClient.on('error', (err) => {
+      console.error(`[${this.thingId}] ERROR: cannot connect to MQTT broker`, err);
     });
 
-    mqttClient.on("offline", () => {
+    mqttClient.on('offline', () => {
       console.log(`[${this.thingId}] gone offline!`);
       this.setStatus(OFFLINE);
     });
 
-    mqttClient.on("message", (topic, message, packet) => {
+    mqttClient.on('message', (topic, message, packet) => {
       // console.log(`[${this.thingId}] received message on topic: ${topic}`);
       this.handleMQTTMessage(topic, message.toString(), packet);
     });
@@ -142,21 +130,21 @@ class ThingMQTT extends Thing {
    * @param {Object} sensor The publisher
    */
   publishData(data, sensor) {
-    super.publishData(data,sensor);
-    if (!data) return ;
+    super.publishData(data, sensor);
+    if (!data) return;
     let publishTopic = null;
     if (sensor.topic) {
-        publishTopic = sensor.topic;
+      publishTopic = sensor.topic;
     } else {
       publishTopic = `things/${this.thingId}/sensors/${sensor.topicEnd}`;
-    }    
-    this.mqttClient.publish(publishTopic, typeof data === "object" ? JSON.stringify(data): data);
+    }
+    this.mqttClient.publish(publishTopic, typeof data === 'object' ? JSON.stringify(data) : data);
   }
 
   getStats() {
     const stats = super.getStats();
-    const {host, port} = this.mqttConfig;
-    return {...stats, protocol: "MQTT", host, port};
+    const { host, port } = this.mqttConfig;
+    return { ...stats, protocol: 'MQTT', host, port };
   }
 }
 

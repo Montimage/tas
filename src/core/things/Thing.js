@@ -1,14 +1,10 @@
-const Actuator = require("../actuators");
-const Sensor = require("../sensors");
-const { ONLINE, OFFLINE, SIMULATING } = require("../DeviceStatus");
-const MQBus = require("../communications/MQBus");
-const DataStorage = require("../communications/DataStorage");
-const {
-  DS_RECORDER,
-  DS_DATASET,
-  DS_DATA_GENERATOR,
-} = require("../DataSourceType");
-const { checkMQTTTopic } = require("../utils");
+const Actuator = require('../actuators');
+const Sensor = require('../sensors');
+const { ONLINE, OFFLINE, SIMULATING } = require('../DeviceStatus');
+const MQBus = require('../communications/MQBus');
+const DataStorage = require('../communications/DataStorage');
+const { DS_RECORDER, DS_DATASET, DS_DATA_GENERATOR } = require('../DataSourceType');
+const { checkMQTTTopic } = require('../utils');
 
 const findDevice = (id, objectId, array) => {
   for (let index = 0; index < array.length; index++) {
@@ -19,7 +15,7 @@ const findDevice = (id, objectId, array) => {
 };
 
 let startReplayingTime = Date.now();
-console.log("startReplayingTime: ", startReplayingTime);
+console.log('startReplayingTime: ', startReplayingTime);
 /**
  * The Device class presents a Device component:
  * - List of sensors
@@ -70,8 +66,7 @@ class Device {
     this.actuatorsConfig = actuators;
     this.dataStorageConfig = dataStorage;
     this.newDatasetConfig = newDataset;
-    this.isReplayingStreams =
-      isReplayingStreams !== undefined ? isReplayingStreams : false;
+    this.isReplayingStreams = isReplayingStreams !== undefined ? isReplayingStreams : false;
     this.upStreams = upStreams ? upStreams : [];
     this.downStreams = downStreams ? downStreams : [];
     this.report = report;
@@ -181,9 +176,8 @@ class Device {
           return;
         }
       }
-      console.error("Cannot find the sensor with the topic: ", topic);
+      console.error('Cannot find the sensor with the topic: ', topic);
     }
-
   }
 
   /**
@@ -221,7 +215,7 @@ class Device {
         return;
       }
     }
-    console.error("Cannot find the actuator with the topic: ", topic);
+    console.error('Cannot find the actuator with the topic: ', topic);
   }
 
   /**
@@ -243,7 +237,7 @@ class Device {
         return;
       }
     }
-    console.error("Cannot find the sensor with the topic: ", topic);
+    console.error('Cannot find the sensor with the topic: ', topic);
   }
 
   /**
@@ -268,8 +262,7 @@ class Device {
         return;
       }
     }
-    setTimeout(() => this.stop(),3000); // Wait 3 seconds for the actuated data comming;
-
+    setTimeout(() => this.stop(), 3000); // Wait 3 seconds for the actuated data comming;
   }
   /**
    * Add a new Sensor into the current Device
@@ -283,9 +276,7 @@ class Device {
   addSensor(id, sensorData, objectId = null, events = null) {
     console.log('Going to add a new sensor: ', id);
     if (findDevice(id, objectId, this.sensors) > -1) {
-      console.error(
-        `[${this.id}] Sensor ID ${id} ${objectId} has already existed!`
-      );
+      console.error(`[${this.id}] Sensor ID ${id} ${objectId} has already existed!`);
       return null;
     }
     let topic = sensorData.topic;
@@ -296,10 +287,7 @@ class Device {
     const { dataSource } = sensorData;
     if (!topic) {
       topic = `devices/${this.id}/sensors/${id}`;
-      console.log(
-        `[${this.id}] Sensor ${id} will use the default topic name`,
-        topic
-      );
+      console.log(`[${this.id}] Sensor ${id} will use the default topic name`, topic);
     }
 
     if (dataSource === DS_RECORDER) {
@@ -319,9 +307,7 @@ class Device {
         if (this.status === SIMULATING) {
           this.sensors[this.sensors.length - 1].start();
         }
-        console.log(
-          `[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`
-        );
+        console.log(`[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`);
       } else {
         console.error(
           `[${this.id}] Cannot create a sensor! Missing data source from production broker`
@@ -349,9 +335,7 @@ class Device {
       if (this.status === SIMULATING) {
         this.sensors[this.sensors.length - 1].start();
       }
-      console.log(
-        `[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`
-      );
+      console.log(`[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`);
     } else {
       // Data will be generated in run time
       const newSensor = new Sensor(
@@ -371,9 +355,7 @@ class Device {
       if (this.status === SIMULATING) {
         this.sensors[this.sensors.length - 1].start();
       }
-      console.log(
-        `[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`
-      );
+      console.log(`[${this.id}] added new sensor ${id} ${objectId} (${dataSource})`);
     }
   }
 
@@ -416,25 +398,25 @@ class Device {
   addActuator(id, actuatorData, objectId = null) {
     console.log('Going to add a new actuator: ', id);
     if (findDevice(id, objectId, this.actuators) > -1) {
-      console.error(
-        `[${this.id}] Actuator ID ${id} ${objectId} has already existed!`
-      );
+      console.error(`[${this.id}] Actuator ID ${id} ${objectId} has already existed!`);
       return null;
     }
     let topic = actuatorData.topic;
     if (!topic) {
       topic = `devices/${this.id}/actuators/${id}`;
-      console.log(
-        `[${this.id}] Actuator ${id} will use the default topic name`,
-        topic
-      );
+      console.log(`[${this.id}] Actuator ${id} will use the default topic name`, topic);
     }
     // subscribe to testBroker
     // this.testBroker.subscribe(topic);
-    const newActuator = new Actuator(id, {
-      ...actuatorData,
-      topic: topic,
-    }, this.testBroker, objectId);
+    const newActuator = new Actuator(
+      id,
+      {
+        ...actuatorData,
+        topic: topic,
+      },
+      this.testBroker,
+      objectId
+    );
     this.actuators.push(newActuator);
     console.log(`[${this.id}] added new actuator ${id} ${objectId}`);
 
@@ -453,9 +435,7 @@ class Device {
   removeActuator(id, objectId = null) {
     const actuatorIndex = findDevice(id, objectId, this.actuators);
     if (actuatorIndex === -1) {
-      console.error(
-        `[${this.id}] Actuator ID ${id} ${objectId} does not exist!`
-      );
+      console.error(`[${this.id}] Actuator ID ${id} ${objectId} does not exist!`);
       return null;
     }
     const actuator = this.actuators[actuatorIndex];
@@ -496,27 +476,22 @@ class Device {
           this.productionBroker = new MQBus(this.productionBrokerConfig);
           this.productionBroker.connect((err2) => {
             if (err2) {
-              console.error("Failed to init production broker", err2);
+              console.error('Failed to init production broker', err2);
             } else {
               console.log(`[${this.id}] Connected with production broker`);
-              this.productionBroker.setupMessageHandler(
-                (topic, message, packet) =>
-                  this.productionBrokerMessageHandler(topic, message, packet)
+              this.productionBroker.setupMessageHandler((topic, message, packet) =>
+                this.productionBrokerMessageHandler(topic, message, packet)
               );
               // Add the sensors which have the data source from the production broker
               this.sensorsConfig.map((sensorData) => {
                 const { id, scale, enable, objectId, dataSource } = sensorData;
                 if (enable && dataSource === DS_RECORDER) {
-                  console.log("Going to add a RECORDER sensor");
+                  console.log('Going to add a RECORDER sensor');
                   let nbSensors = scale ? scale : 1;
                   if (nbSensors === 1) {
                     this.addSensor(id, sensorData, objectId);
                   } else {
-                    for (
-                      let sensorIndex = 0;
-                      sensorIndex < nbSensors;
-                      sensorIndex++
-                    ) {
+                    for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
                       const sID = `${id}-${sensorIndex}`;
                       this.addSensor(sID, sensorData, objectId);
                     }
@@ -533,7 +508,7 @@ class Device {
           this.dataStorage = new DataStorage(this.dataStorageConfig);
           this.dataStorage.connect((err3) => {
             if (err3) {
-              console.error("Failed to connect to data storage", err3);
+              console.error('Failed to connect to data storage', err3);
             } else {
               console.log(`[${this.id}] Connected to data storage`);
               // Create report
@@ -556,13 +531,13 @@ class Device {
               if (this.globalReplayOptions) {
                 if (this.globalReplayOptions.startTime)
                   startTime = this.globalReplayOptions.startTime;
-                if (this.globalReplayOptions.endTime)
-                  endTime = this.globalReplayOptions.endTime;
+                if (this.globalReplayOptions.endTime) endTime = this.globalReplayOptions.endTime;
               }
               this.dataStorage.getAllEvents(this.datasetId, startTime, endTime, (err4, events) => {
                 if (!err4 && events && events.length > 0) {
                   const firstEventTimestamp = events[0].timestamp;
-                  if (startReplayingTime > firstEventTimestamp) startReplayingTime = firstEventTimestamp;
+                  if (startReplayingTime > firstEventTimestamp)
+                    startReplayingTime = firstEventTimestamp;
                   console.log(`[${this.id}] firstEventTimestamp: ${startReplayingTime}`);
                   console.log(`[${this.id}] startReplayingTime: ${startReplayingTime}`);
                   if (this.isReplayingStreams) {
@@ -585,7 +560,7 @@ class Device {
                       scale: 1,
                       enable: true,
                       objectId: null,
-                      dataSource: DS_DATASET
+                      dataSource: DS_DATASET,
                     };
 
                     this.addSensor(singleSensorId, singleSensorData, null, matchedEvents);
@@ -593,16 +568,9 @@ class Device {
                   } else {
                     // Add sensors which have data source from data storage
                     this.sensorsConfig.map((sensorData) => {
-                      const {
-                        id,
-                        topic,
-                        scale,
-                        enable,
-                        objectId,
-                        dataSource,
-                      } = sensorData;
+                      const { id, topic, scale, enable, objectId, dataSource } = sensorData;
                       if (enable && dataSource === DS_DATASET && topic) {
-                        console.log("Going to add a DATASET sensor");
+                        console.log('Going to add a DATASET sensor');
                         // filter the events match the sensor's topics
                         const matchedEvents = [];
                         for (let eventIndex = 0; eventIndex < events.length; eventIndex++) {
@@ -615,11 +583,7 @@ class Device {
                         if (nbSensors === 1) {
                           this.addSensor(id, sensorData, objectId, matchedEvents);
                         } else {
-                          for (
-                            let sensorIndex = 0;
-                            sensorIndex < nbSensors;
-                            sensorIndex++
-                          ) {
+                          for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
                             const sID = `${id}-${sensorIndex}`;
                             this.addSensor(sID, sensorData, objectId, matchedEvents);
                           }
@@ -651,11 +615,7 @@ class Device {
           }
         } else {
           // Add sensors
-          for (
-            let sensorIndex = 0;
-            sensorIndex < this.sensorsConfig.length;
-            sensorIndex++
-          ) {
+          for (let sensorIndex = 0; sensorIndex < this.sensorsConfig.length; sensorIndex++) {
             const sensorData = this.sensorsConfig[sensorIndex];
             const { id, scale, enable, objectId, dataSource } = sensorData;
             if (enable === false || dataSource !== DS_DATA_GENERATOR) continue;
@@ -663,11 +623,7 @@ class Device {
             if (nbSensors === 1) {
               this.addSensor(id, sensorData, objectId);
             } else {
-              for (
-                let sensorIndex = 0;
-                sensorIndex < nbSensors;
-                sensorIndex++
-              ) {
+              for (let sensorIndex = 0; sensorIndex < nbSensors; sensorIndex++) {
                 const sID = `${id}-${sensorIndex}`;
                 this.addSensor(sID, sensorData, objectId);
               }
@@ -682,11 +638,7 @@ class Device {
             if (nbActuators === 1) {
               this.addActuator(id, actuatorData, objectId);
             } else {
-              for (
-                let actuatorIndex = 0;
-                actuatorIndex < nbActuators;
-                actuatorIndex++
-              ) {
+              for (let actuatorIndex = 0; actuatorIndex < nbActuators; actuatorIndex++) {
                 const actID = `${id}-${actuatorIndex}`;
                 this.addActuator(actID, actuatorData, objectId);
               }
@@ -709,10 +661,7 @@ class Device {
         this.startedTime = Date.now();
         // Check for the gateway behaviour
         this.setStatus(SIMULATING);
-        if (
-          this.behaviours.indexOf("GATEWAY_DOWN") > -1 &&
-          this.timeToFailed > 0
-        ) {
+        if (this.behaviours.indexOf('GATEWAY_DOWN') > -1 && this.timeToFailed > 0) {
           setTimeout(() => {
             this.stop();
           }, this.timeToFailed * 1000);
@@ -722,9 +671,7 @@ class Device {
         break;
       case OFFLINE:
         console.error(
-          `[${
-            this.id
-          }] must be online before starting simulation: ${this.getStatus()}`
+          `[${this.id}] must be online before starting simulation: ${this.getStatus()}`
         );
         break;
       case SIMULATING:

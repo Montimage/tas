@@ -1,9 +1,9 @@
 /**
-* Start simulating a gateway
-*
-*    node src/gateways/index.js gw-01-config.json
-*
-*/
+ * Start simulating a gateway
+ *
+ *    node src/gateways/index.js gw-01-config.json
+ *
+ */
 
 const Gateway = require('./Gateway');
 const { readJSONFile } = require('../utils');
@@ -46,7 +46,7 @@ const createGateway = (id, things, externals, upstreams) => {
     if (scaledThings[usRule.in]) {
       // Need to extend the rule for scaled thing
       for (let rIndex = 0; rIndex < scaledThings[usRule.in]; rIndex++) {
-        const newUSRule = {in: `${usRule.in}-${rIndex}`, out: usRule.out};
+        const newUSRule = { in: `${usRule.in}-${rIndex}`, out: usRule.out };
         gw.addUpstreamRule(newUSRule);
       }
     } else {
@@ -65,7 +65,7 @@ readJSONFile(gwConfigFile, (err, gwConfigs) => {
     console.error(`[ERROR] Cannot read the config of gateway:`, gwConfigFile);
   } else {
     for (let gwConfigIndex = 0; gwConfigIndex < gwConfigs.length; gwConfigIndex++) {
-      const {id, things, externals, upstreams } = gwConfigs[gwConfigIndex];
+      const { id, things, externals, upstreams } = gwConfigs[gwConfigIndex];
       createGateway(id, things, externals, upstreams);
     }
   }

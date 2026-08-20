@@ -13,7 +13,7 @@ var http = require('http');
 var TEST_CREDENTIALS = {
   AUTH_ADMIN_USERNAME: 'test-admin',
   AUTH_ADMIN_PASSWORD: 'test-password',
-  SESSION_SECRET: 'test-session-secret'
+  SESSION_SECRET: 'test-session-secret',
 };
 
 /**
@@ -27,7 +27,7 @@ function login(port, host, credentials) {
   return new Promise(function (resolve, reject) {
     var payload = JSON.stringify({
       username: credentials.username,
-      password: credentials.password
+      password: credentials.password,
     });
     var req = http.request(
       {
@@ -37,8 +37,8 @@ function login(port, host, credentials) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload)
-        }
+          'Content-Length': Buffer.byteLength(payload),
+        },
       },
       function (res) {
         var raw = '';
@@ -59,7 +59,7 @@ function login(port, host, credentials) {
           resolve({
             cookie: cookie,
             csrfToken: body.csrfToken,
-            authHeaders: { Cookie: cookie, 'X-CSRF-Token': body.csrfToken }
+            authHeaders: { Cookie: cookie, 'X-CSRF-Token': body.csrfToken },
           });
         });
       }
@@ -123,14 +123,14 @@ function startApp(envOverrides, opts) {
         base: 'http://127.0.0.1:' + port,
         baseUrl: 'http://127.0.0.1:' + port,
         port: port,
-        restore: restore
+        restore: restore,
       };
       if (!shouldLogin) {
         return resolve(ctx);
       }
       login(port, '127.0.0.1', {
         username: overrides.AUTH_ADMIN_USERNAME,
-        password: overrides.AUTH_ADMIN_PASSWORD
+        password: overrides.AUTH_ADMIN_PASSWORD,
       })
         .then(function (session) {
           ctx.cookie = session.cookie;

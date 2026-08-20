@@ -6,36 +6,34 @@
   }
  */
 
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
-const actuatorSchema = new Schema(
-  {
-    instanceId: {
-      type: String,
-      required: true
-    },
-    objectId: {
-      type: String,
-      required: false
-    },
-    timestamp: {
-      type: Number,
-      required: true
-    },
-    values: {
-      type: Object,
-      required: true
-    },
-    userData: {
-      type: Object,
-      required: false
-    }
-  }
-);
+const actuatorSchema = new Schema({
+  instanceId: {
+    type: String,
+    required: true,
+  },
+  objectId: {
+    type: String,
+    required: false,
+  },
+  timestamp: {
+    type: Number,
+    required: true,
+  },
+  values: {
+    type: Object,
+    required: true,
+  },
+  userData: {
+    type: Object,
+    required: false,
+  },
+});
 
-actuatorSchema.statics.findActuatorsWithOptions = function(options, callback) {
+actuatorSchema.statics.findActuatorsWithOptions = function (options, callback) {
   this.find(options)
     .sort({ timestamp: 1 })
     .exec((err, stats) => {
@@ -51,26 +49,25 @@ actuatorSchema.statics.findActuatorsWithOptions = function(options, callback) {
     });
 };
 
-actuatorSchema.statics.findActuatorDataBetweenTimes = function(
+actuatorSchema.statics.findActuatorDataBetweenTimes = function (
   filter,
   startTime,
   endTime,
   callback
 ) {
-
   const options = {
     $and: [
       {
         timestamp: {
-          $gte: Number(startTime)
-        }
+          $gte: Number(startTime),
+        },
       },
       {
         timestamp: {
-          $lte: Number(endTime)
-        }
-      }
-    ]
+          $lte: Number(endTime),
+        },
+      },
+    ],
   };
 
   if (filter) {
@@ -79,4 +76,4 @@ actuatorSchema.statics.findActuatorDataBetweenTimes = function(
   return this.findActuatorsWithOptions(options, callback);
 };
 
-module.exports = mongoose.model("Actuator", actuatorSchema);
+module.exports = mongoose.model('Actuator', actuatorSchema);

@@ -1,17 +1,10 @@
 /* Working with Data Generator */
-var express = require("express");
-const Joi = require("joi");
-const {
-  getDataStorage,
-  dbConnector,
-  updateDataStorage
-} = require('./db-connector');
+var express = require('express');
+const Joi = require('joi');
+const { getDataStorage, dbConnector, updateDataStorage } = require('./db-connector');
 let router = express.Router();
-const {
-  validate,
-  dataStorageSchema,
-} = require("../middleware/validate");
-const { errorHandler, internal } = require("../middleware/errors");
+const { validate, dataStorageSchema } = require('../middleware/validate');
+const { errorHandler, internal } = require('../middleware/errors');
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the data-storage endpoints (issue #10)
@@ -25,29 +18,27 @@ const dataStorageBody = Joi.object({
   dataStorage: dataStorageSchema.required(),
 }).required();
 
-router.get("/", validate(), function (req, res, next) {
+router.get('/', validate(), function (req, res, next) {
   getDataStorage((err, dataStorage) => {
     if (err) {
       next(internal('Cannot get data storage', err));
     } else {
       res.send({
-        dataStorage
+        dataStorage,
       });
     }
-  })
+  });
 });
 
 // Save the default data storage
-router.post("/", validate({ body: dataStorageBody }), function (req, res, next) {
-  const {
-    dataStorage
-  } = req.body;
+router.post('/', validate({ body: dataStorageBody }), function (req, res, next) {
+  const { dataStorage } = req.body;
   updateDataStorage(dataStorage, (err, ds) => {
     if (err) {
       next(internal('Failed to update data storage', err));
     } else {
       res.send({
-        dataStorage: ds
+        dataStorage: ds,
       });
     }
   });
@@ -55,9 +46,8 @@ router.post("/", validate({ body: dataStorageBody }), function (req, res, next) 
 
 // Test the connection to the default data storage
 router.get('/test', validate(), dbConnector, (req, res, next) => {
-  res.send({connectionStatus: true});
+  res.send({ connectionStatus: true });
 });
-
 
 // Attached to the router itself as well as to the application: see the note in
 // `routes/model.js`.

@@ -1,13 +1,7 @@
-const {
-  SIMULATING,
-  OFFLINE
-} = require("../DeviceStatus");
-const {
-  DS_DATASET,
-  DS_RECORDER
-} = require('../DataSourceType');
-const DataReplayer = require("./DataReplayer");
-const DataGenerator = require("./DataGenerator");
+const { SIMULATING, OFFLINE } = require('../DeviceStatus');
+const { DS_DATASET, DS_RECORDER } = require('../DataSourceType');
+const DataReplayer = require('./DataReplayer');
+const DataGenerator = require('./DataGenerator');
 /**
  * The Sensor class presents a sensor
  * - Collect the data: randomly or from database
@@ -21,18 +15,18 @@ class Sensor {
    * @param {Object} dataSource The data source of the sensor
    * -
    */
-  constructor(id, data, productionBroker, publishDataFct, events, startReplayingTime, callbackWhenFinish = null) {
-    const {
-      objectId,
-      name,
-      topic,
-      dataSpecs,
-      dataSource,
-      reportFormat,
-      replayOptions
-    } = data;
+  constructor(
+    id,
+    data,
+    productionBroker,
+    publishDataFct,
+    events,
+    startReplayingTime,
+    callbackWhenFinish = null
+  ) {
+    const { objectId, name, topic, dataSpecs, dataSource, reportFormat, replayOptions } = data;
     this.id = id;
-    this.reportFormat = reportFormat ? reportFormat: 0;
+    this.reportFormat = reportFormat ? reportFormat : 0;
     this.productionBroker = productionBroker;
     this.publishDataFct = publishDataFct;
     this.dataSourceType = dataSource;
@@ -74,22 +68,22 @@ class Sensor {
       lastSentData: this.lastSentData,
       isFromDatabase: this.isFromDatabase,
       dataSource: this.dataSource ? this.dataSource.getStats() : null,
-      topic: this.topic
+      topic: this.topic,
     };
   }
 
   dataHandler(values, topic = null) {
     if (typeof values === 'object') {
-      values["timestamp"] = Date.now();
-      values["instanceId"] = this.id;
+      values['timestamp'] = Date.now();
+      values['instanceId'] = this.id;
       if (this.name) {
-        values["name"] = this.name;
+        values['name'] = this.name;
       }
       if (this.objectId) {
-        values["objectId"] = this.objectId;
+        values['objectId'] = this.objectId;
       }
     }
-    console.log(`Sensor ${this.id} published data on topic: ${topic ? topic: this.topic}`);
+    console.log(`Sensor ${this.id} published data on topic: ${topic ? topic : this.topic}`);
     this.publishDataFct(topic ? topic : this.topic, values);
     // Statistics
     this.lastActivity = Date.now();
@@ -114,7 +108,11 @@ class Sensor {
         // Init
         const stopSensor = () => this.stop();
         if (this.dataSourceType === DS_DATASET) {
-          console.log(`[SENSOR] ${this.id} Number of events to be replayed: ${this.events.length} with replayOptions: ${JSON.stringify(this.replayOptions)}`);
+          console.log(
+            `[SENSOR] ${this.id} Number of events to be replayed: ${
+              this.events.length
+            } with replayOptions: ${JSON.stringify(this.replayOptions)}`
+          );
           this.dataSource = new DataReplayer(
             this.id,
             (values, topic = null) => this.dataHandler(values, topic),
@@ -142,18 +140,14 @@ class Sensor {
       if (this.dataSource.getStatus() !== SIMULATING) {
         this.startedTime = Date.now();
         console.log(
-          `[${this.objectId ? this.objectId : "sensor"}-${
-            this.id
-          }] has been started at: ${new Date(this.startedTime).toLocaleTimeString()}`
+          `[${this.objectId ? this.objectId : 'sensor'}-${this.id}] has been started at: ${new Date(
+            this.startedTime
+          ).toLocaleTimeString()}`
         );
         this.dataSource.start();
         this.status = SIMULATING;
       } else {
-        console.log(
-          `[${this.id}${
-            this.objectId ? this.objectId : "sensor-"
-          }] is simulating!`
-        );
+        console.log(`[${this.id}${this.objectId ? this.objectId : 'sensor-'}] is simulating!`);
       }
     }
   }
@@ -172,17 +166,13 @@ class Sensor {
     } else {
       if (this.dataSource) {
         if (this.dataSource.getStatus() === OFFLINE) {
-          console.log(
-            `[${this.objectId ? this.objectId : "sensor"}-${
-              this.id
-            }] is offline!`
-          );
+          console.log(`[${this.objectId ? this.objectId : 'sensor'}-${this.id}] is offline!`);
         } else {
           this.dataSource.stop();
           console.log(
-            `[${this.objectId ? this.objectId : "sensor"}-${
-                this.id
-              }] stopped at: ${new Date().toLocaleTimeString()}`
+            `[${this.objectId ? this.objectId : 'sensor'}-${
+              this.id
+            }] stopped at: ${new Date().toLocaleTimeString()}`
           );
         }
       }

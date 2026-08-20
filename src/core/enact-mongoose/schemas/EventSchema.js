@@ -11,31 +11,31 @@
   }
  */
 
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
 const eventSchema = new Schema({
   datasetId: {
     type: String,
-    required: true
+    required: true,
   },
   timestamp: {
     type: Number,
-    required: true
+    required: true,
   },
   values: {
     type: Object,
-    required: true
+    required: true,
   },
   isSensorData: {
     type: Boolean,
-    required: true
+    required: true,
   },
   topic: {
     type: String,
-    required: false
-  }
+    required: false,
+  },
 });
 
 eventSchema.statics.findEventsWithPagingOptions = function (options, page, callback) {
@@ -43,7 +43,7 @@ eventSchema.statics.findEventsWithPagingOptions = function (options, page, callb
     .limit(200)
     .skip(page * 200)
     .sort({
-      timestamp: 1
+      timestamp: 1,
     })
     .exec((err, data) => {
       if (err) {
@@ -52,7 +52,7 @@ eventSchema.statics.findEventsWithPagingOptions = function (options, page, callb
 
       if (!data) {
         return callback({
-          error: `Cannot find any event data`
+          error: `Cannot find any event data`,
         });
       }
 
@@ -63,7 +63,7 @@ eventSchema.statics.findEventsWithPagingOptions = function (options, page, callb
 eventSchema.statics.findEventsWithOptions = function (options, callback) {
   this.find(options)
     .sort({
-      timestamp: 1
+      timestamp: 1,
     })
     .exec((err, data) => {
       if (err) {
@@ -72,7 +72,7 @@ eventSchema.statics.findEventsWithOptions = function (options, callback) {
 
       if (!data) {
         return callback({
-          error: `Cannot find any event data`
+          error: `Cannot find any event data`,
         });
       }
 
@@ -80,28 +80,24 @@ eventSchema.statics.findEventsWithOptions = function (options, callback) {
     });
 };
 
-eventSchema.statics.findEventsBetweenTimes = function (
-  filter,
-  startTime,
-  endTime,
-  callback
-) {
-
-  const options = {...filter,
-    $and: [{
+eventSchema.statics.findEventsBetweenTimes = function (filter, startTime, endTime, callback) {
+  const options = {
+    ...filter,
+    $and: [
+      {
         timestamp: {
-          $gte: Number(startTime)
-        }
+          $gte: Number(startTime),
+        },
       },
       {
         timestamp: {
-          $lte: Number(endTime)
-        }
-      }
-    ]
+          $lte: Number(endTime),
+        },
+      },
+    ],
   };
   // console.log(JSON.stringify(filter));
   return this.findEventsWithOptions(options, callback);
 };
 
-module.exports = mongoose.model("Event", eventSchema);
+module.exports = mongoose.model('Event', eventSchema);

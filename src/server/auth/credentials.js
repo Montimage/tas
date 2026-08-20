@@ -21,7 +21,7 @@
  * blanks the plaintext fields on the object it is handed, once it has hashed
  * them. It is the only consumer of those fields.
  */
-const { hashPassword, verifyPassword, timingSafeCompare } = require("./passwords");
+const { hashPassword, verifyPassword, timingSafeCompare } = require('./passwords');
 
 /**
  * A hash of a value nobody knows, used when no credential is configured.
@@ -31,7 +31,7 @@ const { hashPassword, verifyPassword, timingSafeCompare } = require("./passwords
  * time alone would tell an anonymous caller whether the server has a password
  * set at all.
  */
-const UNCONFIGURED_HASH = hashPassword(require("crypto").randomBytes(32).toString("hex"));
+const UNCONFIGURED_HASH = hashPassword(require('crypto').randomBytes(32).toString('hex'));
 
 /**
  * Blank a secret field on a configuration object, tolerating a frozen or
@@ -42,9 +42,9 @@ const UNCONFIGURED_HASH = hashPassword(require("crypto").randomBytes(32).toStrin
  * @returns {void}
  */
 function eraseSecret(target, key) {
-  if (typeof target[key] !== "string" || target[key] === "") return;
+  if (typeof target[key] !== 'string' || target[key] === '') return;
   try {
-    target[key] = "";
+    target[key] = '';
   } catch (_) {
     // Non-writable property: the value stays, and the hash is still what the
     // login route compares against.
@@ -59,25 +59,28 @@ function eraseSecret(target, key) {
  */
 function createCredential(config) {
   const settings = config || {};
-  const username = String(settings.authAdminUsername || "admin");
+  const username = String(settings.authAdminUsername || 'admin');
 
   let hash = null;
   let source = null;
 
-  if (typeof settings.authAdminPasswordHash === "string" && settings.authAdminPasswordHash.trim() !== "") {
+  if (
+    typeof settings.authAdminPasswordHash === 'string' &&
+    settings.authAdminPasswordHash.trim() !== ''
+  ) {
     hash = settings.authAdminPasswordHash.trim();
-    source = "hash";
-  } else if (typeof settings.authAdminPassword === "string" && settings.authAdminPassword !== "") {
+    source = 'hash';
+  } else if (typeof settings.authAdminPassword === 'string' && settings.authAdminPassword !== '') {
     // Hashed once, here, and the plaintext goes out of scope with this branch.
     hash = hashPassword(settings.authAdminPassword);
-    source = "password";
+    source = 'password';
   }
 
   // Erase the plaintext from the caller's object now that it has been hashed.
   // Deliberately unconditional: whether the hash form won, the plaintext form
   // did, or neither was set, nothing downstream has any use for the plaintext.
-  eraseSecret(settings, "authAdminPassword");
-  eraseSecret(settings, "AUTH_ADMIN_PASSWORD");
+  eraseSecret(settings, 'authAdminPassword');
+  eraseSecret(settings, 'AUTH_ADMIN_PASSWORD');
 
   const configured = hash !== null;
   const stored = configured ? hash : UNCONFIGURED_HASH;

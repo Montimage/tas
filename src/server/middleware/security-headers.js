@@ -117,7 +117,7 @@ function buildCspDirectives(options) {
     'worker-src': ["'self'", 'blob:'],
     // index.html links /manifest.json.
     'manifest-src': ["'self'"],
-    'media-src': ["'self'"]
+    'media-src': ["'self'"],
   };
 
   // Deliberately no `upgrade-insecure-requests`. It is part of the middleware's
@@ -154,8 +154,8 @@ function securityHeaders(options) {
       // Declare the whole policy rather than merging into helmet's defaults.
       useDefaults: false,
       directives: buildCspDirectives(opts),
-      reportOnly: opts.reportOnly !== false
-    }
+      reportOnly: opts.reportOnly !== false,
+    },
   });
 }
 
@@ -163,5 +163,5 @@ module.exports = {
   securityHeaders: securityHeaders,
   buildCspDirectives: buildCspDirectives,
   inlineScriptHashes: inlineScriptHashes,
-  INDEX_HTML: INDEX_HTML
+  INDEX_HTML: INDEX_HTML,
 };

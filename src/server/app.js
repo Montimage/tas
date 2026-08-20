@@ -45,14 +45,18 @@ const credential = createCredential(config);
 const sessions = createSessionStore({
   idleTtlMs: config.sessionIdleTtlMs,
   absoluteTtlMs: config.sessionAbsoluteTtlMs,
-  maxSessions: config.sessionMaxRecords
+  maxSessions: config.sessionMaxRecords,
 });
 
 if (!credential.configured) {
-  console.error('[AUTH] No administrator credential configured — every API endpoint will reject requests. Set AUTH_ADMIN_PASSWORD or AUTH_ADMIN_PASSWORD_HASH.');
+  console.error(
+    '[AUTH] No administrator credential configured — every API endpoint will reject requests. Set AUTH_ADMIN_PASSWORD or AUTH_ADMIN_PASSWORD_HASH.'
+  );
 }
 if (config.authTrustProxyHeader === true && config.authTrustedProxies.length === 0) {
-  console.error('[AUTH] AUTH_TRUST_PROXY_HEADER is enabled but AUTH_TRUSTED_PROXIES is empty — proxy identity delegation stays disabled.');
+  console.error(
+    '[AUTH] AUTH_TRUST_PROXY_HEADER is enabled but AUTH_TRUSTED_PROXIES is empty — proxy identity delegation stays disabled.'
+  );
 }
 
 var app = express();
@@ -68,7 +72,7 @@ var app = express();
  * `middleware/validate` enforce the same rule declaratively; this makes it
  * structurally impossible one layer earlier.
  */
-app.set("query parser", "simple");
+app.set('query parser', 'simple');
 
 app.use(compression()); //Compress all routes
 
@@ -80,11 +84,13 @@ app.use(compression()); //Compress all routes
  * defaults. It ships in report-only mode so a deployment can observe violations
  * before they start blocking; set `CSP_REPORT_ONLY=false` to enforce it.
  */
-app.use(securityHeaders({
-  reportOnly: config.cspReportOnly,
-  reportUri: config.cspReportUri
-}));
-app.set("port", config.port);
+app.use(
+  securityHeaders({
+    reportOnly: config.cspReportOnly,
+    reportUri: config.cspReportUri,
+  })
+);
+app.set('port', config.port);
 
 /**
  * Cross-origin access control.
@@ -140,13 +146,17 @@ app.use(function corsControl(req, res, next) {
   next();
 });
 
-app.use(bodyParser.json({
-  limit: config.bodyLimit
-}));
-app.use(bodyParser.urlencoded({
-  limit: config.bodyLimit,
-  extended: true
-}));
+app.use(
+  bodyParser.json({
+    limit: config.bodyLimit,
+  })
+);
+app.use(
+  bodyParser.urlencoded({
+    limit: config.bodyLimit,
+    extended: true,
+  })
+);
 // The secret is what makes `signed: true` cookies verifiable: a session cookie
 // that was edited or minted by anything but this process fails the signature
 // check and never reaches the session table.
@@ -163,7 +173,7 @@ const apiLimiter = rateLimit({
   // that is over the limit reads the same error shape as every other refusal.
   handler: function (req, res, next) {
     next(new ApiError(429, 'Too many requests, please try again later.'));
-  }
+  },
 });
 
 app.use('/api', apiLimiter);
@@ -184,7 +194,7 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true,
   handler: function (req, res, next) {
     next(new ApiError(429, 'Too many login attempts, please try again later.'));
-  }
+  },
 });
 
 app.use('/api/auth/login', loginLimiter);
@@ -196,11 +206,17 @@ app.use('/api/auth/login', loginLimiter);
  * ahead of every router, so a route added later is closed by default rather
  * than open until somebody remembers to guard it.
  */
-app.use('/api', createAuthMiddleware({ credential: credential, sessions: sessions, config: config }));
+app.use(
+  '/api',
+  createAuthMiddleware({ credential: credential, sessions: sessions, config: config })
+);
 app.use('/api', createCsrfMiddleware());
 
 app.use('/api/health', healthRouter);
-app.use('/api/auth', createAuthRouter({ credential: credential, sessions: sessions, config: config }));
+app.use(
+  '/api/auth',
+  createAuthRouter({ credential: credential, sessions: sessions, config: config })
+);
 
 app.use('/api/models', modelRouter);
 app.use('/api/data-recorders', dataRecorderRouter);
@@ -238,7 +254,9 @@ app.use(errorHandler);
 module.exports = app;
 
 if (require.main === module) {
-  var server = app.listen(app.get('port'), config.host, function () {
-    console.log(`[SERVER] Test and Simulation Server started on: http://${config.host}:${config.port}`);
+  var _server = app.listen(app.get('port'), config.host, function () {
+    console.log(
+      `[SERVER] Test and Simulation Server started on: http://${config.host}:${config.port}`
+    );
   });
 }

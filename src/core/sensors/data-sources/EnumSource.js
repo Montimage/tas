@@ -1,5 +1,5 @@
 const DataGeneratorAbstract = require('./DataSourceAbstract');
-const {AB_FIX_VALUE, AB_INVALID_VALUE, NORMAL_BEHAVIOUR} = require('../../AbnormalBehaviours');
+const { AB_FIX_VALUE, AB_INVALID_VALUE, NORMAL_BEHAVIOUR } = require('../../AbnormalBehaviours');
 const { getRandomInteger, getNotEnum, getRandomEnum } = require('./generator');
 /**
  * Boolean Data Generator
@@ -17,7 +17,7 @@ class EnumSource extends DataGeneratorAbstract {
   readData() {
     let value = super.readData();
     if (value) return value;
-    const beha = this.behaviours[getRandomInteger(0, this.behaviours.length -1)];
+    const beha = this.behaviours[getRandomInteger(0, this.behaviours.length - 1)];
     switch (beha) {
       case AB_FIX_VALUE:
         value = this.value;

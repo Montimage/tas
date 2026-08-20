@@ -1,8 +1,8 @@
-const { SIMULATING, OFFLINE } = require("../DeviceStatus");
-const ds = require("../DataSourceType");
-const abnormalBehaviours = require("../AbnormalBehaviours");
-const DataSource = require("./data-sources/DataSource");
-const DeviceDataSource = require("./DeviceDataSource");
+const { SIMULATING, OFFLINE } = require('../DeviceStatus');
+const ds = require('../DataSourceType');
+const abnormalBehaviours = require('../AbnormalBehaviours');
+const DataSource = require('./data-sources/DataSource');
+const DeviceDataSource = require('./DeviceDataSource');
 
 class DataGenerator extends DeviceDataSource {
   constructor(id, dataHandler, callbackWhenFinish, dataSpecs, objectId, reportFormat = 0) {
@@ -31,26 +31,20 @@ class DataGenerator extends DeviceDataSource {
         sensorBehaviours.indexOf(abnormalBehaviours.AB_NODE_FAILED) > -1 &&
         timeBeforeFailed === 0
       ) {
-        console.error(
-          `[${this.id}] Cannot initialize this sensor! timeBeforeFailed is 0`
-        );
+        console.error(`[${this.id}] Cannot initialize this sensor! timeBeforeFailed is 0`);
         return null;
       }
       if (
         sensorBehaviours.indexOf(abnormalBehaviours.AB_DOS_ATTACK) > -1 &&
         dosAttackSpeedUpRate === 0
       ) {
-        console.error(
-          `[${this.id}] Cannot initialize this sensor! dosAttackSpeedUpRate is 0`
-        );
+        console.error(`[${this.id}] Cannot initialize this sensor! dosAttackSpeedUpRate is 0`);
         return null;
       }
     }
     if (energy && withEnergy) {
       if (energy.type !== ds.DS_ENERGY) {
-        console.warn(
-          `[${this.id}] Energy data source is invalid: ${energy.type}`
-        );
+        console.warn(`[${this.id}] Energy data source is invalid: ${energy.type}`);
       }
       const energySource = new DataSource(energy.key, ds.DS_ENERGY, energy);
       this.energy = energySource;
@@ -73,11 +67,10 @@ class DataGenerator extends DeviceDataSource {
       timePeriod: this.timePeriod,
       sensorBehaviours: this.sensorBehaviours,
       numberOfMeasurements,
-    }
+    };
   }
 
   collectAndReportPlainData() {
-    
     if (!this.energy && this.sources.length === 1) {
       this.values = this.sources[0].getValue().value;
     } else {
@@ -88,7 +81,7 @@ class DataGenerator extends DeviceDataSource {
         const value = source.getValue();
         this.values.push(value);
       }
-      if(this.energy) {
+      if (this.energy) {
         this.values.push(this.energy.getValue());
       }
     }
@@ -149,9 +142,7 @@ class DataGenerator extends DeviceDataSource {
       // Check the time based behaviour: NODE_FAILED
       const currentTime = Date.now();
       if (this.sensorBehaviours.length > 0) {
-        if (
-          this.sensorBehaviours.indexOf(abnormalBehaviours.AB_NODE_FAILED) > -1
-        ) {
+        if (this.sensorBehaviours.indexOf(abnormalBehaviours.AB_NODE_FAILED) > -1) {
           if (currentTime - this.startedTime >= this.timeBeforeFailed * 1000) {
             console.log(`[${this.id}] Going to FAIL!`);
             this.stop();
@@ -159,10 +150,7 @@ class DataGenerator extends DeviceDataSource {
         }
 
         // Check the time based behaviour: SLOW_DOS_ATTACK
-        if (
-          this.sensorBehaviours.indexOf(abnormalBehaviours.AB_SLOW_DOS_ATTACK) >
-          -1
-        ) {
+        if (this.sensorBehaviours.indexOf(abnormalBehaviours.AB_SLOW_DOS_ATTACK) > -1) {
           if (this.timePeriod === this.originalTimePeriod) {
             this.timePeriod += 1; // Increase 1 second
             console.log(
@@ -174,9 +162,7 @@ class DataGenerator extends DeviceDataSource {
         }
 
         // Check the time based behaviour: DOS_ATTACK
-        if (
-          this.sensorBehaviours.indexOf(abnormalBehaviours.AB_DOS_ATTACK) > -1
-        ) {
+        if (this.sensorBehaviours.indexOf(abnormalBehaviours.AB_DOS_ATTACK) > -1) {
           if (this.timePeriod === this.originalTimePeriod) {
             this.timePeriod = this.timePeriod / this.dosAttackSpeedUpRate;
             console.log(
@@ -189,26 +175,18 @@ class DataGenerator extends DeviceDataSource {
 
         if (this.energy) {
           // Check the energy behaviour: OUT_OF_ENERGY
-          if (
-            this.sensorBehaviours.indexOf(abnormalBehaviours.AB_OUT_OF_ENERGY) >
-            -1
-          ) {
+          if (this.sensorBehaviours.indexOf(abnormalBehaviours.AB_OUT_OF_ENERGY) > -1) {
             if (this.energy.value <= 0) {
               console.log(`[${this.id}] Out of energy. Going to STOP!`);
               this.stop();
             }
           }
           // Check the energy behaviour: LOW_ENERGY
-          const low_energy_index = this.sensorBehaviours.indexOf(
-            abnormalBehaviours.AB_LOW_ENERGY
-          );
+          const low_energy_index = this.sensorBehaviours.indexOf(abnormalBehaviours.AB_LOW_ENERGY);
           if (low_energy_index > -1) {
             if (this.energy.value <= this.energy.dataGenerator.low) {
-              console.log(
-                `[${this.id}] Low energy. Going to change the frequency!`
-              );
-              this.timePeriod =
-                this.timePeriod * this.energy.dataGenerator.slowDownRate;
+              console.log(`[${this.id}] Low energy. Going to change the frequency!`);
+              this.timePeriod = this.timePeriod * this.energy.dataGenerator.slowDownRate;
               this.sensorBehaviours.splice(low_energy_index, 1);
               clearInterval(timerID);
               return this.start();

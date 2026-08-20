@@ -4,9 +4,9 @@ const DS_ENUM = 'DATA_SOURCE_ENUM';
 const DS_INTEGER = 'DATA_SOURCE_INTEGER';
 const DS_FLOAT = 'DATA_SOURCE_FLOAT';
 // DATA SOURCE TYPE
-const DS_RECORDER = "DATA_SOURCE_RECORDER"; // Digital Twins
-const DS_DATASET = "DATA_SOURCE_DATASET"; // Replay data from database
-const DS_DATA_GENERATOR = "DATA_SOURCE_GENERATOR"; // Generate data at runtime
+const DS_RECORDER = 'DATA_SOURCE_RECORDER'; // Digital Twins
+const DS_DATASET = 'DATA_SOURCE_DATASET'; // Replay data from database
+const DS_DATA_GENERATOR = 'DATA_SOURCE_GENERATOR'; // Generate data at runtime
 
 module.exports = {
   DS_ENERGY,
@@ -16,5 +16,5 @@ module.exports = {
   DS_FLOAT,
   DS_RECORDER,
   DS_DATASET,
-  DS_DATA_GENERATOR
-}
+  DS_DATA_GENERATOR,
+};

@@ -7,11 +7,11 @@
  * the token bound to the server-side session, which a cross-site page can never
  * read and therefore never send.
  */
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const { startApp, TEST_CREDENTIALS } = require("./helpers/start-app");
-const { isMutatingSafeMethodPath } = require("../src/server/middleware/csrf");
-const { collectRoutes } = require("./helpers/route-table");
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { startApp, TEST_CREDENTIALS } = require('./helpers/start-app');
+const { isMutatingSafeMethodPath } = require('../src/server/middleware/csrf');
+const { collectRoutes } = require('./helpers/route-table');
 
 const USERNAME = TEST_CREDENTIALS.AUTH_ADMIN_USERNAME;
 const PASSWORD = TEST_CREDENTIALS.AUTH_ADMIN_PASSWORD;
@@ -28,7 +28,7 @@ async function call(ctx, method, path, options = {}) {
   const res = await fetch(ctx.base + path, {
     method,
     headers: {
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...(options.headers || {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
@@ -51,14 +51,14 @@ async function call(ctx, method, path, options = {}) {
 async function withSession(fn) {
   const ctx = await startApp({}, { login: false });
   try {
-    const res = await call(ctx, "POST", "/api/auth/login", {
+    const res = await call(ctx, 'POST', '/api/auth/login', {
       body: { username: USERNAME, password: PASSWORD },
     });
     assert.equal(res.status, 200, res.raw);
     const cookie = res.res.headers
       .getSetCookie()
-      .map((value) => value.split(";")[0])
-      .join("; ");
+      .map((value) => value.split(';')[0])
+      .join('; ');
     await fn(ctx, { cookie, csrfToken: res.body.csrfToken });
   } finally {
     await new Promise((resolve) => ctx.server.close(resolve));
@@ -66,26 +66,31 @@ async function withSession(fn) {
   }
 }
 
-test("a state-changing request without the CSRF header is refused", async () => {
+test('a state-changing request without the CSRF header is refused', async () => {
   await withSession(async (ctx, session) => {
-    const res = await call(ctx, "POST", "/api/data-storage", {
+    const res = await call(ctx, 'POST', '/api/data-storage', {
       headers: { Cookie: session.cookie },
-      body: { dataStorage: { type: "MongoDB", host: "localhost", port: 27017 } },
+      body: { dataStorage: { type: 'MongoDB', host: 'localhost', port: 27017 } },
     });
     assert.equal(res.status, 403, `expected a CSRF rejection, got ${res.status}: ${res.raw}`);
-    assert.equal(res.body.error, "Invalid CSRF token");
+    assert.equal(res.body.error, 'Invalid CSRF token');
   });
 });
 
-test("a state-changing request with the wrong CSRF token is refused", async () => {
+test('a state-changing request with the wrong CSRF token is refused', async () => {
   await withSession(async (ctx, session) => {
-    for (const token of ["not-the-token", "", session.csrfToken + "x", session.csrfToken.slice(1)]) {
-      const res = await call(ctx, "POST", "/api/data-storage", {
-        headers: { Cookie: session.cookie, "X-CSRF-Token": token },
-        body: { dataStorage: { type: "MongoDB", host: "localhost", port: 27017 } },
+    for (const token of [
+      'not-the-token',
+      '',
+      session.csrfToken + 'x',
+      session.csrfToken.slice(1),
+    ]) {
+      const res = await call(ctx, 'POST', '/api/data-storage', {
+        headers: { Cookie: session.cookie, 'X-CSRF-Token': token },
+        body: { dataStorage: { type: 'MongoDB', host: 'localhost', port: 27017 } },
       });
       assert.equal(res.status, 403, `token ${JSON.stringify(token)}: ${res.raw}`);
-      assert.equal(res.body.error, "Invalid CSRF token");
+      assert.equal(res.body.error, 'Invalid CSRF token');
     }
   });
 });
@@ -95,89 +100,89 @@ test("the correct CSRF token lets the dashboard's own request through", async ()
     // What is asserted is that CSRF did NOT reject it. The route itself may
     // still answer 400/404/500 depending on the payload and on whether a
     // database is reachable - that is not this middleware's business.
-    const post = await call(ctx, "POST", "/api/data-storage", {
-      headers: { Cookie: session.cookie, "X-CSRF-Token": session.csrfToken },
-      body: { dataStorage: { type: "MongoDB", host: "localhost", port: 27017 } },
+    const post = await call(ctx, 'POST', '/api/data-storage', {
+      headers: { Cookie: session.cookie, 'X-CSRF-Token': session.csrfToken },
+      body: { dataStorage: { type: 'MongoDB', host: 'localhost', port: 27017 } },
     });
     assert.notEqual(post.status, 403, `a correctly tokened POST must not be refused: ${post.raw}`);
-    assert.notEqual(post.body && post.body.error, "Invalid CSRF token");
+    assert.notEqual(post.body && post.body.error, 'Invalid CSRF token');
 
-    const del = await call(ctx, "DELETE", "/api/models/no-such-model.json", {
-      headers: { Cookie: session.cookie, "X-CSRF-Token": session.csrfToken },
+    const del = await call(ctx, 'DELETE', '/api/models/no-such-model.json', {
+      headers: { Cookie: session.cookie, 'X-CSRF-Token': session.csrfToken },
     });
     assert.notEqual(del.status, 403, `a correctly tokened DELETE must not be refused: ${del.raw}`);
   });
 });
 
-test("a DELETE without the CSRF header is refused", async () => {
+test('a DELETE without the CSRF header is refused', async () => {
   await withSession(async (ctx, session) => {
-    const res = await call(ctx, "DELETE", "/api/models/no-such-model.json", {
+    const res = await call(ctx, 'DELETE', '/api/models/no-such-model.json', {
       headers: { Cookie: session.cookie },
     });
     assert.equal(res.status, 403, res.raw);
-    assert.equal(res.body.error, "Invalid CSRF token");
+    assert.equal(res.body.error, 'Invalid CSRF token');
   });
 });
 
-test("safe methods never require the CSRF header", async () => {
+test('safe methods never require the CSRF header', async () => {
   await withSession(async (ctx, session) => {
-    for (const path of ["/api/models", "/api/devops/status", "/api/auth/session"]) {
-      const res = await call(ctx, "GET", path, { headers: { Cookie: session.cookie } });
+    for (const path of ['/api/models', '/api/devops/status', '/api/auth/session']) {
+      const res = await call(ctx, 'GET', path, { headers: { Cookie: session.cookie } });
       assert.notEqual(res.status, 403, `${path} must not require a token for GET: ${res.raw}`);
     }
   });
 });
 
-test("the forged cross-site POST - session cookie, attacker-chosen token - is refused", async () => {
+test('the forged cross-site POST - session cookie, attacker-chosen token - is refused', async () => {
   await withSession(async (ctx, session) => {
     // Exactly what a hostile page can produce: the browser attaches the session
     // cookie, and the page supplies whatever header value it likes (it cannot
     // read the real token, because the same-origin policy stops it).
-    const forged = await call(ctx, "POST", "/api/models", {
+    const forged = await call(ctx, 'POST', '/api/models', {
       headers: {
         Cookie: session.cookie,
         Origin: ctx.base,
-        "X-CSRF-Token": "value-chosen-by-the-attacker",
+        'X-CSRF-Token': 'value-chosen-by-the-attacker',
       },
-      body: { model: { name: "forged", devices: [] } },
+      body: { model: { name: 'forged', devices: [] } },
     });
     assert.equal(forged.status, 403, `a forged POST must be refused: ${forged.raw}`);
-    assert.equal(forged.body.error, "Invalid CSRF token");
+    assert.equal(forged.body.error, 'Invalid CSRF token');
 
     // And with no header at all - the plain cross-site form post.
-    const noHeader = await call(ctx, "POST", "/api/models", {
+    const noHeader = await call(ctx, 'POST', '/api/models', {
       headers: { Cookie: session.cookie },
-      body: { model: { name: "forged", devices: [] } },
+      body: { model: { name: 'forged', devices: [] } },
     });
     assert.equal(noHeader.status, 403, `a headerless POST must be refused: ${noHeader.raw}`);
   });
 });
 
-test("a token from a different session does not authorise a request", async () => {
+test('a token from a different session does not authorise a request', async () => {
   await withSession(async (ctx, session) => {
-    const second = await call(ctx, "POST", "/api/auth/login", {
+    const second = await call(ctx, 'POST', '/api/auth/login', {
       body: { username: USERNAME, password: PASSWORD },
     });
     assert.equal(second.status, 200, second.raw);
-    assert.notEqual(second.body.csrfToken, session.csrfToken, "each session gets its own token");
+    assert.notEqual(second.body.csrfToken, session.csrfToken, 'each session gets its own token');
 
-    const res = await call(ctx, "POST", "/api/models", {
-      headers: { Cookie: session.cookie, "X-CSRF-Token": second.body.csrfToken },
-      body: { model: { name: "crossed", devices: [] } },
+    const res = await call(ctx, 'POST', '/api/models', {
+      headers: { Cookie: session.cookie, 'X-CSRF-Token': second.body.csrfToken },
+      body: { model: { name: 'crossed', devices: [] } },
     });
     assert.equal(res.status, 403, `a token from another session must not work: ${res.raw}`);
   });
 });
 
-test("login itself is exempt, because it is what issues the token", async () => {
+test('login itself is exempt, because it is what issues the token', async () => {
   const ctx = await startApp({}, { login: false });
   try {
-    const res = await fetch(ctx.base + "/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch(ctx.base + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: USERNAME, password: PASSWORD }),
     });
-    assert.equal(res.status, 200, "login must not require a token it has not issued yet");
+    assert.equal(res.status, 200, 'login must not require a token it has not issued yet');
   } finally {
     await new Promise((resolve) => ctx.server.close(resolve));
     ctx.restore();
@@ -195,16 +200,16 @@ test("login itself is exempt, because it is what issues the token", async () => 
  * logged in would otherwise reach them with full authority.
  */
 const MUTATING_GETS = [
-  "/api/devops/start",
-  "/api/devops/stop",
-  "/api/simulation/stop/anything.json",
-  "/api/data-recorders/stop/anything.json",
+  '/api/devops/start',
+  '/api/devops/stop',
+  '/api/simulation/stop/anything.json',
+  '/api/data-recorders/stop/anything.json',
 ];
 
-test("state-changing GET endpoints require the CSRF token too", async () => {
+test('state-changing GET endpoints require the CSRF token too', async () => {
   await withSession(async (ctx, session) => {
     for (const path of MUTATING_GETS) {
-      const res = await call(ctx, "GET", path, {
+      const res = await call(ctx, 'GET', path, {
         headers: { Cookie: session.cookie },
       });
       assert.equal(
@@ -212,20 +217,20 @@ test("state-changing GET endpoints require the CSRF token too", async () => {
         403,
         `${path} mutates, so a tokenless GET must be refused: ${res.status} ${res.raw}`
       );
-      assert.equal(res.body.error, "Invalid CSRF token");
+      assert.equal(res.body.error, 'Invalid CSRF token');
     }
   });
 });
 
-test("the same endpoints are reachable once the token is sent", async () => {
+test('the same endpoints are reachable once the token is sent', async () => {
   await withSession(async (ctx, session) => {
     // `/api/devops/start` is left out: it reaches for the configured data
     // storage and blocks until that connection attempt times out, which says
     // nothing about the guard under test here. Its refusal without a token is
     // asserted above, which is the property this pair exists to pin.
-    for (const path of MUTATING_GETS.filter((p) => p !== "/api/devops/start")) {
-      const res = await call(ctx, "GET", path, {
-        headers: { Cookie: session.cookie, "X-CSRF-Token": session.csrfToken },
+    for (const path of MUTATING_GETS.filter((p) => p !== '/api/devops/start')) {
+      const res = await call(ctx, 'GET', path, {
+        headers: { Cookie: session.cookie, 'X-CSRF-Token': session.csrfToken },
       });
       assert.notEqual(
         res.status,
@@ -236,18 +241,18 @@ test("the same endpoints are reachable once the token is sent", async () => {
   });
 });
 
-test("the mutating-GET list is matched case-insensitively, as Express routes are", async () => {
+test('the mutating-GET list is matched case-insensitively, as Express routes are', async () => {
   await withSession(async (ctx, session) => {
     // `/api/DevOps/stop` reaches the same handler, so a case-sensitive list
     // would be a way straight around the check.
-    const res = await call(ctx, "GET", "/api/DevOps/stop", {
+    const res = await call(ctx, 'GET', '/api/DevOps/stop', {
       headers: { Cookie: session.cookie },
     });
     assert.equal(res.status, 403, `case variation must not evade the check: ${res.raw}`);
   });
 });
 
-test("a forged CORS preflight cannot enumerate the routing table", async () => {
+test('a forged CORS preflight cannot enumerate the routing table', async () => {
   await startApp({}, { login: false }).then(async (ctx) => {
     try {
       // The two headers that define a preflight are trivially forged by a
@@ -255,17 +260,21 @@ test("a forged CORS preflight cannot enumerate the routing table", async () => {
       // preflight: passing it on hands Express's own OPTIONS responder an
       // anonymous caller, and its `Allow` header - plus the 404 an unrouted
       // path gets - maps every endpoint and the methods it takes.
-      const probes = ["/api/models", "/api/models/x.json", "/api/devops/start", "/api/nope"];
+      const probes = ['/api/models', '/api/models/x.json', '/api/devops/start', '/api/nope'];
       const seen = new Set();
       for (const path of probes) {
-        const res = await call(ctx, "OPTIONS", path, {
-          headers: { Origin: ctx.base, "Access-Control-Request-Method": "GET" },
+        const res = await call(ctx, 'OPTIONS', path, {
+          headers: { Origin: ctx.base, 'Access-Control-Request-Method': 'GET' },
         });
         assert.equal(res.status, 204, `${path} preflight must be answered here: ${res.raw}`);
-        assert.equal(res.res.headers.get("allow"), null, `${path} must not leak an Allow header`);
+        assert.equal(res.res.headers.get('allow'), null, `${path} must not leak an Allow header`);
         seen.add(res.status);
       }
-      assert.equal(seen.size, 1, "an existing path must not be distinguishable from an unknown one");
+      assert.equal(
+        seen.size,
+        1,
+        'an existing path must not be distinguishable from an unknown one'
+      );
     } finally {
       await new Promise((resolve) => ctx.server.close(resolve));
       ctx.restore();
@@ -295,52 +304,52 @@ test("a forged CORS preflight cannot enumerate the routing table", async () => {
  * notices.
  */
 const READ_ONLY_SAFE_ROUTES = new Set([
-  "/auth/session",
-  "/data-recorders/models",
-  "/data-recorders/models/:fileName",
-  "/data-recorders/status",
-  "/data-sets",
-  "/data-sets/:datasetId",
-  "/data-storage",
-  "/data-storage/test",
-  "/devops",
-  "/devops/status",
-  "/events",
-  "/events/:eventId",
-  "/health",
-  "/logs/data-recorders",
-  "/logs/data-recorders/:fileName",
-  "/logs/simulations",
-  "/logs/simulations/:fileName",
-  "/logs/test-campaigns",
-  "/logs/test-campaigns/:fileName",
-  "/models",
-  "/models/:fileName",
-  "/reports",
-  "/reports/:reportId",
-  "/simulation/stats",
-  "/simulation/status",
-  "/test-campaigns",
-  "/test-campaigns/:testCampaignId",
-  "/test-cases",
-  "/test-cases/:testCaseId",
+  '/auth/session',
+  '/data-recorders/models',
+  '/data-recorders/models/:fileName',
+  '/data-recorders/status',
+  '/data-sets',
+  '/data-sets/:datasetId',
+  '/data-storage',
+  '/data-storage/test',
+  '/devops',
+  '/devops/status',
+  '/events',
+  '/events/:eventId',
+  '/health',
+  '/logs/data-recorders',
+  '/logs/data-recorders/:fileName',
+  '/logs/simulations',
+  '/logs/simulations/:fileName',
+  '/logs/test-campaigns',
+  '/logs/test-campaigns/:fileName',
+  '/models',
+  '/models/:fileName',
+  '/reports',
+  '/reports/:reportId',
+  '/simulation/stats',
+  '/simulation/status',
+  '/test-campaigns',
+  '/test-campaigns/:testCampaignId',
+  '/test-cases',
+  '/test-cases/:testCaseId',
 ]);
 
-test("every safe-method route under /api is classified read-only or token-bearing", async () => {
+test('every safe-method route under /api is classified read-only or token-bearing', async () => {
   // Boot the real application so the route table is the one the guard sees.
-  const appPath = require.resolve("../src/server/app.js");
+  const appPath = require.resolve('../src/server/app.js');
   const saved = {};
   const env = {
     AUTH_ADMIN_USERNAME: USERNAME,
     AUTH_ADMIN_PASSWORD: PASSWORD,
-    SESSION_SECRET: "route-walk-secret",
+    SESSION_SECRET: 'route-walk-secret',
   };
   Object.keys(env).forEach((key) => {
     saved[key] = process.env[key];
     process.env[key] = env[key];
   });
   delete require.cache[appPath];
-  delete require.cache[require.resolve("../src/server/config.js")];
+  delete require.cache[require.resolve('../src/server/config.js')];
   let app;
   try {
     app = require(appPath);
@@ -350,16 +359,16 @@ test("every safe-method route under /api is classified read-only or token-bearin
       else process.env[key] = saved[key];
     });
     delete require.cache[appPath];
-    delete require.cache[require.resolve("../src/server/config.js")];
+    delete require.cache[require.resolve('../src/server/config.js')];
   }
 
   const router = app._router || app.router;
-  assert.ok(router && router.stack, "the Express route table must be reachable");
+  assert.ok(router && router.stack, 'the Express route table must be reachable');
 
-  const safeApiRoutes = collectRoutes(router.stack, "")
-    .filter((route) => route.path === "/api" || route.path.startsWith("/api/"))
+  const safeApiRoutes = collectRoutes(router.stack, '')
+    .filter((route) => route.path === '/api' || route.path.startsWith('/api/'))
     .filter((route) => route.methods.get || route.methods.head)
-    .map((route) => route.path.slice("/api".length) || "/");
+    .map((route) => route.path.slice('/api'.length) || '/');
 
   assert.ok(
     safeApiRoutes.length > 20,
@@ -375,7 +384,7 @@ test("every safe-method route under /api is classified read-only or token-bearin
     }
     // Checked with the parameter left in place *and* filled in, because the
     // guard matches a concrete request path at runtime.
-    const concrete = path.replace(/:[^/]+/g, "placeholder.json");
+    const concrete = path.replace(/:[^/]+/g, 'placeholder.json');
     if (isMutatingSafeMethodPath(path) && isMutatingSafeMethodPath(concrete)) continue;
     unclassified.push(path);
   }
@@ -383,10 +392,10 @@ test("every safe-method route under /api is classified read-only or token-bearin
   assert.deepEqual(
     [...new Set(unclassified)].sort(),
     [],
-    "a safe-method route under /api is neither on the reviewed read-only list nor " +
+    'a safe-method route under /api is neither on the reviewed read-only list nor ' +
       "covered by the CSRF guard's mutating-path list - classify it in one of the " +
-      "two, and if it changes state add it to MUTATING_SAFE_METHOD_PATHS in " +
-      "src/server/middleware/csrf.js"
+      'two, and if it changes state add it to MUTATING_SAFE_METHOD_PATHS in ' +
+      'src/server/middleware/csrf.js'
   );
 
   // A stale entry is a pre-authorisation for a route nobody reviewed: it would
@@ -394,6 +403,6 @@ test("every safe-method route under /api is classified read-only or token-bearin
   assert.deepEqual(
     [...READ_ONLY_SAFE_ROUTES].filter((path) => !seen.has(path)).sort(),
     [],
-    "READ_ONLY_SAFE_ROUTES lists a path that no longer exists - remove it"
+    'READ_ONLY_SAFE_ROUTES lists a path that no longer exists - remove it'
   );
 });

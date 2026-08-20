@@ -54,8 +54,8 @@ function login(base, credentials) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload)
-        }
+          'Content-Length': Buffer.byteLength(payload),
+        },
       },
       (res) => {
         let raw = '';
@@ -89,9 +89,9 @@ test('server starts and serves dashboard + API without a tracked .env file', asy
       // account - provisioned the way an operator provisions one.
       AUTH_ADMIN_USERNAME: 'smoke-admin',
       AUTH_ADMIN_PASSWORD: 'smoke-password',
-      SESSION_SECRET: 'smoke-session-secret'
+      SESSION_SECRET: 'smoke-session-secret',
     },
-    stdio: 'ignore'
+    stdio: 'ignore',
   });
   try {
     const base = `http://127.0.0.1:${port}`;

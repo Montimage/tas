@@ -1,4 +1,4 @@
-const { OFFLINE, SIMULATING } = require("../DeviceStatus");
+const { OFFLINE, SIMULATING } = require('../DeviceStatus');
 
 /**
  * The Actuator class presents an actuator
@@ -28,8 +28,8 @@ class Actuator {
       numberOfReceivedData: this.numberOfReceivedData,
       lastActivity: this.lastActivity,
       lastReceivedData: this.lastReceivedData,
-      topic: this.topic
-    }
+      topic: this.topic,
+    };
   }
 
   /**
@@ -50,9 +50,7 @@ class Actuator {
    */
   showStatus() {
     console.log(
-      `[${this.id}] ${this.name} ${new Date(this.timestamp)} ${JSON.stringify(
-        this.actuatedData
-      )}`
+      `[${this.id}] ${this.name} ${new Date(this.timestamp)} ${JSON.stringify(this.actuatedData)}`
     );
   }
 

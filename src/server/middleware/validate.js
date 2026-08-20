@@ -1,6 +1,6 @@
-const Joi = require("joi");
-const { NAME_MAX_LENGTH } = require("../routes/path-safety");
-const { badRequest } = require("./errors");
+const Joi = require('joi');
+const { NAME_MAX_LENGTH } = require('../routes/path-safety');
+const { badRequest } = require('./errors');
 
 /**
  * Request sections that carry externally controlled input, with the validation
@@ -14,9 +14,9 @@ const { badRequest } = require("./errors");
  * documents (see `documentSchema`).
  */
 const SECTIONS = [
-  { key: "params", options: { abortEarly: false, convert: true } },
-  { key: "query", options: { abortEarly: false, stripUnknown: true, convert: true } },
-  { key: "body", options: { abortEarly: false, convert: true } },
+  { key: 'params', options: { abortEarly: false, convert: true } },
+  { key: 'query', options: { abortEarly: false, stripUnknown: true, convert: true } },
+  { key: 'body', options: { abortEarly: false, convert: true } },
 ];
 
 /**
@@ -36,8 +36,7 @@ const NOTHING_DECLARED = {};
  * @param {Object|Joi.Schema} schema The declared schema
  * @returns {Joi.Schema} A compiled Joi schema
  */
-const compileSchema = (schema) =>
-  Joi.isSchema(schema) ? schema : Joi.compile(schema);
+const compileSchema = (schema) => (Joi.isSchema(schema) ? schema : Joi.compile(schema));
 
 /**
  * Validate request parameters, query string and body against declared schemas.
@@ -70,9 +69,7 @@ const validate = (schemas = {}) => {
     key,
     options,
     schema: compileSchema(
-      schemas[key] === undefined || schemas[key] === null
-        ? NOTHING_DECLARED
-        : schemas[key]
+      schemas[key] === undefined || schemas[key] === null ? NOTHING_DECLARED : schemas[key]
     ),
   }));
 
@@ -90,7 +87,7 @@ const validate = (schemas = {}) => {
             location: key,
             // A failure on the section itself (a missing body, say) has an
             // empty path; name the section so every entry names a field.
-            field: detail.path.length > 0 ? detail.path.join(".") : key,
+            field: detail.path.length > 0 ? detail.path.join('.') : key,
             message: detail.message,
             type: detail.type,
           });
@@ -104,7 +101,7 @@ const validate = (schemas = {}) => {
       // Handed to `next` rather than answered here, so a rejected request is
       // rendered by the same handler as every other failure and the API keeps
       // one error shape (`middleware/errors.js`).
-      return next(badRequest("Validation failed", details));
+      return next(badRequest('Validation failed', details));
     }
 
     for (const { key, value } of validated) {
@@ -156,12 +153,12 @@ const documentSchema = (keys) =>
  * containment will also accept, so the two never disagree about what is safe.
  */
 const safeNameSchema = Joi.string()
-  .pattern(/^[A-Za-z0-9][A-Za-z0-9 _\-.()\[\]+@'#]*$/)
+  .pattern(/^[A-Za-z0-9][A-Za-z0-9 _\-.()[\]+@'#]*$/)
   .max(NAME_MAX_LENGTH)
   .messages({
-    "string.pattern.base":
-      "{{#label}} must start with an alphanumeric character and contain only safe characters",
-    "string.max": "{{#label}} must not exceed {{#limit}} characters",
+    'string.pattern.base':
+      '{{#label}} must start with an alphanumeric character and contain only safe characters',
+    'string.max': '{{#label}} must not exceed {{#limit}} characters',
   });
 
 /**
@@ -200,7 +197,7 @@ const TIMESTAMP_LENGTH = String(Date.now()).length;
  * @returns {Number} Maximum length of the generated file name
  */
 const generatedFileNameMaxLength = (extension) =>
-  fileNameMaxLength(extension) + "_".length + TIMESTAMP_LENGTH;
+  fileNameMaxLength(extension) + '_'.length + TIMESTAMP_LENGTH;
 
 /**
  * Build a schema for a filename parameter with a fixed extension.
@@ -217,8 +214,8 @@ const fileNameParam = (extension, maxLength = fileNameMaxLength(extension)) =>
     .max(maxLength)
     .required()
     .messages({
-      "string.pattern.base": `{{#label}} must be a safe ${extension} file name`,
-      "string.max": "{{#label}} must not exceed {{#limit}} characters",
+      'string.pattern.base': `{{#label}} must be a safe ${extension} file name`,
+      'string.max': '{{#label}} must not exceed {{#limit}} characters',
     });
 
 /**
@@ -240,7 +237,9 @@ const pageSchema = Joi.number().integer().min(0);
 const timestampSchema = Joi.number().integer().min(0);
 
 /** Schema for an http(s) URL. */
-const urlSchema = Joi.string().uri({ scheme: [/https?/] }).max(2048);
+const urlSchema = Joi.string()
+  .uri({ scheme: [/https?/] })
+  .max(2048);
 
 /**
  * Schema for a database connection configuration.
@@ -253,25 +252,26 @@ const urlSchema = Joi.string().uri({ scheme: [/https?/] }).max(2048);
  * happens to check less.
  */
 const dataStorageSchema = documentSchema({
-  protocol: Joi.string().valid("MONGODB").required(),
+  protocol: Joi.string().valid('MONGODB').required(),
   connConfig: documentSchema({
     // Deliberately a character allowlist rather than a strict hostname check:
     // it still rules out the separators that would let a host rewrite the
     // connection string, without rejecting the service names an operator may
     // legitimately have configured.
-    host: Joi.string().pattern(/^[A-Za-z0-9._-]+$/).max(253).required(),
+    host: Joi.string()
+      .pattern(/^[A-Za-z0-9._-]+$/)
+      .max(253)
+      .required(),
     port: Joi.number().integer().min(1).max(65535).required(),
-    username: Joi.string().max(256).allow(null, ""),
-    password: Joi.string().max(256).allow(null, ""),
-    dbname: Joi.string().max(256).allow(null, ""),
+    username: Joi.string().max(256).allow(null, ''),
+    password: Joi.string().max(256).allow(null, ''),
+    dbname: Joi.string().max(256).allow(null, ''),
     // The dashboard's connection form submits this field as the raw text the
     // operator typed — `ConnectionConfig` stringifies it for display and hands
     // back what was typed without parsing it — so a string is what actually
     // arrives. It is destructured but never read by the connector, so admitting
     // the string costs nothing; it stays bounded rather than becoming `any`.
-    options: Joi.alternatives()
-      .try(Joi.object(), Joi.string().max(2048))
-      .allow(null),
+    options: Joi.alternatives().try(Joi.object(), Joi.string().max(2048)).allow(null),
   }).required(),
 });
 
@@ -285,10 +285,10 @@ const dataStorageSchema = documentSchema({
  */
 const datasetSchema = documentSchema({
   id: idSchema,
-  name: textSchema.allow(null, ""),
-  description: textSchema.allow(null, ""),
+  name: textSchema.allow(null, ''),
+  description: textSchema.allow(null, ''),
   tags: Joi.array().items(Joi.string().max(256)),
-  source: textSchema.allow(null, ""),
+  source: textSchema.allow(null, ''),
 });
 
 /**

@@ -1,16 +1,12 @@
 /* Working with Data Generator */
-var express = require("express");
-const Joi = require("joi");
-const { SIMULATING, OFFLINE } = require("../../core/DeviceStatus");
-let getLogger = require("../logger");
-const Simulation = require("../../core/simulation");
-const { readJSONFile } = require("../../core/utils");
-const {
-  isValidName,
-  resolveWithin,
-  sendBadRequest,
-} = require("./path-safety");
-const { getDataStorage } = require("./db-connector");
+var express = require('express');
+const Joi = require('joi');
+const { OFFLINE } = require('../../core/DeviceStatus');
+let getLogger = require('../logger');
+const Simulation = require('../../core/simulation');
+const { readJSONFile } = require('../../core/utils');
+const { isValidName, resolveWithin, sendBadRequest } = require('./path-safety');
+const { getDataStorage } = require('./db-connector');
 const { getObjectId } = require('../../core/utils');
 const {
   validate,
@@ -19,14 +15,14 @@ const {
   fileNameParam,
   fileNameMaxLength,
   simulationRunFields,
-} = require("../middleware/validate");
+} = require('../middleware/validate');
 const {
   errorHandler,
   badRequest,
   conflict,
   fileError,
   unavailable,
-} = require("../middleware/errors");
+} = require('../middleware/errors');
 
 let router = express.Router();
 const logsPath = `${__dirname}/../logs/simulations/`;
@@ -38,7 +34,7 @@ const modelsPath = `${__dirname}/../data/models/`;
 
 // A simulation is keyed by its model file name, so `/stop` is given the same
 // `.json` name the dashboard started it with.
-const simulationFileNameParam = fileNameParam(".json");
+const simulationFileNameParam = fileNameParam('.json');
 
 const simulationModelBody = documentSchema({
   name: safeNameSchema.required(),
@@ -54,7 +50,7 @@ const simulationModelBody = documentSchema({
 // A run starts either from a stored model or from an inline one.
 const simulationStartBody = Joi.object({
   model: simulationModelBody,
-  modelFileName: Joi.string().max(fileNameMaxLength(".json")),
+  modelFileName: Joi.string().max(fileNameMaxLength('.json')),
   // Unknown keys are rejected here rather than tolerated: unlike a stored
   // topology, `options` is assembled by the caller for this one request, so
   // there is no round-tripped field to make room for. Defaulted because the
@@ -62,7 +58,7 @@ const simulationStartBody = Joi.object({
   // an object behind, not an undefined the run would crash on.
   options: Joi.object(simulationRunFields).default({}),
 })
-  .or("model", "modelFileName")
+  .or('model', 'modelFileName')
   .required();
 
 /**
@@ -102,14 +98,14 @@ const startingSimulations = new Set();
 const startSimulation = (model, options = {}, res, next, modelFileName = null) => {
   // Check if there is a configuration
   if (!model) {
-    return next(badRequest("Cannot simulate a null model"));
+    return next(badRequest('Cannot simulate a null model'));
   }
   const { name, devices } = model;
   if (!name || !devices) {
-    return next(badRequest("Invalid model"));
+    return next(badRequest('Invalid model'));
   }
   if (!isValidName(name)) {
-    return sendBadRequest(res, "Invalid model name");
+    return sendBadRequest(res, 'Invalid model name');
   }
 
   const simId = getObjectId(name);
@@ -124,13 +120,13 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
     // state the resource is in, which is a conflict rather than a fault.
     next(
       conflict(
-        "A running simulation is using this topology. A topology can be used only in one running simulation"
+        'A running simulation is using this topology. A topology can be used only in one running simulation'
       )
     );
   } else {
     const startedTime = Date.now();
     const logFile = `${name}_${Date.now()}.log`;
-    getLogger("SIMULATION", `${logsPath}${logFile}`);
+    getLogger('SIMULATION', `${logsPath}${logFile}`);
     if (!model.dataStorage && !options.dataStorage) {
       // Use default data storage
       startingSimulations.add(simId);
@@ -139,12 +135,9 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
         // path, nor if registering the run throws.
         startingSimulations.delete(simId);
         if (err) {
-          next(unavailable("No data storage", err));
+          next(unavailable('No data storage', err));
         } else {
-          const simulation = new Simulation(
-            { ...model, dataStorage: ds },
-            options
-          );
+          const simulation = new Simulation({ ...model, dataStorage: ds }, options);
           simulation.start();
           allSimulations[simId] = simulation;
           allSimulationStatus[simId] = {
@@ -155,7 +148,7 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
             newDataset: simulation.newDataset,
             report: simulation.report,
             modelFileName,
-            isRunning: true
+            isRunning: true,
           };
 
           res.send({
@@ -187,16 +180,16 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
   }
 };
 
-router.post("/start", validate({ body: simulationStartBody }), function (req, res, next) {
+router.post('/start', validate({ body: simulationStartBody }), function (req, res, next) {
   const { model, modelFileName, options } = req.body;
   if (modelFileName) {
     const modelFilePath = resolveWithin(modelsPath, modelFileName);
     if (!modelFilePath) {
-      return sendBadRequest(res, "Invalid model file name");
+      return sendBadRequest(res, 'Invalid model file name');
     }
     readJSONFile(modelFilePath, (err, myModel) => {
       if (err) {
-        next(fileError(err, "Model not found", "Cannot read the model file"));
+        next(fileError(err, 'Model not found', 'Cannot read the model file'));
       } else {
         startSimulation(myModel, options, res, next, modelFileName);
       }
@@ -206,24 +199,28 @@ router.post("/start", validate({ body: simulationStartBody }), function (req, re
   }
 });
 
-router.get("/stop/:fileName", validate({ params: { fileName: simulationFileNameParam } }), function (req, res, next) {
-  const { fileName } = req.params;
-  const simId = getObjectId(fileName.replace(".json", ""));
-  if (allSimulations[simId]) {
-    allSimulations[simId].stop();
-    allSimulations[simId] = null;
+router.get(
+  '/stop/:fileName',
+  validate({ params: { fileName: simulationFileNameParam } }),
+  function (req, res, next) {
+    const { fileName } = req.params;
+    const simId = getObjectId(fileName.replace('.json', ''));
+    if (allSimulations[simId]) {
+      allSimulations[simId].stop();
+      allSimulations[simId] = null;
+    }
+    if (allSimulationStatus[simId]) {
+      allSimulationStatus[simId].isRunning = false;
+      allSimulationStatus[simId].endTime = Date.now();
+    }
+    res.send({
+      error: null,
+      simulationStatus: allSimulationStatus,
+    });
   }
-  if (allSimulationStatus[simId]) {
-    allSimulationStatus[simId].isRunning = false;
-    allSimulationStatus[simId].endTime = Date.now();
-  }
-  res.send({
-    error: null,
-    simulationStatus: allSimulationStatus,
-  });
-});
+);
 
-router.get("/status", validate(), (req, res, next) => {
+router.get('/status', validate(), (req, res, next) => {
   const keys = Object.keys(allSimulationStatus);
   for (let index = 0; index < keys.length; index++) {
     const key = keys[index];
@@ -232,11 +229,11 @@ router.get("/status", validate(), (req, res, next) => {
     }
   }
   res.send({
-    simulationStatus: allSimulationStatus
+    simulationStatus: allSimulationStatus,
   });
 });
 
-router.get("/stats", validate(), (req, res, next) => {
+router.get('/stats', validate(), (req, res, next) => {
   // Read from the registry the rest of this router keeps. It used to read a
   // `simulation` binding that is never assigned, so every call threw a
   // ReferenceError and was answered with a stack trace. With more than one run

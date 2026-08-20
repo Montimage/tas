@@ -1,6 +1,6 @@
-const ThingMQTT = require("../things/ThingMQTT");
-const ThingSTOMP = require("../things/ThingSTOMP");
-const { readJSONFile } = require("../utils");
+const ThingMQTT = require('../things/ThingMQTT');
+const ThingSTOMP = require('../things/ThingSTOMP');
+const { readJSONFile } = require('../utils');
 
 const allThings = [];
 /**
@@ -23,7 +23,7 @@ const stopSimulation = () => {
  */
 const createThing = (thingId, protocol, connConfig, actuators, behaviours, timeToDown) => {
   let Thing = ThingMQTT; // MQTT protocol by default
-  if (protocol.toUpperCase() === "STOMP") {
+  if (protocol.toUpperCase() === 'STOMP') {
     Thing = ThingSTOMP; // Switch to STOMP protocol
   }
   // Add more protocol here
@@ -33,9 +33,9 @@ const createThing = (thingId, protocol, connConfig, actuators, behaviours, timeT
     if (actuators) {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
         const actuatorData = actuators[aIndex];
-        actuatorData["devType"] = "ACTUATOR";
+        actuatorData['devType'] = 'ACTUATOR';
         const { id, scale, enable, objectId, topic } = actuatorData;
-        let topicPrefix = `things/${thingId}/actuators${objectId ? `/${objectId}`:''}/`;
+        let topicPrefix = `things/${thingId}/actuators${objectId ? `/${objectId}` : ''}/`;
         if (enable === false) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
@@ -44,11 +44,7 @@ const createThing = (thingId, protocol, connConfig, actuators, behaviours, timeT
           }
           th.addSensor(id, actuatorData, objectId);
         } else {
-          for (
-            let actuatorIndex = 0;
-            actuatorIndex < nbActuators;
-            actuatorIndex++
-          ) {
+          for (let actuatorIndex = 0; actuatorIndex < nbActuators; actuatorIndex++) {
             const sID = `${id}-${actuatorIndex}`;
             if (!topic) {
               actuatorData['topic'] = `${topicPrefix}${sID}`;
@@ -74,11 +70,12 @@ const createThing = (thingId, protocol, connConfig, actuators, behaviours, timeT
  * @param {Array} thingConfigs The list of things
  */
 const startSimulation = (thingConfigs) => {
-  while(allThings.length > 0) {
+  while (allThings.length > 0) {
     allThings.pop();
   }
   for (let index = 0; index < thingConfigs.length; index++) {
-    const { scale, id, protocol, connConfig, actuators, enable, behaviours, timeToDown } = thingConfigs[index];
+    const { scale, id, protocol, connConfig, actuators, enable, behaviours, timeToDown } =
+      thingConfigs[index];
     if (enable === false) continue;
     let nbThings = scale ? scale : 1;
     const proto = protocol.toUpperCase();
@@ -93,20 +90,14 @@ const startSimulation = (thingConfigs) => {
   }
 };
 
-if (process.argv[2] === "test") {
+if (process.argv[2] === 'test') {
   readJSONFile(process.argv[3], (err, thingConfigs) => {
     if (err) {
-      console.error(
-        `[Actuated] [ERROR] Cannot read the config of thing:`,
-        process.argv[3]
-      );
+      console.error(`[Actuated] [ERROR] Cannot read the config of thing:`, process.argv[3]);
       // console.error();
     } else {
       if (!thingConfigs.things || thingConfigs.things.length === 0) {
-        console.error(
-          `[Actuated] [ERROR] There is no simulator:`,
-          process.argv[3]
-        );
+        console.error(`[Actuated] [ERROR] There is no simulator:`, process.argv[3]);
       } else {
         startSimulation(thingConfigs.things);
       }

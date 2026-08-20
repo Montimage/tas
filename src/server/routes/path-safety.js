@@ -1,12 +1,12 @@
-const path = require("path");
-const { ApiError, sendError } = require("../middleware/errors");
+const path = require('path');
+const { ApiError, sendError } = require('../middleware/errors');
 
 const NAME_MAX_LENGTH = 128;
 
 // Allowlist of characters permitted in user-supplied names before they are
 // used to derive a storage filename. Rejects path separators, control
 // characters and any other value that could escape the intended directory.
-const NAME_ALLOWLIST = /^[A-Za-z0-9][A-Za-z0-9 _\-.()\[\]+@'#]*$/;
+const NAME_ALLOWLIST = /^[A-Za-z0-9][A-Za-z0-9 _\-.()[\]+@'#]*$/;
 
 /**
  * Validate a user-supplied name against the allowlist and a length cap.
@@ -15,12 +15,12 @@ const NAME_ALLOWLIST = /^[A-Za-z0-9][A-Za-z0-9 _\-.()\[\]+@'#]*$/;
  */
 const isValidName = (name) => {
   return (
-    typeof name === "string" &&
+    typeof name === 'string' &&
     name.length > 0 &&
     name.length <= NAME_MAX_LENGTH &&
     NAME_ALLOWLIST.test(name) &&
-    name !== "." &&
-    name !== ".."
+    name !== '.' &&
+    name !== '..'
   );
 };
 
@@ -34,13 +34,13 @@ const isValidName = (name) => {
  *                        the base directory
  */
 const resolveWithin = (baseDir, relativePath) => {
-  if (typeof relativePath !== "string" || relativePath.length === 0) {
+  if (typeof relativePath !== 'string' || relativePath.length === 0) {
     return null;
   }
   const base = path.resolve(baseDir);
   const resolved = path.resolve(base, relativePath);
   const rel = path.relative(base, resolved);
-  if (rel === "" || rel.startsWith("..") || path.isAbsolute(rel)) {
+  if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) {
     return null;
   }
   return resolved;
@@ -55,7 +55,7 @@ const resolveWithin = (baseDir, relativePath) => {
  * directly. It is still that handler that decides what the body looks like.
  */
 const sendBadRequest = (res, message) => {
-  return sendError(res, new ApiError(400, message || "Invalid request"));
+  return sendError(res, new ApiError(400, message || 'Invalid request'));
 };
 
 module.exports = {

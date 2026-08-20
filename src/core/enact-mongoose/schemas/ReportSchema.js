@@ -11,7 +11,7 @@
 
  */
 
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
@@ -50,9 +50,9 @@ const reportSchema = new Schema({
     type: String,
     required: false,
   },
-  evaluationParameters:{
-    type: Object
-  }
+  evaluationParameters: {
+    type: Object,
+  },
 });
 reportSchema.statics.findReportsWithOptions = function (options, callback) {
   this.find(options)
@@ -74,4 +74,4 @@ reportSchema.statics.findReportsWithOptions = function (options, callback) {
     });
 };
 
-module.exports = mongoose.model("Report", reportSchema);
+module.exports = mongoose.model('Report', reportSchema);

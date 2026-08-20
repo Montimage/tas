@@ -13,3 +13,6 @@ ssh-remote-montimage
 
 # Local gitissue run state (issue analyses, run log)
 .gitissue/
+
+# Husky v9 internal helper (regenerated on `npm install` via the prepare script)
+.husky/_/

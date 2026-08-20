@@ -6,36 +6,34 @@
   }
  */
 
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
-const sensorSchema = new Schema(
-  {
-    instanceId: {
-      type: String,
-      required: true
-    },
-    objectId: {
-      type: String,
-      required: false
-    },
-    timestamp: {
-      type: Number,
-      required: true
-    },
-    values: {
-      type: Object,
-      required: true
-    },
-    userData: {
-      type: Object,
-      required: false
-    }
-  }
-);
+const sensorSchema = new Schema({
+  instanceId: {
+    type: String,
+    required: true,
+  },
+  objectId: {
+    type: String,
+    required: false,
+  },
+  timestamp: {
+    type: Number,
+    required: true,
+  },
+  values: {
+    type: Object,
+    required: true,
+  },
+  userData: {
+    type: Object,
+    required: false,
+  },
+});
 
-sensorSchema.statics.findSensorsWithOptions = function(options, callback) {
+sensorSchema.statics.findSensorsWithOptions = function (options, callback) {
   this.find(options)
     .sort({ timestamp: 1 })
     .exec((err, stats) => {
@@ -51,26 +49,20 @@ sensorSchema.statics.findSensorsWithOptions = function(options, callback) {
     });
 };
 
-sensorSchema.statics.findSensorDataBetweenTimes = function(
-  filter,
-  startTime,
-  endTime,
-  callback
-) {
-
+sensorSchema.statics.findSensorDataBetweenTimes = function (filter, startTime, endTime, callback) {
   const options = {
     $and: [
       {
         timestamp: {
-          $gte: Number(startTime)
-        }
+          $gte: Number(startTime),
+        },
       },
       {
         timestamp: {
-          $lte: Number(endTime)
-        }
-      }
-    ]
+          $lte: Number(endTime),
+        },
+      },
+    ],
   };
 
   if (filter) {
@@ -79,4 +71,4 @@ sensorSchema.statics.findSensorDataBetweenTimes = function(
   return this.findSensorsWithOptions(options, callback);
 };
 
-module.exports = mongoose.model("Sensor", sensorSchema);
+module.exports = mongoose.model('Sensor', sensorSchema);

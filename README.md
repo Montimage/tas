@@ -74,24 +74,34 @@ Every endpoint answers with the HTTP status code that describes the outcome, so
 a client, a reverse proxy or a monitor can tell a served request from a failed
 one without parsing the body.
 
-| Status | When                                                                       |
-| ------ | -------------------------------------------------------------------------- |
-| `2xx`  | The request was served.                                                    |
-| `400`  | The request was malformed — a field of the wrong type, a name that cannot derive a safe file path, a document the database refused. |
-| `401`  | The request carries no valid session. Log in at `POST /api/auth/login`; a session that has expired or been logged out reads the same. |
+| Status | When                                                                                                                                     |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `2xx`  | The request was served.                                                                                                                  |
+| `400`  | The request was malformed — a field of the wrong type, a name that cannot derive a safe file path, a document the database refused.      |
+| `401`  | The request carries no valid session. Log in at `POST /api/auth/login`; a session that has expired or been logged out reads the same.    |
 | `403`  | The request came from an origin that is not in `CORS_ALLOWED_ORIGINS`, or a state-changing request did not carry a valid `X-CSRF-Token`. |
-| `404`  | The addressed model, data recorder, log, data set, event, report, test case, test campaign or API path does not exist. |
-| `409`  | The request conflicts with the current state — starting a simulation or a data recorder that is already running. |
-| `413`  | The body is larger than `BODY_LIMIT`.                                      |
-| `415`  | The request carries a content encoding the server cannot read.             |
-| `429`  | The client is over `RATE_LIMIT_MAX` for the current window.                |
-| `5xx`  | The server failed (`500`), or a dependency such as the database is not reachable (`503`). |
+| `404`  | The addressed model, data recorder, log, data set, event, report, test case, test campaign or API path does not exist.                   |
+| `409`  | The request conflicts with the current state — starting a simulation or a data recorder that is already running.                         |
+| `413`  | The body is larger than `BODY_LIMIT`.                                                                                                    |
+| `415`  | The request carries a content encoding the server cannot read.                                                                           |
+| `429`  | The client is over `RATE_LIMIT_MAX` for the current window.                                                                              |
+| `5xx`  | The server failed (`500`), or a dependency such as the database is not reachable (`503`).                                                |
 
 Every failure carries the same JSON body, produced by one central handler
 (`src/server/middleware/errors.js`):
 
 ```json
-{ "error": "Validation failed", "details": [{ "location": "body", "field": "model.name", "message": "\"model.name\" must be a string", "type": "string.base" }] }
+{
+  "error": "Validation failed",
+  "details": [
+    {
+      "location": "body",
+      "field": "model.name",
+      "message": "\"model.name\" must be a string",
+      "type": "string.base"
+    }
+  ]
+}
 ```
 
 `error` is a message chosen for the caller and safe to display; `details` is
@@ -201,15 +211,15 @@ opens itself up.
 The allowlist is explicit, lives in one place (`src/server/middleware/auth.js`)
 and holds exactly three endpoints:
 
-| Endpoint             | Why it is public                                                        |
-| -------------------- | ----------------------------------------------------------------------- |
-| `GET /api/health`    | Liveness probe for an orchestrator or monitor. Reports `{"status":"ok"}` and deliberately nothing else — no uptime, version or dependency state. |
-| `POST /api/auth/login` | The endpoint that issues a session.                                   |
-| `GET /api/auth/session` | Lets the dashboard ask whether it is logged in. Answers `200` either way, so a cold start is not a 401 storm. |
+| Endpoint                | Why it is public                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/health`       | Liveness probe for an orchestrator or monitor. Reports `{"status":"ok"}` and deliberately nothing else — no uptime, version or dependency state. |
+| `POST /api/auth/login`  | The endpoint that issues a session.                                                                                                              |
+| `GET /api/auth/session` | Lets the dashboard ask whether it is logged in. Answers `200` either way, so a cold start is not a 401 storm.                                    |
 
 A genuine CORS **preflight** — an `OPTIONS` request carrying both an `Origin`
 and an `Access-Control-Request-Method` header — is also answered without a
-session, because a preflight carries no credentials by definition. A *bare*
+session, because a preflight carries no credentials by definition. A _bare_
 `OPTIONS` is not exempt: it is refused with `401` like anything else, so an
 anonymous caller cannot read an `Allow` header off every path and map which
 endpoints exist and which methods they accept.
@@ -232,7 +242,7 @@ data: every value the dashboard displays comes from the API, which is closed.
 - `tas.csrf` — the CSRF token for that session. Readable by script on purpose
   (see below).
 
-Sessions expire two ways. `SESSION_TTL_MS` (default 1 hour) is an *idle*
+Sessions expire two ways. `SESSION_TTL_MS` (default 1 hour) is an _idle_
 timeout that slides forward on every request, so working in the dashboard never
 logs you out mid-task; `SESSION_ABSOLUTE_TTL_MS` (default 12 hours) is a hard
 cap that does not slide. `POST /api/auth/logout` invalidates a session
@@ -259,8 +269,8 @@ curl -X POST http://127.0.0.1:3004/api/models \
 
 A browser attaches the session cookie to any request that reaches this origin,
 including one an unrelated page caused, so the cookie alone cannot be what
-authorises a write. A cross-site page can cause the cookie to be *sent* but the
-same-origin policy stops it from *reading* it, so it can never produce the
+authorises a write. A cross-site page can cause the cookie to be _sent_ but the
+same-origin policy stops it from _reading_ it, so it can never produce the
 header. `POST /api/auth/login` is exempt, because it is what issues the token.
 
 Four endpoints change state over `GET` and therefore need the header as well:
@@ -364,27 +374,27 @@ The hardening limits are configurable. Every value below has a safe default, so
 an unconfigured deployment is already protected — set these only to relax or
 tighten a limit.
 
-| Variable               | Default           | Purpose                                                                                                                                                                          |
-| ---------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CORS_ALLOWED_ORIGINS` | _(empty)_         | Comma- or whitespace-separated list of origins allowed to call the API from a browser. Empty means same-origin only, and a request from any other origin is rejected with `403`. |
-| `BODY_LIMIT`           | `1mb`             | Largest request body accepted. Anything bigger is rejected with `413` rather than buffered. `MAX_BODY_SIZE` is accepted as an alias.                                             |
-| `RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | Length of the rate-limiting window applied to `/api`.                                                                                                                            |
-| `RATE_LIMIT_MAX`       | `1000`            | Requests allowed per window per client. Going over returns `429`.                                                                                                                |
-| `CSP_REPORT_ONLY`      | `true`            | Ship the Content Security Policy as `Content-Security-Policy-Report-Only`, so browsers report violations without blocking. Set to `false` to enforce the policy.                 |
-| `CSP_REPORT_URI`       | _(empty)_         | Endpoint browsers should POST policy violation reports to. Empty means violations are only visible in the browser console. Must be a single URL: `;`, `,`, whitespace and control characters are refused at startup.                                                        |
-| `AUTH_ADMIN_USERNAME`  | `admin`           | The single administrator account name.                                                                                                                                                                                                                                     |
-| `AUTH_ADMIN_PASSWORD`  | _(empty)_         | Plaintext bootstrap password. Hashed once at startup and then discarded. Empty means no credential is configured, and every API request is refused.                                                                                                                        |
-| `AUTH_ADMIN_PASSWORD_HASH` | _(empty)_     | Preferred: a `scrypt$...` value produced by `hashPassword` (see above). Takes precedence over `AUTH_ADMIN_PASSWORD`.                                                                                                                                                       |
-| `SESSION_SECRET`       | _(none)_          | Secret the session cookie is signed with. There is deliberately no default: when unset, an ephemeral secret is generated per process and a warning is logged, so sessions do not survive a restart. Set it in production.                                                   |
-| `SESSION_TTL_MS`       | `3600000` (1 h)   | Idle timeout. Slides forward on every request, so an in-use session is never logged out.                                                                                                                                                                                   |
-| `SESSION_ABSOLUTE_TTL_MS` | `43200000` (12 h) | Hard lifetime. Does not slide: no session outlives it, however busy it is.                                                                                                                                                                                              |
-| `SESSION_MAX_RECORDS`  | `1000`            | Hard cap on how many session records are held at once. When it is full the least recently seen record is evicted, so the table stays bounded whatever the traffic.                                                                                                          |
-| `SESSION_COOKIE_SECURE` | `false`          | Mark the session cookies `Secure`. Set to `true` whenever TLS reaches the application; the default suits the documented plain-HTTP-on-loopback baseline, where a `Secure` cookie would never be sent.                                                                       |
-| `AUTH_TRUST_PROXY_HEADER` | `false`        | Believe an identity header from an authenticating reverse proxy. Ignored unless `AUTH_TRUSTED_PROXIES` is non-empty.                                                                                                                                                        |
-| `AUTH_PROXY_USER_HEADER` | `x-forwarded-user` | Name of that identity header.                                                                                                                                                                                                                                          |
-| `AUTH_TRUSTED_PROXIES` | _(empty)_         | Comma- or whitespace-separated peer addresses whose identity header is honoured. Empty means delegation stays disabled whatever the flag says.                                                                                                                              |
-| `AUTH_LOGIN_RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | Window for the login-specific rate limit.                                                                                                                                                                                                             |
-| `AUTH_LOGIN_RATE_LIMIT_MAX` | `10`         | Failed logins allowed per window per client. Successful logins do not count.                                                                                                                                                                                               |
+| Variable                          | Default            | Purpose                                                                                                                                                                                                                   |
+| --------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CORS_ALLOWED_ORIGINS`            | _(empty)_          | Comma- or whitespace-separated list of origins allowed to call the API from a browser. Empty means same-origin only, and a request from any other origin is rejected with `403`.                                          |
+| `BODY_LIMIT`                      | `1mb`              | Largest request body accepted. Anything bigger is rejected with `413` rather than buffered. `MAX_BODY_SIZE` is accepted as an alias.                                                                                      |
+| `RATE_LIMIT_WINDOW_MS`            | `900000` (15 min)  | Length of the rate-limiting window applied to `/api`.                                                                                                                                                                     |
+| `RATE_LIMIT_MAX`                  | `1000`             | Requests allowed per window per client. Going over returns `429`.                                                                                                                                                         |
+| `CSP_REPORT_ONLY`                 | `true`             | Ship the Content Security Policy as `Content-Security-Policy-Report-Only`, so browsers report violations without blocking. Set to `false` to enforce the policy.                                                          |
+| `CSP_REPORT_URI`                  | _(empty)_          | Endpoint browsers should POST policy violation reports to. Empty means violations are only visible in the browser console. Must be a single URL: `;`, `,`, whitespace and control characters are refused at startup.      |
+| `AUTH_ADMIN_USERNAME`             | `admin`            | The single administrator account name.                                                                                                                                                                                    |
+| `AUTH_ADMIN_PASSWORD`             | _(empty)_          | Plaintext bootstrap password. Hashed once at startup and then discarded. Empty means no credential is configured, and every API request is refused.                                                                       |
+| `AUTH_ADMIN_PASSWORD_HASH`        | _(empty)_          | Preferred: a `scrypt$...` value produced by `hashPassword` (see above). Takes precedence over `AUTH_ADMIN_PASSWORD`.                                                                                                      |
+| `SESSION_SECRET`                  | _(none)_           | Secret the session cookie is signed with. There is deliberately no default: when unset, an ephemeral secret is generated per process and a warning is logged, so sessions do not survive a restart. Set it in production. |
+| `SESSION_TTL_MS`                  | `3600000` (1 h)    | Idle timeout. Slides forward on every request, so an in-use session is never logged out.                                                                                                                                  |
+| `SESSION_ABSOLUTE_TTL_MS`         | `43200000` (12 h)  | Hard lifetime. Does not slide: no session outlives it, however busy it is.                                                                                                                                                |
+| `SESSION_MAX_RECORDS`             | `1000`             | Hard cap on how many session records are held at once. When it is full the least recently seen record is evicted, so the table stays bounded whatever the traffic.                                                        |
+| `SESSION_COOKIE_SECURE`           | `false`            | Mark the session cookies `Secure`. Set to `true` whenever TLS reaches the application; the default suits the documented plain-HTTP-on-loopback baseline, where a `Secure` cookie would never be sent.                     |
+| `AUTH_TRUST_PROXY_HEADER`         | `false`            | Believe an identity header from an authenticating reverse proxy. Ignored unless `AUTH_TRUSTED_PROXIES` is non-empty.                                                                                                      |
+| `AUTH_PROXY_USER_HEADER`          | `x-forwarded-user` | Name of that identity header.                                                                                                                                                                                             |
+| `AUTH_TRUSTED_PROXIES`            | _(empty)_          | Comma- or whitespace-separated peer addresses whose identity header is honoured. Empty means delegation stays disabled whatever the flag says.                                                                            |
+| `AUTH_LOGIN_RATE_LIMIT_WINDOW_MS` | `900000` (15 min)  | Window for the login-specific rate limit.                                                                                                                                                                                 |
+| `AUTH_LOGIN_RATE_LIMIT_MAX`       | `10`               | Failed logins allowed per window per client. Successful logins do not count.                                                                                                                                              |
 
 Values are read from the process environment first, then from `.env`, then from
 these defaults — so a container or a CI job can override a setting without

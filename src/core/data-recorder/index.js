@@ -1,6 +1,6 @@
-const DataStorage = require("../communications/DataStorage");
-const DRecorder = require("./DRecorder");
-const { readJSONFile } = require("../utils");
+const DataStorage = require('../communications/DataStorage');
+const DRecorder = require('./DRecorder');
+const { readJSONFile } = require('../utils');
 
 class DataRecorder {
   constructor(drConfig) {
@@ -41,17 +41,17 @@ class DataRecorder {
     const dsClient = new DataStorage(this.dataStorage);
     dsClient.connect((error) => {
       if (error) {
-        console.error("Failed to create DataStorage", error);
+        console.error('Failed to create DataStorage', error);
         return callback(error);
       } else {
-        this.dataStorage["dsClient"] = dsClient;
+        this.dataStorage['dsClient'] = dsClient;
         if (this.dataset) {
           dsClient.saveDataset(this.dataset);
           return callback();
         } else {
-          console.error("Failed to create DataStorage: dataset missing");
+          console.error('Failed to create DataStorage: dataset missing');
           dsClient.stop();
-          return callback("Dataset missing");
+          return callback('Dataset missing');
         }
       }
     });
@@ -88,14 +88,14 @@ class DataRecorder {
       this.dataStorage.dsClient.stop();
     }
 
-    while(this.allDataRecorders.length > 0) {
+    while (this.allDataRecorders.length > 0) {
       const dRecorder = this.allDataRecorders.pop();
       dRecorder.stop();
     }
   }
 }
 
-if (process.argv[2] === "test") {
+if (process.argv[2] === 'test') {
   readJSONFile(process.argv[3], (err, drConfig) => {
     if (err) {
       console.error(

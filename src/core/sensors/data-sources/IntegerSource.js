@@ -1,12 +1,12 @@
-const DataGeneratorAbstract = require("./DataSourceAbstract");
+const DataGeneratorAbstract = require('./DataSourceAbstract');
 const {
   AB_FIX_VALUE,
   AB_INVALID_VALUE,
   NORMAL_BEHAVIOUR,
   AB_VALUE_CHANGE_OUT_OF_REGULAR_STEP,
   AB_VALUE_OUT_OF_RANGE,
-  AB_VALUE_OUT_OF_REGULAR_RANGE
-} = require("../../AbnormalBehaviours");
+  AB_VALUE_OUT_OF_REGULAR_RANGE,
+} = require('../../AbnormalBehaviours');
 const {
   getRandomInteger,
   getNotInteger,
@@ -14,7 +14,7 @@ const {
   getIntegerOutOfRange,
   getIntegerOutOfRegularRange,
   getIntegerOutOfRegularStep,
-} = require("./generator");
+} = require('./generator');
 /**
  * Boolean Data Generator
  * Possible behaviour:
@@ -29,7 +29,7 @@ class IntegerSource extends DataGeneratorAbstract {
   constructor(data) {
     super(data);
     if (data.valueConstraints) {
-      const {min, max, regularMin, regularMax, step} = data.valueConstraints;
+      const { min, max, regularMin, regularMax, step } = data.valueConstraints;
       this.min = min !== null ? min : -65535;
       this.max = max !== null ? max : 65535;
       this.regularMin = regularMin ? regularMin : min;
@@ -41,9 +41,7 @@ class IntegerSource extends DataGeneratorAbstract {
   readData() {
     let value = super.readData();
     if (value) return value;
-    const beha = this.behaviours[
-      getRandomInteger(0, this.behaviours.length - 1)
-    ];
+    const beha = this.behaviours[getRandomInteger(0, this.behaviours.length - 1)];
     let rmin = -65535;
     let rmax = 65535;
     if (this.min !== undefined && this.max !== undefined) {
@@ -58,7 +56,7 @@ class IntegerSource extends DataGeneratorAbstract {
         value = getNotInteger();
         break;
       case AB_VALUE_OUT_OF_RANGE:
-        if (this.min===null || this.max===null) {
+        if (this.min === null || this.max === null) {
           console.error(`[IntegerSource] Invalid value range: ${this.min} - ${this.max}`);
           value = this.value;
         } else {
@@ -66,16 +64,25 @@ class IntegerSource extends DataGeneratorAbstract {
         }
         break;
       case AB_VALUE_OUT_OF_REGULAR_RANGE:
-          if (this.regularMin===null || this.regularMax===null || this.min===null || this.max===null) {
-            console.error(`[IntegerSource] Invalid value range/regular range: ${this.min} - ${this.max} | ${this.regularMin} - ${this.regularMax}`);
-            value = this.value;
-          } else {
-            value = getIntegerOutOfRegularRange(this.min, this.max, this.regularMin, this.regularMax);
-          }
-          break;
+        if (
+          this.regularMin === null ||
+          this.regularMax === null ||
+          this.min === null ||
+          this.max === null
+        ) {
+          console.error(
+            `[IntegerSource] Invalid value range/regular range: ${this.min} - ${this.max} | ${this.regularMin} - ${this.regularMax}`
+          );
+          value = this.value;
+        } else {
+          value = getIntegerOutOfRegularRange(this.min, this.max, this.regularMin, this.regularMax);
+        }
+        break;
       case AB_VALUE_CHANGE_OUT_OF_REGULAR_STEP:
-        if (rmin===null || rmax===null || this.step===null || this.step === 0) {
-          console.error(`[IntegerSource] Invalid value range or step: ${rmin} - ${rmax}, ${this.step}`);
+        if (rmin === null || rmax === null || this.step === null || this.step === 0) {
+          console.error(
+            `[IntegerSource] Invalid value range or step: ${rmin} - ${rmax}, ${this.step}`
+          );
           value = this.value;
         } else {
           value = getIntegerOutOfRegularStep(rmin, rmax, this.step, this.value);

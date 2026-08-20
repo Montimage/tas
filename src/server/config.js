@@ -10,7 +10,7 @@ var path = require('path');
 var DEFAULT_CONFIG = {
   SERVER_HOST: '0.0.0.0',
   SERVER_PORT: '3004',
-  DEV_DASHBOARD_PORT: '8080'
+  DEV_DASHBOARD_PORT: '8080',
 };
 
 /**
@@ -41,7 +41,7 @@ var SECURITY_DEFAULTS = {
   authProxyUserHeader: 'x-forwarded-user',
   authTrustedProxies: [], // empty = delegation stays off, whatever the flag says
   authLoginRateLimitWindowMs: 15 * 60 * 1000,
-  authLoginRateLimitMax: 10 // failed logins per window per client
+  authLoginRateLimitMax: 10, // failed logins per window per client
 };
 
 /**
@@ -73,7 +73,9 @@ function resolveSessionSecret(configured) {
   }
   if (!warnedAboutSessionSecret) {
     warnedAboutSessionSecret = true;
-    console.error('[AUTH] SESSION_SECRET is not set — generated an ephemeral secret; all sessions will be invalidated when this process restarts. Set SESSION_SECRET in production.');
+    console.error(
+      '[AUTH] SESSION_SECRET is not set — generated an ephemeral secret; all sessions will be invalidated when this process restarts. Set SESSION_SECRET in production.'
+    );
   }
   return crypto.randomBytes(32).toString('hex');
 }
@@ -144,7 +146,9 @@ function parseBoolean(value, fallback) {
 function parseReportUri(value) {
   var uri = String(value || '').trim();
   if (/[;,]/.test(uri)) {
-    throw new Error('CSP_REPORT_URI must not contain ";" or "," - they would inject CSP directives');
+    throw new Error(
+      'CSP_REPORT_URI must not contain ";" or "," - they would inject CSP directives'
+    );
   }
   // Interior whitespace would add a second, bogus report endpoint to the
   // directive; a control character (a newline pasted out of a config file, say)
@@ -216,8 +220,7 @@ function loadConfig(options) {
     sessionIdleTtlMs: Number(value('SESSION_TTL_MS')) || SECURITY_DEFAULTS.sessionIdleTtlMs,
     sessionAbsoluteTtlMs:
       Number(value('SESSION_ABSOLUTE_TTL_MS')) || SECURITY_DEFAULTS.sessionAbsoluteTtlMs,
-    sessionMaxRecords:
-      Number(value('SESSION_MAX_RECORDS')) || SECURITY_DEFAULTS.sessionMaxRecords,
+    sessionMaxRecords: Number(value('SESSION_MAX_RECORDS')) || SECURITY_DEFAULTS.sessionMaxRecords,
     sessionCookieSecure: parseBoolean(
       value('SESSION_COOKIE_SECURE'),
       SECURITY_DEFAULTS.sessionCookieSecure
@@ -226,18 +229,17 @@ function loadConfig(options) {
       value('AUTH_TRUST_PROXY_HEADER'),
       SECURITY_DEFAULTS.authTrustProxyHeader
     ),
-    authProxyUserHeader:
-      value('AUTH_PROXY_USER_HEADER') || SECURITY_DEFAULTS.authProxyUserHeader,
+    authProxyUserHeader: value('AUTH_PROXY_USER_HEADER') || SECURITY_DEFAULTS.authProxyUserHeader,
     authTrustedProxies: normalizeList(value('AUTH_TRUSTED_PROXIES')),
     authLoginRateLimitWindowMs:
       Number(value('AUTH_LOGIN_RATE_LIMIT_WINDOW_MS')) ||
       SECURITY_DEFAULTS.authLoginRateLimitWindowMs,
     authLoginRateLimitMax:
-      Number(value('AUTH_LOGIN_RATE_LIMIT_MAX')) || SECURITY_DEFAULTS.authLoginRateLimitMax
+      Number(value('AUTH_LOGIN_RATE_LIMIT_MAX')) || SECURITY_DEFAULTS.authLoginRateLimitMax,
   });
 }
 
 module.exports = {
   loadConfig: loadConfig,
-  DEFAULT_CONFIG: DEFAULT_CONFIG
+  DEFAULT_CONFIG: DEFAULT_CONFIG,
 };

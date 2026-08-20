@@ -30,11 +30,7 @@
             {
               "type": "DATA_SOURCE_ENUM",
               "key": "heating_level-01",
-              "values": [
-                "Low",
-                "Normal",
-                "High"
-              ]
+              "values": ["Low", "Normal", "High"]
             },
             {
               "type": "DATA_SOURCE_FLOAT",

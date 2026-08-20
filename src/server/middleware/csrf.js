@@ -23,11 +23,11 @@
  * Safe methods are untouched: they change nothing, and requiring a header on
  * `GET` would break every plain navigation and every link.
  */
-const { forbidden } = require("./errors");
-const { timingSafeCompare } = require("../auth/passwords");
+const { forbidden } = require('./errors');
+const { timingSafeCompare } = require('../auth/passwords');
 
 /** Methods that must not change state, and therefore need no token. */
-const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
+const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
 /**
  * The safe methods that can still reach a handler and therefore still mutate.
@@ -38,7 +38,7 @@ const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
  * correct on its own rather than only because the gate ahead of it answers
  * preflights first.
  */
-const ROUTED_SAFE_METHODS = ["GET", "HEAD"];
+const ROUTED_SAFE_METHODS = ['GET', 'HEAD'];
 
 /**
  * Routes that change state over a *safe* method, and therefore need the token
@@ -56,13 +56,13 @@ const ROUTED_SAFE_METHODS = ["GET", "HEAD"];
  * Compared case-insensitively because Express's own routing is: `/DevOps/stop`
  * reaches the same handler, and a case-sensitive list would be a way around it.
  */
-const MUTATING_SAFE_METHOD_PATHS = ["/devops/start", "/devops/stop"];
+const MUTATING_SAFE_METHOD_PATHS = ['/devops/start', '/devops/stop'];
 
 /**
  * Prefixes of the same kind, for the routes that carry a parameter.
  * A path matches when it is the prefix itself or a child of it.
  */
-const MUTATING_SAFE_METHOD_PREFIXES = ["/simulation/stop", "/data-recorders/stop"];
+const MUTATING_SAFE_METHOD_PREFIXES = ['/simulation/stop', '/data-recorders/stop'];
 
 /**
  * Paths (relative to the `/api` mount) exempt from the check.
@@ -72,18 +72,18 @@ const MUTATING_SAFE_METHOD_PREFIXES = ["/simulation/stop", "/data-recorders/stop
  * and by a dedicated rate limit — a forged login can only log a victim in as
  * somebody whose password the attacker already knows.
  */
-const EXEMPT_PATHS = ["/auth/login"];
+const EXEMPT_PATHS = ['/auth/login'];
 
 /** The header the dashboard echoes the session's token back in. */
-const CSRF_HEADER = "x-csrf-token";
+const CSRF_HEADER = 'x-csrf-token';
 
 /**
  * @param {String} value Raw `req.path`
  * @returns {String} Path without a trailing slash (except the root)
  */
 const normalizePath = (value) => {
-  const trimmed = String(value || "/").replace(/\/+$/, "");
-  return trimmed === "" ? "/" : trimmed;
+  const trimmed = String(value || '/').replace(/\/+$/, '');
+  return trimmed === '' ? '/' : trimmed;
 };
 
 /**
@@ -101,7 +101,7 @@ const isMutatingSafeMethodPath = (path) => {
   const wanted = path.toLowerCase();
   if (MUTATING_SAFE_METHOD_PATHS.indexOf(wanted) !== -1) return true;
   return MUTATING_SAFE_METHOD_PREFIXES.some(
-    (prefix) => wanted === prefix || wanted.startsWith(prefix + "/")
+    (prefix) => wanted === prefix || wanted.startsWith(prefix + '/')
   );
 };
 
@@ -123,11 +123,11 @@ function createCsrfMiddleware() {
     const expected = req.auth && req.auth.csrfToken;
     const offered = req.get(CSRF_HEADER);
 
-    if (!expected || typeof offered !== "string" || offered === "") {
-      return next(forbidden("Invalid CSRF token"));
+    if (!expected || typeof offered !== 'string' || offered === '') {
+      return next(forbidden('Invalid CSRF token'));
     }
     if (!timingSafeCompare(offered, expected)) {
-      return next(forbidden("Invalid CSRF token"));
+      return next(forbidden('Invalid CSRF token'));
     }
     return next();
   };

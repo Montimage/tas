@@ -1,0 +1,11 @@
+# This file lists commits that `git blame` (and GitHub's annotated blame view) should ignore.
+# See https://git-scm.com/docs/git-blame#Documentation/git-blame.txt---ignore-revs-fileltfilegt
+#
+# The "lint/format baseline" commit listed at the bottom of this file is a single, pure
+# reformatting + lint-cleanup pass that touches the majority of source files. Excluding it
+# keeps authorship attribution meaningful so reviewers are not pointed at the formatting
+# commit for every line.
+
+# Lint/format baseline for issue #25 — pure reformatting + lint-cleanup pass.
+# Exclude this commit from git blame so authorship attribution stays meaningful.
+55c4d403fb53d28879df7765138ac58f5f4c550d
