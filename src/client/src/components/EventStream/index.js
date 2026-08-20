@@ -1,3 +1,3 @@
-const EventStream = require('./EventStream');
+import EventStream from './EventStream';
 
 export default EventStream;
