@@ -17,20 +17,19 @@ defect (F-BUG-001).
 
 ## Architecture Map
 
-| Path | Role |
-|------|------|
-| `src/server/` | Express API — routes, middleware, config, auth, logger |
-| `src/core/` | Simulation engine — things, gateways, sensors, communications, evaluation, Mongoose schemas |
-| `src/client/src/` | React dashboard (CRA 3, antd 4) — pages, components, reducers, sagas, API layer |
-| `src/public/` | **Generated build output from `src/client`. Never edit manually.** |
-| `test/` | All automated tests (node:test, ~286 cases) |
+| Path              | Role                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| `src/server/`     | Express API — routes, middleware, config, auth, logger                                      |
+| `src/core/`       | Simulation engine — things, gateways, sensors, communications, evaluation, Mongoose schemas |
+| `src/client/src/` | React dashboard (CRA 3, antd 4) — pages, components, reducers, sagas, API layer             |
+| `src/public/`     | **Generated build output from `src/client`. Never edit manually.**                          |
+| `test/`           | All automated tests (node:test, ~286 cases)                                                 |
 
 ## Hard Rules
 
 - **`src/public/` is generated.** It is the build output of `src/client`. Never edit files
   here by hand — rebuild from `src/client/src` instead.
-- **`src/core/**/*.test.js` are NOT real tests.** They are ad-hoc scripts that open a live
-  MongoDB and use no assertion framework. The `npm test` glob (`test/**/*.test.js`) never
+- **`src/core/**/_.test.js`are NOT real tests.** They are ad-hoc scripts that open a live MongoDB and use no assertion framework. The`npm test`glob (`test/\*\*/_.test.js`) never
   runs them. Do not treat them as coverage.
 - **Lint is currently inoperable.** `.eslintrc.json` extends `"airbnb"` which is not installed.
   `npm run lint` will fail with a config error. Do not assume lint passes.
@@ -48,6 +47,7 @@ defect (F-BUG-001).
 - When the README and code disagree, the README is stale — follow the code.
 
 ## Token Efficiency
+
 - Never re-read files you just wrote or edited. You know the contents.
 - Never re-run commands to "verify" unless the outcome was uncertain.
 - Don't echo back large blocks of code or file contents unless asked.
