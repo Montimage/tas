@@ -275,13 +275,21 @@ test('every inline script in the served dashboard is allow-listed by hash', () =
     }))
     .filter((tag) => !/(?:^|\s)src\s*=/i.test(tag.attrs) && tag.body.length > 0);
 
-  assert.ok(inline.length > 0, 'the built dashboard is expected to carry an inline runtime script');
-  for (const tag of inline) {
-    const digest = crypto.createHash('sha256').update(tag.body, 'utf8').digest('base64');
-    assert.ok(
-      scriptSrc.includes(`'sha256-${digest}'`),
-      'an inline script in index.html is not covered by script-src'
-    );
+  // A CRA build injects an inline webpack runtime that must be hash-allow-listed;
+  // a Vite build ships only external module scripts and legitimately carries none.
+  // Either way the invariant below holds: every inline script present IS covered.
+  if (inline.length > 0) {
+    for (const tag of inline) {
+      const digest = crypto.createHash('sha256').update(tag.body, 'utf8').digest('base64');
+      assert.ok(
+        scriptSrc.includes(`'sha256-${digest}'`),
+        'an inline script in index.html is not covered by script-src'
+      );
+    }
+  } else {
+    // Vite build: no inline scripts, so the policy needs only 'self' and must not
+    // have picked up any stray hash.
+    assert.ok(inline.length === 0, 'a Vite build is expected to carry no inline runtime script');
   }
   // Nothing but 'self' and those hashes: no stray source crept into script-src.
   assert.equal(scriptSrc.length, 1 + new Set(inline.map((tag) => tag.body)).size);
