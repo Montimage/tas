@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The compiled client bundle is no longer committed (issue #42), so build
+      # it before running the suite — the security-headers test reads
+      # src/public/index.html for its CSP inline-script assertions.
+      - name: Build the dashboard client
+        run: cd src/client && npm install && npm run build
+
       # Serialised: several files spawn their own real instance and the suites
       # share the on-disk storage root, so running them in parallel makes the
       # directory snapshots race and the instances contend for the same port.
