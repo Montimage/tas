@@ -10,7 +10,7 @@ const { loadConfig } = require('../src/server/config');
 const {
   buildCspDirectives,
   inlineScriptHashes,
-  INDEX_HTML
+  INDEX_HTML,
 } = require('../src/server/middleware/security-headers');
 
 const MISSING_ENV = path.join(__dirname, 'no-such-file.env');
@@ -88,7 +88,13 @@ test('the policy is declared explicitly, not inherited from middleware defaults'
 
     // Directives helmet's default policy does not contain at all: their
     // presence proves the policy is ours, not the shipped default.
-    for (const directive of ['connect-src', 'worker-src', 'manifest-src', 'frame-src', 'media-src']) {
+    for (const directive of [
+      'connect-src',
+      'worker-src',
+      'manifest-src',
+      'frame-src',
+      'media-src',
+    ]) {
       assert.ok(policy[directive], `expected an explicit ${directive} directive`);
     }
 
@@ -97,7 +103,11 @@ test('the policy is declared explicitly, not inherited from middleware defaults'
       !('upgrade-insecure-requests' in policy),
       'upgrade-insecure-requests would break the documented plain-HTTP baseline'
     );
-    assert.deepEqual(policy['font-src'], ["'self'"], 'font-src should not keep the default https: data:');
+    assert.deepEqual(
+      policy['font-src'],
+      ["'self'"],
+      'font-src should not keep the default https: data:'
+    );
     assert.ok(
       !policy['style-src'].includes('https:'),
       'style-src should not keep the default https: source'
@@ -179,7 +189,7 @@ test('the served policy is exactly the one declared, source for source', async (
     'connect-src': ["'self'"],
     'worker-src': ["'self'", 'blob:'],
     'manifest-src': ["'self'"],
-    'media-src': ["'self'"]
+    'media-src': ["'self'"],
   };
 
   await withServer({}, async (ctx) => {
@@ -192,7 +202,10 @@ test('the served policy is exactly the one declared, source for source', async (
 test('a report endpoint that cannot go into a header is rejected at startup', () => {
   // A newline survives `.trim()`, so without this check the server starts fine
   // and then answers every request with a 500 from inside the HTTP layer.
-  for (const value of ['https://collector.example.com/csp\nX-Injected: 1', 'https://collector.example.com /csp']) {
+  for (const value of [
+    'https://collector.example.com/csp\nX-Injected: 1',
+    'https://collector.example.com /csp',
+  ]) {
     process.env.CSP_REPORT_URI = value;
     try {
       assert.throws(
@@ -225,11 +238,19 @@ test('CSP_REPORT_ONLY defaults to on and reads the usual off values', () => {
   try {
     for (const value of ['false', 'FALSE', '0', 'no', 'off']) {
       process.env.CSP_REPORT_ONLY = value;
-      assert.equal(loadConfig({ path: MISSING_ENV }).cspReportOnly, false, `"${value}" should disable`);
+      assert.equal(
+        loadConfig({ path: MISSING_ENV }).cspReportOnly,
+        false,
+        `"${value}" should disable`
+      );
     }
     for (const value of ['true', '1', 'yes']) {
       process.env.CSP_REPORT_ONLY = value;
-      assert.equal(loadConfig({ path: MISSING_ENV }).cspReportOnly, true, `"${value}" should enable`);
+      assert.equal(
+        loadConfig({ path: MISSING_ENV }).cspReportOnly,
+        true,
+        `"${value}" should enable`
+      );
     }
   } finally {
     // Leaving this set would silently change the mode every later test observes.
@@ -248,7 +269,10 @@ test('every inline script in the served dashboard is allow-listed by hash', () =
     .split('</script>')
     .slice(0, -1)
     .map((chunk) => chunk.slice(chunk.indexOf('<script')))
-    .map((chunk) => ({ attrs: chunk.slice(0, chunk.indexOf('>')), body: chunk.slice(chunk.indexOf('>') + 1) }))
+    .map((chunk) => ({
+      attrs: chunk.slice(0, chunk.indexOf('>')),
+      body: chunk.slice(chunk.indexOf('>') + 1),
+    }))
     .filter((tag) => !/(?:^|\s)src\s*=/i.test(tag.attrs) && tag.body.length > 0);
 
   assert.ok(inline.length > 0, 'the built dashboard is expected to carry an inline runtime script');
@@ -264,9 +288,15 @@ test('every inline script in the served dashboard is allow-listed by hash', () =
 });
 
 test('a script whose only src-like attribute is hyphenated is still hashed', () => {
-  const fixture = path.join(fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'tas-csp-')), 'index.html');
+  const fixture = path.join(
+    fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'tas-csp-')),
+    'index.html'
+  );
   const body = 'window.__boot=1;';
-  fs.writeFileSync(fixture, `<html><body><script data-src="ignored">${body}</script></body></html>`);
+  fs.writeFileSync(
+    fixture,
+    `<html><body><script data-src="ignored">${body}</script></body></html>`
+  );
 
   const digest = crypto.createHash('sha256').update(body, 'utf8').digest('base64');
   assert.deepEqual(inlineScriptHashes(fixture), [`'sha256-${digest}'`]);
@@ -324,6 +354,8 @@ test('the upgrade added the headers the previous major version never sent', asyn
 test('the middleware degrades safely when no built client is on disk', () => {
   const hashes = inlineScriptHashes(path.join(__dirname, 'no-such-index.html'));
   assert.deepEqual(hashes, []);
-  const directives = buildCspDirectives({ indexHtmlPath: path.join(__dirname, 'no-such-index.html') });
+  const directives = buildCspDirectives({
+    indexHtmlPath: path.join(__dirname, 'no-such-index.html'),
+  });
   assert.deepEqual(directives['script-src'], ["'self'"]);
 });

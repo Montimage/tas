@@ -15,10 +15,10 @@
  * checks the length first and reports the mismatch as a plain "no" rather than
  * letting an exception escape into the request path.
  */
-const crypto = require("crypto");
+const crypto = require('crypto');
 
 /** Serialised-form marker: this file only ever produces and reads scrypt hashes. */
-const ALGORITHM = "scrypt";
+const ALGORITHM = 'scrypt';
 
 /**
  * scrypt cost parameters. N=16384/r=8/p=1 is the interactive-login preset: it
@@ -42,8 +42,8 @@ const KEY_BYTES = 64;
  * @returns {Boolean} True when the two values are byte-for-byte identical
  */
 function timingSafeCompare(a, b) {
-  const left = Buffer.from(String(a === undefined || a === null ? "" : a), "utf8");
-  const right = Buffer.from(String(b === undefined || b === null ? "" : b), "utf8");
+  const left = Buffer.from(String(a === undefined || a === null ? '' : a), 'utf8');
+  const right = Buffer.from(String(b === undefined || b === null ? '' : b), 'utf8');
   if (left.length !== right.length) {
     // Still do a comparison of equal-length buffers so a length mismatch is not
     // measurably cheaper than a content mismatch.
@@ -71,9 +71,9 @@ function hashPassword(plain) {
     COST.N,
     COST.r,
     COST.p,
-    salt.toString("base64"),
-    derived.toString("base64"),
-  ].join("$");
+    salt.toString('base64'),
+    derived.toString('base64'),
+  ].join('$');
 }
 
 /**
@@ -89,15 +89,15 @@ function hashPassword(plain) {
  */
 function verifyPassword(plain, serialized) {
   try {
-    const parts = String(serialized || "").split("$");
+    const parts = String(serialized || '').split('$');
     if (parts.length !== 6 || parts[0] !== ALGORITHM) return false;
     const N = Number(parts[1]);
     const r = Number(parts[2]);
     const p = Number(parts[3]);
     if (!Number.isInteger(N) || !Number.isInteger(r) || !Number.isInteger(p)) return false;
     if (N < 2 || r < 1 || p < 1) return false;
-    const salt = Buffer.from(parts[4], "base64");
-    const expected = Buffer.from(parts[5], "base64");
+    const salt = Buffer.from(parts[4], 'base64');
+    const expected = Buffer.from(parts[5], 'base64');
     if (salt.length === 0 || expected.length === 0) return false;
     const derived = crypto.scryptSync(String(plain), salt, expected.length, {
       N: N,

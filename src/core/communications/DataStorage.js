@@ -4,8 +4,8 @@ const {
   DatasetSchema,
   TestCampaignSchema,
   TestCaseSchema,
-} = require("../enact-mongoose");
-const ReportSchema = require("../enact-mongoose/schemas/ReportSchema");
+} = require('../enact-mongoose');
+const ReportSchema = require('../enact-mongoose/schemas/ReportSchema');
 
 /**
  * DataStorage class presents the interface of a data base
@@ -28,16 +28,9 @@ class DataStorage {
    * @param {Function} callback The callback function
    */
   connect(callback) {
-    console.log("[DataStorage] Connecting...");
-    if (this.protocol === "MONGODB") {
-      const {
-        host,
-        port,
-        username,
-        password,
-        dbname,
-        options,
-      } = this.connConfig;
+    console.log('[DataStorage] Connecting...');
+    if (this.protocol === 'MONGODB') {
+      const { host, port, username, password, dbname, options } = this.connConfig;
       if (username && password) {
         this.dsClient = new ENACTDB(host, port, dbname, {
           username: username,
@@ -54,7 +47,7 @@ class DataStorage {
           console.error(this.connConfig);
           return callback(error);
         }
-        console.log("[DataStorage] Connected to database");
+        console.log('[DataStorage] Connected to database');
         return callback();
       });
     } else {
@@ -81,10 +74,10 @@ class DataStorage {
           ...dataset,
           createdAt: currentTime,
           lastModified: currentTime,
-          source: dataset.source ? dataset.source : "RECORDED",
+          source: dataset.source ? dataset.source : 'RECORDED',
         });
         newDS.save();
-        console.log("[DataStorage] A new dataset has been created: ", dataset);
+        console.log('[DataStorage] A new dataset has been created: ', dataset);
       }
     });
   }
@@ -92,15 +85,15 @@ class DataStorage {
   saveReport(report) {
     ReportSchema.findOne({ id: report.id }, (err, rp) => {
       if (rp) {
-        console.log("[DataStorage] Going to update a report: ");
+        console.log('[DataStorage] Going to update a report: ');
         console.log(report);
         ReportSchema.findOneAndUpdate({ id: report.id }, report);
       } else {
-        console.log("[DataStorage] Going to add a new report: ");
+        console.log('[DataStorage] Going to add a new report: ');
         console.log(JSON.stringify(report));
         const newReport = new ReportSchema(report);
         newReport.save();
-        console.log("[DataStorage] A new report has been created");
+        console.log('[DataStorage] A new report has been created');
       }
     });
   }
@@ -108,11 +101,11 @@ class DataStorage {
   getAllEvents(datasetId, startTime, endTime, callback) {
     EventSchema.findEventsBetweenTimes(
       { datasetId },
-      startTime ? startTime: 0,
-      endTime ? endTime: Date.now(),
+      startTime ? startTime : 0,
+      endTime ? endTime : Date.now(),
       (err, events) => {
         if (err) {
-          console.error("[DataStorage] Cannot get events!");
+          console.error('[DataStorage] Cannot get events!');
           console.error(datasetId);
           console.error(err);
           return callback(err);
@@ -127,40 +120,26 @@ class DataStorage {
     let { startTime, endTime } = timeConstraints;
     if (!startTime) startTime = 0;
     if (!endTime) endTime = Date.now();
-    EventSchema.findEventsBetweenTimes(
-      { topic, datasetId },
-      startTime,
-      endTime,
-      (err, events) => {
-        if (err) {
-          console.error(
-            "[DataStorage] Cannot get events!",
-            topic,
-            datasetId,
-            timeConstraints,
-            err
-          );
-          return callback(err);
-        } else {
-          return callback(null, events);
-        }
+    EventSchema.findEventsBetweenTimes({ topic, datasetId }, startTime, endTime, (err, events) => {
+      if (err) {
+        console.error('[DataStorage] Cannot get events!', topic, datasetId, timeConstraints, err);
+        return callback(err);
+      } else {
+        return callback(null, events);
       }
-    );
+    });
   }
 
   getTestCampaignById(testCampaignId, callback) {
     TestCampaignSchema.findOne({ id: testCampaignId }, (err, tc) => {
       if (err) {
-        console.error(
-          `[DataStorage] Cannot get test campaign: ${testCampaignId}`,
-          err
-        );
+        console.error(`[DataStorage] Cannot get test campaign: ${testCampaignId}`, err);
         return callback(err, null);
       } else if (!tc) {
         console.error(
           `[DataStorage] Cannot get test campaign: ${testCampaignId}. TestCampaign is null`
         );
-        return callback("Test Campaign is NULL", null);
+        return callback('Test Campaign is NULL', null);
       } else {
         return callback(null, tc);
       }
@@ -173,10 +152,8 @@ class DataStorage {
         console.error(`[DataStorage] Cannot get test Case: ${testCaseId}`, err);
         return callback(err, null);
       } else if (!tc) {
-        console.error(
-          `[DataStorage] Cannot get test Case: ${testCaseId}. TestCase is null`
-        );
-        return callback("Test Case is NULL", null);
+        console.error(`[DataStorage] Cannot get test Case: ${testCaseId}. TestCase is null`);
+        return callback('Test Case is NULL', null);
       } else {
         return callback(null, tc);
       }

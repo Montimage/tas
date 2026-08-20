@@ -11,5 +11,5 @@ module.exports = {
   SIMULATING,
   PAUSE,
   STOP,
-  INITIALIZED
-}
+  INITIALIZED,
+};

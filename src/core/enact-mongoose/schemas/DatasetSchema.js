@@ -7,44 +7,44 @@
 
  */
 
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 /**
- * TODO: 
+ * TODO:
  * - get Dataset by name/id
  * - get dataset by tags
  */
 const datasetSchema = new Schema({
   id: {
     type: String,
-    required: true
+    required: true,
   },
   name: {
     type: String,
-    required: true
+    required: true,
   },
   tags: {
     type: Array,
-    required: true
+    required: true,
   },
   description: {
     type: String,
-    required: false
+    required: false,
   },
   createdAt: {
     type: Number,
-    required: true
+    required: true,
   },
   lastModified: {
     type: Number,
-    required: true
+    required: true,
   },
   source: {
     type: String,
     enum: ['RECORDED', 'GENERATED', 'MUTATED'],
-    required: true
-  }
+    required: true,
+  },
 });
 
 datasetSchema.statics.findDatasetsWithPagingOptions = function (options, page, callback) {
@@ -52,7 +52,7 @@ datasetSchema.statics.findDatasetsWithPagingOptions = function (options, page, c
     .limit(20)
     .skip(page * 20)
     .sort({
-      lastModified: 1
+      lastModified: 1,
     })
     .exec((err, data) => {
       if (err) {
@@ -61,7 +61,7 @@ datasetSchema.statics.findDatasetsWithPagingOptions = function (options, page, c
 
       if (!data) {
         return callback({
-          error: `Cannot find any event data`
+          error: `Cannot find any event data`,
         });
       }
 
@@ -72,7 +72,7 @@ datasetSchema.statics.findDatasetsWithPagingOptions = function (options, page, c
 datasetSchema.statics.findDatasetsWithOptions = function (options, callback) {
   this.find(options)
     .sort({
-      lastModified: 1
+      lastModified: 1,
     })
     .exec((err, data) => {
       if (err) {
@@ -81,7 +81,7 @@ datasetSchema.statics.findDatasetsWithOptions = function (options, callback) {
 
       if (!data) {
         return callback({
-          error: `Cannot find any recorded data`
+          error: `Cannot find any recorded data`,
         });
       }
 
@@ -89,4 +89,4 @@ datasetSchema.statics.findDatasetsWithOptions = function (options, callback) {
     });
 };
 
-module.exports = mongoose.model("Dataset", datasetSchema);
+module.exports = mongoose.model('Dataset', datasetSchema);

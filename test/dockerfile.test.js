@@ -31,13 +31,21 @@ test('the image runs as a non-root user', () => {
 });
 
 test('runtime-writable locations are owned by the unprivileged user', () => {
-  assert.match(dockerfile, /chown\s+-R\s+node:node/, 'app and runtime dirs must be chowned to node');
+  assert.match(
+    dockerfile,
+    /chown\s+-R\s+node:node/,
+    'app and runtime dirs must be chowned to node'
+  );
 });
 
 test('supervisord config never forces a root user and supervises all three services', () => {
   assert.ok(!/user\s*=\s*root/.test(supervisor), 'supervisor programs must not run as root');
   for (const program of ['mosquitto', 'nodered', 'tas']) {
-    assert.match(supervisor, new RegExp(`\\[program:${program}\\]`), `missing [program:${program}]`);
+    assert.match(
+      supervisor,
+      new RegExp(`\\[program:${program}\\]`),
+      `missing [program:${program}]`
+    );
   }
 });
 

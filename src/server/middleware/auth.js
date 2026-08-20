@@ -35,8 +35,8 @@
  * authenticated, and show it a password form for an account whose password a
  * proxy deployment deliberately does not hand out.
  */
-const { unauthorized } = require("./errors");
-const { timingSafeCompare } = require("../auth/passwords");
+const { unauthorized } = require('./errors');
+const { timingSafeCompare } = require('../auth/passwords');
 
 /**
  * How many delegated identities the proxy session cache remembers.
@@ -49,23 +49,23 @@ const { timingSafeCompare } = require("../auth/passwords");
 const DELEGATED_IDENTITY_LIMIT = 1000;
 
 /** Name of the signed cookie carrying the opaque session identifier. */
-const SESSION_COOKIE = "tas.sid";
+const SESSION_COOKIE = 'tas.sid';
 
 /**
  * Name of the readable cookie carrying the CSRF token. Deliberately NOT
  * httpOnly: the dashboard has to read it to echo it back in a request header,
  * which is the whole mechanism (see `middleware/csrf.js`).
  */
-const CSRF_COOKIE = "tas.csrf";
+const CSRF_COOKIE = 'tas.csrf';
 
 /**
  * The endpoints that answer without a session, relative to the `/api` mount.
  * Documented in the README; changing this list changes the attack surface.
  */
 const PUBLIC_API_ROUTES = [
-  { method: "GET", path: "/health" },
-  { method: "POST", path: "/auth/login" },
-  { method: "GET", path: "/auth/session" },
+  { method: 'GET', path: '/health' },
+  { method: 'POST', path: '/auth/login' },
+  { method: 'GET', path: '/auth/session' },
 ];
 
 /**
@@ -75,9 +75,9 @@ const PUBLIC_API_ROUTES = [
  * @returns {String} Path without a trailing slash (except the root)
  */
 const normalizePath = (value) => {
-  const path = String(value || "/");
-  const trimmed = path.replace(/\/+$/, "");
-  return trimmed === "" ? "/" : trimmed;
+  const path = String(value || '/');
+  const trimmed = path.replace(/\/+$/, '');
+  return trimmed === '' ? '/' : trimmed;
 };
 
 /**
@@ -95,9 +95,9 @@ const normalizePath = (value) => {
  * @returns {Boolean} True for a CORS preflight
  */
 const isCorsPreflight = (req) =>
-  req.method === "OPTIONS" &&
-  typeof req.headers["origin"] === "string" &&
-  typeof req.headers["access-control-request-method"] === "string";
+  req.method === 'OPTIONS' &&
+  typeof req.headers['origin'] === 'string' &&
+  typeof req.headers['access-control-request-method'] === 'string';
 
 /**
  * @param {Object} req Express request
@@ -109,9 +109,7 @@ const isPublicRoute = (req) => {
   // in fact have been authorised.
   if (isCorsPreflight(req)) return true;
   const wanted = normalizePath(req.path);
-  return PUBLIC_API_ROUTES.some(
-    (route) => route.method === req.method && route.path === wanted
-  );
+  return PUBLIC_API_ROUTES.some((route) => route.method === req.method && route.path === wanted);
 };
 
 /**
@@ -120,8 +118,8 @@ const isPublicRoute = (req) => {
  * @returns {Object} Options for `res.cookie`
  */
 const baseCookieOptions = (config) => ({
-  sameSite: "lax",
-  path: "/",
+  sameSite: 'lax',
+  path: '/',
   secure: config.sessionCookieSecure === true,
   maxAge: config.sessionIdleTtlMs,
 });
@@ -157,8 +155,8 @@ function setSessionCookies(res, session, config) {
  */
 function clearSessionCookies(res, config) {
   const options = {
-    sameSite: "lax",
-    path: "/",
+    sameSite: 'lax',
+    path: '/',
     secure: config.sessionCookieSecure === true,
   };
   // Not signed: an expiring cookie carries no value worth signing, and signing
@@ -180,7 +178,7 @@ function clearSessionCookies(res, config) {
 function resolveSession(req, sessions) {
   const signed = req.signedCookies || {};
   const id = signed[SESSION_COOKIE];
-  if (typeof id !== "string" || id === "") return null;
+  if (typeof id !== 'string' || id === '') return null;
   return sessions.touch(id);
 }
 
@@ -195,8 +193,7 @@ function resolveSession(req, sessions) {
  * @param {String} address Raw remote address
  * @returns {String} Normalised address
  */
-const normalizeAddress = (address) =>
-  String(address || "").replace(/^::ffff:/i, "");
+const normalizeAddress = (address) => String(address || '').replace(/^::ffff:/i, '');
 
 /**
  * Build the `/api` authentication gate.
@@ -214,9 +211,8 @@ function createAuthMiddleware({ credential, sessions, config }) {
   // Both conditions, deliberately: an operator who sets the flag but forgets
   // the list gets the feature switched off (and a startup warning), not a
   // server that believes whatever header it is handed.
-  const proxyDelegationActive =
-    config.authTrustProxyHeader === true && trustedProxies.length > 0;
-  const proxyUserHeader = String(config.authProxyUserHeader || "x-forwarded-user").toLowerCase();
+  const proxyDelegationActive = config.authTrustProxyHeader === true && trustedProxies.length > 0;
+  const proxyUserHeader = String(config.authProxyUserHeader || 'x-forwarded-user').toLowerCase();
 
   /**
    * @param {Object} req Express request
@@ -227,9 +223,9 @@ function createAuthMiddleware({ credential, sessions, config }) {
     const peer = normalizeAddress(req.socket && req.socket.remoteAddress);
     if (trustedProxies.indexOf(peer) === -1) return null;
     const asserted = req.headers[proxyUserHeader];
-    if (typeof asserted !== "string") return null;
+    if (typeof asserted !== 'string') return null;
     const user = asserted.trim();
-    return user === "" ? null : user;
+    return user === '' ? null : user;
   }
 
   /**
@@ -256,7 +252,7 @@ function createAuthMiddleware({ credential, sessions, config }) {
    */
   function delegatedSession(user) {
     const known = delegatedSessions.get(user);
-    if (typeof known === "string") {
+    if (typeof known === 'string') {
       const live = sessions.touch(known);
       // A cached identifier can be stale: the session may have expired, or
       // `POST /auth/logout` may have destroyed it. Either way, fall through and
@@ -281,13 +277,13 @@ function createAuthMiddleware({ credential, sessions, config }) {
     // a public route still has to know who the caller is, or the endpoint the
     // dashboard boots with cannot report a proxy-delegated login.
     let session = resolveSession(req, sessions);
-    let via = "session";
+    let via = 'session';
 
     if (!session) {
       const delegated = proxyIdentity(req);
       if (delegated) {
         session = delegatedSession(delegated);
-        via = "proxy";
+        via = 'proxy';
       }
     }
 
@@ -323,7 +319,7 @@ function createAuthMiddleware({ credential, sessions, config }) {
       return next();
     }
     if (!req.auth) {
-      return next(unauthorized("Authentication required"));
+      return next(unauthorized('Authentication required'));
     }
     return next();
   };

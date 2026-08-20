@@ -15,7 +15,7 @@
  */
 
 /** What the caller is told about a failure whose cause must not be disclosed. */
-const INTERNAL_MESSAGE = "Internal server error";
+const INTERNAL_MESSAGE = 'Internal server error';
 
 /**
  * A failure with a status code and a message that is safe to return.
@@ -33,7 +33,7 @@ class ApiError extends Error {
    */
   constructor(status, message, { details, cause } = {}) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
     this.status = status;
     if (details !== undefined) this.details = details;
     if (cause !== undefined) this.cause = cause;
@@ -42,30 +42,29 @@ class ApiError extends Error {
 
 /** The request was malformed or asked for something it may not ask for. */
 const badRequest = (message, details) =>
-  new ApiError(400, message || "Invalid request", { details });
+  new ApiError(400, message || 'Invalid request', { details });
 
 /** The caller has not proved who it is (or the proof it had has expired). */
-const unauthorized = (message) => new ApiError(401, message || "Unauthorized");
+const unauthorized = (message) => new ApiError(401, message || 'Unauthorized');
 
 /** The caller may not have what it asked for. */
-const forbidden = (message) => new ApiError(403, message || "Forbidden");
+const forbidden = (message) => new ApiError(403, message || 'Forbidden');
 
 /** The addressed resource does not exist. */
-const notFound = (message) => new ApiError(404, message || "Not found");
+const notFound = (message) => new ApiError(404, message || 'Not found');
 
 /** The request cannot be applied to the current state of the resource. */
-const conflict = (message) => new ApiError(409, message || "Conflict");
+const conflict = (message) => new ApiError(409, message || 'Conflict');
 
 /** A dependency the request needs is not reachable. */
 const unavailable = (message, cause) =>
-  new ApiError(503, message || "Service unavailable", { cause });
+  new ApiError(503, message || 'Service unavailable', { cause });
 
 /** The server failed at something that is not the caller's fault. */
-const internal = (message, cause) =>
-  new ApiError(500, message || INTERNAL_MESSAGE, { cause });
+const internal = (message, cause) => new ApiError(500, message || INTERNAL_MESSAGE, { cause });
 
 /** fs error codes that mean "the thing addressed is not there". */
-const MISSING_FILE_CODES = ["ENOENT", "ENOTDIR"];
+const MISSING_FILE_CODES = ['ENOENT', 'ENOTDIR'];
 
 /**
  * Map a filesystem failure onto the status it actually is.
@@ -98,14 +97,14 @@ const fileError = (err, missingMessage, failureMessage) =>
  * @returns {ApiError}
  */
 const databaseError = (err, failureMessage) => {
-  if (err && err.name === "CastError") {
-    return new ApiError(400, "Invalid identifier", { cause: err });
+  if (err && err.name === 'CastError') {
+    return new ApiError(400, 'Invalid identifier', { cause: err });
   }
-  if (err && err.name === "ValidationError") {
-    return new ApiError(400, "Invalid document", { cause: err });
+  if (err && err.name === 'ValidationError') {
+    return new ApiError(400, 'Invalid document', { cause: err });
   }
   if (err && (err.code === 11000 || err.code === 11001)) {
-    return new ApiError(409, "Already exists", { cause: err });
+    return new ApiError(409, 'Already exists', { cause: err });
   }
   return new ApiError(500, failureMessage, { cause: err });
 };
@@ -116,11 +115,11 @@ const databaseError = (err, failureMessage) => {
  * an HTML page carrying a stack trace.
  */
 const BODY_PARSER_FAILURES = {
-  "entity.too.large": [413, "Request entity too large"],
-  "entity.parse.failed": [400, "Malformed request body"],
-  "entity.verify.failed": [400, "Malformed request body"],
-  "encoding.unsupported": [415, "Unsupported content encoding"],
-  "request.aborted": [400, "Request aborted"],
+  'entity.too.large': [413, 'Request entity too large'],
+  'entity.parse.failed': [400, 'Malformed request body'],
+  'entity.verify.failed': [400, 'Malformed request body'],
+  'encoding.unsupported': [415, 'Unsupported content encoding'],
+  'request.aborted': [400, 'Request aborted'],
 };
 
 /**
@@ -133,11 +132,11 @@ const BODY_PARSER_FAILURES = {
  * that names internals — so the caller is told one of these instead.
  */
 const CALLER_FAILURES = {
-  400: "Bad request",
-  404: "Not found",
-  415: "Unsupported media type",
+  400: 'Bad request',
+  404: 'Not found',
+  415: 'Unsupported media type',
 };
-const CALLER_FAILURE = "Request refused";
+const CALLER_FAILURE = 'Request refused';
 
 /**
  * The status a failure already carries, when it is one only the caller can fix.
@@ -189,7 +188,7 @@ const describe = (value) => {
   if (value instanceof Error) {
     return value.stack || `${value.name}: ${value.message}`;
   }
-  if (value === undefined || value === null) return "";
+  if (value === undefined || value === null) return '';
   try {
     return JSON.stringify(value);
   } catch (e) {
@@ -209,13 +208,12 @@ const describe = (value) => {
  * @param {ApiError} apiError The normalised failure
  */
 const logFailure = (req, apiError) => {
-  const where =
-    req && req.method ? `${req.method} ${req.originalUrl || req.url}` : "request";
-  const detail = apiError.cause === undefined ? "" : describe(apiError.cause);
-  const details = apiError.details ? ` details=${describe(apiError.details)}` : "";
+  const where = req && req.method ? `${req.method} ${req.originalUrl || req.url}` : 'request';
+  const detail = apiError.cause === undefined ? '' : describe(apiError.cause);
+  const details = apiError.details ? ` details=${describe(apiError.details)}` : '';
   console.error(
     `[SERVER] ${where} -> ${apiError.status} ${apiError.message}${details}${
-      detail ? ` | ${detail}` : ""
+      detail ? ` | ${detail}` : ''
     }`
   );
 };
@@ -263,7 +261,7 @@ const sendError = (res, err) => errorHandler(err, res.req, res, () => {});
  * Answer an API path no router claimed with a JSON 404 rather than the SPA's
  * index.html (which a client cannot tell from a successful call).
  */
-const apiNotFound = (req, res, next) => next(notFound("Not found"));
+const apiNotFound = (req, res, next) => next(notFound('Not found'));
 
 module.exports = {
   ApiError,

@@ -1,5 +1,5 @@
-const ThingMongoDB = require("../things/ThingMongoDB");
-const { readJSONFile } = require("../utils");
+const ThingMongoDB = require('../things/ThingMongoDB');
+const { readJSONFile } = require('../utils');
 
 const allThings = [];
 /**
@@ -28,7 +28,7 @@ const createDataGenerator = (id, connConfig, sensors, actuators, behaviours, tim
     if (sensors) {
       for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
         const sensorData = sensors[sIndex];
-        sensorData['devType'] = "SENSOR";
+        sensorData['devType'] = 'SENSOR';
         const { id, scale, enable } = sensorData;
         if (enable === false) continue;
         let nbSensors = scale ? scale : 1;
@@ -47,18 +47,14 @@ const createDataGenerator = (id, connConfig, sensors, actuators, behaviours, tim
     if (actuators) {
       for (let aIndex = 0; aIndex < actuators.length; aIndex++) {
         const actuatorData = actuators[aIndex];
-        actuatorData['devType'] = "ACTUATOR";
+        actuatorData['devType'] = 'ACTUATOR';
         const { id, scale, enable } = actuatorData;
         if (enable === false) continue;
         let nbActuators = scale ? scale : 1;
         if (nbActuators === 1) {
           th.addSensor(id, actuatorData);
         } else {
-          for (
-            let actuatorIndex = 0;
-            actuatorIndex < nbActuators;
-            actuatorIndex++
-          ) {
+          for (let actuatorIndex = 0; actuatorIndex < nbActuators; actuatorIndex++) {
             const sID = `${id}-${actuatorIndex}`;
             th.addSensor(sID, actuatorData);
           }
@@ -77,7 +73,6 @@ const createDataGenerator = (id, connConfig, sensors, actuators, behaviours, tim
   }, connConfig);
 };
 
-
 const getStatsDataGenerator = () => {
   const stats = [];
   if (!allThings) return null;
@@ -94,14 +89,13 @@ const getStatsDataGenerator = () => {
  * @param {Array} generatorConfigs The list of things
  */
 const startDataGenerator = (generatorConfigs) => {
-  while(allThings.length > 0) {
+  while (allThings.length > 0) {
     allThings.pop();
   }
   for (let index = 0; index < generatorConfigs.length; index++) {
-    const { id, protocol, connConfig, sensors, actuators, enable, behaviours, timeToDown } = generatorConfigs[
-      index
-    ];
-    if (protocol.toUpperCase() !== "DATABASE") {
+    const { id, protocol, connConfig, sensors, actuators, enable, behaviours, timeToDown } =
+      generatorConfigs[index];
+    if (protocol.toUpperCase() !== 'DATABASE') {
       console.error(`[Data-Generator] ERROR: Unsupported protocol ${protocol}`);
       continue;
     }
@@ -110,13 +104,10 @@ const startDataGenerator = (generatorConfigs) => {
   }
 };
 
-if (process.argv[2] === "test") {
+if (process.argv[2] === 'test') {
   readJSONFile(process.argv[3], (err, generatorConfigs) => {
     if (err) {
-      console.error(
-        `[Data-Generator] ERROR: Cannot read the config of thing:`,
-        process.argv[3]
-      );
+      console.error(`[Data-Generator] ERROR: Cannot read the config of thing:`, process.argv[3]);
       // console.error();
     } else {
       if (!generatorConfigs.things || generatorConfigs.things.length === 0) {

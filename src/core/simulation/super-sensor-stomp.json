@@ -25,10 +25,7 @@
           "dosAttackSpeedUpRate": 5,
           "timeBeforeFailed": 20,
           "isIPSOFormat": false,
-          "sensorBehaviours": [
-            "AB_LOW_ENERGY",
-            "AB_OUT_OF_ENERGY"
-          ],
+          "sensorBehaviours": ["AB_LOW_ENERGY", "AB_OUT_OF_ENERGY"],
           "energy": {
             "type": "DATA_SOURCE_ENERGY",
             "key": "battery",
@@ -56,11 +53,7 @@
               "initValue": "Normal",
               "unit": null,
               "behaviours": [],
-              "values": [
-                "Low",
-                "Normal",
-                "High"
-              ]
+              "values": ["Low", "Normal", "High"]
             },
             {
               "type": "DATA_SOURCE_FLOAT",

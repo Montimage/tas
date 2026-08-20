@@ -1,7 +1,7 @@
-const { SIMULATING, OFFLINE } = require("../DeviceStatus");
+const { SIMULATING, OFFLINE } = require('../DeviceStatus');
 
 class DeviceDataSource {
-  constructor(id,dataHandler, callbackWhenFinish = null) {
+  constructor(id, dataHandler, callbackWhenFinish = null) {
     this.dataHandler = dataHandler;
     this.status = OFFLINE;
     this.id = id;
@@ -21,9 +21,7 @@ class DeviceDataSource {
       console.log(`[${this.id}] is offline!`);
     } else {
       this.status = OFFLINE;
-      console.log(
-        `[${this.id}] stopped at: ${new Date().toLocaleTimeString()}`
-      );
+      console.log(`[${this.id}] stopped at: ${new Date().toLocaleTimeString()}`);
       if (this.callbackWhenFinish) this.callbackWhenFinish();
     }
   }

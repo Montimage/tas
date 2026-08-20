@@ -20,7 +20,10 @@ test('.env is not tracked by git', () => {
 test('.env is listed in .gitignore', () => {
   const gitignore = fs.readFileSync(`${REPO}/.gitignore`, 'utf8');
   assert.ok(
-    gitignore.split('\n').map((l) => l.trim()).includes('.env'),
+    gitignore
+      .split('\n')
+      .map((l) => l.trim())
+      .includes('.env'),
     '.gitignore must ignore .env'
   );
 });

@@ -1,12 +1,17 @@
-const {
-  SIMULATING,
-  OFFLINE
-} = require("../DeviceStatus");
+const { SIMULATING, OFFLINE } = require('../DeviceStatus');
 
 const DeviceDataSource = require('./DeviceDataSource');
 
 class DataReplayer extends DeviceDataSource {
-  constructor(id, dataHandler, callbackWhenFinish, replayOptions, events, objectId, startReplayingTime) {
+  constructor(
+    id,
+    dataHandler,
+    callbackWhenFinish,
+    replayOptions,
+    events,
+    objectId,
+    startReplayingTime
+  ) {
     super(id, dataHandler, callbackWhenFinish);
     this.objectId = objectId;
     this.repeat = false;
@@ -26,16 +31,14 @@ class DataReplayer extends DeviceDataSource {
       endTime: this.endTime,
       repeat: this.repeat,
       speedup: this.speedup,
-      numberOfRepeats: this.nbRepeated
+      numberOfRepeats: this.nbRepeated,
     };
   }
 
   replayEvent(event, waitingTime, isLastEvent = false) {
     setTimeout(() => {
       if (this.status === SIMULATING) {
-        const {
-          values, topic
-        } = event;
+        const { values, topic } = event;
         // console.log('Going to replaying event: ', event);
         this.dataHandler(values, topic);
         if (isLastEvent) {
@@ -61,7 +64,12 @@ class DataReplayer extends DeviceDataSource {
     for (let index = 0; index < this.events.length; index++) {
       const event = this.events[index];
       const waitingTime = (event.timestamp - startTime) / this.speedup;
-      if (index === 0) console.log(`First event timestamp: ${event.timestamp}, waiting time ${waitingTime/1000} (seconds) at ${new Date()}`);
+      if (index === 0)
+        console.log(
+          `First event timestamp: ${event.timestamp}, waiting time ${
+            waitingTime / 1000
+          } (seconds) at ${new Date()}`
+        );
       if (this.status === SIMULATING) {
         this.replayEvent(event, waitingTime, index === this.events.length - 1);
       }

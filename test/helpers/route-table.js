@@ -21,14 +21,14 @@
  * @returns {String} The mount path, or "" for a layer that matches everything
  */
 function layerPath(layer) {
-  if (layer.regexp && layer.regexp.fast_slash) return "";
-  const source = String((layer.regexp && layer.regexp.source) || "");
+  if (layer.regexp && layer.regexp.fast_slash) return '';
+  const source = String((layer.regexp && layer.regexp.source) || '');
   const trimmed = source
-    .replace(/^\^/, "")
-    .replace(/\\\/\?\(\?=\\\/\|\$\)$/, "")
-    .replace(/\\\/\?\$$/, "")
-    .replace(/\$$/, "");
-  return trimmed.replace(/\\(.)/g, "$1");
+    .replace(/^\^/, '')
+    .replace(/\\\/\?\(\?=\\\/\|\$\)$/, '')
+    .replace(/\\\/\?\$$/, '')
+    .replace(/\$$/, '');
+  return trimmed.replace(/\\(.)/g, '$1');
 }
 
 /**
@@ -42,9 +42,9 @@ function collectRoutes(stack, prefix) {
   const found = [];
   for (const layer of stack || []) {
     if (layer.route) {
-      const routePath = layer.route.path === "/" ? "" : layer.route.path;
+      const routePath = layer.route.path === '/' ? '' : layer.route.path;
       found.push({
-        path: (prefix + routePath).replace(/\/+$/, "") || "/",
+        path: (prefix + routePath).replace(/\/+$/, '') || '/',
         methods: layer.route.methods || {},
       });
     } else if (layer.handle && layer.handle.stack) {

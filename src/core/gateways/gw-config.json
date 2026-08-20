@@ -33,15 +33,11 @@
     "upstreams": [
       {
         "in": "thing-01",
-        "out": [
-          "ext-01"
-        ]
+        "out": ["ext-01"]
       },
       {
         "in": "thing-02",
-        "out": [
-          "ext-01"
-        ]
+        "out": ["ext-01"]
       }
     ]
   },
@@ -81,15 +77,11 @@
     "upstreams": [
       {
         "in": "thing-02",
-        "out": [
-          "ext-04"
-        ]
+        "out": ["ext-04"]
       },
       {
         "in": "thing-03",
-        "out": [
-          "ext-04"
-        ]
+        "out": ["ext-04"]
       }
     ]
   }

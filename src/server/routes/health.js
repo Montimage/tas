@@ -12,14 +12,14 @@
  * and none of them is needed to decide whether the process is alive. The
  * operational detail lives behind the gate, on the existing `/status` routes.
  */
-const express = require("express");
-const { validate } = require("../middleware/validate");
-const { errorHandler } = require("../middleware/errors");
+const express = require('express');
+const { validate } = require('../middleware/validate');
+const { errorHandler } = require('../middleware/errors');
 
 const router = express.Router();
 
-router.get("/", validate(), (req, res) => {
-  res.json({ status: "ok" });
+router.get('/', validate(), (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 router.use(errorHandler);

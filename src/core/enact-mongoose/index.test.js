@@ -1,6 +1,6 @@
-const { ENACTDB, EventSchema, TestCaseSchema } = require("./index");
+const { ENACTDB, EventSchema, TestCaseSchema } = require('./index');
 
-const mydb = new ENACTDB("localhost", 27017, "tasdb");
+const mydb = new ENACTDB('localhost', 27017, 'tasdb');
 mydb.connect(() => {
   // EventSchema.findEventsBetweenTimes(
   //   { topic: "devices/device-01/sensors/motion", datasetId: "my-data-set" },
@@ -15,13 +15,13 @@ mydb.connect(() => {
   //   }
   // );
   const testCaseId = 'my-test-case-02';
-  TestCaseSchema.findOne({id: testCaseId}, (err, tc) => {
+  TestCaseSchema.findOne({ id: testCaseId }, (err, tc) => {
     if (err) {
       console.error(`[DataStorage] Cannot get test Case: ${testCaseId}`, err);
-      return ;
+      return;
     } else if (!tc) {
       console.error(`[DataStorage] Cannot get test Case: ${testCaseId}. TestCase is null`);
-      return ;
+      return;
     } else {
       console.log(tc);
     }

@@ -1,4 +1,4 @@
-const http = require("http");
+const http = require('http');
 
 /**
  * Make an HTTP request against a running server.
@@ -25,19 +25,19 @@ const request = (server, method, path, body, headers) =>
     delete extra.__anonymous;
     const auth = anonymous ? {} : server.__authHeaders || {};
     const options = {
-      hostname: "127.0.0.1",
+      hostname: '127.0.0.1',
       port,
       path,
       method,
       headers: Object.assign({}, auth, extra),
     };
-    if (data) options.headers["Content-Type"] = "application/json";
+    if (data) options.headers['Content-Type'] = 'application/json';
     const req = http.request(options, (res) => {
-      let raw = "";
-      res.on("data", (chunk) => {
+      let raw = '';
+      res.on('data', (chunk) => {
         raw += chunk;
       });
-      res.on("end", () => {
+      res.on('end', () => {
         let parsed = null;
         try {
           parsed = JSON.parse(raw);
@@ -47,7 +47,7 @@ const request = (server, method, path, body, headers) =>
         resolve({ status: res.statusCode, body: parsed, raw, headers: res.headers });
       });
     });
-    req.on("error", reject);
+    req.on('error', reject);
     if (data) req.write(data);
     req.end();
   });

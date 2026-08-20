@@ -30,12 +30,8 @@ const simpleCompare = (v1, v2) => {
  * @param {Array} originalArray The original values
  * @param {Array} newArray The new values
  */
-const compareArray = (
-  originalArray,
-  newArray,
-  compareFunction = simpleCompare
-) => {
-  if (!originalArray || !newArray) throw Error("[compareArray] Invalid input!");
+const compareArray = (originalArray, newArray, compareFunction = simpleCompare) => {
+  if (!originalArray || !newArray) throw Error('[compareArray] Invalid input!');
   if (originalArray.length === 0 && newArray.length === 0) return 1;
   let originalArrays = [...originalArray];
   let newArrays = [...newArray];
@@ -67,16 +63,14 @@ const compareArray = (
     const newOriginalLen = originalArrays.length;
     if (newOriginalLen === 0) return (newLen - newArrayRemain.length) / newLen;
     return (
-      (((originalLen - newOriginalLen) / originalLen) *
-        (newLen - newArrayRemain.length)) /
-      newLen
+      (((originalLen - newOriginalLen) / originalLen) * (newLen - newArrayRemain.length)) / newLen
     );
   }
 };
 
 const compareDelayTimestamp = (t1, t2) => {
-  return Math.abs(t2-t1)/t1 < 0.01; // 1% threshold
-}
+  return Math.abs(t2 - t1) / t1 < 0.01; // 1% threshold
+};
 
 const evalEventValue = (data) => {
   const { originalEvents, newEvents } = data;
@@ -87,12 +81,8 @@ const evalEventValue = (data) => {
 
 const evalEventTimestamp = (data) => {
   const { originalEvents, newEvents } = data;
-  const originalTimestamps = originalEvents.timestamps.map(
-    (t) => t - originalEvents.timestamps[0]
-  );
-  const newTimestamps = newEvents.timestamps.map(
-    (t) => t - newEvents.timestamps[0]
-  );
+  const originalTimestamps = originalEvents.timestamps.map((t) => t - originalEvents.timestamps[0]);
+  const newTimestamps = newEvents.timestamps.map((t) => t - newEvents.timestamps[0]);
 
   return compareArray(originalTimestamps, newTimestamps, compareDelayTimestamp);
 };
@@ -101,12 +91,8 @@ const evalEventValueTimestamp = (data) => {
   const { originalEvents, newEvents } = data;
   const originalValues = originalEvents.values;
   const newValues = newEvents.values;
-  const originalTimestamps = originalEvents.timestamps.map(
-    (t) => t - originalEvents.timestamps[0]
-  );
-  const newTimestamps = newEvents.timestamps.map(
-    (t) => t - newEvents.timestamps[0]
-  );
+  const originalTimestamps = originalEvents.timestamps.map((t) => t - originalEvents.timestamps[0]);
+  const newTimestamps = newEvents.timestamps.map((t) => t - newEvents.timestamps[0]);
   const valueCompare = compareArray(originalValues, newValues);
   const timestampCompare = compareArray(originalTimestamps, newTimestamps, compareDelayTimestamp);
   return valueCompare * timestampCompare;
@@ -171,8 +157,8 @@ const evaluateEvents = (originalEvents, newEvents, metricType, threshold) => {
     case METRIC_TIMESTAMP:
       _evalMetric = (data) => evalEventTimestamp(data);
       break;
-      case METRIC_VALUE_TIMESTAMP:
-        _evalMetric = (data) => evalEventValueTimestamp(data);
+    case METRIC_VALUE_TIMESTAMP:
+      _evalMetric = (data) => evalEventValueTimestamp(data);
       break;
     default:
       console.error(`[Evaluation] Unsupported metric type: ${metricType}`);
@@ -185,7 +171,7 @@ const evaluateEvents = (originalEvents, newEvents, metricType, threshold) => {
     ret.push(evalTopic);
   }
 
-  const retOK = ret.filter(r => r >=threshold);
+  const retOK = ret.filter((r) => r >= threshold);
   console.log('ret: ', ret);
   console.log('retOK: ', retOK);
   return retOK.length / ret.length;

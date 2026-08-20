@@ -11,48 +11,47 @@
   }
  */
 
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
 const testCampaignSchema = new Schema({
   id: {
     type: String,
-    required: true
+    required: true,
   },
   name: {
     type: String,
-    required: false
+    required: false,
   },
   description: {
     type: String,
-    required: false
+    required: false,
   },
   testCaseIds: {
     type: Array,
-    required: false
+    required: false,
   },
   webhookURL: {
     type: String,
-    require: false
-  }
+    require: false,
+  },
 });
 
 testCampaignSchema.statics.findTestCampaignWithOptions = function (options, callback) {
-  this.find(options)
-    .exec((err, data) => {
-      if (err) {
-        return callback(err);
-      }
+  this.find(options).exec((err, data) => {
+    if (err) {
+      return callback(err);
+    }
 
-      if (!data) {
-        return callback({
-          error: `Cannot find any TestCampaign data`
-        });
-      }
+    if (!data) {
+      return callback({
+        error: `Cannot find any TestCampaign data`,
+      });
+    }
 
-      return callback(null, data);
-    });
+    return callback(null, data);
+  });
 };
 
-module.exports = mongoose.model("TestCampaign", testCampaignSchema);
+module.exports = mongoose.model('TestCampaign', testCampaignSchema);

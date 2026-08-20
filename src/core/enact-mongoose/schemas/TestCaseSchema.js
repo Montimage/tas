@@ -11,52 +11,51 @@
   }
  */
 
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
 const testCaseSchema = new Schema({
   id: {
     type: String,
-    required: true
+    required: true,
   },
   name: {
     type: String,
-    required: false
+    required: false,
   },
   description: {
     type: String,
-    required: false
+    required: false,
   },
   tags: {
     type: Array,
-    required: false
+    required: false,
   },
   datasetIds: {
     type: Array,
-    required: false
+    required: false,
   },
   modelFileName: {
     type: String,
-    require: true
-  }
+    require: true,
+  },
 });
 
 testCaseSchema.statics.findTestCaseWithOptions = function (options, callback) {
-  this.find(options)
-    .exec((err, data) => {
-      if (err) {
-        return callback(err);
-      }
+  this.find(options).exec((err, data) => {
+    if (err) {
+      return callback(err);
+    }
 
-      if (!data) {
-        return callback({
-          error: `Cannot find any TestCase data`
-        });
-      }
+    if (!data) {
+      return callback({
+        error: `Cannot find any TestCase data`,
+      });
+    }
 
-      return callback(null, data);
-    });
+    return callback(null, data);
+  });
 };
 
-module.exports = mongoose.model("TestCase", testCaseSchema);
+module.exports = mongoose.model('TestCase', testCaseSchema);

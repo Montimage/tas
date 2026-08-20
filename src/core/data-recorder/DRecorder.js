@@ -1,5 +1,5 @@
 const MQBus = require('../communications/MQBus');
-const {checkMQTTTopic} = require('../utils');
+const { checkMQTTTopic } = require('../utils');
 /**
  * DataRecorder class present a data recorder who have 3 functionalities:
  * - Listen data from a source (broker)
@@ -8,12 +8,7 @@ const {checkMQTTTopic} = require('../utils');
  */
 class DataRecorder {
   constructor(drConfig, dataStorage, dataset) {
-    const {
-      id,
-      name,
-      source,
-      forward
-    } = drConfig;
+    const { id, name, source, forward } = drConfig;
     this.id = id;
     this.name = name;
     this.source = source;
@@ -28,9 +23,7 @@ class DataRecorder {
    * @param {Object} packet The attribute of the received message
    */
   isSensorData(_topic, packet) {
-    const {
-      upStreams
-    } = this.source;
+    const { upStreams } = this.source;
     // Check by topic name
     for (let index = 0; index < upStreams.length; index++) {
       const topic = upStreams[index];
@@ -65,7 +58,7 @@ class DataRecorder {
         topic,
         isSensorData,
         timestamp: Date.now(),
-        values: message
+        values: message,
       });
     }
   }
@@ -97,14 +90,13 @@ class DataRecorder {
    * - subscribe to the register topics
    */
   initSource() {
-    const {
-      upStreams,
-      downStreams
-    } = this.source;
+    const { upStreams, downStreams } = this.source;
     // Init source
     const mqClient = new MQBus(this.source);
     // Setup message handler
-    mqClient.setupMessageHandler((topic, message, packet) => this.messageHandler(topic, message, packet));
+    mqClient.setupMessageHandler((topic, message, packet) =>
+      this.messageHandler(topic, message, packet)
+    );
     // Connect to the broker
     mqClient.connect(() => {
       // subscribe topics
@@ -118,7 +110,6 @@ class DataRecorder {
     // Save the configuration
     this.source['mqClient'] = mqClient;
   }
-
 
   /**
    *
@@ -144,8 +135,6 @@ class DataRecorder {
       return callback();
     });
   }
-
-
 
   /**
    * Initialise the Data Recorder

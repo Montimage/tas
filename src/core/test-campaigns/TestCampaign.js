@@ -1,7 +1,7 @@
-const fetch = require("node-fetch");
-const DataStorage = require("../communications/DataStorage");
-const { OFFLINE, SIMULATING } = require("../DeviceStatus");
-const TestCase = require("./TestCase");
+const fetch = require('node-fetch');
+const DataStorage = require('../communications/DataStorage');
+const { OFFLINE, SIMULATING } = require('../DeviceStatus');
+const TestCase = require('./TestCase');
 
 class TestCampaign {
   constructor(id, dataStorageConfig, webhookURL, evaluationParameters) {
@@ -42,17 +42,13 @@ class TestCampaign {
                   });
                 }
 
-                for (
-                  let tcIndex = 0;
-                  tcIndex < this.testCases.length;
-                  tcIndex++
-                ) {
+                for (let tcIndex = 0; tcIndex < this.testCases.length; tcIndex++) {
                   const tc = this.testCases[tcIndex];
                   if (tc.getStatus() !== OFFLINE) {
                     return;
                   }
                 }
-                console.log("All test case have been finished");
+                console.log('All test case have been finished');
                 return this.stop();
               }
             );
@@ -65,22 +61,20 @@ class TestCampaign {
   }
 
   sendResultToWebhook() {
-    console.log(
-      `Going to notify the result to the webhook: ${this.webhookURL}`
-    );
+    console.log(`Going to notify the result to the webhook: ${this.webhookURL}`);
     fetch(this.webhookURL, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(this.results),
     })
       .then((res) => {
-        console.log("Response from webhook:");
+        console.log('Response from webhook:');
         console.log(JSON.stringify(res));
       })
       .catch((err) => {
-        console.error("Cannot send result to webhook");
+        console.error('Cannot send result to webhook');
         console.log(JSON.stringify(err));
       });
   }

@@ -1,11 +1,11 @@
-const DataStorage = require("./DataStorage");
+const DataStorage = require('./DataStorage');
 
 const ds = new DataStorage({
-  protocol: "MONGODB",
+  protocol: 'MONGODB',
   connConfig: {
-    host: "localhost",
+    host: 'localhost',
     port: 27017,
-    dbname: "homeiodb",
+    dbname: 'homeiodb',
   },
 });
 
@@ -23,13 +23,8 @@ ds.connect((err) => {
   //   tags:[]
   // });
 
-  ds.getEvents(
-    "enact/sensors/cec/status",
-    "homeio-dataset-01",
-    {},
-    (err2, events) => {
-      if (err2) return console.error(err2);
-      console.log("Events: ", events);
-    }
-  );
+  ds.getEvents('enact/sensors/cec/status', 'homeio-dataset-01', {}, (err2, events) => {
+    if (err2) return console.error(err2);
+    console.log('Events: ', events);
+  });
 });

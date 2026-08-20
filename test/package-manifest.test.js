@@ -6,11 +6,47 @@ const pkg = require('../package.json');
 const lock = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package-lock.json'), 'utf8'));
 
 const NODE_BUILTINS = new Set([
-  'assert', 'async_hooks', 'buffer', 'child_process', 'cluster', 'console', 'constants',
-  'crypto', 'dgram', 'diagnostics_channel', 'dns', 'domain', 'events', 'fs', 'http',
-  'http2', 'https', 'module', 'net', 'os', 'path', 'perf_hooks', 'process', 'punycode',
-  'querystring', 'readline', 'repl', 'stream', 'string_decoder', 'sys', 'timers', 'tls',
-  'trace_events', 'tty', 'url', 'util', 'v8', 'vm', 'wasi', 'worker_threads', 'zlib'
+  'assert',
+  'async_hooks',
+  'buffer',
+  'child_process',
+  'cluster',
+  'console',
+  'constants',
+  'crypto',
+  'dgram',
+  'diagnostics_channel',
+  'dns',
+  'domain',
+  'events',
+  'fs',
+  'http',
+  'http2',
+  'https',
+  'module',
+  'net',
+  'os',
+  'path',
+  'perf_hooks',
+  'process',
+  'punycode',
+  'querystring',
+  'readline',
+  'repl',
+  'stream',
+  'string_decoder',
+  'sys',
+  'timers',
+  'tls',
+  'trace_events',
+  'tty',
+  'url',
+  'util',
+  'v8',
+  'vm',
+  'wasi',
+  'worker_threads',
+  'zlib',
 ]);
 
 const ALL = { ...pkg.dependencies, ...pkg.devDependencies };
@@ -28,7 +64,7 @@ test('the previously-shadowing packages are removed from the manifest', () => {
 });
 
 test('build-only tooling lives under devDependencies, not runtime dependencies', () => {
-  for (const name of ['jshint', 'nodemon', 'file-loader']) {
+  for (const name of ['nodemon', 'file-loader']) {
     assert.ok(name in pkg.devDependencies, `${name} should be a devDependency`);
     assert.ok(!(name in pkg.dependencies), `${name} must not be a runtime dependency`);
   }

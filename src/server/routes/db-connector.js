@@ -1,18 +1,14 @@
-
 const {
   ENACTDB,
   EventSchema,
   ReportSchema,
   DatasetSchema,
   TestCaseSchema,
-  TestCampaignSchema
-} = require("../../core/enact-mongoose");
+  TestCampaignSchema,
+} = require('../../core/enact-mongoose');
 
-const {
-  readJSONFile,
-  writeToFile,
-} = require("../../core/utils");
-const { unavailable } = require("../middleware/errors");
+const { readJSONFile, writeToFile } = require('../../core/utils');
+const { unavailable } = require('../middleware/errors');
 
 const dataStoragePath = `${__dirname}/../data/data-storage.json`;
 
@@ -43,22 +39,15 @@ const getDBClient = (callback, reload = false) => {
         console.error('[SERVER] Cannot get the data storage configuration');
         return callback(err);
       } else {
-        const { protocol, connConfig} = dataStorage;
-        if(protocol === 'MONGODB') {
-          const {
-            host,
-            port,
-            dbname,
-            username,
-            password,
-            options
-          } = connConfig;
+        const { protocol, connConfig } = dataStorage;
+        if (protocol === 'MONGODB') {
+          const { host, port, dbname, username, password, _options } = connConfig;
           console.log(`MongoDB configuration: ${JSON.stringify(connConfig)}`);
           let auth = null;
           if (username && password) {
             auth = {
               username: username,
-              password
+              password,
             };
           }
           dbClient = new ENACTDB(host, port, dbname, auth);
@@ -88,25 +77,30 @@ const getDataStorage = (callback, reload = false) => {
   if (dataStorageConfig) return callback(null, dataStorageConfig);
   return readJSONFile(dataStoragePath, (err, data) => {
     if (err) {
-      console.error("[SERVER] reading data storage", err);
+      console.error('[SERVER] reading data storage', err);
       const defaultDataStorage = {
-        protocol: "MONGODB",
-        host: "localhost",
+        protocol: 'MONGODB',
+        host: 'localhost',
         port: 27017,
         username: null,
         password: null,
         dbname: null,
         options: null,
       };
-      writeToFile(dataStoragePath, JSON.stringify(defaultDataStorage), (err2, data) => {
-        if (err2) {
-          console.error("[SERVER] saving data storage", err2);
-          return callback(err2);
-        } else {
-          dataStorageConfig = defaultDataStorage;
-          return callback(null, dataStorageConfig);
-        }
-      }, true);
+      writeToFile(
+        dataStoragePath,
+        JSON.stringify(defaultDataStorage),
+        (err2, data) => {
+          if (err2) {
+            console.error('[SERVER] saving data storage', err2);
+            return callback(err2);
+          } else {
+            dataStorageConfig = defaultDataStorage;
+            return callback(null, dataStorageConfig);
+          }
+        },
+        true
+      );
     } else {
       dataStorageConfig = data;
       return callback(null, dataStorageConfig);
@@ -115,36 +109,40 @@ const getDataStorage = (callback, reload = false) => {
 };
 
 const updateDataStorage = (dataStorage, callback) => {
-  writeToFile(dataStoragePath, JSON.stringify(dataStorage), (err, data) => {
-    if (err) {
-      console.error("[SERVER] Cannot save the new data storage configuration", err);
-      return callback(err);
-    } else {
-      dataStorageConfig = dataStorage;
-      if (dbClient) {
-        dbClient.close();
-        dbClient = null;
-      }
-      getDBClient((err2) => {
-        if (err2) {
-          // The configuration asked for *was* written, so the update itself
-          // succeeded; only the connection it names is not answering. Report
-          // the save as done and keep the connection failure in the log —
-          // `GET /api/data-storage/test` is what probes the connection.
-          // (This branch used to test the wrong variable and then reference an
-          // `res` that does not exist here, so it could only ever have thrown.)
-          console.error(
-            `[SERVER] Data storage saved, but its connection is not reachable | ${
-              err2 && err2.stack ? err2.stack : err2
-            }`
-          );
+  writeToFile(
+    dataStoragePath,
+    JSON.stringify(dataStorage),
+    (err, data) => {
+      if (err) {
+        console.error('[SERVER] Cannot save the new data storage configuration', err);
+        return callback(err);
+      } else {
+        dataStorageConfig = dataStorage;
+        if (dbClient) {
+          dbClient.close();
+          dbClient = null;
         }
-        return callback(null, dataStorage);
-      }, true);
-    }
-  }, true);
+        getDBClient((err2) => {
+          if (err2) {
+            // The configuration asked for *was* written, so the update itself
+            // succeeded; only the connection it names is not answering. Report
+            // the save as done and keep the connection failure in the log —
+            // `GET /api/data-storage/test` is what probes the connection.
+            // (This branch used to test the wrong variable and then reference an
+            // `res` that does not exist here, so it could only ever have thrown.)
+            console.error(
+              `[SERVER] Data storage saved, but its connection is not reachable | ${
+                err2 && err2.stack ? err2.stack : err2
+              }`
+            );
+          }
+          return callback(null, dataStorage);
+        }, true);
+      }
+    },
+    true
+  );
 };
-
 
 /**
  * Establish the database connection a route needs, or refuse the request.
@@ -171,6 +169,5 @@ module.exports = {
   EventSchema,
   DatasetSchema,
   TestCaseSchema,
-  TestCampaignSchema
-}
-
+  TestCampaignSchema,
+};

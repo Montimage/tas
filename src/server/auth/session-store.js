@@ -22,7 +22,7 @@
  * login failure tracker is bounded in `routes/auth.js`. The map is kept in
  * recency order (`touch` re-inserts) so "least recently seen" is its first key.
  */
-const crypto = require("crypto");
+const crypto = require('crypto');
 
 /** Default idle window: an operator session that goes quiet for an hour ends. */
 const DEFAULT_IDLE_TTL_MS = 60 * 60 * 1000;
@@ -34,7 +34,7 @@ const DEFAULT_ABSOLUTE_TTL_MS = 12 * 60 * 60 * 1000;
 const DEFAULT_MAX_SESSIONS = 1000;
 
 /** Opaque, unguessable identifier — 256 bits from the system CSPRNG. */
-const newId = () => crypto.randomBytes(32).toString("base64url");
+const newId = () => crypto.randomBytes(32).toString('base64url');
 
 /**
  * Create an in-process session store.
@@ -100,7 +100,7 @@ function createSessionStore(options) {
       const session = {
         id: newId(),
         user: String(user),
-        csrfToken: crypto.randomBytes(32).toString("base64url"),
+        csrfToken: crypto.randomBytes(32).toString('base64url'),
         createdAt: now,
         lastSeenAt: now,
         expiresAt: now + absoluteTtlMs,
@@ -114,7 +114,7 @@ function createSessionStore(options) {
      * @returns {Object|null} The live record, or null when absent or expired
      */
     get: function (id) {
-      if (typeof id !== "string" || id === "") return null;
+      if (typeof id !== 'string' || id === '') return null;
       const session = sessions.get(id);
       if (!session) return null;
       if (isExpired(session, Date.now())) {
@@ -145,7 +145,7 @@ function createSessionStore(options) {
      * @returns {Boolean} True when a record was removed
      */
     destroy: function (id) {
-      if (typeof id !== "string") return false;
+      if (typeof id !== 'string') return false;
       return sessions.delete(id);
     },
 

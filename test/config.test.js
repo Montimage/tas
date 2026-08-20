@@ -4,12 +4,18 @@ var { loadConfig } = require('../src/server/config');
 
 test('config provides safe defaults without any env file', function () {
   var saved = {};
-  ['SERVER_HOST', 'SERVER_PORT', 'BODY_LIMIT', 'MAX_BODY_SIZE',
-    'RATE_LIMIT_WINDOW_MS', 'RATE_LIMIT_MAX', 'CORS_ALLOWED_ORIGINS']
-    .forEach(function (key) {
-      saved[key] = process.env[key];
-      delete process.env[key];
-    });
+  [
+    'SERVER_HOST',
+    'SERVER_PORT',
+    'BODY_LIMIT',
+    'MAX_BODY_SIZE',
+    'RATE_LIMIT_WINDOW_MS',
+    'RATE_LIMIT_MAX',
+    'CORS_ALLOWED_ORIGINS',
+  ].forEach(function (key) {
+    saved[key] = process.env[key];
+    delete process.env[key];
+  });
 
   var cfg = loadConfig();
 
@@ -31,11 +37,17 @@ test('config provides safe defaults without any env file', function () {
 
 test('config honours explicit environment overrides', function () {
   var saved = {};
-  ['SERVER_HOST', 'SERVER_PORT', 'BODY_LIMIT', 'MAX_BODY_SIZE',
-    'RATE_LIMIT_WINDOW_MS', 'RATE_LIMIT_MAX', 'CORS_ALLOWED_ORIGINS']
-    .forEach(function (key) {
-      saved[key] = process.env[key];
-    });
+  [
+    'SERVER_HOST',
+    'SERVER_PORT',
+    'BODY_LIMIT',
+    'MAX_BODY_SIZE',
+    'RATE_LIMIT_WINDOW_MS',
+    'RATE_LIMIT_MAX',
+    'CORS_ALLOWED_ORIGINS',
+  ].forEach(function (key) {
+    saved[key] = process.env[key];
+  });
 
   process.env.SERVER_HOST = '127.0.0.1';
   process.env.SERVER_PORT = '9999';
@@ -53,7 +65,7 @@ test('config honours explicit environment overrides', function () {
   assert.strictEqual(cfg.rateLimitMax, 50);
   assert.deepStrictEqual(cfg.corsAllowedOrigins, [
     'https://ops.example.com',
-    'https://dash.example.com'
+    'https://dash.example.com',
   ]);
 
   Object.keys(saved).forEach(function (key) {

@@ -9,7 +9,7 @@ test('requests larger than the configured body limit are rejected with 413', asy
     var res = await fetch(ctx.base + '/api/devops/status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: big
+      body: big,
     });
     assert.strictEqual(res.status, 413);
     var body = await res.json();
@@ -31,7 +31,7 @@ test('a small request under the limit is not rejected as too large', async funct
     var res = await fetch(ctx.baseUrl + '/api/devops/status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ a: 1 })
+      body: JSON.stringify({ a: 1 }),
     });
     // The body is parsed fine; the route does not exist as POST, so it falls
     // through to the 404 handler rather than a 413.
@@ -49,7 +49,7 @@ test('the body limit can be raised via configuration', async function () {
     var res = await fetch(ctx.baseUrl + '/api/devops/status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: big
+      body: big,
     });
     // 2MB < 100MB so it should be accepted by the parser (and then 404 as the
     // route is GET-only) - definitely not 413.

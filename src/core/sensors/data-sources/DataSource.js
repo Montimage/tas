@@ -1,14 +1,14 @@
-const BooleanSource = require("./BooleanSource");
-const EnumSource = require("./EnumSource");
-const IntegerSource = require("./IntegerSource");
-const FloatSource = require("./FloatSource");
-const EnergySource = require("./EnergySource");
-const ds = require("../../DataSourceType");
+const BooleanSource = require('./BooleanSource');
+const EnumSource = require('./EnumSource');
+const IntegerSource = require('./IntegerSource');
+const FloatSource = require('./FloatSource');
+const EnergySource = require('./EnergySource');
+const ds = require('../../DataSourceType');
 
 class DataSource {
   constructor(key, type, data) {
     this.key = key;
-    const { resourceId , unit, initValue } = data;
+    const { resourceId, unit, initValue } = data;
     this.value = initValue ? initValue : null;
     this.resourceId = resourceId ? resourceId : null;
     this.unit = unit ? unit : null;
@@ -16,23 +16,23 @@ class DataSource {
     switch (type) {
       case ds.DS_ENERGY:
         this.dataGenerator = new EnergySource(data);
-        this.type = "Float";
+        this.type = 'Float';
         break;
       case ds.DS_BOOLEAN:
         this.dataGenerator = new BooleanSource(data);
-        this.type = "Boolean";
+        this.type = 'Boolean';
         break;
       case ds.DS_INTEGER:
         this.dataGenerator = new IntegerSource(data);
-        this.type = "Integer";
+        this.type = 'Integer';
         break;
       case ds.DS_FLOAT:
         this.dataGenerator = new FloatSource(data);
-        this.type = "Float";
+        this.type = 'Float';
         break;
       case ds.DS_ENUM:
         this.dataGenerator = new EnumSource(data);
-        this.type = "String";
+        this.type = 'String';
         break;
       default:
         break;
@@ -49,13 +49,13 @@ class DataSource {
   }
 
   getValue() {
-      this.readData();
-      return {
-        resourceId: this.resourceId,
-        datatype: this.type,
-        value: this.value,
-        unit: this.unit,
-      };
+    this.readData();
+    return {
+      resourceId: this.resourceId,
+      datatype: this.type,
+      value: this.value,
+      unit: this.unit,
+    };
   }
 }
 

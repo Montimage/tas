@@ -10,10 +10,7 @@ const MQTTBus = require('./MQTTBus');
  */
 class MQBus {
   constructor(config) {
-    const {
-      protocol,
-      connConfig,
-    } = config;
+    const { protocol, connConfig } = config;
     this.protocol = protocol;
     this.connConfig = connConfig;
     this.mqClient = null;
@@ -23,7 +20,7 @@ class MQBus {
   }
 
   /**
-   * Connect to the MQ broker 
+   * Connect to the MQ broker
    * @param {Function} callback The callback function
    */
   connect(callback) {
@@ -44,7 +41,7 @@ class MQBus {
    * @param {Array|String} topics The topics to be listening on
    */
   subscribe(topics) {
-    console.log('[MQBus]Going to subscribe to topics: ',topics);
+    console.log('[MQBus]Going to subscribe to topics: ', topics);
     if (typeof topics === 'string') {
       // single topic
       this.mqClient.subscribe(topics);
@@ -61,7 +58,7 @@ class MQBus {
    * @param {Array|String} topics the topics to be unsubscribed
    */
   unsubscribe(topics) {
-    console.log('[MQBus]Going to subscribe to topics: ',topics);
+    console.log('[MQBus]Going to subscribe to topics: ', topics);
     if (typeof topics === 'string') {
       // single topic
       this.mqClient.unsubscribe(topics);
@@ -74,11 +71,11 @@ class MQBus {
     }
   }
   /**
-   * Publish a data to a topic  
+   * Publish a data to a topic
    * @param {String} topic The topic to be published to
    * @param {Object} data The data to be published
    */
-  publish(topic, data){
+  publish(topic, data) {
     this.mqClient.publish(topic, data);
   }
 

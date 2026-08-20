@@ -1,8 +1,8 @@
 /* Working with event */
-const express = require("express");
-const Joi = require("joi");
+const express = require('express');
+const Joi = require('joi');
 const router = express.Router();
-const { EventSchema, dbConnector } = require("./db-connector");
+const { EventSchema, dbConnector } = require('./db-connector');
 const {
   validate,
   documentSchema,
@@ -10,12 +10,8 @@ const {
   pageSchema,
   textSchema,
   timestampSchema,
-} = require("../middleware/validate");
-const {
-  errorHandler,
-  databaseError,
-  notFound,
-} = require("../middleware/errors");
+} = require('../middleware/validate');
+const { errorHandler, databaseError, notFound } = require('../middleware/errors');
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the event endpoints (issue #10)
@@ -86,7 +82,7 @@ const eventUpdateBody = Joi.object({
 }).required();
 
 // Get all the events
-router.get("/", validate({ query: eventQuery }), dbConnector, function (req, res, next) {
+router.get('/', validate({ query: eventQuery }), dbConnector, function (req, res, next) {
   let page = Number(req.query.page);
   if (!page) page = 0;
   let filter = {};
@@ -124,24 +120,24 @@ router.get("/", validate({ query: eventQuery }), dbConnector, function (req, res
   if (page === 0) {
     EventSchema.countDocuments(filter, (err3, totalNbEvents) => {
       if (err3) {
-        next(databaseError(err3, "Failed to count number of event"));
+        next(databaseError(err3, 'Failed to count number of event'));
       } else {
         EventSchema.findEventsWithPagingOptions(filter, page, (err2, events) => {
           if (err2) {
-            next(databaseError(err2, "Failed to get event"));
+            next(databaseError(err2, 'Failed to get event'));
           } else {
             res.send({
               totalNbEvents,
               events,
             });
           }
-      });
-    }
-  });
+        });
+      }
+    });
   } else {
     EventSchema.findEventsWithPagingOptions(filter, page, (err2, events) => {
       if (err2) {
-        next(databaseError(err2, "Failed to get event"));
+        next(databaseError(err2, 'Failed to get event'));
       } else {
         res.send({
           events,
@@ -154,24 +150,29 @@ router.get("/", validate({ query: eventQuery }), dbConnector, function (req, res
 /**
  * Get a event by id
  */
-router.get("/:eventId", validate({ params: { eventId: eventIdParam } }), dbConnector, function (req, res, next) {
-  const { eventId } = req.params;
+router.get(
+  '/:eventId',
+  validate({ params: { eventId: eventIdParam } }),
+  dbConnector,
+  function (req, res, next) {
+    const { eventId } = req.params;
 
-  EventSchema.findById(eventId, (err2, event) => {
-    if (err2) {
-      next(databaseError(err2, "Failed to get event"));
-    } else if (!event) {
-      next(notFound("Event not found"));
-    } else {
-      res.send({
-        event,
-      });
-    }
-  });
-});
+    EventSchema.findById(eventId, (err2, event) => {
+      if (err2) {
+        next(databaseError(err2, 'Failed to get event'));
+      } else if (!event) {
+        next(notFound('Event not found'));
+      } else {
+        res.send({
+          event,
+        });
+      }
+    });
+  }
+);
 
 // Add a new event
-router.post("/", validate({ body: eventCreateBody }), dbConnector, function (req, res, next) {
+router.post('/', validate({ body: eventCreateBody }), dbConnector, function (req, res, next) {
   const { event } = req.body;
   const { timestamp, topic, datasetId, isSensorData, values } = event;
   const newevent = new EventSchema({
@@ -183,7 +184,7 @@ router.post("/", validate({ body: eventCreateBody }), dbConnector, function (req
   });
   newevent.save((err, _event) => {
     if (err) {
-      next(databaseError(err, "Failed to save the event"));
+      next(databaseError(err, 'Failed to save the event'));
     } else {
       res.send({
         event: _event,
@@ -195,37 +196,47 @@ router.post("/", validate({ body: eventCreateBody }), dbConnector, function (req
 /**
  * Update a event
  */
-router.post("/:eventId", validate({ params: { eventId: eventIdParam }, body: eventUpdateBody }), dbConnector, function (req, res, next) {
-  const { event } = req.body;
-  const { eventId } = req.params;
+router.post(
+  '/:eventId',
+  validate({ params: { eventId: eventIdParam }, body: eventUpdateBody }),
+  dbConnector,
+  function (req, res, next) {
+    const { event } = req.body;
+    const { eventId } = req.params;
 
-  EventSchema.findByIdAndUpdate(eventId, event, (err, ts) => {
-    if (err) {
-      next(databaseError(err, "Failed to save the event"));
-    } else {
-      res.send({
-        event: ts,
-      });
-    }
-  });
-});
+    EventSchema.findByIdAndUpdate(eventId, event, (err, ts) => {
+      if (err) {
+        next(databaseError(err, 'Failed to save the event'));
+      } else {
+        res.send({
+          event: ts,
+        });
+      }
+    });
+  }
+);
 
 /**
  * Delete a event by id
  */
-router.delete("/:eventId", validate({ params: { eventId: eventIdParam } }), dbConnector, function (req, res, next) {
-  const { eventId } = req.params;
+router.delete(
+  '/:eventId',
+  validate({ params: { eventId: eventIdParam } }),
+  dbConnector,
+  function (req, res, next) {
+    const { eventId } = req.params;
 
-  EventSchema.findByIdAndDelete(eventId, (err, ret) => {
-    if (err) {
-      next(databaseError(err, "Failed to delete a event"));
-    } else {
-      res.send({
-        result: ret,
-      });
-    }
-  });
-});
+    EventSchema.findByIdAndDelete(eventId, (err, ret) => {
+      if (err) {
+        next(databaseError(err, 'Failed to delete a event'));
+      } else {
+        res.send({
+          result: ret,
+        });
+      }
+    });
+  }
+);
 
 // Attached to the router itself as well as to the application: see the note in
 // `routes/model.js`.

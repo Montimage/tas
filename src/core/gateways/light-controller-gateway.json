@@ -25,9 +25,7 @@
     "upstreams": [
       {
         "in": "t01",
-        "out": [
-          "ext-01"
-        ]
+        "out": ["ext-01"]
       }
     ]
   }

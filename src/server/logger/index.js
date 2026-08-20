@@ -15,13 +15,8 @@ const myFormat = printf(({ level, message, label, timestamp }) => {
  */
 const getLogger = (_label, _filename) => {
   const logger = createLogger({
-    format: combine(
-      label({ label: _label }),
-      timestamp(),
-      myFormat,
-      format.colorize()
-    ),
-    transports: [new transports.File({ filename: _filename })]
+    format: combine(label({ label: _label }), timestamp(), myFormat, format.colorize()),
+    transports: [new transports.File({ filename: _filename })],
   });
 
   if (process.env.NODE_ENV !== 'production') {
@@ -30,12 +25,12 @@ const getLogger = (_label, _filename) => {
 
   console.log = (message) => {
     logger.log('info', message);
-  }
+  };
   console.error = (message) => {
     logger.log('error', message);
-  }
+  };
 
   return logger;
-}
+};
 
 module.exports = getLogger;

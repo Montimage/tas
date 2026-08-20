@@ -1,6 +1,6 @@
-const { ENACTDB, ActuatorSchema, SensorSchema } = require("../enact-mongoose");
-const Thing = require("./Thing");
-const { ONLINE, OFFLINE, SIMULATING } = require("../DeviceStatus");
+const { ENACTDB, ActuatorSchema, SensorSchema } = require('../enact-mongoose');
+const Thing = require('./Thing');
+const { ONLINE, OFFLINE, SIMULATING } = require('../DeviceStatus');
 /**
  * The Thing class presents a THING component:
  * - List of sensors
@@ -23,37 +23,25 @@ class DataGenerator extends Thing {
   initThing(callback, dbConfig) {
     this.dbConfig = dbConfig;
     if (!dbConfig) {
-      console.error(
-        `[Data-Generator] ERROR: Missing database configuration:`,
-        dataConfig
-      );
+      console.error(`[Data-Generator] ERROR: Missing database configuration:`, dataConfig);
       return;
     }
 
     if (dbConfig.username && dbConfig.password) {
-      this.enactDB = new ENACTDB(
-        dbConfig.host,
-        dbConfig.port,
-        dbConfig.dbname,
-        {
-          username: dbConfig.username,
-          password: dbConfig.password,
-        }
-      );
+      this.enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname, {
+        username: dbConfig.username,
+        password: dbConfig.password,
+      });
     } else {
       this.enactDB = new ENACTDB(dbConfig.host, dbConfig.port, dbConfig.dbname);
     }
 
     this.enactDB.connect((error) => {
       if (error) {
-        console.log(
-          "[Data-Generator] ERROR: Failed to connect to database",
-          error,
-          dbConfig
-        );
+        console.log('[Data-Generator] ERROR: Failed to connect to database', error, dbConfig);
         exit(1);
       }
-      console.log("[Data-Generator] Connected to database");
+      console.log('[Data-Generator] Connected to database');
       this.setStatus(ONLINE);
       return callback();
     });
@@ -76,31 +64,27 @@ class DataGenerator extends Thing {
    * @param {Object} sensor The publisher
    */
   publishData(data, sensor) {
-    super.publishData(data,sensor);
+    super.publishData(data, sensor);
     let newData = null;
-    if (sensor.devType === "ACTUATOR") {
+    if (sensor.devType === 'ACTUATOR') {
       newData = new ActuatorSchema(data);
     } else {
       newData = new SensorSchema(data);
     }
     newData.save((err, _data) => {
       if (err) {
-        console.error(
-          `[${this.thingId}] Failed to save generated data of sensor ${sensor.id}`
-        );
+        console.error(`[${this.thingId}] Failed to save generated data of sensor ${sensor.id}`);
         console.error(err);
       } else {
-        console.log(
-          `[${this.thingId}] ${data.timestamp} ${JSON.stringify(data)}`
-        );
+        console.log(`[${this.thingId}] ${data.timestamp} ${JSON.stringify(data)}`);
       }
     });
   }
 
   getStats() {
     const stats = super.getStats();
-    const {host, port} = this.dbConfig;
-    return {...stats, protocol: "MONGODB", host, port};
+    const { host, port } = this.dbConfig;
+    return { ...stats, protocol: 'MONGODB', host, port };
   }
 }
 

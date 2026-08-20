@@ -2,9 +2,9 @@ name: E2E Security Regression Suite
 
 on:
   push:
-    branches: ["master"]
+    branches: ['master']
   pull_request:
-    branches: ["master"]
+    branches: ['master']
   workflow_dispatch:
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
         with:
           # Match the runtime the shipped container image uses, so the gate
           # exercises the same Node major as a deployed instance.
-          node-version: "22"
+          node-version: '22'
           cache: npm
 
       - name: Install dependencies

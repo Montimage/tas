@@ -1,10 +1,16 @@
 const DataStorage = require('../communications/DataStorage');
-const {OFFLINE, SIMULATING} = require('../DeviceStatus');
+const { OFFLINE, SIMULATING } = require('../DeviceStatus');
 const Simulation = require('../simulation');
 const { readJSONFile } = require('../utils');
 const modelsPath = `${__dirname}/../../server/data/models/`;
 class TestCase {
-  constructor(id, dataStorageConfig, testCampaignId = null, evaluationParameters = null,callbackWhenFinish = null) {
+  constructor(
+    id,
+    dataStorageConfig,
+    testCampaignId = null,
+    evaluationParameters = null,
+    callbackWhenFinish = null
+  ) {
     this.id = id;
     this.name = id;
     this.dataStorageConfig = dataStorageConfig;
@@ -31,7 +37,7 @@ class TestCase {
           console.error(`[TestCase] Cannot get the test case by id: ${this.id}`);
           return callback(err);
         }
-        const {datasetIds, name, modelFileName} = tc;
+        const { datasetIds, name, modelFileName } = tc;
         this.name = name ? name : this.id;
         this.modelFileName = modelFileName;
         if (!datasetIds || datasetIds.length === 0) {
@@ -46,7 +52,7 @@ class TestCase {
         return readJSONFile(`${modelsPath}${this.modelFileName}`, (err2, data) => {
           if (err2) {
             console.error(`[TestCase] Cannot read model file ${this.modelFileName}`);
-            console.error(err2)
+            console.error(err2);
             return callback(`Cannot read model file ${this.modelFileName}`);
           } else {
             this.model = data;
@@ -75,25 +81,34 @@ class TestCase {
     for (let index = 0; index < this.datasetIds.length; index++) {
       const datasetId = this.datasetIds[index];
       const stopTestCase = () => this.stop();
-      const newSimulation = new Simulation(this.model,{dataStorage: this.dataStorageConfig, datasetId, testCampaignId: this.testCampaignId, evaluationParameters: this.evaluationParameters}, (score = null) => {
-        if (score !== null && score !== undefined) {
-          // Do something if the score === 0
-          this.scores.push({
-            simulationIndex: index,
-            datasetId,
-            score
-          });
-        }
-        for (let simuIndex = 0; simuIndex < this.simulations.length; simuIndex++) {
-          const sim = this.simulations[simuIndex];
-          if (sim.status !== OFFLINE) {
+      const newSimulation = new Simulation(
+        this.model,
+        {
+          dataStorage: this.dataStorageConfig,
+          datasetId,
+          testCampaignId: this.testCampaignId,
+          evaluationParameters: this.evaluationParameters,
+        },
+        (score = null) => {
+          if (score !== null && score !== undefined) {
+            // Do something if the score === 0
+            this.scores.push({
+              simulationIndex: index,
+              datasetId,
+              score,
+            });
+          }
+          for (let simuIndex = 0; simuIndex < this.simulations.length; simuIndex++) {
+            const sim = this.simulations[simuIndex];
+            if (sim.status !== OFFLINE) {
+              return;
+            }
+            // All the simulations have been finished
+            stopTestCase();
             return;
           }
-          // All the simulations have been finished
-          stopTestCase();
-          return;
         }
-      });
+      );
       newSimulation.start();
       this.simulations.push(newSimulation);
     }
@@ -116,7 +131,6 @@ class TestCase {
   getStatus() {
     return this.status;
   }
-
 }
 
 module.exports = TestCase;
