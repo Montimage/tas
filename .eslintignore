@@ -1,0 +1,11 @@
+node_modules
+src/client
+src/core
+src/public
+homeio-models
+node-red-flows
+*.min.js
+bundle.js
+dist
+build
+coverage

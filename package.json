@@ -5,7 +5,12 @@
   "scripts": {
     "start": "NODE_ENV=production node src/server/app.js",
     "server": "nodemon src/server/app.js",
-    "test": "node --test-concurrency=1 --test \"test/**/*.test.js\""
+    "test": "node --test-concurrency=1 --test \"test/**/*.test.js\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "nodemonConfig": {
     "verbose": true,
@@ -57,13 +62,22 @@
     "ws": "^7.2.1"
   },
   "devDependencies": {
-    "eslint": "^7.6.0",
-    "eslint-config-prettier": "^6.11.0",
-    "eslint-plugin-prettier": "^3.1.4",
-    "eslint-plugin-react": "^7.20.5",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^8.10.0",
+    "eslint-plugin-react": "^7.34.0",
     "file-loader": "^5.1.0",
-    "jshint": "^2.12.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
     "nodemon": "^2.0.3",
-    "prettier": "^2.0.5"
+    "prettier": "^2.8.8"
+  },
+  "lint-staged": {
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

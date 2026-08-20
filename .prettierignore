@@ -1,0 +1,17 @@
+node_modules
+src/client
+src/public
+homeio-models
+node-red-flows
+*.min.js
+bundle.js
+package-lock.json
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.svg
+dist
+build
+coverage
