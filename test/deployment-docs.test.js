@@ -23,7 +23,7 @@ test('the documented docker run provisions a session secret', () => {
   const block = quickStartBlock(readme);
   assert.match(
     block,
-    /-e\s+"?\$\{?SESSION_SECRET\}?=?|SESSION_SECRET=/,
+    /-e\s+"?SESSION_SECRET=/,
     'the quick-start docker run must pass SESSION_SECRET'
   );
   // A literal placeholder would ship an identical secret in every deployment,
