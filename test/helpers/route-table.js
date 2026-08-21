@@ -10,17 +10,42 @@
  */
 
 /**
- * Recover the path a layer was mounted at from the regexp Express compiled for
- * it. Express keeps no copy of the original string, and reading the live stack
- * is the only way to see what the guard actually sees: a source-text scan would
- * miss a computed path, a `router.route(...)`, a route registered outside
- * `src/server/routes/`, and every extra mount of a router mounted more than
- * once — each of which is a way for an unprotected route to ship green.
+ * Express 5 (router@2) compiles mount paths into matcher closures and keeps no
+ * readable copy of the original string on the layer — `layer.regexp` is gone,
+ * so the old source-text recovery below finds nothing and every walk comes
+ * back empty. Requiring this module therefore patches the Layer constructor in
+ * the require cache, before anything has loaded `router`, so every layer born
+ * afterwards records its original path. A constructor that returns an object
+ * replaces the `new`-built one, and the instance handed to `Router.use` is
+ * still a genuine Layer, so Express behaviour is unchanged.
+ */
+const LAYER_MODULE = 'router/lib/layer';
+try {
+  const RealLayer = require(LAYER_MODULE);
+  require.cache[require.resolve(LAYER_MODULE)].exports = function RecordedLayer(path, options, fn) {
+    const instance = new RealLayer(path, options, fn);
+    instance.originalPath = Array.isArray(path) ? path[0] : path;
+    return instance;
+  };
+} catch (e) {
+  // An older Express that still exposes `layer.regexp` needs no patch; the
+  // regexp-based recovery in `layerPath` handles it.
+}
+
+/**
+ * Recover the path a layer was mounted at.
+ *
+ * On Express 5 this reads the original path recorded at construction (see the
+ * patch above). On Express 4 it falls back to recovering the prefix from the
+ * compiled regexp, which was the only copy Express kept there.
  *
  * @param {Object} layer An Express router-stack layer
  * @returns {String} The mount path, or "" for a layer that matches everything
  */
 function layerPath(layer) {
+  if (typeof layer.originalPath === 'string') {
+    return layer.originalPath === '/' ? '' : layer.originalPath;
+  }
   if (layer.regexp && layer.regexp.fast_slash) return '';
   const source = String((layer.regexp && layer.regexp.source) || '');
   const trimmed = source

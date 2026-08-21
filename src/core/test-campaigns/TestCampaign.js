@@ -1,4 +1,5 @@
-const fetch = require('node-fetch');
+// The webhook notification uses the runtime's global fetch (Node >= 18);
+// the node-fetch dependency is gone (issue #28).
 const DataStorage = require('../communications/DataStorage');
 const { OFFLINE, SIMULATING } = require('../DeviceStatus');
 const TestCase = require('./TestCase');

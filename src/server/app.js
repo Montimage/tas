@@ -1,7 +1,6 @@
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
 var compression = require('compression');
 var rateLimit = require('express-rate-limit');
 var { loadConfig } = require('./config');
@@ -147,15 +146,26 @@ app.use(function corsControl(req, res, next) {
   next();
 });
 
+/**
+ * Body parsing, provided by Express's own re-exports of the body parser.
+ *
+ * The urlencoded parser deliberately runs with `extended: false` (issue #74):
+ * it is the body-side twin of the `query parser: simple` setting above. With
+ * the extended parser a form body of `a[$ne]=1` arrives as the object
+ * `{ a: { $ne: '1' } }`, reinstating exactly the nested-operator shape the
+ * simple query parser makes unrepresentable on the query side. With the flat
+ * parser every form field is a string — `a[$ne]` stays the literal key
+ * `'a[$ne]'` — so neither request surface can carry an operator.
+ */
 app.use(
-  bodyParser.json({
+  express.json({
     limit: config.bodyLimit,
   })
 );
 app.use(
-  bodyParser.urlencoded({
+  express.urlencoded({
     limit: config.bodyLimit,
-    extended: true,
+    extended: false,
   })
 );
 // The secret is what makes `signed: true` cookies verifiable: a session cookie
@@ -237,9 +247,19 @@ app.use('/api/devops', devopsRouter);
 // with an HTML page a client cannot tell from a successful call.
 app.use('/api', apiNotFound);
 
-app.get('/*', function (req, res) {
+/**
+ * The single-page app catch-all (Express 5 / path-to-regexp v8).
+ *
+ * v8 no longer accepts an anonymous `*` wildcard, so the old `'/*'` route is
+ * split: the root path is registered explicitly and `/*splat` covers every
+ * deeper GET. Anything outside `/api` that no router claimed is the dashboard,
+ * answered with its index.html.
+ */
+function serveDashboard(req, res) {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
-});
+}
+app.get('/', serveDashboard);
+app.get('/*splat', serveDashboard);
 
 /**
  * The central error handler.
