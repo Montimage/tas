@@ -9,12 +9,17 @@ class TestCase {
     dataStorageConfig,
     testCampaignId = null,
     evaluationParameters = null,
-    callbackWhenFinish = null
+    callbackWhenFinish = null,
+    logger = null
   ) {
+    // Where this run writes its log lines. A campaign shares its own logger
+    // with every test case it owns; without one, fall back to the process
+    // console.
+    this.logger = logger || console;
     this.id = id;
     this.name = id;
     this.dataStorageConfig = dataStorageConfig;
-    this.dataStorage = new DataStorage(dataStorageConfig);
+    this.dataStorage = new DataStorage(dataStorageConfig, this.logger);
     this.simulations = [];
     this.modelFileName = null;
     this.model = null;
@@ -29,19 +34,19 @@ class TestCase {
   init(callback) {
     this.dataStorage.connect((err) => {
       if (err) {
-        console.error(`[TestCase] Cannot connect to data storage: ${JSON.stringify(err)}`);
+        this.logger.error(`[TestCase] Cannot connect to data storage`, err);
         return callback(err);
       }
       this.dataStorage.getTestCaseById(this.id, (err, tc) => {
         if (err) {
-          console.error(`[TestCase] Cannot get the test case by id: ${this.id}`);
+          this.logger.error(`[TestCase] Cannot get the test case by id: ${this.id}`, err);
           return callback(err);
         }
         const { datasetIds, name, modelFileName } = tc;
         this.name = name ? name : this.id;
         this.modelFileName = modelFileName;
         if (!datasetIds || datasetIds.length === 0) {
-          console.error(`[TestCase] No datasetIds: ${this.id}`);
+          this.logger.error(`[TestCase] No datasetIds: ${this.id}`);
           return callback(`[TestCase] No datasetIds: ${this.id}`);
         }
         if (!this.modelFileName) {
@@ -51,8 +56,7 @@ class TestCase {
         this.modelFileName = modelFileName;
         return readJSONFile(`${modelsPath}${this.modelFileName}`, (err2, data) => {
           if (err2) {
-            console.error(`[TestCase] Cannot read model file ${this.modelFileName}`);
-            console.error(err2);
+            this.logger.error(`[TestCase] Cannot read model file ${this.modelFileName}`, err2);
             return callback(`Cannot read model file ${this.modelFileName}`);
           } else {
             this.model = data;
@@ -65,16 +69,16 @@ class TestCase {
 
   start() {
     if (this.status === SIMULATING) {
-      console.log('[TestCase] Test case is in simulating');
+      this.logger.log('[TestCase] Test case is in simulating');
       return;
     }
     if (!this.datasetIds || this.datasetIds.length === 0) {
-      console.log('[TestCase] No datasetIds');
+      this.logger.log('[TestCase] No datasetIds');
       this.stop();
       return;
     }
     if (!this.model) {
-      console.log('[TestCase] No model');
+      this.logger.log('[TestCase] No model');
       this.stop();
       return;
     }
@@ -107,7 +111,8 @@ class TestCase {
             stopTestCase();
             return;
           }
-        }
+        },
+        this.logger
       );
       newSimulation.start();
       this.simulations.push(newSimulation);
@@ -117,7 +122,7 @@ class TestCase {
 
   stop() {
     if (this.status === OFFLINE) {
-      console.log(`[TestCase] Test case ${this.name} is offline`);
+      this.logger.log(`[TestCase] Test case ${this.name} is offline`);
     } else {
       for (let index = 0; index < this.simulations.length; index++) {
         const simulation = this.simulations[index];

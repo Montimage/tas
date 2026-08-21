@@ -16,11 +16,15 @@ const ReportSchema = require('../enact-mongoose/schemas/ReportSchema');
  *  + stop(): disconnect with the database
  */
 class DataStorage {
-  constructor(config) {
+  constructor(config, logger = null) {
     const { protocol, connConfig } = config;
     this.protocol = protocol;
     this.connConfig = connConfig;
     this.dsClient = null;
+    // Where this connection writes its log lines. The run that opened the
+    // connection passes its own logger in; without one, fall back to the
+    // process console.
+    this.logger = logger || console;
   }
 
   /**
@@ -28,7 +32,7 @@ class DataStorage {
    * @param {Function} callback The callback function
    */
   connect(callback) {
-    console.log('[DataStorage] Connecting...');
+    this.logger.log('[DataStorage] Connecting...');
     if (this.protocol === 'MONGODB') {
       const { host, port, username, password, dbname, options } = this.connConfig;
       if (username && password) {
@@ -42,16 +46,18 @@ class DataStorage {
 
       this.dsClient.connect((error) => {
         if (error) {
-          console.error(`[DataStorage] ERROR: Failed to connect to database:`);
-          console.error(error);
-          console.error(this.connConfig);
+          this.logger.error(
+            `[DataStorage] ERROR: Failed to connect to database:`,
+            error,
+            this.connConfig
+          );
           return callback(error);
         }
-        console.log('[DataStorage] Connected to database');
+        this.logger.log('[DataStorage] Connected to database');
         return callback();
       });
     } else {
-      console.log(`Unsupported protocol: ${this.protocol}`);
+      this.logger.log(`Unsupported protocol: ${this.protocol}`);
     }
   }
 
@@ -77,7 +83,7 @@ class DataStorage {
           source: dataset.source ? dataset.source : 'RECORDED',
         });
         newDS.save();
-        console.log('[DataStorage] A new dataset has been created: ', dataset);
+        this.logger.log('[DataStorage] A new dataset has been created: ', dataset);
       }
     });
   }
@@ -85,15 +91,13 @@ class DataStorage {
   saveReport(report) {
     ReportSchema.findOne({ id: report.id }, (err, rp) => {
       if (rp) {
-        console.log('[DataStorage] Going to update a report: ');
-        console.log(report);
+        this.logger.log('[DataStorage] Going to update a report: ', report);
         ReportSchema.findOneAndUpdate({ id: report.id }, report);
       } else {
-        console.log('[DataStorage] Going to add a new report: ');
-        console.log(JSON.stringify(report));
+        this.logger.log('[DataStorage] Going to add a new report: ', report);
         const newReport = new ReportSchema(report);
         newReport.save();
-        console.log('[DataStorage] A new report has been created');
+        this.logger.log('[DataStorage] A new report has been created');
       }
     });
   }
@@ -105,9 +109,7 @@ class DataStorage {
       endTime ? endTime : Date.now(),
       (err, events) => {
         if (err) {
-          console.error('[DataStorage] Cannot get events!');
-          console.error(datasetId);
-          console.error(err);
+          this.logger.error('[DataStorage] Cannot get events!', datasetId, err);
           return callback(err);
         } else {
           return callback(null, events);
@@ -122,7 +124,13 @@ class DataStorage {
     if (!endTime) endTime = Date.now();
     EventSchema.findEventsBetweenTimes({ topic, datasetId }, startTime, endTime, (err, events) => {
       if (err) {
-        console.error('[DataStorage] Cannot get events!', topic, datasetId, timeConstraints, err);
+        this.logger.error(
+          '[DataStorage] Cannot get events!',
+          topic,
+          datasetId,
+          timeConstraints,
+          err
+        );
         return callback(err);
       } else {
         return callback(null, events);
@@ -133,10 +141,10 @@ class DataStorage {
   getTestCampaignById(testCampaignId, callback) {
     TestCampaignSchema.findOne({ id: testCampaignId }, (err, tc) => {
       if (err) {
-        console.error(`[DataStorage] Cannot get test campaign: ${testCampaignId}`, err);
+        this.logger.error(`[DataStorage] Cannot get test campaign: ${testCampaignId}`, err);
         return callback(err, null);
       } else if (!tc) {
-        console.error(
+        this.logger.error(
           `[DataStorage] Cannot get test campaign: ${testCampaignId}. TestCampaign is null`
         );
         return callback('Test Campaign is NULL', null);
@@ -149,10 +157,10 @@ class DataStorage {
   getTestCaseById(testCaseId, callback) {
     TestCaseSchema.findOne({ id: testCaseId }, (err, tc) => {
       if (err) {
-        console.error(`[DataStorage] Cannot get test Case: ${testCaseId}`, err);
+        this.logger.error(`[DataStorage] Cannot get test Case: ${testCaseId}`, err);
         return callback(err, null);
       } else if (!tc) {
-        console.error(`[DataStorage] Cannot get test Case: ${testCaseId}. TestCase is null`);
+        this.logger.error(`[DataStorage] Cannot get test Case: ${testCaseId}. TestCase is null`);
         return callback('Test Case is NULL', null);
       } else {
         return callback(null, tc);

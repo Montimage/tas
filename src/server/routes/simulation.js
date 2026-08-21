@@ -93,6 +93,10 @@ let allSimulations = {};
 // placeholder in `allSimulations`: `/stop` calls `stop()` on whatever it finds
 // there.
 const startingSimulations = new Set();
+// The logger of each running simulation, held here so `/stop` can release the
+// run's file handle once the run stops. The logger is passed explicitly to the
+// run; global console methods are never touched.
+const runLoggers = {};
 // Start simulating a model
 
 const startSimulation = (model, options = {}, res, next, modelFileName = null) => {
@@ -126,7 +130,8 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
   } else {
     const startedTime = Date.now();
     const logFile = `${name}_${Date.now()}.log`;
-    getLogger('SIMULATION', `${logsPath}${logFile}`);
+    const logger = getLogger('SIMULATION', `${logsPath}${logFile}`);
+    runLoggers[simId] = logger;
     if (!model.dataStorage && !options.dataStorage) {
       // Use default data storage
       startingSimulations.add(simId);
@@ -137,7 +142,7 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
         if (err) {
           next(unavailable('No data storage', err));
         } else {
-          const simulation = new Simulation({ ...model, dataStorage: ds }, options);
+          const simulation = new Simulation({ ...model, dataStorage: ds }, options, null, logger);
           simulation.start();
           allSimulations[simId] = simulation;
           allSimulationStatus[simId] = {
@@ -158,7 +163,7 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
         }
       });
     } else {
-      const simulation = new Simulation(model, options);
+      const simulation = new Simulation(model, options, null, logger);
       simulation.start();
       allSimulations[simId] = simulation;
       allSimulationStatus[simId] = {
@@ -208,6 +213,11 @@ router.get(
     if (allSimulations[simId]) {
       allSimulations[simId].stop();
       allSimulations[simId] = null;
+    }
+    if (runLoggers[simId]) {
+      // The run has stopped: release its log file handle.
+      runLoggers[simId].close();
+      delete runLoggers[simId];
     }
     if (allSimulationStatus[simId]) {
       allSimulationStatus[simId].isRunning = false;

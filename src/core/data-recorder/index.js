@@ -3,12 +3,16 @@ const DRecorder = require('./DRecorder');
 const { readJSONFile } = require('../utils');
 
 class DataRecorder {
-  constructor(drConfig) {
+  constructor(drConfig, logger = null) {
     const { dataStorage, dataRecorders, dataset } = drConfig;
     this.dataStorage = dataStorage;
     this.dataRecorders = dataRecorders;
     this.dataset = dataset;
     this.allDataRecorders = [];
+    // Where this run writes its log lines. The route that started the
+    // recorder passes its own logger in; without one, fall back to the
+    // process console.
+    this.logger = logger || console;
   }
 
   /**
@@ -38,10 +42,10 @@ class DataRecorder {
    * @param {Function} callback The callback function
    */
   initDataStorage(callback) {
-    const dsClient = new DataStorage(this.dataStorage);
+    const dsClient = new DataStorage(this.dataStorage, this.logger);
     dsClient.connect((error) => {
       if (error) {
-        console.error('Failed to create DataStorage', error);
+        this.logger.error('Failed to create DataStorage', error);
         return callback(error);
       } else {
         this.dataStorage['dsClient'] = dsClient;
@@ -49,7 +53,7 @@ class DataRecorder {
           dsClient.saveDataset(this.dataset);
           return callback();
         } else {
-          console.error('Failed to create DataStorage: dataset missing');
+          this.logger.error('Failed to create DataStorage: dataset missing');
           dsClient.stop();
           return callback('Dataset missing');
         }
@@ -60,7 +64,7 @@ class DataRecorder {
   initDRecorders() {
     for (let index = 0; index < this.dataRecorders.length; index++) {
       const dRecorderCfg = this.dataRecorders[index];
-      const dRecorder = new DRecorder(dRecorderCfg, this.dataStorage, this.dataset);
+      const dRecorder = new DRecorder(dRecorderCfg, this.dataStorage, this.dataset, this.logger);
       if (dRecorder.init()) {
         this.allDataRecorders.push(dRecorder);
       }
@@ -74,7 +78,7 @@ class DataRecorder {
    * - Init the data recorders
    */
   start() {
-    console.log(`[DataRecorder] Going to start ...`);
+    this.logger.log(`[DataRecorder] Going to start ...`);
     if (this.dataStorage) {
       this.initDataStorage(() => this.initDRecorders());
     } else {
@@ -83,7 +87,7 @@ class DataRecorder {
   }
 
   stop() {
-    console.log(`[DataRecorder] Going to stop ...`);
+    this.logger.log(`[DataRecorder] Going to stop ...`);
     if (this.dataStorage && this.dataStorage.dsClient) {
       this.dataStorage.dsClient.stop();
     }
