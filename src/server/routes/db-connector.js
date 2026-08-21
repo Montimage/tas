@@ -49,7 +49,10 @@ const getDBClient = (callback, reload = false) => {
         }
         if (protocol === 'MONGODB') {
           const { host, port, dbname, username, password, _options } = connConfig;
-          console.log(`MongoDB configuration: ${JSON.stringify(connConfig)}`);
+          // Connection logging names host, port and database only: username
+          // and password must never reach a log file or the logs endpoint.
+          // (F-SEC-001, #72)
+          console.log(`MongoDB configuration: host=${host} port=${port} dbname=${dbname}`);
           let auth = null;
           if (username && password) {
             auth = {
