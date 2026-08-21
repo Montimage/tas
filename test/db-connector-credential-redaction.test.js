@@ -143,7 +143,7 @@ test('the connector logs host, port and dbname only — never credentials (AC #1
     assert.ok(!all.includes('"password"'), 'the password field must not survive redaction');
     // The request still goes through the normal refusal path (503), proving
     // redaction did not break the connector.
-    assert.ok(nextErr === undefined || nextErr != null);
+    assert.ok(nextErr, 'the failed connect must surface through the 503 refusal path');
   });
 });
 
