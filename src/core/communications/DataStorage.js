@@ -46,11 +46,14 @@ class DataStorage {
 
       this.dsClient.connect((error) => {
         if (error) {
-          this.logger.error(
-            `[DataStorage] ERROR: Failed to connect to database:`,
-            error,
-            this.connConfig
-          );
+          // Name host, port and database only: these lines land in run log
+          // files served by GET /api/logs/*/:fileName, so username and
+          // password must never be included. (F-SEC-001, #72)
+          this.logger.error(`[DataStorage] ERROR: Failed to connect to database:`, error, {
+            host,
+            port,
+            dbname,
+          });
           return callback(error);
         }
         this.logger.log('[DataStorage] Connected to database');
