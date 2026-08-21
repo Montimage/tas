@@ -1,6 +1,7 @@
 /* Working with Data Generator */
 var express = require('express');
 var path = require('path');
+var fs = require('fs');
 const Joi = require('joi');
 
 const { readJSONFile, writeToFile, readDir, deleteFile } = require('../../core/utils');
@@ -12,7 +13,7 @@ const {
   fileNameParam,
   simulationRunFields,
 } = require('../middleware/validate');
-const { errorHandler, fileError, internal } = require('../middleware/errors');
+const { errorHandler, fileError, internal, conflict } = require('../middleware/errors');
 const modelsPath = `${__dirname}/../data/models/`;
 let router = express.Router();
 
@@ -90,6 +91,29 @@ router.get(
   }
 );
 
+// Bound the search for a free "[Duplicated]" name so a pathological
+// directory cannot spin the event loop (issue #70).
+const MAX_DUPLICATE_CANDIDATES = 1000;
+
+/**
+ * Derive the first available "<name> [Duplicated]" filename for a duplicate.
+ * Every candidate is re-checked against the name allowlist, because the
+ * suffix grows the name and the length cap may cut the search short.
+ * @param {String} sourceName The stored model name being duplicated
+ * @returns {{name: String, path: String}|null} A free candidate, or null
+ */
+const findFreeDuplicate = (sourceName) => {
+  for (let i = 1; i <= MAX_DUPLICATE_CANDIDATES; i++) {
+    const candidate = i === 1 ? `${sourceName} [Duplicated]` : `${sourceName} [Duplicated] ${i}`;
+    if (!isValidName(candidate)) continue;
+    const candidatePath = resolveWithin(modelsPath, `${candidate}.json`);
+    if (candidatePath && !fs.existsSync(candidatePath)) {
+      return { name: candidate, path: candidatePath };
+    }
+  }
+  return null;
+};
+
 const duplicateModel = (fileName, res, next) => {
   const modelFile = resolveWithin(modelsPath, fileName);
   if (!modelFile) {
@@ -99,22 +123,20 @@ const duplicateModel = (fileName, res, next) => {
     if (err) {
       next(fileError(err, 'Model not found', 'Cannot read the model file'));
     } else {
-      const newName = `${data.name} [Duplicated]`;
-      const newModel = { ...data, name: newName };
-      if (!isValidName(newName)) {
-        return sendBadRequest(res, 'Invalid model name');
+      // Collision policy (issue #70): duplicating must never overwrite an
+      // earlier copy, so write to a name proven free and report exactly it.
+      const free = findFreeDuplicate(data.name);
+      if (!free) {
+        return next(conflict('Cannot derive a free name for the duplicated model'));
       }
-      const newFileName = `${newName}.json`;
-      const newFile = resolveWithin(modelsPath, newFileName);
-      if (!newFile) {
-        return sendBadRequest(res, 'Invalid model name');
-      }
+      const newModel = { ...data, name: free.name };
+      const newFileName = `${free.name}.json`;
       writeToFile(
-        newFile,
+        free.path,
         JSON.stringify(newModel),
-        (err, dupModel) => {
-          if (err) {
-            next(internal('Cannot save the duplicated model', err));
+        (err2) => {
+          if (err2) {
+            next(internal('Cannot save the duplicated model', err2));
           } else {
             res.send({
               modelFileName: newFileName,
@@ -218,15 +240,26 @@ router.post('/', validate({ body: modelCreateBody }), function (req, res, next) 
   if (!modelFilePath) {
     return sendBadRequest(res, 'Invalid model name');
   }
-  writeToFile(modelFilePath, JSON.stringify(model), (err, data) => {
-    if (err) {
-      next(internal('Cannot save the new configuration', err));
-    } else {
-      res.send({
-        modelFileName,
-      });
-    }
-  });
+  // Collision policy (issue #70): refuse a duplicate name instead of letting
+  // writeToFile silently rename the target — the filename this handler returns
+  // must always be the exact file that was written.
+  if (fs.existsSync(modelFilePath)) {
+    return next(conflict('A model with this name already exists'));
+  }
+  writeToFile(
+    modelFilePath,
+    JSON.stringify(model),
+    (err, data) => {
+      if (err) {
+        next(internal('Cannot save the new configuration', err));
+      } else {
+        res.send({
+          modelFileName,
+        });
+      }
+    },
+    true
+  );
 });
 
 // Delete a model
