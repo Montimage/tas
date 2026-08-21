@@ -4,13 +4,46 @@ on:
   push:
     tags: ['v*'] # Push events to matching v*, i.e. v1.0, v20.15.10
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  build:
+  test:
+    name: Test suite gate
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          # Match the runtime the shipped container image uses.
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The compiled client bundle is not committed (issue #42); build it
+      # before the suite, mirroring e2e-security.yml.
+      - name: Build the dashboard client
+        run: cd src/client && npm install && npm run build
+
+      # A failing suite aborts the workflow here — nothing is published.
+      - name: Run the full test suite
+        run: npm test
+
+  publish:
+    name: Build, scan and publish the image
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
 
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -19,15 +52,45 @@ jobs:
         env:
           GITHUB_REF: ${{ github.ref }}
         run: |
-          cat <<EOF >> $GITHUB_ENV
-          PACKAGE_VERSION=$(echo $GITHUB_REF | tr -d 'refs/tags/' )
-          EOF
+          # Strip the refs/tags/ prefix exactly. Never delete characters:
+          # the old `tr -d 'refs/tags/'` mangled any tag containing
+          # r, e, f, s, t, a or g (issue #19).
+          PACKAGE_VERSION="${GITHUB_REF#refs/tags/}"
+          if [ -z "$PACKAGE_VERSION" ] || [ "$PACKAGE_VERSION" = "$GITHUB_REF" ]; then
+            echo "Could not derive PACKAGE_VERSION from GITHUB_REF='$GITHUB_REF'" >&2
+            exit 1
+          fi
+          # Only a stable vX.Y.Z — no pre-release suffix — may move the
+          # floating latest tag.
+          if [[ "$PACKAGE_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            IS_STABLE=true
+          else
+            IS_STABLE=false
+          fi
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+          echo "IS_STABLE=$IS_STABLE" >> "$GITHUB_ENV"
 
-      - name: Build and push Docker images
-        uses: docker/build-push-action@v2
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t "ghcr.io/montimage/tas:${PACKAGE_VERSION}" \
+            -t "tas:release-scan" \
+            .
+
+      - name: Scan the built image for known vulnerabilities
+        uses: aquasecurity/trivy-action@0.36.0
         with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/montimage/tas:${{ env.PACKAGE_VERSION }}
-            ghcr.io/montimage/tas:latest
+          image-ref: 'tas:release-scan'
+          format: table
+          exit-code: '0'
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+
+      - name: Push version tag
+        run: docker push "ghcr.io/montimage/tas:${PACKAGE_VERSION}"
+
+      # Pre-releases publish under their exact tag only; latest keeps
+      # pointing at the newest stable release.
+      - name: Push latest tag
+        if: env.IS_STABLE == 'true'
+        run: docker push "ghcr.io/montimage/tas:latest"
