@@ -260,4 +260,14 @@ if (require.main === module) {
       `[SERVER] Test and Simulation Server started on: http://${config.host}:${config.port}`
     );
   });
+
+  /**
+   * Graceful termination (F-BUG-010): SIGTERM and SIGINT stop the listener,
+   * drain in-flight requests, close the database connection, then exit 0.
+   * Registered only when this file is the entry point, so requiring the app
+   * from tests or tooling never installs process-level signal handlers.
+   */
+  const { installGracefulShutdown } = require('./shutdown');
+  const { closeDBClient } = require('./routes/db-connector');
+  installGracefulShutdown(_server, { closeDb: closeDBClient });
 }

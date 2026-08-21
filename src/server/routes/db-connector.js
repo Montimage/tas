@@ -178,10 +178,32 @@ const dbConnector = (req, res, next) => {
   });
 };
 
+/**
+ * Close the database connection this module established, if any.
+ *
+ * Called once during graceful shutdown so the process does not exit with a
+ * Mongoose connection still open. The client reference is cleared first so a
+ * request arriving mid-shutdown cannot reconnect behind the closing back.
+ * @param {Function} [callback] Invoked once the close has been initiated and
+ *   Mongoose reports it finished.
+ */
+const closeDBClient = (callback) => {
+  const done = typeof callback === 'function' ? callback : function () {};
+  if (!dbClient) {
+    return done();
+  }
+  const client = dbClient;
+  dbClient = null;
+  client.close(function () {
+    done();
+  });
+};
+
 module.exports = {
   getDataStorage,
   updateDataStorage,
   dbConnector,
+  closeDBClient,
   ReportSchema,
   EventSchema,
   DatasetSchema,

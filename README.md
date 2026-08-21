@@ -403,6 +403,15 @@ The API is authenticated, but the safe baseline is still defence in depth:
 
 The quick-start `docker run` on this page already binds to loopback.
 
+### Graceful shutdown
+
+On `SIGTERM` or `SIGINT` the server stops accepting connections, lets the
+requests already in flight finish (bounded by a 10-second grace period — the
+same as the `docker stop` default), closes its MongoDB connection and exits 0.
+A drain that overruns the grace period forces an exit with code 1. This makes
+restarts under a process supervisor and `docker stop` safe for in-flight
+requests instead of severing them mid-response.
+
 ## Security-related configuration
 
 The hardening limits are configurable. Every value below has a safe default, so
