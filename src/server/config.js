@@ -23,7 +23,7 @@ var SECURITY_DEFAULTS = {
   rateLimitWindowMs: 15 * 60 * 1000, // 15 minutes
   rateLimitMax: 1000, // requests per window per client
   corsAllowedOrigins: [], // empty = same-origin only
-  cspReportOnly: true, // report violations, do not block, until observed clean
+  cspReportOnly: false, // enforce the policy; `CSP_REPORT_ONLY=true` observes first
   cspReportUri: '', // empty = browsers report to the console only
   authAdminUsername: 'admin', // the single operator account
   authAdminPassword: '', // plaintext bootstrap; hashed and erased by createCredential

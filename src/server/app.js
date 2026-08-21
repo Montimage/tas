@@ -81,8 +81,9 @@ app.use(compression()); //Compress all routes
  *
  * The policy is written out in `middleware/security-headers.js` from what the
  * dashboard bundle actually loads, rather than inherited from the middleware's
- * defaults. It ships in report-only mode so a deployment can observe violations
- * before they start blocking; set `CSP_REPORT_ONLY=false` to enforce it.
+ * defaults. It is enforced by default so the policy actually blocks; a
+ * deployment that wants to observe violations first can set
+ * `CSP_REPORT_ONLY=true` to ship it in report-only mode.
  */
 app.use(
   securityHeaders({

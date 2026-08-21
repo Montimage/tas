@@ -67,14 +67,14 @@ test('a Content Security Policy is served on dashboard responses', async () => {
   await withServer({}, async (ctx) => {
     const dashboard = await head(ctx.base, '/');
     assert.equal(dashboard.status, 200);
-    const value = dashboard.headers['content-security-policy-report-only'];
+    const value = dashboard.headers['content-security-policy'];
     assert.ok(value, 'the dashboard response should carry a CSP header');
     assert.match(value, /default-src 'self'/);
 
     // The API surface is covered by the same policy.
     const api = await head(ctx.base, '/api/models');
     assert.equal(
-      api.headers['content-security-policy-report-only'],
+      api.headers['content-security-policy'],
       value,
       'API responses should carry the same policy'
     );
@@ -84,7 +84,7 @@ test('a Content Security Policy is served on dashboard responses', async () => {
 test('the policy is declared explicitly, not inherited from middleware defaults', async () => {
   await withServer({}, async (ctx) => {
     const res = await head(ctx.base, '/');
-    const policy = parsePolicy(res.headers['content-security-policy-report-only']);
+    const policy = parsePolicy(res.headers['content-security-policy']);
 
     // Directives helmet's default policy does not contain at all: their
     // presence proves the policy is ours, not the shipped default.
@@ -124,7 +124,7 @@ test('the policy is declared explicitly, not inherited from middleware defaults'
 test('script execution is pinned rather than opened up with unsafe sources', async () => {
   await withServer({}, async (ctx) => {
     const res = await head(ctx.base, '/');
-    const policy = parsePolicy(res.headers['content-security-policy-report-only']);
+    const policy = parsePolicy(res.headers['content-security-policy']);
 
     assert.ok(!policy['script-src'].includes("'unsafe-inline'"));
     assert.ok(!policy['script-src'].includes("'unsafe-eval'"));
@@ -134,37 +134,37 @@ test('script execution is pinned rather than opened up with unsafe sources', asy
   });
 });
 
-test('report-only mode is the default and can be switched to enforcing', async () => {
+test('enforcing mode is the default and can be switched to report-only', async () => {
   await withServer({}, async (ctx) => {
+    const res = await head(ctx.base, '/');
+    assert.ok(res.headers['content-security-policy'], 'the default rollout enforces the policy');
+    assert.equal(
+      res.headers['content-security-policy-report-only'],
+      undefined,
+      'enforcing mode must not also report-only'
+    );
+  });
+
+  await withServer({ CSP_REPORT_ONLY: 'true' }, async (ctx) => {
     const res = await head(ctx.base, '/');
     assert.ok(
       res.headers['content-security-policy-report-only'],
-      'the default rollout is report-only'
+      'CSP_REPORT_ONLY=true ships the policy as report-only'
     );
     assert.equal(
       res.headers['content-security-policy'],
       undefined,
       'report-only mode must not also enforce'
     );
-  });
-
-  await withServer({ CSP_REPORT_ONLY: 'false' }, async (ctx) => {
-    const res = await head(ctx.base, '/');
-    assert.ok(res.headers['content-security-policy'], 'CSP_REPORT_ONLY=false enforces the policy');
-    assert.equal(
-      res.headers['content-security-policy-report-only'],
-      undefined,
-      'enforcing mode must not also report-only'
-    );
     // Both positions serve the same policy - only the header name changes.
-    assert.match(res.headers['content-security-policy'], /worker-src 'self' blob:/);
+    assert.match(res.headers['content-security-policy-report-only'], /worker-src 'self' blob:/);
   });
 });
 
 test('a configured report endpoint is added to the policy', async () => {
   await withServer({ CSP_REPORT_URI: 'https://collector.example.com/csp' }, async (ctx) => {
     const res = await head(ctx.base, '/');
-    const policy = parsePolicy(res.headers['content-security-policy-report-only']);
+    const policy = parsePolicy(res.headers['content-security-policy']);
     assert.deepEqual(policy['report-uri'], ['https://collector.example.com/csp']);
   });
 });
@@ -194,7 +194,7 @@ test('the served policy is exactly the one declared, source for source', async (
 
   await withServer({}, async (ctx) => {
     const res = await head(ctx.base, '/');
-    const policy = parsePolicy(res.headers['content-security-policy-report-only']);
+    const policy = parsePolicy(res.headers['content-security-policy']);
     assert.deepEqual(policy, expected, 'the served policy drifted from the declared one');
   });
 });
@@ -232,24 +232,24 @@ test('a report endpoint that would inject directives is rejected by name', () =>
   }
 });
 
-test('CSP_REPORT_ONLY defaults to on and reads the usual off values', () => {
-  assert.equal(loadConfig({ path: MISSING_ENV }).cspReportOnly, true);
+test('CSP_REPORT_ONLY defaults to off (enforcing) and reads the usual on values', () => {
+  assert.equal(loadConfig({ path: MISSING_ENV }).cspReportOnly, false);
 
   try {
-    for (const value of ['false', 'FALSE', '0', 'no', 'off']) {
-      process.env.CSP_REPORT_ONLY = value;
-      assert.equal(
-        loadConfig({ path: MISSING_ENV }).cspReportOnly,
-        false,
-        `"${value}" should disable`
-      );
-    }
-    for (const value of ['true', '1', 'yes']) {
+    for (const value of ['true', 'TRUE', '1', 'yes']) {
       process.env.CSP_REPORT_ONLY = value;
       assert.equal(
         loadConfig({ path: MISSING_ENV }).cspReportOnly,
         true,
-        `"${value}" should enable`
+        `"${value}" should enable report-only`
+      );
+    }
+    for (const value of ['false', '0', 'no', 'off']) {
+      process.env.CSP_REPORT_ONLY = value;
+      assert.equal(
+        loadConfig({ path: MISSING_ENV }).cspReportOnly,
+        false,
+        `"${value}" should keep the policy enforcing`
       );
     }
   } finally {
