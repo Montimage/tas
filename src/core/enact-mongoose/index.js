@@ -50,9 +50,15 @@ ENACTDB.prototype.connect = function (callback) {
   });
 };
 
-ENACTDB.prototype.close = function () {
+/**
+ * Close the connection.
+ *
+ * @param {Function} [callback] Invoked once Mongoose has finished tearing the
+ *   connection down, so a graceful shutdown can wait for it before exiting.
+ */
+ENACTDB.prototype.close = function (callback) {
   console.log('[ENACTDB] Going to close the connection');
-  mongoose.disconnect();
+  mongoose.disconnect(callback);
 };
 
 module.exports = {
