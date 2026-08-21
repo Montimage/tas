@@ -4,24 +4,42 @@ Test and Simulation
 
 ## Use docker image
 
-> **Security note:** the TaS service has **no built-in authentication**. Any client
-> that can reach its network ports can use it. Do not expose it to untrusted
-> networks. See the [Security](#security) section before deploying.
+> **Security note:** the TaS API requires an authenticated session. A deployment
+> must provision an administrator credential and a session secret — without
+> them the dashboard cannot log in (no credential) or every restart signs
+> everyone out (no secret). The quick-start below passes both. See the
+> [Security](#security) section before deploying.
 
-For a safe local start, bind the published ports to localhost (loopback only):
+For a safe local start, bind the published ports to localhost (loopback only)
+and provision the credential and the session secret:
 
 ```
-docker run --name my-tas -d -p 127.0.0.1:1883:1883 -p 127.0.0.1:1880:1880 -p 127.0.0.1:3004:3004 ghcr.io/montimage/tas:v1.0.2
+TAS_IMAGE=ghcr.io/montimage/tas:v1.0.2
+
+# One-time administrator credential. The password is hashed where you type it;
+# only the scrypt hash reaches the container's environment.
+ADMIN_HASH="$(docker run --rm "$TAS_IMAGE" \
+  node -e "console.log(require('./src/server/auth/passwords').hashPassword(process.argv[1]))" \
+  'change-me-now')"
+
+docker run --name my-tas -d \
+  -p 127.0.0.1:1883:1883 -p 127.0.0.1:1880:1880 -p 127.0.0.1:3004:3004 \
+  -e SESSION_SECRET="$(openssl rand -hex 32)" \
+  -e AUTH_ADMIN_PASSWORD_HASH="$ADMIN_HASH" \
+  "$TAS_IMAGE"
 ```
 
-Then access to the tool at the address: `http://127.0.0.1:3004`
+Then access to the tool at the address: `http://127.0.0.1:3004` and log in as
+`admin` with the password you hashed above — replace `change-me-now` with your
+own before running it.
 
 A MQTT broker server at the address: `127.0.0.1:1883`,
 A nodered server at the address: `http://127.0.0.1:1880`, and the nodered dashboard at the address: `http://127.0.0.1:1880/ui`
 
 If you need other hosts on a **trusted private network** to reach the service, replace
 `127.0.0.1` with the machine's private interface address. Do not publish these ports to
-`0.0.0.0` or to the public internet while the service has no authentication.
+`0.0.0.0` or to the public internet, and keep in mind the MQTT broker and Node-RED
+listeners on the same container have no credential of their own.
 
 ## Install from source code
 
@@ -397,7 +415,7 @@ tighten a limit.
 | `BODY_LIMIT`                      | `1mb`              | Largest request body accepted. Anything bigger is rejected with `413` rather than buffered. `MAX_BODY_SIZE` is accepted as an alias.                                                                                      |
 | `RATE_LIMIT_WINDOW_MS`            | `900000` (15 min)  | Length of the rate-limiting window applied to `/api`.                                                                                                                                                                     |
 | `RATE_LIMIT_MAX`                  | `1000`             | Requests allowed per window per client. Going over returns `429`.                                                                                                                                                         |
-| `CSP_REPORT_ONLY`                 | `true`             | Ship the Content Security Policy as `Content-Security-Policy-Report-Only`, so browsers report violations without blocking. Set to `false` to enforce the policy.                                                          |
+| `CSP_REPORT_ONLY`                 | `false`            | Ship the Content Security Policy as `Content-Security-Policy-Report-Only`, so browsers report violations without blocking. The policy is enforced by default; set to `true` to observe a deployment first.                |
 | `CSP_REPORT_URI`                  | _(empty)_          | Endpoint browsers should POST policy violation reports to. Empty means violations are only visible in the browser console. Must be a single URL: `;`, `,`, whitespace and control characters are refused at startup.      |
 | `AUTH_ADMIN_USERNAME`             | `admin`            | The single administrator account name.                                                                                                                                                                                    |
 | `AUTH_ADMIN_PASSWORD`             | _(empty)_          | Plaintext bootstrap password. Hashed once at startup and then discarded. Empty means no credential is configured, and every API request is refused.                                                                       |
@@ -432,13 +450,20 @@ the inline styles the component library injects, `data:` images, same-origin
 `fetch` calls, and a `blob:` worker for the embedded JSON editor. No third-party
 origin is permitted.
 
-It ships in **report-only** mode. A deployment that serves a differently-built
-dashboard would otherwise have it break on the first load with no warning, so
-the safe rollout is to watch for violations first and only then enforce:
+It is **enforced by default**: the header is `Content-Security-Policy`, so a
+request the policy forbids is actually blocked. The policy is derived from what
+the shipped dashboard bundle loads, and the hash allow-list is recomputed from
+`src/public/index.html` at startup, so a rebuilt client needs no configuration
+change — restart the server after a rebuild.
 
-1. Deploy as shipped and load the dashboard. Violations appear in the browser
-   console (and at `CSP_REPORT_URI`, if you set one).
-2. If nothing is reported, set `CSP_REPORT_ONLY=false` to enforce the policy.
+A deployment that serves a differently-built dashboard can observe first and
+enforce second by setting `CSP_REPORT_ONLY=true`:
+
+1. Deploy with `CSP_REPORT_ONLY=true` and load the dashboard. Violations appear
+   in the browser console (and at `CSP_REPORT_URI`, if you set one) while
+   nothing is blocked.
+2. If nothing is reported, remove the setting to go back to the enforced
+   default.
 
 Point `CSP_REPORT_URI` at an external collector or a path outside `/api`. Reports
 sent to `/api/...` are counted by the rate limiter described above, so a page in

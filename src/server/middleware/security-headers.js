@@ -135,10 +135,11 @@ function buildCspDirectives(options) {
 /**
  * The security-header middleware.
  *
- * Wraps helmet with an explicit Content Security Policy. The policy can be run
- * in report-only mode (the default), which makes browsers report violations
- * without blocking anything - so a deployment whose dashboard build differs
- * from the shipped one can be observed before the policy is enforced.
+ * Wraps helmet with an explicit Content Security Policy. Callers decide the
+ * mode: `reportOnly: false` enforces the policy (the shipped default via
+ * `config.cspReportOnly`), while leaving it on makes browsers report
+ * violations without blocking - so a deployment whose dashboard build differs
+ * from the shipped one can be observed before it is enforced.
  *
  * @param {Object} [options] Optional overrides
  * @param {Boolean} [options.reportOnly] Report violations instead of blocking
