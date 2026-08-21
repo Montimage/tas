@@ -7,7 +7,7 @@ const { checkMQTTTopic } = require('../utils');
  * - Save the capturing data into a data storage (mongodb)
  */
 class DataRecorder {
-  constructor(drConfig, dataStorage, dataset) {
+  constructor(drConfig, dataStorage, dataset, logger = null) {
     const { id, name, source, forward } = drConfig;
     this.id = id;
     this.name = name;
@@ -15,6 +15,8 @@ class DataRecorder {
     this.forwarder = forward;
     this.dataStorage = dataStorage;
     this.dataset = dataset;
+    // Where this run writes its log lines; defaults to the process console.
+    this.logger = logger || console;
   }
 
   /**
@@ -39,7 +41,7 @@ class DataRecorder {
    * @param {Object} packet Full attributes of the packets
    */
   messageHandler(topic, message, packet) {
-    console.log(`[DataRecorder] Received a message on topic: ${topic}`);
+    this.logger.log(`[DataRecorder] Received a message on topic: ${topic}`);
     // console.log(message);
     let isSensorData = false;
     if (this.isSensorData(topic, packet)) {
@@ -145,18 +147,18 @@ class DataRecorder {
   init() {
     // Check source
     if (!this.source) {
-      console.error('[DataRecorder] Source is not found!');
+      this.logger.error('[DataRecorder] Source is not found!');
       return false;
     }
 
     // Check output
     if (!this.forwarder) {
-      console.warn('[DataRecorder] forward are not found!');
+      this.logger.warn('[DataRecorder] forward are not found!');
       this.initSource();
     } else {
       // Init the forwarder
       this.initForwarder(() => {
-        console.error('[DataRecorder] Forwarder has been created!', this.forwarder);
+        this.logger.error('[DataRecorder] Forwarder has been created!', this.forwarder);
         this.initSource();
       });
     }

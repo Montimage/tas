@@ -93,6 +93,10 @@ let allDataRecorders = {};
 // reservation rather than a placeholder in `allDataRecorders`: `/stop` calls
 // `stop()` on whatever it finds there.
 const startingDataRecorders = new Set();
+// The logger of each running recorder, held here so `/stop` can release the
+// run's file handle once the recorder stops. The logger is passed explicitly
+// to the run; global console methods are never touched.
+const runLoggers = {};
 
 /**
  * Get the running status of data recorder
@@ -113,6 +117,11 @@ router.get(
     if (allDataRecorders[recorderId]) {
       allDataRecorders[recorderId].stop();
       allDataRecorders[recorderId] = null;
+    }
+    if (runLoggers[recorderId]) {
+      // The run has stopped: release its log file handle.
+      runLoggers[recorderId].close();
+      delete runLoggers[recorderId];
     }
     if (allRunningStatus[recorderId]) {
       allRunningStatus[recorderId].isRunning = false;
@@ -143,7 +152,8 @@ const startRecorder = (model, res, next) => {
       } else {
         const startedTime = Date.now();
         const logFile = `${name}_${startedTime}.log`;
-        getLogger('DATA-RECORDER', `${logsPath}${logFile}`);
+        const logger = getLogger('DATA-RECORDER', `${logsPath}${logFile}`);
+        runLoggers[recorderId] = logger;
         if (!dataStorage) {
           // use default data storage
           startingDataRecorders.add(recorderId);
@@ -154,12 +164,15 @@ const startRecorder = (model, res, next) => {
             if (err) {
               next(unavailable('No data storage', err));
             } else {
-              const dataRecorder = new DataRecorder({
-                ...model,
-                dataStorage: ds,
-              });
+              const dataRecorder = new DataRecorder(
+                {
+                  ...model,
+                  dataStorage: ds,
+                },
+                logger
+              );
               dataRecorder.start();
-              console.log('[data-recorders] A data recorder has been started ...');
+              logger.log('[data-recorders] A data recorder has been started ...');
               allDataRecorders[`${recorderId}`] = dataRecorder;
               allRunningStatus[`${recorderId}`] = {
                 isRunning: true,
@@ -175,9 +188,9 @@ const startRecorder = (model, res, next) => {
             }
           });
         } else {
-          const dataRecorder = new DataRecorder(model);
+          const dataRecorder = new DataRecorder(model, logger);
           dataRecorder.start();
-          console.log('[data-recorders] A data recorder has been started ...');
+          logger.log('[data-recorders] A data recorder has been started ...');
           allDataRecorders[`${recorderId}`] = dataRecorder;
           allRunningStatus[`${recorderId}`] = {
             isRunning: true,

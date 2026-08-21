@@ -12,8 +12,18 @@ const Thing = require('../things/Thing');
  * Simulation class presents a simulation
  */
 class Simulation {
-  constructor(model, options = null, simulationCallbackWhenFinish = null) {
+  /**
+   * Create a simulation
+   * @param {Object} model The model to simulate
+   * @param {Object} options Run options (dataStorage, datasetId, ...)
+   * @param {Function} simulationCallbackWhenFinish Called with the score when the run stops
+   * @param {Object} logger Where this run writes its log lines. Obtained
+   *   explicitly by the caller (one per run) and never the global console
+   *   replacement; defaults to the process console for standalone use.
+   */
+  constructor(model, options = null, simulationCallbackWhenFinish = null, logger = null) {
     this.model = model;
+    this.logger = logger || console;
     this.newDataset = model.newDataset;
     this.dataStorage = model.dataStorage;
     this.datasetId = model.datasetId;
@@ -32,7 +42,7 @@ class Simulation {
       if (options.evaluationParameters) this.evaluationParameters = options.evaluationParameters;
     }
     if (!this.evaluationParameters) {
-      console.log(`[SIMULATION] Use default evaluation parameters`);
+      this.logger.log(`[SIMULATION] Use default evaluation parameters`);
       this.evaluationParameters = {
         threshold: THRESHOLD_FLEXIBLE,
         eventType: ALL_EVENTS,
@@ -85,7 +95,7 @@ class Simulation {
   }
 
   deviceCallbackWhenFinish() {
-    console.log('A device is going to finish his job');
+    this.logger.log('A device is going to finish his job');
     for (let index = 0; index < this.allThings.length; index++) {
       const dev = this.allThings[index];
       if (dev.status !== OFFLINE) {
@@ -101,12 +111,12 @@ class Simulation {
       endTime,
       (err3, originalEvents) => {
         if (err3) {
-          console.error(`Cannot get original events of dataset ${originalDatasetId}`);
+          this.logger.error(`Cannot get original events of dataset ${originalDatasetId}`, err3);
           stopSimulation();
         } else {
           EventSchema.findEventsWithOptions({ datasetId: newDatasetId }, (err4, newEvents) => {
             if (err4) {
-              console.error(`Cannot get new events of dataset ${newDatasetId}`);
+              this.logger.error(`Cannot get new events of dataset ${newDatasetId}`, err4);
               stopSimulation();
             } else {
               const { threshold, eventType, metricType } = this.evaluationParameters;
@@ -114,10 +124,10 @@ class Simulation {
               // Going to save the score into the report
               ReportSchema.findOneAndUpdate({ id }, { score }, (err5, ret) => {
                 if (err5) {
-                  console.error(`Cannot update the score for report ${id}`);
+                  this.logger.error(`Cannot update the score for report ${id}`, err5);
                   stopSimulation();
                 } else {
-                  console.log(`Report ${id} has score of ${score}`);
+                  this.logger.log(`Report ${id} has score of ${score}`);
                   stopSimulation(score);
                 }
               });
@@ -137,7 +147,8 @@ class Simulation {
       this.newDataset,
       this.report,
       isFirstDevice,
-      () => this.deviceCallbackWhenFinish()
+      () => this.deviceCallbackWhenFinish(),
+      this.logger
     );
 
     newThing.initDevice(() => {
@@ -147,7 +158,7 @@ class Simulation {
   }
 
   start() {
-    console.log('Start simulating for the model: ', this.model.name);
+    this.logger.log('Start simulating for the model: ', this.model.name);
     this.status = SIMULATING;
     while (this.allThings.length > 0) {
       this.allThings.pop();
@@ -183,7 +194,7 @@ class Simulation {
    */
   stop(score) {
     if (this.status === OFFLINE) {
-      console.log('Simulation has been stopped already');
+      this.logger.log('Simulation has been stopped already');
     } else {
       this.status = OFFLINE;
       for (let index = 0; index < this.allThings.length; index++) {

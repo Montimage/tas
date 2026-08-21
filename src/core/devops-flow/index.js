@@ -19,19 +19,34 @@ const stopTestCampaign = () => {
  * Start the test campaign
  * @param {Object} model The model to be simulated
  */
-const startTestCampaign = (testCampaignId, dataStorage, webhookURL, evaluationParameters) => {
+const startTestCampaign = (
+  testCampaignId,
+  dataStorage,
+  webhookURL,
+  evaluationParameters,
+  logger = null
+) => {
+  // The run's own logger, obtained explicitly by the caller. Without one,
+  // fall back to the process console.
+  const log = logger || console;
   // console.log("Start test campaign: ");
   // console.log(testCampaignId);
   // console.log(JSON.stringify(dataStorage));
   // console.log(webhookURL);
   // console.log(JSON.stringify(evaluationParameters));
-  testCampaign = new TestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters);
+  testCampaign = new TestCampaign(
+    testCampaignId,
+    dataStorage,
+    webhookURL,
+    evaluationParameters,
+    logger
+  );
   testCampaign.init((err) => {
     if (err) {
-      console.log(`[devops-flow] Failed to start a Test Campaign ${testCampaignId}`);
+      log.log(`[devops-flow] Failed to start a Test Campaign ${testCampaignId}`);
     } else {
       testCampaign.start(() => {
-        console.log(`[devops-flow] Test campaign ${testCampaignId} has been finished`);
+        log.log(`[devops-flow] Test campaign ${testCampaignId} has been finished`);
       });
     }
   });

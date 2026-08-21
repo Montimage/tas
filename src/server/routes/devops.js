@@ -24,6 +24,10 @@ const { errorHandler, badRequest, internal, unavailable } = require('../middlewa
 let logsPath = `${__dirname}/../logs/test-campaigns/`;
 
 let runningStatus = null;
+// The logger of the running test campaign, held here so `/stop` can release
+// the run's file handle once the campaign stops. The logger is passed
+// explicitly to the run; global console methods are never touched.
+let runLogger = null;
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the devops endpoints (issue #10)
@@ -152,8 +156,9 @@ router.get('/start', validate(), loadValidatedDevops, dbConnector, (req, res, ne
   if (!logFilePath) {
     return sendBadRequest(res, 'Invalid test campaign id');
   }
-  getLogger('TEST-CAMPAIGN', logFilePath);
-  console.log('[devops] A test campaign is going to be started ...');
+  const logger = getLogger('TEST-CAMPAIGN', logFilePath);
+  runLogger = logger;
+  logger.log('[devops] A test campaign is going to be started ...');
 
   if (dataStorage) {
     runningStatus = {
@@ -165,7 +170,7 @@ router.get('/start', validate(), loadValidatedDevops, dbConnector, (req, res, ne
       endTime: null,
       logFile,
     };
-    startTestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters);
+    startTestCampaign(testCampaignId, dataStorage, webhookURL, evaluationParameters, logger);
     res.send({
       error: null,
       devops,
@@ -185,7 +190,7 @@ router.get('/start', validate(), loadValidatedDevops, dbConnector, (req, res, ne
           endTime: null,
           logFile,
         };
-        startTestCampaign(testCampaignId, ds, webhookURL, evaluationParameters);
+        startTestCampaign(testCampaignId, ds, webhookURL, evaluationParameters, logger);
         res.send({
           error: null,
           runningStatus,
@@ -201,6 +206,11 @@ router.get('/stop', validate(), (req, res, next) => {
     stopTestCampaign();
     runningStatus = null;
     copiedStatus.isRunning = false;
+  }
+  if (runLogger) {
+    // The run has stopped: release its log file handle.
+    runLogger.close();
+    runLogger = null;
   }
   res.send({
     error: null,

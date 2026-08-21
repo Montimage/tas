@@ -4,11 +4,16 @@ const { OFFLINE, SIMULATING } = require('../DeviceStatus');
 const TestCase = require('./TestCase');
 
 class TestCampaign {
-  constructor(id, dataStorageConfig, webhookURL, evaluationParameters) {
+  constructor(id, dataStorageConfig, webhookURL, evaluationParameters, logger = null) {
     this.id = id;
     this.name = id;
+    // Where this run writes its log lines. The route that started the
+    // campaign passes its own logger in, shared by every test case and
+    // simulation of the campaign; without one, fall back to the process
+    // console.
+    this.logger = logger || console;
     this.dataStorageConfig = dataStorageConfig;
-    this.dataStorage = new DataStorage(dataStorageConfig);
+    this.dataStorage = new DataStorage(dataStorageConfig, this.logger);
     this.webhookURL = webhookURL;
     this.evaluationParameters = evaluationParameters;
     //
@@ -48,9 +53,10 @@ class TestCampaign {
                     return;
                   }
                 }
-                console.log('All test case have been finished');
+                this.logger.log('All test case have been finished');
                 return this.stop();
-              }
+              },
+              this.logger
             );
             this.testCases.push(testCase);
           }
@@ -61,7 +67,7 @@ class TestCampaign {
   }
 
   sendResultToWebhook() {
-    console.log(`Going to notify the result to the webhook: ${this.webhookURL}`);
+    this.logger.log(`Going to notify the result to the webhook: ${this.webhookURL}`);
     fetch(this.webhookURL, {
       method: 'POST',
       headers: {
@@ -70,23 +76,21 @@ class TestCampaign {
       body: JSON.stringify(this.results),
     })
       .then((res) => {
-        console.log('Response from webhook:');
-        console.log(JSON.stringify(res));
+        this.logger.log('Response from webhook:', res);
       })
       .catch((err) => {
-        console.error('Cannot send result to webhook');
-        console.log(JSON.stringify(err));
+        this.logger.error('Cannot send result to webhook', err);
       });
   }
 
   start() {
     if (this.status === SIMULATING) {
-      console.log(`[TestCampaign] Test campaign is on running ${this.name}`);
+      this.logger.log(`[TestCampaign] Test campaign is on running ${this.name}`);
       return;
     }
 
     if (!this.testCases || this.testCases.length === 0) {
-      console.error(`[TestCampaign] No test case ${this.name}`);
+      this.logger.error(`[TestCampaign] No test case ${this.name}`);
       return this.stop();
     }
     for (let index = 0; index < this.testCases.length; index++) {
@@ -100,7 +104,7 @@ class TestCampaign {
 
   stop() {
     if (this.status === OFFLINE) {
-      console.log(`[TestCampaign] Test Campaign is offline`);
+      this.logger.log(`[TestCampaign] Test Campaign is offline`);
       return;
     }
 
