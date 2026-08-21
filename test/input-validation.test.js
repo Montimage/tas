@@ -43,10 +43,13 @@ before(() => {
 
   app = express();
   app.use(express.json());
-  // Deliberately left on Express's default ("extended") query parser, which is
-  // what turns `?a[$ne]=1` into an object. The schemas have to reject that on
-  // their own — `app.js` additionally switches the parser off, and that is
-  // asserted separately below.
+  // Deliberately pinned to the ("extended") query parser, which is what turns
+  // `?a[$ne]=1` into an object. The schemas have to reject that on their own —
+  // `app.js` additionally switches the parser off, and that is asserted
+  // separately below. Pinned explicitly rather than inherited because Express 5
+  // flipped the default to "simple", which flattens the key before any schema
+  // sees it and would silently retire these rejection tests.
+  app.set('query parser', 'extended');
   app.use('/api/models', modelRouter);
   app.use('/api/data-recorders', dataRecorderRouter);
   app.use('/api/simulation', simulationRouter);
