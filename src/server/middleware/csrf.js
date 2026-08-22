@@ -25,6 +25,9 @@
  */
 const { forbidden } = require('./errors');
 const { timingSafeCompare } = require('../auth/passwords');
+// One home for the path normaliser: the authentication gate runs ahead of this
+// guard and exports the exact function both compare paths with.
+const { normalizePath } = require('./auth');
 
 /** Methods that must not change state, and therefore need no token. */
 const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
@@ -41,17 +44,22 @@ const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 const ROUTED_SAFE_METHODS = ['GET', 'HEAD'];
 
 /**
- * Routes that change state over a *safe* method, and therefore need the token
- * anyway (paths relative to the `/api` mount, lower-cased).
- *
  * The method-based rule above is only sound while `GET` really is safe. Four
- * endpoints in this application predate that rule and mutate: they start and
- * stop a test campaign, a simulation and a data recorder. `SameSite=Lax` does
- * *not* cover them — it deliberately still attaches the cookie to a top-level
+ * endpoints in this application predate that rule and mutate over `GET`:
+ * `GET /api/devops/start` and `GET /api/devops/stop` start and stop a devops
+ * run (which writes a test-campaign log), and `GET /api/simulation/stop/:file`
+ * and `GET /api/data-recorders/stop/:file` stop a running simulation or data
+ * recorder. Starting a simulation or a recorder, like every other mutation in
+ * this API, happens over `POST` and needs no entry here. `SameSite=Lax` does
+ * *not* cover these — it deliberately still attaches the cookie to a top-level
  * `GET` navigation, so a link, a `window.open` or a redirect from any page an
  * operator visits while logged in would reach them with full authority. They
  * are listed here rather than left to the method check, and the dashboard's
  * request layer sends the token on every call so the listed ones keep working.
+ *
+ * The two stop routes are listed as prefixes because the file they address is
+ * part of the path (`/simulation/stop/<file>`); the devops pair are exact
+ * paths.
  *
  * Compared case-insensitively because Express's own routing is: `/DevOps/stop`
  * reaches the same handler, and a case-sensitive list would be a way around it.
@@ -59,7 +67,7 @@ const ROUTED_SAFE_METHODS = ['GET', 'HEAD'];
 const MUTATING_SAFE_METHOD_PATHS = ['/devops/start', '/devops/stop'];
 
 /**
- * Prefixes of the same kind, for the routes that carry a parameter.
+ * Prefixes of the same kind, for the stop routes that carry a file parameter.
  * A path matches when it is the prefix itself or a child of it.
  */
 const MUTATING_SAFE_METHOD_PREFIXES = ['/simulation/stop', '/data-recorders/stop'];
@@ -77,21 +85,6 @@ const EXEMPT_PATHS = ['/auth/login'];
 /** The header the dashboard echoes the session's token back in. */
 const CSRF_HEADER = 'x-csrf-token';
 
-/**
- * @param {String} value Raw `req.path`
- * @returns {String} Path without a trailing slash (except the root)
- */
-const normalizePath = (value) => {
-  const trimmed = String(value || '/').replace(/\/+$/, '');
-  return trimmed === '' ? '/' : trimmed;
-};
-
-/**
- * Build the CSRF guard. Mounted on `/api`, after the authentication gate, so
- * `req.auth` — and with it the session's token — is already resolved.
- *
- * @returns {Function} Express middleware
- */
 /**
  * Does this path mutate despite arriving over a safe method?
  * @param {String} path Normalised, `/api`-relative path

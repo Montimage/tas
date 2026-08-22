@@ -19,7 +19,7 @@ let dbClient = null;
  * Get the db client
  * @param {Function} callback The callback function
  */
-const getDBClient = (callback, reload = false) => {
+const getDBClient = (callback) => {
   if (dbClient) {
     if (!dbClient.isConnected) {
       dbClient.connect((err) => {
@@ -48,7 +48,7 @@ const getDBClient = (callback, reload = false) => {
           return callback(new Error('data-storage configuration is missing connConfig'));
         }
         if (protocol === 'MONGODB') {
-          const { host, port, dbname, username, password, _options } = connConfig;
+          const { host, port, dbname, username, password } = connConfig;
           // Connection logging names host, port and database only: username
           // and password must never reach a log file or the logs endpoint.
           // (F-SEC-001, #72)
@@ -74,7 +74,7 @@ const getDBClient = (callback, reload = false) => {
           return callback(`Protocol is not supported ${protocol}`);
         }
       }
-    }, reload);
+    });
   }
 };
 
@@ -83,7 +83,7 @@ const getDBClient = (callback, reload = false) => {
 ///////////////
 // Read a specific model by its name:
 
-const getDataStorage = (callback, reload = false) => {
+const getDataStorage = (callback) => {
   if (dataStorageConfig) return callback(null, dataStorageConfig);
   return readJSONFile(dataStoragePath, (err, data) => {
     if (err) {
@@ -154,7 +154,7 @@ const updateDataStorage = (dataStorage, callback) => {
             );
           }
           return callback(null, dataStorage);
-        }, true);
+        });
       }
     },
     true

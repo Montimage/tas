@@ -217,10 +217,7 @@ app.use('/api/auth/login', loginLimiter);
  * ahead of every router, so a route added later is closed by default rather
  * than open until somebody remembers to guard it.
  */
-app.use(
-  '/api',
-  createAuthMiddleware({ credential: credential, sessions: sessions, config: config })
-);
+app.use('/api', createAuthMiddleware({ sessions: sessions, config: config }));
 app.use('/api', createCsrfMiddleware());
 
 app.use('/api/health', healthRouter);

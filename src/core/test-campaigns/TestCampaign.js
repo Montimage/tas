@@ -40,7 +40,6 @@ class TestCampaign {
               this.evaluationParameters,
               (scores = null) => {
                 if (scores) {
-                  // TODO: do something with scores
                   this.results.push({
                     testCampaignId: this.id,
                     testCaseId: testCase.id,

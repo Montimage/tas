@@ -280,3 +280,46 @@ test('the table has a hard size cap and evicts rather than growing without bound
   assert.equal(DEFAULT_MAX_SESSIONS, 1000, 'the shipped default is documented in the README');
   assert.equal(createSessionStore({}).maxSessions(), DEFAULT_MAX_SESSIONS);
 });
+
+// ---------------------------------------------------------------------------
+// dead-weight guards (issue #81): removed fields and duplicated helpers must
+// stay removed.
+// ---------------------------------------------------------------------------
+
+test('a session record carries no unread expiry copy', () => {
+  const store = createSessionStore({ idleTtlMs: 1000, absoluteTtlMs: 5000 });
+  const session = store.create('operator');
+  // `expiresAt` used to be written on every record and read by nothing —
+  // expiry is computed from `createdAt` + the absolute TTL. If a future change
+  // wants a materialised deadline again it must also come with a reader.
+  assert.equal('expiresAt' in session, false, 'no field may exist without a reader');
+  assert.equal(typeof session.createdAt, 'number');
+  assert.equal(typeof session.lastSeenAt, 'number');
+});
+
+test('the gate builds without a credential dependency', () => {
+  const { createAuthMiddleware } = require('../src/server/middleware/auth');
+  const middleware = createAuthMiddleware({
+    sessions: createSessionStore({}),
+    config: {
+      sessionCookieSecure: false,
+      sessionIdleTtlMs: 60 * 60 * 1000,
+      authTrustProxyHeader: false,
+      authTrustedProxies: [],
+      authProxyUserHeader: 'x-forwarded-user',
+    },
+  });
+  assert.equal(typeof middleware, 'function', 'the gate is an Express middleware');
+});
+
+test('path normalisation has exactly one home shared by the gate and CSRF guard', () => {
+  const { normalizePath } = require('../src/server/middleware/auth');
+  assert.equal(typeof normalizePath, 'function');
+  assert.equal(
+    normalizePath('/auth/login/'),
+    '/auth/login',
+    'a trailing slash is the same resource'
+  );
+  assert.equal(normalizePath('///'), '/', 'runs of trailing slashes collapse to the root');
+  assert.equal(normalizePath(undefined), '/', 'absent paths normalise to the root');
+});
