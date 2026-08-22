@@ -1,16 +1,23 @@
 // Sensor data-source tests (issue #23, acceptance criterion 4: each data-source
-// type). Every source subclasses DataSourceAbstract and exposes readData(),
-// which honours the configured abnormal behaviours. These tests run with no
-// database or broker.
+// type). Moved here from src/core/sensors/data-sources/index.test.js by issue
+// #80 so the `npm test` glob (test/**/*.test.js) actually runs it.
+//
+// Every source subclasses DataSourceAbstract and exposes readData(), which
+// honours the configured abnormal behaviours. These tests run with no database
+// or broker.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { AB_FIX_VALUE, AB_INVALID_VALUE, NORMAL_BEHAVIOUR } = require('../../AbnormalBehaviours');
-const FloatSource = require('./FloatSource');
-const IntegerSource = require('./IntegerSource');
-const BooleanSource = require('./BooleanSource');
-const EnumSource = require('./EnumSource');
-const EnergySource = require('./EnergySource');
+const {
+  AB_FIX_VALUE,
+  AB_INVALID_VALUE,
+  NORMAL_BEHAVIOUR,
+} = require('../src/core/AbnormalBehaviours');
+const FloatSource = require('../src/core/sensors/data-sources/FloatSource');
+const IntegerSource = require('../src/core/sensors/data-sources/IntegerSource');
+const BooleanSource = require('../src/core/sensors/data-sources/BooleanSource');
+const EnumSource = require('../src/core/sensors/data-sources/EnumSource');
+const EnergySource = require('../src/core/sensors/data-sources/EnergySource');
 
 // A value read many times under a single behaviour is stable for FIX_VALUE and
 // the choice is deterministic for the others within one constructed instance.
