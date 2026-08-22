@@ -62,3 +62,26 @@ jobs:
         run: node --test test/e2e/container-nonroot.test.js
         env:
           TAS_IMAGE: montimage/tas:e2e
+
+  lint:
+    name: Lint (eslint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Issue #24: the suite gate exercised behaviour, but nothing ran static
+      # analysis on a pull request. A dedicated job rather than a step of the
+      # suite job, so lint reports independently of the database-backed suites.
+      - name: Run eslint
+        run: npm run lint
