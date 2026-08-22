@@ -22,8 +22,15 @@ ADMIN_HASH="$(docker run --rm "$TAS_IMAGE" \
   node -e "console.log(require('./src/server/auth/passwords').hashPassword(process.argv[1]))" \
   'change-me-now')"
 
+# One-time MQTT broker credential (issue #46): the published 1883 listener
+# refuses anonymous access, so provision an entry before starting.
+printf 'tas:change-me-broker' | docker run --rm -i "$TAS_IMAGE" \
+  sh -c 'cat > /tmp/plain && mosquitto_passwd -U /tmp/plain && cat /tmp/plain' \
+  > mosquitto.passwd
+
 docker run --name my-tas -d \
   -p 127.0.0.1:1883:1883 -p 127.0.0.1:1880:1880 -p 127.0.0.1:3004:3004 \
+  -v "$PWD/mosquitto.passwd:/run/mosquitto/passwd:ro" \
   -e SESSION_SECRET="$(openssl rand -hex 32)" \
   -e AUTH_ADMIN_PASSWORD_HASH="$ADMIN_HASH" \
   "$TAS_IMAGE"
@@ -33,7 +40,9 @@ Then access to the tool at the address: `http://127.0.0.1:3004` and log in as
 `admin` with the password you hashed above — replace `change-me-now` with your
 own before running it.
 
-A MQTT broker server at the address: `127.0.0.1:1883`,
+An authenticated MQTT broker server at the address: `127.0.0.1:1883` (the
+broker account is `tas` with the password you provisioned above — without its
+password file mounted the broker stays down by design),
 A nodered server at the address: `http://127.0.0.1:1880`, and the nodered dashboard at the address: `http://127.0.0.1:1880/ui`
 
 If you need other hosts on a **trusted private network** to reach the service, replace
@@ -78,7 +87,8 @@ docker run --name my-tas -d \
 External MQTT clients (sensors, gateways, test harnesses outside the container)
 connect to port 1883 with that username and password. Processes running inside
 the container can keep using the anonymous listener on port 1884 without any
-credential — point the model's broker connection at `localhost:1884`.
+credential — the bundled simulation assets and the demo Node-RED flow already
+point at `localhost:1884`, and new models or flows should too.
 
 Without a mounted password file the broker exits and reports the missing
 credential source loudly, and the supervisor keeps retrying — so an appliance

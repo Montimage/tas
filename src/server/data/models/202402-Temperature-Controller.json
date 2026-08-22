@@ -11,7 +11,7 @@
       "timeToDown": 0,
       "testBroker": {
         "protocol": "MQTT",
-        "connConfig": { "host": "localhost", "port": 1883, "options": null }
+        "connConfig": { "host": "localhost", "port": 1884, "options": null }
       },
       "productionBroker": null,
       "isReplayingStreams": false,

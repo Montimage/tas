@@ -174,3 +174,42 @@ test('broker persistence is explicit and the internal listener stays loopback-on
     'the internal listener must be bound to loopback only'
   );
 });
+
+test('in-container consumers never dial the authenticated listener anonymously', () => {
+  // Everything that ships inside the image and talks to its own broker can
+  // only use the loopback anonymous listener (1884): the published 1883
+  // refuses anonymous access by policy, so a co-located consumer still
+  // pointing there silently stops publishing (issue #46).
+  const consumers = [
+    'node-red-flows/202402-temperature-controller.json',
+    'src/server/data/models/202402-Temperature-Controller.json',
+    'src/server/data/data-recorders/TemperatureControllerRecorder.json',
+    'src/core/gateways/gw-01.json',
+    'src/core/gateways/gw-config.json',
+  ];
+  // Collected per file rather than thrown on the first hit, so a fix shows
+  // every remaining offender at once.
+  const walk = (node, offenders) => {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      node.forEach((child) => walk(child, offenders));
+      return;
+    }
+    const local = ['host', 'HOST', 'broker'].some(
+      (k) => typeof node[k] === 'string' && /^(localhost|127\.0\.0\.1)$/.test(node[k])
+    );
+    const authed = ['port', 'PORT'].some((k) => String(node[k]) === '1883');
+    if (local && authed) offenders.push('localhost:1883');
+    Object.values(node).forEach((value) => walk(value, offenders));
+  };
+  for (const rel of consumers) {
+    const offenders = [];
+    walk(JSON.parse(fs.readFileSync(`${REPO}/${rel}`, 'utf8')), offenders);
+    assert.deepEqual(
+      offenders,
+      [],
+      `${rel} must not point co-located processes at anonymous localhost:1883 — ` +
+        'use the loopback listener 1884 or supply credentials via options'
+    );
+  }
+});

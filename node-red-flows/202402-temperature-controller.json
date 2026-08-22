@@ -345,7 +345,7 @@
         "type": "mqtt-broker",
         "name": "mosquitto-broker",
         "broker": "localhost",
-        "port": "1883",
+        "port": "1884",
         "clientid": "",
         "autoConnect": true,
         "usetls": false,

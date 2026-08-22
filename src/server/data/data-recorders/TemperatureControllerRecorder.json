@@ -14,7 +14,7 @@
       "enable": true,
       "source": {
         "protocol": "MQTT",
-        "connConfig": { "host": "localhost", "port": 1883, "options": null },
+        "connConfig": { "host": "localhost", "port": 1884, "options": null },
         "upStreams": ["sensors/temp"],
         "downStreams": ["actuators/heater"]
       },
