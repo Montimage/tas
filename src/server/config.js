@@ -82,34 +82,26 @@ function resolveSessionSecret(configured) {
 
 /**
  * Split a comma/whitespace separated list into trimmed, non-empty entries.
+ *
+ * One helper serves both plain lists and origin lists: an origin list is the
+ * same split with each entry's trailing slash(es) removed, so the two forms
+ * cannot drift apart.
+ *
  * @param {String} value Raw configuration value
+ * @param {Object} [options]
+ * @param {Boolean} [options.stripTrailingSlashes] Strip trailing slashes from each entry
  * @returns {String[]} The entries
  */
-function normalizeList(value) {
+function normalizeList(value, options) {
+  var stripTrailingSlashes = options && options.stripTrailingSlashes;
   if (!value) {
     return [];
   }
   return value
     .split(/[,\s]+/)
     .map(function (entry) {
-      return entry.trim();
-    })
-    .filter(Boolean);
-}
-
-/**
- * Split a comma/whitespace separated origin list into normalised origins.
- * @param {String} value Raw configuration value
- * @returns {String[]} Origins without trailing slashes, empties removed
- */
-function normalizeOrigins(value) {
-  if (!value) {
-    return [];
-  }
-  return value
-    .split(/[,\s]+/)
-    .map(function (origin) {
-      return origin.trim().replace(/\/+$/, '');
+      var trimmed = entry.trim();
+      return stripTrailingSlashes ? trimmed.replace(/\/+$/, '') : trimmed;
     })
     .filter(Boolean);
 }
@@ -129,6 +121,43 @@ function parseBoolean(value, fallback) {
     return fallback;
   }
   return ['false', '0', 'no', 'off'].indexOf(String(value).trim().toLowerCase()) === -1;
+}
+
+/**
+ * Read a configuration value that has to be a number.
+ *
+ * Unset (or empty) means the safe default applies. Everything else has to be
+ * an actual number: `Number(value) || default` would silently coerce both a
+ * deliberate `0` and a typo into the built-in default, so instead a value that
+ * is not a number fails at startup naming the setting. A negative value is
+ * meaningless for every one of these knobs and fails the same way; so does a
+ * deliberate `0` where zero cannot work, while a knob where `0` is a
+ * meaningful operator statement accepts it (`allowZero`).
+ *
+ * @param {String} key Operator-facing configuration key, named in error messages
+ * @param {String} value Raw configuration value
+ * @param {Number} fallback Value to use when nothing is configured
+ * @param {Object} [options]
+ * @param {Boolean} [options.allowZero] Accept a deliberate `0` (default false)
+ * @returns {Number} Parsed numeric value
+ * @throws {Error} When the value is not a number, negative, or an unusable zero
+ */
+function parseNumeric(key, value, fallback, options) {
+  var allowZero = options && options.allowZero;
+  if (value === undefined || value === null || String(value).trim() === '') {
+    return fallback;
+  }
+  var parsed = Number(String(value).trim());
+  if (!Number.isFinite(parsed)) {
+    throw new Error(key + ' must be a number; got "' + value + '"');
+  }
+  if (parsed < 0) {
+    throw new Error(key + ' must not be negative');
+  }
+  if (parsed === 0 && !allowZero) {
+    throw new Error(key + ' must be greater than 0');
+  }
+  return parsed;
 }
 
 /**
@@ -207,9 +236,24 @@ function loadConfig(options) {
     host: merged.SERVER_HOST || DEFAULT_CONFIG.SERVER_HOST,
     port: merged.SERVER_PORT || DEFAULT_CONFIG.SERVER_PORT,
     bodyLimit: value('BODY_LIMIT') || value('MAX_BODY_SIZE') || SECURITY_DEFAULTS.bodyLimit,
-    rateLimitWindowMs: Number(value('RATE_LIMIT_WINDOW_MS')) || SECURITY_DEFAULTS.rateLimitWindowMs,
-    rateLimitMax: Number(value('RATE_LIMIT_MAX')) || SECURITY_DEFAULTS.rateLimitMax,
-    corsAllowedOrigins: normalizeOrigins(value('CORS_ALLOWED_ORIGINS')),
+    rateLimitWindowMs: parseNumeric(
+      'RATE_LIMIT_WINDOW_MS',
+      value('RATE_LIMIT_WINDOW_MS'),
+      SECURITY_DEFAULTS.rateLimitWindowMs
+    ),
+    // `0` is honoured: under express-rate-limit v8 a limit of 0 blocks every
+    // request, which is exactly the lockdown an operator writing it asked for.
+    rateLimitMax: parseNumeric(
+      'RATE_LIMIT_MAX',
+      value('RATE_LIMIT_MAX'),
+      SECURITY_DEFAULTS.rateLimitMax,
+      {
+        allowZero: true,
+      }
+    ),
+    corsAllowedOrigins: normalizeList(value('CORS_ALLOWED_ORIGINS'), {
+      stripTrailingSlashes: true,
+    }),
     cspReportOnly: parseBoolean(value('CSP_REPORT_ONLY'), SECURITY_DEFAULTS.cspReportOnly),
     cspReportUri: parseReportUri(value('CSP_REPORT_URI') || SECURITY_DEFAULTS.cspReportUri),
     authAdminUsername: value('AUTH_ADMIN_USERNAME') || SECURITY_DEFAULTS.authAdminUsername,
@@ -217,10 +261,21 @@ function loadConfig(options) {
     authAdminPasswordHash:
       value('AUTH_ADMIN_PASSWORD_HASH') || SECURITY_DEFAULTS.authAdminPasswordHash,
     sessionSecret: resolveSessionSecret(value('SESSION_SECRET')),
-    sessionIdleTtlMs: Number(value('SESSION_TTL_MS')) || SECURITY_DEFAULTS.sessionIdleTtlMs,
-    sessionAbsoluteTtlMs:
-      Number(value('SESSION_ABSOLUTE_TTL_MS')) || SECURITY_DEFAULTS.sessionAbsoluteTtlMs,
-    sessionMaxRecords: Number(value('SESSION_MAX_RECORDS')) || SECURITY_DEFAULTS.sessionMaxRecords,
+    sessionIdleTtlMs: parseNumeric(
+      'SESSION_TTL_MS',
+      value('SESSION_TTL_MS'),
+      SECURITY_DEFAULTS.sessionIdleTtlMs
+    ),
+    sessionAbsoluteTtlMs: parseNumeric(
+      'SESSION_ABSOLUTE_TTL_MS',
+      value('SESSION_ABSOLUTE_TTL_MS'),
+      SECURITY_DEFAULTS.sessionAbsoluteTtlMs
+    ),
+    sessionMaxRecords: parseNumeric(
+      'SESSION_MAX_RECORDS',
+      value('SESSION_MAX_RECORDS'),
+      SECURITY_DEFAULTS.sessionMaxRecords
+    ),
     sessionCookieSecure: parseBoolean(
       value('SESSION_COOKIE_SECURE'),
       SECURITY_DEFAULTS.sessionCookieSecure
@@ -231,11 +286,19 @@ function loadConfig(options) {
     ),
     authProxyUserHeader: value('AUTH_PROXY_USER_HEADER') || SECURITY_DEFAULTS.authProxyUserHeader,
     authTrustedProxies: normalizeList(value('AUTH_TRUSTED_PROXIES')),
-    authLoginRateLimitWindowMs:
-      Number(value('AUTH_LOGIN_RATE_LIMIT_WINDOW_MS')) ||
-      SECURITY_DEFAULTS.authLoginRateLimitWindowMs,
-    authLoginRateLimitMax:
-      Number(value('AUTH_LOGIN_RATE_LIMIT_MAX')) || SECURITY_DEFAULTS.authLoginRateLimitMax,
+    authLoginRateLimitWindowMs: parseNumeric(
+      'AUTH_LOGIN_RATE_LIMIT_WINDOW_MS',
+      value('AUTH_LOGIN_RATE_LIMIT_WINDOW_MS'),
+      SECURITY_DEFAULTS.authLoginRateLimitWindowMs
+    ),
+    // `0` failed logins tolerated is a deliberate hard lockdown of the login
+    // endpoint: honoured, like the general rate-limit max above.
+    authLoginRateLimitMax: parseNumeric(
+      'AUTH_LOGIN_RATE_LIMIT_MAX',
+      value('AUTH_LOGIN_RATE_LIMIT_MAX'),
+      SECURITY_DEFAULTS.authLoginRateLimitMax,
+      { allowZero: true }
+    ),
   });
 }
 
