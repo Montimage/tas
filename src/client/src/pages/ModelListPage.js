@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button, Dropdown, Table } from "antd";
+import { Button, Dropdown, Popconfirm, Table } from "antd";
 import {
   ClearOutlined,
   ImportOutlined,
@@ -11,6 +11,7 @@ import {
   StopOutlined,
 } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
+import { ListStateEmpty, ListStateError } from "../components/ListStates";
 import {
   requestAllModels,
   requestDeleteModel,
@@ -49,6 +50,9 @@ class ModelListPage extends Component {
       simulationStatus,
       startSimulation,
       stopSimulation,
+      requesting,
+      requestError,
+      fetchAllModels,
     } = this.props;
     const dataSource = allModels.map((model, index) => {
       const simId = getObjectId(model.replace(".json", ""));
@@ -81,15 +85,22 @@ class ModelListPage extends Component {
         render: (item) => (
           <Fragment>
             {item.isRunning ? (
-              <Button
-                style={{ marginRight: 10, paddingRight: 34 }}
-                size="small"
-                type="primary"
-                danger
-                onClick={() => stopSimulation(item.name)}
+              <Popconfirm
+                title={`Stop the simulation of "${item.name}"?`}
+                description="The running simulation will be stopped."
+                okText="Stop"
+                cancelText="Cancel"
+                onConfirm={() => stopSimulation(item.name)}
               >
-                <StopOutlined /> Stop
-              </Button>
+                <Button
+                  style={{ marginRight: 10, paddingRight: 34 }}
+                  size="small"
+                  type="primary"
+                  danger
+                >
+                  <StopOutlined /> Stop
+                </Button>
+              </Popconfirm>
             ) : (
               <a type="button" href={`/simulation?model=${item.name}`}>
                 <Button
@@ -110,14 +121,37 @@ class ModelListPage extends Component {
             >
               <CopyOutlined /> Duplicate
             </Button>
-            <Button size="small" onClick={() => deleteModel(item.name)} danger>
-              <DeleteOutlined />
-              Delete
-            </Button>
+            <Popconfirm
+              title={`Delete topology "${item.name}"?`}
+              description="This permanently removes the topology file. It cannot be undone."
+              okText="Delete"
+              okButtonProps={{ danger: true }}
+              cancelText="Cancel"
+              onConfirm={() => deleteModel(item.name)}
+            >
+              <Button size="small" danger>
+                <DeleteOutlined />
+                Delete
+              </Button>
+            </Popconfirm>
           </Fragment>
         ),
       },
     ];
+
+    const emptyState =
+      !requesting && requestError ? (
+        <ListStateError message={requestError.message} onRetry={fetchAllModels} />
+      ) : (
+        <ListStateEmpty
+          description="No topologies yet"
+          action={
+            <a href={`/models/new-model-${Date.now()}`}>
+              <Button type="primary">Create New Topology</Button>
+            </a>
+          }
+        />
+      );
 
     return (
       <LayoutPage
@@ -168,15 +202,17 @@ class ModelListPage extends Component {
             Add Model <DownOutlined />
           </Button>
         </Dropdown>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );
   }
 }
 
-const mapPropsToStates = ({ allModels, simulationStatus }) => ({
+const mapPropsToStates = ({ allModels, simulationStatus, requesting, requestError }) => ({
   allModels,
   simulationStatus,
+  requesting,
+  requestError,
 });
 
 const mapDispatchToProps = (dispatch) => ({

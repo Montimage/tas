@@ -1,13 +1,14 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
 import dayjs from "dayjs";
-import { Table, Button } from "antd";
+import { Table, Button, Popconfirm } from "antd";
 import {
   CaretRightOutlined,
   CopyOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
+import { ListStateEmpty, ListStateError } from "../components/ListStates";
 import {
   requestAllDatasets,
   requestAddNewDataset,
@@ -47,7 +48,8 @@ class DatasetListPage extends Component {
   }
 
   render() {
-    const { datasets, deleteDataset } = this.props;
+    const { datasets, deleteDataset, requesting, requestError, fetchDatasets } =
+      this.props;
     const dataSource = datasets.map((ds, index) => ({ ...ds, key: index }));
     const columns = [
       {
@@ -80,26 +82,50 @@ class DatasetListPage extends Component {
             >
               <CopyOutlined /> Duplicate
             </Button>
-            <Button size="small" danger onClick={() => deleteDataset(ds.id)}>
-              <DeleteOutlined /> Delete
-            </Button>
+            <Popconfirm
+              title={`Delete dataset "${ds.id}"?`}
+              description="This permanently removes the dataset and its events. It cannot be undone."
+              okText="Delete"
+              okButtonProps={{ danger: true }}
+              cancelText="Cancel"
+              onConfirm={() => deleteDataset(ds.id)}
+            >
+              <Button size="small" danger>
+                <DeleteOutlined /> Delete
+              </Button>
+            </Popconfirm>
           </Fragment>
         ),
       },
     ];
+    const emptyState =
+      !requesting && requestError ? (
+        <ListStateError message={requestError.message} onRetry={fetchDatasets} />
+      ) : (
+        <ListStateEmpty
+          description="No datasets yet"
+          action={
+            <a href={`/data-sets/new-dataset-${Date.now()}`}>
+              <Button type="primary">Add New Dataset</Button>
+            </a>
+          }
+        />
+      );
     return (
       <LayoutPage pageTitle="Dataset" pageSubTitle="All the datasets">
         <a href={`/data-sets/new-dataset-${Date.now()}`}>
           <Button style={{ marginBottom: "10px" }}>Add New Dataset</Button>
         </a>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );
   }
 }
 
-const mapPropsToStates = ({ datasets }) => ({
+const mapPropsToStates = ({ datasets, requesting, requestError }) => ({
   datasets: datasets.allDatasets,
+  requesting,
+  requestError,
 });
 
 const mapDispatchToProps = (dispatch) => ({

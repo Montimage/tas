@@ -35,12 +35,13 @@ const REQUEST_STARTED = [
   storage.requestDataStorage, storage.requestUpdateDataStorage,
   storage.requestTestDataStorageConnection,
   // Logs / statistics
-  logs.requestLogFile,
+  logs.requestLogFile, logs.requestAllLogFiles, logs.requestDeleteLogFile,
   stats.requestStats,
   // Test campaigns
   campaigns.requestAllTestCampaigns, campaigns.requestDeleteTestCampaign,
   campaigns.requestAddNewTestCampaign, campaigns.requestTestCampaign,
-  campaigns.requestUpdateTestCampaign,
+  campaigns.requestUpdateTestCampaign, campaigns.requestLaunchTestCampaign,
+  campaigns.requestStopTestCampaign,
   // Test cases
   testCases.requestAllTestCases, testCases.requestTestCase,
   testCases.requestDeleteTestCase, testCases.requestAddNewTestCase,
@@ -72,7 +73,7 @@ const REQUEST_FINISHED = [
   // Data storage
   storage.setDataStorage, storage.setDataStorageConnectionStatus,
   // Logs / statistics
-  logs.requestLogFileOK,
+  logs.requestLogFileOK, logs.requestAllLogFilesOK, logs.requestDeleteLogFileOK,
   stats.requestStatsOK,
   // Any notification dismisses the spinner
   notify.setNotification,
@@ -106,3 +107,39 @@ export const requestingReducer = createRequestingReducer(
   REQUEST_STARTED,
   REQUEST_FINISHED
 );
+
+/**
+ * The failure half of the same request lifecycle: sagas surface a failed
+ * request as an error notification, so the flag is set there and cleared
+ * when that request re-enters the lifecycle - either because any new
+ * request starts (a retry, or any other activity superseding the stale
+ * failure) or because the paired settle action for the same resource
+ * arrives. Clearing on *every* settle would let an unrelated background
+ * response (a status poll, say) silently swallow a visible failure, so
+ * only the pairs below clear on settle. List views read this flag to swap
+ * their empty state for an error state with retry instead of tracking a
+ * parallel error flag per page.
+ */
+const FETCH_PAIRS = [
+  [models.requestAllModels, [models.setAllModels]],
+  [recorders.requestAllDataRecorders, [recorders.setAllDataRecorders]],
+  [datasets.requestAllDatasets, [datasets.setAllDatasets]],
+  [reports.requestAllReports, [reports.setAllReports]],
+  [campaigns.requestAllTestCampaigns, [campaigns.setAllTestCampaigns]],
+  [testCases.requestAllTestCases, [testCases.setAllTestCases]],
+  [logs.requestAllLogFiles, [logs.requestAllLogFilesOK]],
+];
+
+export const requestErrorReducer = createReducer(null, (builder) => {
+  // Errors ride the notification action; a non-error notification leaves
+  // the recorded failure untouched.
+  builder.addCase(notify.setNotification, (state, action) =>
+    action.payload.type === "error" ? { message: action.payload.message } : state
+  );
+  // Any new request supersedes the recorded failure.
+  REQUEST_STARTED.forEach((action) => builder.addCase(action, () => null));
+  // A settle paired with the failed fetch replaces it with fresh data.
+  FETCH_PAIRS.forEach(([, settledBy]) =>
+    settledBy.forEach((action) => builder.addCase(action, () => null))
+  );
+});

@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button, Tooltip, Form } from "antd";
+import { Button, Tooltip, Form, Modal } from "antd";
 import LayoutPage from "./LayoutPage";
 import {
   requestDataset,
@@ -104,9 +104,28 @@ class DatasetPage extends Component {
   }
 
   componentDidMount() {
+    this.refetch();
+  }
+
+  refetch() {
     const dsId = getLastPath();
     this.props.fetchDataset(dsId);
     this.requestEvents();
+  }
+
+  /**
+   * Event deletion is irreversible, so it is confirmed here before the
+   * callback reaches the event stream; cancelling leaves the event intact.
+   */
+  deleteEventWithConfirmation(eventId) {
+    Modal.confirm({
+      title: `Delete event "${eventId}"?`,
+      content: "This permanently removes the event from the dataset. It cannot be undone.",
+      okText: "Delete",
+      okButtonProps: { danger: true },
+      cancelText: "Cancel",
+      onOk: () => this.props.deleteEvent(eventId),
+    });
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
@@ -230,7 +249,7 @@ class DatasetPage extends Component {
       newEvent,
       isNew,
     } = this.state;
-    const { deleteEvent, addNewEvent, updateEvent, totalNbEvents } = this.props;
+    const { addNewEvent, updateEvent, requesting, requestError } = this.props;
     const nbEvents = events.length;
     const startTime = events[0] ? events[0].timestamp : 0;
     const endTime = events[nbEvents - 1] ? events[nbEvents - 1].timestamp : 0;
@@ -249,11 +268,15 @@ class DatasetPage extends Component {
 
     // TODO: Make statistic beautiful
     // TODO: implement editting event
+    const datasetMissing = !isNew && !requesting && !id;
     return (
       <LayoutPage
         pageTitle={name}
         pageSubTitle="View and update a dataset"
       >
+        {datasetMissing && requestError ? (
+          <Button onClick={() => this.refetch()}>Retry loading dataset</Button>
+        ) : null}
         <Form labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
           {isNew ? (
             <Fragment>
@@ -361,7 +384,7 @@ class DatasetPage extends Component {
         </Tooltip>
         <EventStream
           events={events}
-          deleteEvent={deleteEvent}
+          deleteEvent={(eventId) => this.deleteEventWithConfirmation(eventId)}
           addNewEvent={addNewEvent}
           updateEvent={updateEvent}
         />
@@ -383,10 +406,12 @@ class DatasetPage extends Component {
   }
 }
 
-const mapPropsToStates = ({ datasets }) => ({
+const mapPropsToStates = ({ datasets, requesting, requestError }) => ({
   dataset: datasets.currentDataset.dataset,
   events: datasets.currentDataset.events,
   totalNbEvents: datasets.currentDataset.totalNbEvents,
+  requesting,
+  requestError,
 });
 
 const mapDispatchToProps = (dispatch) => ({
