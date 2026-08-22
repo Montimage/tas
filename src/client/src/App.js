@@ -13,6 +13,7 @@ import { connect } from "react-redux";
 import { checkSession } from "./actions";
 import TSHeader from "./components/TSHeader";
 import SessionExpiredModal from "./components/SessionExpiredModal";
+import GraphView from "./components/GraphView";
 import LoginPage from "./pages/LoginPage";
 import ModelPage from "./pages/ModelPage";
 import DataStoragePage from "./pages/DataStoragePage";
@@ -90,6 +91,7 @@ class App extends Component {
         <Route path="/models" element={<ModelListPage />} />
         <Route path="/data-storage" element={<DataStoragePage />} />
         <Route path="/simulation" element={<SimulationPage />} />
+        <Route path="/graphview" element={<GraphView />} />
         <Route path="/reports/:reportId" element={<ReportPage />} />
         <Route path="/reports" element={<ReportListPage />} />
       </Routes>
