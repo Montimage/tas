@@ -48,7 +48,9 @@ const datasetSchema = new Schema({
 });
 
 datasetSchema.statics.findDatasetsWithPagingOptions = async function (options, page) {
-  const data = await this.find(options)
+  // Mongoose 7+ rejects a null filter where earlier majors matched every
+  // document with it; the unfiltered list route passes null.
+  const data = await this.find(options || {})
     .limit(20)
     .skip(page * 20)
     .sort({

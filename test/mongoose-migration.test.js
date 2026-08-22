@@ -122,6 +122,22 @@ test('dataset paging statics keep their page window on the promised query', asyn
   }
 });
 
+test('a null dataset filter is normalised because mongoose 9 rejects find(null)', async () => {
+  // Mongoose 7+ raises ObjectParameterError for a null filter where earlier
+  // majors matched every document; the unfiltered list route passes null.
+  let receivedFilter = 'not called';
+  const restore = stubFind(DatasetSchema, function (options) {
+    receivedFilter = options;
+    return fakeQuery([]);
+  });
+  try {
+    await DatasetSchema.findDatasetsWithPagingOptions(null, 0);
+    assert.deepEqual(receivedFilter, {});
+  } finally {
+    restore();
+  }
+});
+
 test('a duplicate-key write still maps to 409 through the shared mapper', () => {
   const dup = Object.assign(new Error('E11000 duplicate key'), {
     name: 'MongoServerError',
