@@ -18,6 +18,11 @@ import {
   addNewTestCaseOK,
   deleteTestCaseOK,
   setCurrentTestCase,
+  requestTestCase,
+  requestUpdateTestCase,
+  requestAllTestCases,
+  requestAddNewTestCase,
+  requestDeleteTestCase,
 } from '../actions';
 
 function* handleRequestTestCase(action) {
@@ -108,11 +113,11 @@ function* handleRequestDeleteTestCase(action) {
 }
 
 function* watchTestCases() {
-  yield takeEvery('REQUEST_TEST_CASE', handleRequestTestCase);
-  yield takeEvery('REQUEST_UPDATE_TEST_CASE', handleRequestUpdateTestCase);
-  yield takeEvery('REQUEST_ALL_TEST_CASES', handleRequestAllTestCases);
-  yield takeEvery('REQUEST_ADD_NEW_TEST_CASE', handleRequestAddNewTestCase);
-  yield takeEvery('REQUEST_DELETE_TEST_CASE', handleRequestDeleteTestCase);
+  yield takeEvery(requestTestCase, handleRequestTestCase);
+  yield takeEvery(requestUpdateTestCase, handleRequestUpdateTestCase);
+  yield takeEvery(requestAllTestCases, handleRequestAllTestCases);
+  yield takeEvery(requestAddNewTestCase, handleRequestAddNewTestCase);
+  yield takeEvery(requestDeleteTestCase, handleRequestDeleteTestCase);
 }
 
 export default watchTestCases;

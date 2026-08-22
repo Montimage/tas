@@ -11,6 +11,8 @@ import {
 import {
   setNotification,
   setDevops,
+  requestDevops,
+  requestUpdateDevops,
 } from '../actions';
 
 function* handleRequestDevops() {
@@ -38,8 +40,8 @@ function* handleRequestUpdateDevops(action) {
 }
 
 function* watchDevops() {
-  yield takeEvery('REQUEST_DEVOPS', handleRequestDevops);
-  yield takeEvery('REQUEST_UPDATE_DEVOPS', handleRequestUpdateDevops);
+  yield takeEvery(requestDevops, handleRequestDevops);
+  yield takeEvery(requestUpdateDevops, handleRequestUpdateDevops);
 }
 
 export default watchDevops;

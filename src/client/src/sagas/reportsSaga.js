@@ -16,6 +16,12 @@ import {
   deleteReportOK,
   setOriginalEvents,
   setNewEvents,
+  requestReport,
+  requestOriginalEvents,
+  requestNewEvents,
+  requestUpdateReport,
+  requestAllReports,
+  requestDeleteReport,
 } from "../actions";
 
 function* handleRequestOriginalEvents(action) {
@@ -139,12 +145,12 @@ function* handleRequestDeleteReport(action) {
 }
 
 function* watchReports() {
-  yield takeEvery("REQUEST_REPORT", handleRequestReport);
-  yield takeEvery("REQUEST_ORIGINAL_EVENTS", handleRequestOriginalEvents);
-  yield takeEvery("REQUEST_NEW_EVENTS", handleRequestNewEvents);
-  yield takeEvery("REQUEST_UPDATE_REPORT", handleRequestUpdateReport);
-  yield takeEvery("REQUEST_ALL_REPORTS", handleRequestAllReports);
-  yield takeEvery("REQUEST_DELETE_REPORT", handleRequestDeleteReport);
+  yield takeEvery(requestReport, handleRequestReport);
+  yield takeEvery(requestOriginalEvents, handleRequestOriginalEvents);
+  yield takeEvery(requestNewEvents, handleRequestNewEvents);
+  yield takeEvery(requestUpdateReport, handleRequestUpdateReport);
+  yield takeEvery(requestAllReports, handleRequestAllReports);
+  yield takeEvery(requestDeleteReport, handleRequestDeleteReport);
 }
 
 export default watchReports;

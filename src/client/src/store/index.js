@@ -1,4 +1,4 @@
-import { createStore, applyMiddleware, compose } from 'redux';
+import { configureStore } from '@reduxjs/toolkit';
 import createSagaMiddleware from 'redux-saga';
 
 import rootReducer from '../reducers';
@@ -6,15 +6,19 @@ import rootSaga from '../sagas';
 
 const configStore = () => {
   const sagaMiddleware = createSagaMiddleware();
-  const store = createStore(
-    rootReducer,
-    compose(
-      applyMiddleware(sagaMiddleware)
-      ,
-      window.__REDUX_DEVTOOLS_EXTENSION__ ?
-        window.__REDUX_DEVTOOLS_EXTENSION__() : f => f,
-    ),
-  );
+  const store = configureStore({
+    reducer: rootReducer,
+    // The sagas own every async flow, so the thunk middleware is dropped;
+    // the serializability/immutable checks stay off to keep the runtime
+    // behaviour identical to the previous hand-wired createStore setup.
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        thunk: false,
+        serializableCheck: false,
+        immutableCheck: false,
+      }).concat(sagaMiddleware),
+    devTools: true,
+  });
   sagaMiddleware.run(rootSaga);
   return store;
 };

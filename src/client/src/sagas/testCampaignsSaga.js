@@ -21,7 +21,15 @@ import {
   addNewTestCampaignOK,
   deleteTestCampaignOK,
   setCurrentTestCampaign,
-  setTestCampaignRunningStatus
+  setTestCampaignRunningStatus,
+  requestTestCampaign,
+  requestUpdateTestCampaign,
+  requestAllTestCampaigns,
+  requestAddNewTestCampaign,
+  requestDeleteTestCampaign,
+  requestLaunchTestCampaign,
+  requestStopTestCampaign,
+  requestTestCampaignStatus
 } from '../actions';
 
 function* handleRequestTestCampaign(action) {
@@ -161,14 +169,14 @@ function* handleRequestTestCampaignStatus() {
 }
 
 function* watchTestCampaigns() {
-  yield takeEvery('REQUEST_TEST_CAMPAIGN', handleRequestTestCampaign);
-  yield takeEvery('REQUEST_UPDATE_TEST_CAMPAIGN', handleRequestUpdateTestCampaign);
-  yield takeEvery('REQUEST_ALL_TEST_CAMPAIGNS', handleRequestAllTestCampaigns);
-  yield takeEvery('REQUEST_ADD_NEW_TEST_CAMPAIGN', handleRequestAddNewTestCampaign);
-  yield takeEvery('REQUEST_DELETE_TEST_CAMPAIGN', handleRequestDeleteTestCampaign);
-  yield takeEvery('REQUEST_LAUNCH_TEST_CAMPAIGN', handleRequestLaunchTestCampaign);
-  yield takeEvery('REQUEST_STOP_TEST_CAMPAIGN', handleRequestStopTestCampaign);
-  yield takeEvery('REQUEST_TEST_CAMPAIGN_STATUS', handleRequestTestCampaignStatus);
+  yield takeEvery(requestTestCampaign, handleRequestTestCampaign);
+  yield takeEvery(requestUpdateTestCampaign, handleRequestUpdateTestCampaign);
+  yield takeEvery(requestAllTestCampaigns, handleRequestAllTestCampaigns);
+  yield takeEvery(requestAddNewTestCampaign, handleRequestAddNewTestCampaign);
+  yield takeEvery(requestDeleteTestCampaign, handleRequestDeleteTestCampaign);
+  yield takeEvery(requestLaunchTestCampaign, handleRequestLaunchTestCampaign);
+  yield takeEvery(requestStopTestCampaign, handleRequestStopTestCampaign);
+  yield takeEvery(requestTestCampaignStatus, handleRequestTestCampaignStatus);
 }
 
 export default watchTestCampaigns;

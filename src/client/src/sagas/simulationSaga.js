@@ -8,7 +8,10 @@ import {
 } from "../api";
 import {
   setNotification,
-  setSimulationStatus
+  setSimulationStatus,
+  requestStartSimulation,
+  requestStopSimulation,
+  requestSimulationStatus
 } from "../actions";
 
 function* handleRequestStartSimulation(action) {
@@ -59,9 +62,9 @@ function* handleRequestSimulationStatus() {
 }
 
 function* watchSimulation() {
-  yield takeEvery("REQUEST_START_SIMULATION", handleRequestStartSimulation);
-  yield takeEvery("REQUEST_STOP_SIMULATION", handleRequestStopSimulation);
-  yield takeEvery("REQUEST_SIMULATION_STATUS", handleRequestSimulationStatus);
+  yield takeEvery(requestStartSimulation, handleRequestStartSimulation);
+  yield takeEvery(requestStopSimulation, handleRequestStopSimulation);
+  yield takeEvery(requestSimulationStatus, handleRequestSimulationStatus);
 }
 
 export default watchSimulation;

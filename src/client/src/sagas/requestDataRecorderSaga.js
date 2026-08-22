@@ -17,6 +17,15 @@ import {
   sendRequestDataRecorderStatus
 } from '../api';
 import {
+  requestDataRecorder as requestDataRecorderAction,
+  requestAllDataRecorders as requestAllDataRecordersAction,
+  requestDeleteDataRecorder as requestDeleteDataRecorderAction,
+  requestDuplicateDataRecorder as requestDuplicateDataRecorderAction,
+  requestAddNewDataRecorder,
+  requestUpdateDataRecorder,
+  requestStartDataRecorder,
+  requestStopDataRecorder,
+  requestDataRecorderStatus,
   setDataRecorder,
   setNotification,
   setAllDataRecorders,
@@ -141,15 +150,15 @@ function* handleRequestAllDataRecorders() {
 }
 
 function* watchRequestDataRecorder() {
-  yield takeEvery('REQUEST_DATA_RECORDER', handleRequestDataRecorder);
-  yield takeEvery('REQUEST_ALL_DATA_RECORDERS', handleRequestAllDataRecorders);
-  yield takeEvery('REQUEST_DELETE_DATA_RECORDER', handleRequestDeleteDataRecorder);
-  yield takeEvery('REQUEST_DUPLICATE_DATA_RECORDER', handleRequestDuplicateDataRecorder);
-  yield takeEvery('REQUEST_ADD_NEW_DATA_RECORDER', handleRequestAddNewDataRecorder);
-  yield takeEvery('REQUEST_UPDATE_DATA_RECORDER', handleRequestUpdateDataRecorder);
-  yield takeEvery('REQUEST_START_DATA_RECORDER', handleRequestStartDataRecorder);
-  yield takeEvery('REQUEST_STOP_DATA_RECORDER', handleRequestStopDataRecorder);
-  yield takeEvery('REQUEST_DATA_RECORDER_STATUS', handleRequestDataRecorderStatus);
+  yield takeEvery(requestDataRecorderAction, handleRequestDataRecorder);
+  yield takeEvery(requestAllDataRecordersAction, handleRequestAllDataRecorders);
+  yield takeEvery(requestDeleteDataRecorderAction, handleRequestDeleteDataRecorder);
+  yield takeEvery(requestDuplicateDataRecorderAction, handleRequestDuplicateDataRecorder);
+  yield takeEvery(requestAddNewDataRecorder, handleRequestAddNewDataRecorder);
+  yield takeEvery(requestUpdateDataRecorder, handleRequestUpdateDataRecorder);
+  yield takeEvery(requestStartDataRecorder, handleRequestStartDataRecorder);
+  yield takeEvery(requestStopDataRecorder, handleRequestStopDataRecorder);
+  yield takeEvery(requestDataRecorderStatus, handleRequestDataRecorderStatus);
 }
 
 export default watchRequestDataRecorder;

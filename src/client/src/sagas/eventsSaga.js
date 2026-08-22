@@ -18,7 +18,12 @@ import {
   addNewEventOK,
   deleteEventOK,
   updateEventOK,
-  setTotalNumberEvents
+  setTotalNumberEvents,
+  requestEvent,
+  requestEventsByDatasetId,
+  requestUpdateEvent,
+  requestAddNewEvent,
+  requestDeleteEvent
 } from '../actions';
 
 function* handleRequestEvent(action) {
@@ -124,12 +129,13 @@ function* handleRequestDeleteEvent(action) {
 }
 
 function* watchEvents() {
-  yield takeEvery('REQUEST_EVENT', handleRequestEvent);
-  yield takeEvery('REQUEST_EVENTS_BY_DATASET_ID', handleRequestEventsByDatasetId);
-  yield takeEvery('REQUEST_UPDATE_EVENT', handleRequestUpdateEvent);
+  yield takeEvery(requestEvent, handleRequestEvent);
+  yield takeEvery(requestEventsByDatasetId, handleRequestEventsByDatasetId);
+  yield takeEvery(requestUpdateEvent, handleRequestUpdateEvent);
+  // No `requestAllEvents` creator exists; this watcher has always been dead.
   yield takeEvery('REQUEST_ALL_EVENTS', handleRequestAllEvents);
-  yield takeEvery('REQUEST_ADD_NEW_EVENT', handleRequestAddNewEvent);
-  yield takeEvery('REQUEST_DELETE_EVENT', handleRequestDeleteEvent);
+  yield takeEvery(requestAddNewEvent, handleRequestAddNewEvent);
+  yield takeEvery(requestDeleteEvent, handleRequestDeleteEvent);
 }
 
 export default watchEvents;

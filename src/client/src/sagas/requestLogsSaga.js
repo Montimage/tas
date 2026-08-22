@@ -2,7 +2,7 @@
 import { call, put, takeEvery } from "redux-saga/effects";
 
 import { sendRequestLogFile, sendRequestAllLogFiles, sendRequestDeleteLogFile } from "../api";
-import { requestLogFileOK, setNotification, requestAllLogFilesOK, requestDeleteLogFileOK } from "../actions";
+import { requestLogFileOK, setNotification, requestAllLogFilesOK, requestDeleteLogFileOK, requestLogFile, requestAllLogFiles, requestDeleteLogFile } from "../actions";
 
 function* handleRequestAllLogFiles(action) {
   try {
@@ -41,9 +41,9 @@ function* handleRequestDeleteLogFile(action) {
 }
 
 function* watchRequestLogs() {
-  yield takeEvery('REQUEST_LOG_FILE', handleRequestLogFile);
-  yield takeEvery("REQUEST_ALL_LOG_FILES", handleRequestAllLogFiles);
-  yield takeEvery("REQUEST_DELETE_LOG_FILE", handleRequestDeleteLogFile);
+  yield takeEvery(requestLogFile, handleRequestLogFile);
+  yield takeEvery(requestAllLogFiles, handleRequestAllLogFiles);
+  yield takeEvery(requestDeleteLogFile, handleRequestDeleteLogFile);
 }
 
 export default watchRequestLogs;
