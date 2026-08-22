@@ -38,49 +38,41 @@ const eventSchema = new Schema({
   },
 });
 
-eventSchema.statics.findEventsWithPagingOptions = function (options, page, callback) {
-  this.find(options)
+eventSchema.statics.findEventsWithPagingOptions = async function (options, page) {
+  const data = await this.find(options)
     .limit(200)
     .skip(page * 200)
     .sort({
       timestamp: 1,
     })
-    .exec((err, data) => {
-      if (err) {
-        return callback(err);
-      }
+    .exec();
 
-      if (!data) {
-        return callback({
-          error: `Cannot find any event data`,
-        });
-      }
+  if (!data) {
+    throw {
+      error: `Cannot find any event data`,
+    };
+  }
 
-      return callback(null, data);
-    });
+  return data;
 };
 
-eventSchema.statics.findEventsWithOptions = function (options, callback) {
-  this.find(options)
+eventSchema.statics.findEventsWithOptions = async function (options) {
+  const data = await this.find(options)
     .sort({
       timestamp: 1,
     })
-    .exec((err, data) => {
-      if (err) {
-        return callback(err);
-      }
+    .exec();
 
-      if (!data) {
-        return callback({
-          error: `Cannot find any event data`,
-        });
-      }
+  if (!data) {
+    throw {
+      error: `Cannot find any event data`,
+    };
+  }
 
-      return callback(null, data);
-    });
+  return data;
 };
 
-eventSchema.statics.findEventsBetweenTimes = function (filter, startTime, endTime, callback) {
+eventSchema.statics.findEventsBetweenTimes = function (filter, startTime, endTime) {
   const options = {
     ...filter,
     $and: [
@@ -97,7 +89,7 @@ eventSchema.statics.findEventsBetweenTimes = function (filter, startTime, endTim
     ],
   };
   // console.log(JSON.stringify(filter));
-  return this.findEventsWithOptions(options, callback);
+  return this.findEventsWithOptions(options);
 };
 
 module.exports = mongoose.model('Event', eventSchema);

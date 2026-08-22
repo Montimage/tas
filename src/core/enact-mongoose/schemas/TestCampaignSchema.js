@@ -38,20 +38,16 @@ const testCampaignSchema = new Schema({
   },
 });
 
-testCampaignSchema.statics.findTestCampaignWithOptions = function (options, callback) {
-  this.find(options).exec((err, data) => {
-    if (err) {
-      return callback(err);
-    }
+testCampaignSchema.statics.findTestCampaignWithOptions = async function (options) {
+  const data = await this.find(options).exec();
 
-    if (!data) {
-      return callback({
-        error: `Cannot find any TestCampaign data`,
-      });
-    }
+  if (!data) {
+    throw {
+      error: `Cannot find any TestCampaign data`,
+    };
+  }
 
-    return callback(null, data);
-  });
+  return data;
 };
 
 module.exports = mongoose.model('TestCampaign', testCampaignSchema);

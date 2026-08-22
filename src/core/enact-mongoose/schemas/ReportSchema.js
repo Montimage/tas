@@ -54,24 +54,20 @@ const reportSchema = new Schema({
     type: Object,
   },
 });
-reportSchema.statics.findReportsWithOptions = function (options, callback) {
-  this.find(options)
+reportSchema.statics.findReportsWithOptions = async function (options) {
+  const data = await this.find(options)
     .sort({
       createdAt: 1,
     })
-    .exec((err, data) => {
-      if (err) {
-        return callback(err);
-      }
+    .exec();
 
-      if (!data) {
-        return callback({
-          error: `Cannot find any Report data`,
-        });
-      }
+  if (!data) {
+    throw {
+      error: `Cannot find any Report data`,
+    };
+  }
 
-      return callback(null, data);
-    });
+  return data;
 };
 
 module.exports = mongoose.model('Report', reportSchema);

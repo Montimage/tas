@@ -71,14 +71,15 @@ class DataGenerator extends Thing {
     } else {
       newData = new SensorSchema(data);
     }
-    newData.save((err, _data) => {
-      if (err) {
+    newData
+      .save()
+      .then(() => {
+        console.log(`[${this.thingId}] ${data.timestamp} ${JSON.stringify(data)}`);
+      })
+      .catch((err) => {
         console.error(`[${this.thingId}] Failed to save generated data of sensor ${sensor.id}`);
         console.error(err);
-      } else {
-        console.log(`[${this.thingId}] ${data.timestamp} ${JSON.stringify(data)}`);
-      }
-    });
+      });
   }
 
   getStats() {

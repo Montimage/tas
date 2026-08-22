@@ -47,46 +47,40 @@ const datasetSchema = new Schema({
   },
 });
 
-datasetSchema.statics.findDatasetsWithPagingOptions = function (options, page, callback) {
-  this.find(options)
+datasetSchema.statics.findDatasetsWithPagingOptions = async function (options, page) {
+  // Mongoose 7+ rejects a null filter where earlier majors matched every
+  // document with it; the unfiltered list route passes null.
+  const data = await this.find(options || {})
     .limit(20)
     .skip(page * 20)
     .sort({
       lastModified: 1,
     })
-    .exec((err, data) => {
-      if (err) {
-        return callback(err);
-      }
+    .exec();
 
-      if (!data) {
-        return callback({
-          error: `Cannot find any event data`,
-        });
-      }
+  if (!data) {
+    throw {
+      error: `Cannot find any event data`,
+    };
+  }
 
-      return callback(null, data);
-    });
+  return data;
 };
 
-datasetSchema.statics.findDatasetsWithOptions = function (options, callback) {
-  this.find(options)
+datasetSchema.statics.findDatasetsWithOptions = async function (options) {
+  const data = await this.find(options)
     .sort({
       lastModified: 1,
     })
-    .exec((err, data) => {
-      if (err) {
-        return callback(err);
-      }
+    .exec();
 
-      if (!data) {
-        return callback({
-          error: `Cannot find any recorded data`,
-        });
-      }
+  if (!data) {
+    throw {
+      error: `Cannot find any recorded data`,
+    };
+  }
 
-      return callback(null, data);
-    });
+  return data;
 };
 
 module.exports = mongoose.model('Dataset', datasetSchema);

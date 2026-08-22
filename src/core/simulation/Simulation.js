@@ -94,7 +94,7 @@ class Simulation {
     this.allThings = [];
   }
 
-  deviceCallbackWhenFinish() {
+  async deviceCallbackWhenFinish() {
     this.logger.log('A device is going to finish his job');
     for (let index = 0; index < this.allThings.length; index++) {
       const dev = this.allThings[index];
@@ -105,37 +105,35 @@ class Simulation {
     const stopSimulation = (score) => this.stop(score);
     // Going to evaluate the report here
     const { id, originalDatasetId, newDatasetId, startTime, endTime } = this.report;
-    EventSchema.findEventsBetweenTimes(
-      { datasetId: originalDatasetId },
-      startTime,
-      endTime,
-      (err3, originalEvents) => {
-        if (err3) {
-          this.logger.error(`Cannot get original events of dataset ${originalDatasetId}`, err3);
-          stopSimulation();
-        } else {
-          EventSchema.findEventsWithOptions({ datasetId: newDatasetId }, (err4, newEvents) => {
-            if (err4) {
-              this.logger.error(`Cannot get new events of dataset ${newDatasetId}`, err4);
-              stopSimulation();
-            } else {
-              const { threshold, eventType, metricType } = this.evaluationParameters;
-              const score = evalulate(originalEvents, newEvents, eventType, metricType, threshold);
-              // Going to save the score into the report
-              ReportSchema.findOneAndUpdate({ id }, { score }, (err5, ret) => {
-                if (err5) {
-                  this.logger.error(`Cannot update the score for report ${id}`, err5);
-                  stopSimulation();
-                } else {
-                  this.logger.log(`Report ${id} has score of ${score}`);
-                  stopSimulation(score);
-                }
-              });
-            }
-          });
-        }
-      }
-    );
+    let originalEvents;
+    let newEvents;
+    try {
+      originalEvents = await EventSchema.findEventsBetweenTimes(
+        { datasetId: originalDatasetId },
+        startTime,
+        endTime
+      );
+    } catch (err3) {
+      this.logger.error(`Cannot get original events of dataset ${originalDatasetId}`, err3);
+      return stopSimulation();
+    }
+    try {
+      newEvents = await EventSchema.findEventsWithOptions({ datasetId: newDatasetId });
+    } catch (err4) {
+      this.logger.error(`Cannot get new events of dataset ${newDatasetId}`, err4);
+      return stopSimulation();
+    }
+    const { threshold, eventType, metricType } = this.evaluationParameters;
+    const score = evalulate(originalEvents, newEvents, eventType, metricType, threshold);
+    // Going to save the score into the report
+    try {
+      await ReportSchema.findOneAndUpdate({ id }, { score });
+      this.logger.log(`Report ${id} has score of ${score}`);
+      stopSimulation(score);
+    } catch (err5) {
+      this.logger.error(`Cannot update the score for report ${id}`, err5);
+      stopSimulation();
+    }
   }
 
   createDevice(devConfig, isFirstDevice = false) {

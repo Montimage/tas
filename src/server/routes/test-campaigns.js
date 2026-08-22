@@ -39,16 +39,15 @@ const testCampaignUpdateBody = Joi.object({
 }).required();
 
 // Get all the test campaigns
-router.get('/', validate(), dbConnector, function (req, res, next) {
-  TestCampaignSchema.find((err2, testCampaigns) => {
-    if (err2) {
-      next(databaseError(err2, 'Failed to get test campaign'));
-    } else {
-      res.send({
-        testCampaigns,
-      });
-    }
-  });
+router.get('/', validate(), dbConnector, async function (req, res, next) {
+  try {
+    const testCampaigns = await TestCampaignSchema.find();
+    res.send({
+      testCampaigns,
+    });
+  } catch (err2) {
+    next(databaseError(err2, 'Failed to get test campaign'));
+  }
 });
 
 // Add a new test campaign
@@ -56,7 +55,7 @@ router.post(
   '/',
   validate({ body: testCampaignCreateBody }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { testCampaign } = req.body;
     const { id, name, isDefault, description, testCaseIds, webhookURL } = testCampaign;
     const newtestCampaign = new TestCampaignSchema({
@@ -67,15 +66,14 @@ router.post(
       testCaseIds,
       webhookURL,
     });
-    newtestCampaign.save((err, _testCampaign) => {
-      if (err) {
-        next(databaseError(err, 'Failed to save the test campaign'));
-      } else {
-        res.send({
-          testCampaign: _testCampaign,
-        });
-      }
-    });
+    try {
+      const _testCampaign = await newtestCampaign.save();
+      res.send({
+        testCampaign: _testCampaign,
+      });
+    } catch (err) {
+      next(databaseError(err, 'Failed to save the test campaign'));
+    }
   }
 );
 
@@ -86,20 +84,21 @@ router.get(
   '/:testCampaignId',
   validate({ params: { testCampaignId: testCampaignIdParam } }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { testCampaignId } = req.params;
 
-    TestCampaignSchema.findOne({ id: testCampaignId }, (err2, testCampaign) => {
-      if (err2) {
-        next(databaseError(err2, 'Failed to get test campaign'));
-      } else if (!testCampaign) {
+    try {
+      const testCampaign = await TestCampaignSchema.findOne({ id: testCampaignId });
+      if (!testCampaign) {
         next(notFound('Test campaign not found'));
       } else {
         res.send({
           testCampaign,
         });
       }
-    });
+    } catch (err2) {
+      next(databaseError(err2, 'Failed to get test campaign'));
+    }
   }
 );
 
@@ -110,19 +109,18 @@ router.post(
   '/:testCampaignId',
   validate({ params: { testCampaignId: testCampaignIdParam }, body: testCampaignUpdateBody }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { testCampaign } = req.body;
     const { testCampaignId } = req.params;
 
-    TestCampaignSchema.findOneAndUpdate({ id: testCampaignId }, testCampaign, (err, ts) => {
-      if (err) {
-        next(databaseError(err, 'Failed to save the test campaign'));
-      } else {
-        res.send({
-          testCampaign: ts,
-        });
-      }
-    });
+    try {
+      const ts = await TestCampaignSchema.findOneAndUpdate({ id: testCampaignId }, testCampaign);
+      res.send({
+        testCampaign: ts,
+      });
+    } catch (err) {
+      next(databaseError(err, 'Failed to save the test campaign'));
+    }
   }
 );
 
@@ -133,18 +131,17 @@ router.delete(
   '/:testCampaignId',
   validate({ params: { testCampaignId: testCampaignIdParam } }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { testCampaignId } = req.params;
 
-    TestCampaignSchema.findOneAndDelete({ id: testCampaignId }, (err, ret) => {
-      if (err) {
-        next(databaseError(err, 'Failed to delete the test campaign'));
-      } else {
-        res.send({
-          result: ret,
-        });
-      }
-    });
+    try {
+      const ret = await TestCampaignSchema.findOneAndDelete({ id: testCampaignId });
+      res.send({
+        result: ret,
+      });
+    } catch (err) {
+      next(databaseError(err, 'Failed to delete the test campaign'));
+    }
   }
 );
 

@@ -42,20 +42,16 @@ const testCaseSchema = new Schema({
   },
 });
 
-testCaseSchema.statics.findTestCaseWithOptions = function (options, callback) {
-  this.find(options).exec((err, data) => {
-    if (err) {
-      return callback(err);
-    }
+testCaseSchema.statics.findTestCaseWithOptions = async function (options) {
+  const data = await this.find(options).exec();
 
-    if (!data) {
-      return callback({
-        error: `Cannot find any TestCase data`,
-      });
-    }
+  if (!data) {
+    throw {
+      error: `Cannot find any TestCase data`,
+    };
+  }
 
-    return callback(null, data);
-  });
+  return data;
 };
 
 module.exports = mongoose.model('TestCase', testCaseSchema);

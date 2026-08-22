@@ -33,23 +33,17 @@ const sensorSchema = new Schema({
   },
 });
 
-sensorSchema.statics.findSensorsWithOptions = function (options, callback) {
-  this.find(options)
-    .sort({ timestamp: 1 })
-    .exec((err, stats) => {
-      if (err) {
-        return callback(err);
-      }
+sensorSchema.statics.findSensorsWithOptions = async function (options) {
+  const stats = await this.find(options).sort({ timestamp: 1 }).exec();
 
-      if (!stats) {
-        return callback({ error: `Cannot find sensors` });
-      }
+  if (!stats) {
+    throw { error: `Cannot find sensors` };
+  }
 
-      return callback(null, stats);
-    });
+  return stats;
 };
 
-sensorSchema.statics.findSensorDataBetweenTimes = function (filter, startTime, endTime, callback) {
+sensorSchema.statics.findSensorDataBetweenTimes = function (filter, startTime, endTime) {
   const options = {
     $and: [
       {
@@ -68,7 +62,7 @@ sensorSchema.statics.findSensorDataBetweenTimes = function (filter, startTime, e
   if (filter) {
     options['$and'].push(filter);
   }
-  return this.findSensorsWithOptions(options, callback);
+  return this.findSensorsWithOptions(options);
 };
 
 module.exports = mongoose.model('Sensor', sensorSchema);

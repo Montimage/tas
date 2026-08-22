@@ -86,16 +86,15 @@ const containModelFileName = (req, res, next) => {
 };
 
 // Get all the test cases
-router.get('/', validate(), dbConnector, function (req, res, next) {
-  TestCaseSchema.find((err2, testCases) => {
-    if (err2) {
-      next(databaseError(err2, 'Failed to get test case'));
-    } else {
-      res.send({
-        testCases,
-      });
-    }
-  });
+router.get('/', validate(), dbConnector, async function (req, res, next) {
+  try {
+    const testCases = await TestCaseSchema.find();
+    res.send({
+      testCases,
+    });
+  } catch (err2) {
+    next(databaseError(err2, 'Failed to get test case'));
+  }
 });
 
 /**
@@ -105,20 +104,21 @@ router.get(
   '/:testCaseId',
   validate({ params: { testCaseId: testCaseIdParam } }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { testCaseId } = req.params;
 
-    TestCaseSchema.findOne({ id: testCaseId }, (err2, testCase) => {
-      if (err2) {
-        next(databaseError(err2, 'Failed to get test case'));
-      } else if (!testCase) {
+    try {
+      const testCase = await TestCaseSchema.findOne({ id: testCaseId });
+      if (!testCase) {
         next(notFound('Test case not found'));
       } else {
         res.send({
           testCase,
         });
       }
-    });
+    } catch (err2) {
+      next(databaseError(err2, 'Failed to get test case'));
+    }
   }
 );
 
@@ -128,7 +128,7 @@ router.post(
   validate({ body: testCaseCreateBody }),
   containModelFileName,
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { testCase } = req.body;
     const { id, name, tags, description, datasetIds } = testCase;
     const newTestCase = new TestCaseSchema({
@@ -139,15 +139,14 @@ router.post(
       datasetIds,
       modelFileName: req.containedModelFileName || null,
     });
-    newTestCase.save((err, _testCase) => {
-      if (err) {
-        next(databaseError(err, 'Failed to save the test case'));
-      } else {
-        res.send({
-          testCase: _testCase,
-        });
-      }
-    });
+    try {
+      const _testCase = await newTestCase.save();
+      res.send({
+        testCase: _testCase,
+      });
+    } catch (err) {
+      next(databaseError(err, 'Failed to save the test case'));
+    }
   }
 );
 
@@ -159,7 +158,7 @@ router.post(
   validate({ params: { testCaseId: testCaseIdParam }, body: testCaseUpdateBody }),
   containModelFileName,
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { testCase } = req.body;
     const { testCaseId } = req.params;
 
@@ -172,15 +171,14 @@ router.post(
         ? { ...testCase, modelFileName: req.containedModelFileName }
         : testCase;
 
-    TestCaseSchema.findOneAndUpdate({ id: testCaseId }, update, (err, ts) => {
-      if (err) {
-        next(databaseError(err, 'Failed to save the test case'));
-      } else {
-        res.send({
-          testCase: ts,
-        });
-      }
-    });
+    try {
+      const ts = await TestCaseSchema.findOneAndUpdate({ id: testCaseId }, update);
+      res.send({
+        testCase: ts,
+      });
+    } catch (err) {
+      next(databaseError(err, 'Failed to save the test case'));
+    }
   }
 );
 
@@ -191,18 +189,17 @@ router.delete(
   '/:testCaseId',
   validate({ params: { testCaseId: testCaseIdParam } }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { testCaseId } = req.params;
 
-    TestCaseSchema.findOneAndDelete({ id: testCaseId }, (err, ret) => {
-      if (err) {
-        next(databaseError(err, 'Failed to delete the test case'));
-      } else {
-        res.send({
-          result: ret,
-        });
-      }
-    });
+    try {
+      const ret = await TestCaseSchema.findOneAndDelete({ id: testCaseId });
+      res.send({
+        result: ret,
+      });
+    } catch (err) {
+      next(databaseError(err, 'Failed to delete the test case'));
+    }
   }
 );
 

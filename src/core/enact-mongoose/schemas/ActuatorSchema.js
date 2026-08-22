@@ -33,28 +33,17 @@ const actuatorSchema = new Schema({
   },
 });
 
-actuatorSchema.statics.findActuatorsWithOptions = function (options, callback) {
-  this.find(options)
-    .sort({ timestamp: 1 })
-    .exec((err, stats) => {
-      if (err) {
-        return callback(err);
-      }
+actuatorSchema.statics.findActuatorsWithOptions = async function (options) {
+  const stats = await this.find(options).sort({ timestamp: 1 }).exec();
 
-      if (!stats) {
-        return callback({ error: `Cannot find actuator` });
-      }
+  if (!stats) {
+    throw { error: `Cannot find actuator` };
+  }
 
-      return callback(null, stats);
-    });
+  return stats;
 };
 
-actuatorSchema.statics.findActuatorDataBetweenTimes = function (
-  filter,
-  startTime,
-  endTime,
-  callback
-) {
+actuatorSchema.statics.findActuatorDataBetweenTimes = function (filter, startTime, endTime) {
   const options = {
     $and: [
       {
@@ -73,7 +62,7 @@ actuatorSchema.statics.findActuatorDataBetweenTimes = function (
   if (filter) {
     options['$and'].push(filter);
   }
-  return this.findActuatorsWithOptions(options, callback);
+  return this.findActuatorsWithOptions(options);
 };
 
 module.exports = mongoose.model('Actuator', actuatorSchema);
