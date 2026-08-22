@@ -139,7 +139,7 @@ test('every long-running service restarts independently', () => {
   }
   assert.match(
     serviceBlock('broker-init'),
-    /restart:\s*"no"/,
+    /restart:\s*['"]no['"]/,
     'the one-shot seeder must not restart'
   );
 });
@@ -160,10 +160,10 @@ test('startup order follows health, not guesswork', () => {
 });
 
 test('only the authenticated broker listener is published to the host', () => {
-  assert.match(serviceBlock('broker'), /-\s*"1883:1883"/, 'the broker must publish 1883');
+  assert.match(serviceBlock('broker'), /-\s*['"]1883:1883['"]/, 'the broker must publish 1883');
   // Only quoted host:container mappings count as publications; prose comments
   // mention the internal port by name.
-  const published = (serviceBlock('broker').match(/-\s*"(\d+):\d+"/g) || []).join('\n');
+  const published = (serviceBlock('broker').match(/-\s*['"](\d+):\d+['"]/g) || []).join('\n');
   assert.ok(!/\b1884\b/.test(published), 'the anonymous internal listener must never be published');
   assert.match(
     composedBrokerConf,
@@ -182,7 +182,7 @@ test('the composition resolves cross-container broker addresses through env', ()
     );
     assert.match(
       block,
-      /TAS_MQTT_PORT:\s*"1884"/,
+      /TAS_MQTT_PORT:\s*['"]1884['"]/,
       `${service} must use the internal listener port`
     );
   }
