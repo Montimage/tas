@@ -8,6 +8,12 @@ const { errorHandler, fileError, internal } = require('../middleware/errors');
 
 const _logsPath = `${__dirname}/../logs/`;
 
+// The log root has one subdirectory per kind of log the server writes, and
+// each mounted instance reads exactly one of them (issue #84). Keeping the
+// list here means a misspelled or defaulted kind fails at mount time instead
+// of silently serving a directory that can never exist.
+const LOG_KINDS = ['data-recorders', 'simulations', 'test-campaigns'];
+
 // ---------------------------------------------------------------------------
 // Validation schemas for the log endpoints (issue #10)
 // ---------------------------------------------------------------------------
@@ -18,7 +24,12 @@ const _logsPath = `${__dirname}/../logs/`;
 // delete the logs the product itself writes.
 const logFileNameParam = fileNameParam('.log', generatedFileNameMaxLength('.log'));
 
-const createRouter = (appLog = true) => {
+const createRouter = (appLog) => {
+  if (!LOG_KINDS.includes(appLog)) {
+    throw new TypeError(
+      `Unknown log kind: ${String(appLog)}. Expected one of: ${LOG_KINDS.join(', ')}`
+    );
+  }
   let router = express.Router();
   let logsPath = `${_logsPath}${appLog}/`;
 
