@@ -1,6 +1,4 @@
 const mongoose = require('mongoose');
-mongoose.set('useFindAndModify', false);
-mongoose.set('useUnifiedTopology', true);
 // Schemas
 const SensorSchema = require('./schemas/SensorSchema');
 const ActuatorSchema = require('./schemas/ActuatorSchema');
@@ -30,7 +28,6 @@ ENACTDB.prototype.connect = function (callback) {
 
   const connectOptions = {
     dbName: this.dbName,
-    useNewUrlParser: true,
     autoIndex: false,
   };
 
@@ -39,21 +36,23 @@ ENACTDB.prototype.connect = function (callback) {
     connectOptions['pass'] = this.auth.password;
   }
 
-  mongoose.connect(connString, connectOptions, (error) => {
-    if (error) {
+  mongoose.connect(connString, connectOptions).then(
+    () => {
+      if (mongoose.connection.readyState !== 1) {
+        console.error(
+          `[ENACTDB] connect resolved while readyState=${mongoose.connection.readyState}`
+        );
+        return callback(new Error('database connection did not reach the connected state'));
+      }
+      console.log('[ENACTDB] New connection to database has been established!');
+      this.isConnected = true;
+      return callback(null);
+    },
+    (error) => {
       console.error('[ENACTDB] ', error);
       return callback(error);
     }
-    if (mongoose.connection.readyState !== 1) {
-      console.error(
-        `[ENACTDB] connect resolved while readyState=${mongoose.connection.readyState}`
-      );
-      return callback(new Error('database connection did not reach the connected state'));
-    }
-    console.log('[ENACTDB] New connection to database has been established!');
-    this.isConnected = true;
-    return callback(null);
-  });
+  );
 };
 
 /**
@@ -64,7 +63,14 @@ ENACTDB.prototype.connect = function (callback) {
  */
 ENACTDB.prototype.close = function (callback) {
   console.log('[ENACTDB] Going to close the connection');
-  mongoose.disconnect(callback);
+  mongoose.disconnect().then(
+    () => {
+      if (typeof callback === 'function') callback(null);
+    },
+    (error) => {
+      if (typeof callback === 'function') callback(error);
+    }
+  );
 };
 
 module.exports = {

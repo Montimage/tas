@@ -43,18 +43,17 @@ const datasetUpdateBody = Joi.object({
   dataset: documentSchema(datasetFields).required(),
 }).required();
 
-router.get('/', validate({ query: datasetQuery }), dbConnector, function (req, res, next) {
+router.get('/', validate({ query: datasetQuery }), dbConnector, async function (req, res, next) {
   let page = req.query.page;
   if (!page) page = 0;
-  DatasetSchema.findDatasetsWithPagingOptions(null, page, (err2, datasets) => {
-    if (err2) {
-      next(databaseError(err2, 'Failed to get data set'));
-    } else {
-      res.send({
-        datasets,
-      });
-    }
-  });
+  try {
+    const datasets = await DatasetSchema.findDatasetsWithPagingOptions(null, page);
+    res.send({
+      datasets,
+    });
+  } catch (err2) {
+    next(databaseError(err2, 'Failed to get data set'));
+  }
 });
 
 /**
@@ -64,47 +63,52 @@ router.get(
   '/:datasetId',
   validate({ params: { datasetId: datasetIdParam } }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { datasetId } = req.params;
 
-    DatasetSchema.findOne({ id: datasetId }, (err2, dataset) => {
-      if (err2) {
-        next(databaseError(err2, 'Failed to get data set'));
-      } else if (!dataset) {
+    try {
+      const dataset = await DatasetSchema.findOne({ id: datasetId });
+      if (!dataset) {
         next(notFound('Data set not found'));
       } else {
         res.send({
           dataset,
         });
       }
-    });
+    } catch (err2) {
+      next(databaseError(err2, 'Failed to get data set'));
+    }
   }
 );
 
 // Add a new data set
-router.post('/', validate({ body: datasetCreateBody }), dbConnector, function (req, res, next) {
-  const { dataset } = req.body;
-  const { id, name, tags, description, source } = dataset;
-  const currentTime = Date.now();
-  const newdataset = new DatasetSchema({
-    id,
-    name,
-    tags,
-    description,
-    source,
-    createdAt: currentTime,
-    lastModified: currentTime,
-  });
-  newdataset.save((err, _dataset) => {
-    if (err) {
-      next(databaseError(err, 'Failed to save the data set'));
-    } else {
+router.post(
+  '/',
+  validate({ body: datasetCreateBody }),
+  dbConnector,
+  async function (req, res, next) {
+    const { dataset } = req.body;
+    const { id, name, tags, description, source } = dataset;
+    const currentTime = Date.now();
+    const newdataset = new DatasetSchema({
+      id,
+      name,
+      tags,
+      description,
+      source,
+      createdAt: currentTime,
+      lastModified: currentTime,
+    });
+    try {
+      const _dataset = await newdataset.save();
       res.send({
         dataset: _dataset,
       });
+    } catch (err) {
+      next(databaseError(err, 'Failed to save the data set'));
     }
-  });
-});
+  }
+);
 
 /**
  * Update a data set
@@ -113,23 +117,21 @@ router.post(
   '/:datasetId',
   validate({ params: { datasetId: datasetIdParam }, body: datasetUpdateBody }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { dataset } = req.body;
     const { datasetId } = req.params;
 
-    DatasetSchema.findOneAndUpdate(
-      { id: datasetId },
-      { ...dataset, lastModified: Date.now() },
-      (err, ts) => {
-        if (err) {
-          next(databaseError(err, 'Failed to save the data set'));
-        } else {
-          res.send({
-            dataset: ts,
-          });
-        }
-      }
-    );
+    try {
+      const ts = await DatasetSchema.findOneAndUpdate(
+        { id: datasetId },
+        { ...dataset, lastModified: Date.now() }
+      );
+      res.send({
+        dataset: ts,
+      });
+    } catch (err) {
+      next(databaseError(err, 'Failed to save the data set'));
+    }
   }
 );
 
@@ -140,24 +142,22 @@ router.delete(
   '/:datasetId',
   validate({ params: { datasetId: datasetIdParam } }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { datasetId } = req.params;
 
-    DatasetSchema.findOneAndDelete({ id: datasetId }, (err, ret) => {
-      if (err) {
-        next(databaseError(err, 'Failed to delete the data set'));
-      } else {
-        EventSchema.deleteMany({ datasetId }, (err2) => {
-          if (err2) {
-            next(databaseError(err2, 'Failed to delete all the event of the deleted dataset'));
-          } else {
-            res.send({
-              result: ret,
-            });
-          }
-        });
+    try {
+      const ret = await DatasetSchema.findOneAndDelete({ id: datasetId });
+      try {
+        await EventSchema.deleteMany({ datasetId });
+      } catch (err2) {
+        return next(databaseError(err2, 'Failed to delete all the event of the deleted dataset'));
       }
-    });
+      res.send({
+        result: ret,
+      });
+    } catch (err) {
+      next(databaseError(err, 'Failed to delete the data set'));
+    }
   }
 );
 

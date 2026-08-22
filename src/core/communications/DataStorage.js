@@ -68,16 +68,21 @@ class DataStorage {
    * Save data to database
    * @param {Object} data The data to be saved into the database
    */
-  saveEvent(data) {
-    const rcData = new EventSchema(data);
-    rcData.save();
+  async saveEvent(data) {
+    try {
+      const rcData = new EventSchema(data);
+      await rcData.save();
+    } catch (err) {
+      this.logger.error('[DataStorage] Cannot save event:', err);
+    }
   }
 
-  saveDataset(dataset) {
+  async saveDataset(dataset) {
     const currentTime = Date.now();
-    DatasetSchema.findOne({ id: dataset.id }, (err, ds) => {
+    try {
+      const ds = await DatasetSchema.findOne({ id: dataset.id });
       if (ds) {
-        DatasetSchema.findByIdAndUpdate(ds._id, dataset);
+        await DatasetSchema.findByIdAndUpdate(ds._id, dataset);
       } else {
         const newDS = new DatasetSchema({
           ...dataset,
@@ -85,38 +90,41 @@ class DataStorage {
           lastModified: currentTime,
           source: dataset.source ? dataset.source : 'RECORDED',
         });
-        newDS.save();
+        await newDS.save();
         this.logger.log('[DataStorage] A new dataset has been created: ', dataset);
       }
-    });
+    } catch (err) {
+      this.logger.error(`[DataStorage] Cannot save dataset ${dataset.id}:`, err);
+    }
   }
 
-  saveReport(report) {
-    ReportSchema.findOne({ id: report.id }, (err, rp) => {
+  async saveReport(report) {
+    try {
+      const rp = await ReportSchema.findOne({ id: report.id });
       if (rp) {
         this.logger.log('[DataStorage] Going to update a report: ', report);
-        ReportSchema.findOneAndUpdate({ id: report.id }, report);
+        await ReportSchema.findOneAndUpdate({ id: report.id }, report);
       } else {
         this.logger.log('[DataStorage] Going to add a new report: ', report);
         const newReport = new ReportSchema(report);
-        newReport.save();
+        await newReport.save();
         this.logger.log('[DataStorage] A new report has been created');
       }
-    });
+    } catch (err) {
+      this.logger.error('[DataStorage] Cannot save report:', err);
+    }
   }
 
   getAllEvents(datasetId, startTime, endTime, callback) {
     EventSchema.findEventsBetweenTimes(
       { datasetId },
       startTime ? startTime : 0,
-      endTime ? endTime : Date.now(),
-      (err, events) => {
-        if (err) {
-          this.logger.error('[DataStorage] Cannot get events!', datasetId, err);
-          return callback(err);
-        } else {
-          return callback(null, events);
-        }
+      endTime ? endTime : Date.now()
+    ).then(
+      (events) => callback(null, events),
+      (err) => {
+        this.logger.error('[DataStorage] Cannot get events!', datasetId, err);
+        return callback(err);
       }
     );
   }
@@ -125,8 +133,9 @@ class DataStorage {
     let { startTime, endTime } = timeConstraints;
     if (!startTime) startTime = 0;
     if (!endTime) endTime = Date.now();
-    EventSchema.findEventsBetweenTimes({ topic, datasetId }, startTime, endTime, (err, events) => {
-      if (err) {
+    EventSchema.findEventsBetweenTimes({ topic, datasetId }, startTime, endTime).then(
+      (events) => callback(null, events),
+      (err) => {
         this.logger.error(
           '[DataStorage] Cannot get events!',
           topic,
@@ -135,40 +144,38 @@ class DataStorage {
           err
         );
         return callback(err);
-      } else {
-        return callback(null, events);
       }
-    });
+    );
   }
 
-  getTestCampaignById(testCampaignId, callback) {
-    TestCampaignSchema.findOne({ id: testCampaignId }, (err, tc) => {
-      if (err) {
-        this.logger.error(`[DataStorage] Cannot get test campaign: ${testCampaignId}`, err);
-        return callback(err, null);
-      } else if (!tc) {
+  async getTestCampaignById(testCampaignId, callback) {
+    try {
+      const tc = await TestCampaignSchema.findOne({ id: testCampaignId });
+      if (!tc) {
         this.logger.error(
           `[DataStorage] Cannot get test campaign: ${testCampaignId}. TestCampaign is null`
         );
         return callback('Test Campaign is NULL', null);
-      } else {
-        return callback(null, tc);
       }
-    });
+      return callback(null, tc);
+    } catch (err) {
+      this.logger.error(`[DataStorage] Cannot get test campaign: ${testCampaignId}`, err);
+      return callback(err, null);
+    }
   }
 
-  getTestCaseById(testCaseId, callback) {
-    TestCaseSchema.findOne({ id: testCaseId }, (err, tc) => {
-      if (err) {
-        this.logger.error(`[DataStorage] Cannot get test Case: ${testCaseId}`, err);
-        return callback(err, null);
-      } else if (!tc) {
+  async getTestCaseById(testCaseId, callback) {
+    try {
+      const tc = await TestCaseSchema.findOne({ id: testCaseId });
+      if (!tc) {
         this.logger.error(`[DataStorage] Cannot get test Case: ${testCaseId}. TestCase is null`);
         return callback('Test Case is NULL', null);
-      } else {
-        return callback(null, tc);
       }
-    });
+      return callback(null, tc);
+    } catch (err) {
+      this.logger.error(`[DataStorage] Cannot get test Case: ${testCaseId}`, err);
+      return callback(err, null);
+    }
   }
   /**
    * Disconnect with the database

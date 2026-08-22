@@ -44,7 +44,7 @@ const reportBody = Joi.object({
   .required();
 
 // Get all the reports
-router.get('/', validate({ query: reportQuery }), dbConnector, function (req, res, next) {
+router.get('/', validate({ query: reportQuery }), dbConnector, async function (req, res, next) {
   let options = {};
   const { topologyFileName, testCampaignId } = req.query;
   if (topologyFileName) {
@@ -54,69 +54,65 @@ router.get('/', validate({ query: reportQuery }), dbConnector, function (req, re
     options['testCampaignId'] = testCampaignId;
   }
 
-  ReportSchema.findReportsWithOptions(options, (err2, reports) => {
-    if (err2) {
-      next(databaseError(err2, 'Failed to get reports'));
-    } else {
-      res.send({
-        reports,
-      });
-    }
-  });
+  try {
+    const reports = await ReportSchema.findReportsWithOptions(options);
+    res.send({
+      reports,
+    });
+  } catch (err2) {
+    next(databaseError(err2, 'Failed to get reports'));
+  }
 });
 
-const updateReportScore = (report, res, next) => {
+const updateReportScore = async (report, res, next) => {
   const { originalDatasetId, newDatasetId, startTime, endTime, score, _id, evaluationParameters } =
     report;
-  EventSchema.findEventsBetweenTimes(
-    { datasetId: originalDatasetId },
-    startTime,
-    endTime,
-    (err3, originalEvents) => {
-      if (err3) {
-        next(databaseError(err3, 'Cannot get the original events of the report'));
-      } else {
-        EventSchema.findEventsWithOptions({ datasetId: newDatasetId }, (err4, newEvents) => {
-          if (err4) {
-            next(databaseError(err4, 'Cannot get the new events of the report'));
-          } else {
-            let newScore = score;
-            if (evaluationParameters) {
-              const { threshold, eventType, metricType } = evaluationParameters;
-              newScore = evalulate(originalEvents, newEvents, eventType, metricType, threshold);
-            } else {
-              newScore = evalulate(originalEvents, newEvents);
-            }
-            // Going to save the score into the report
-            ReportSchema.findByIdAndUpdate(
-              _id,
-              {
-                score: newScore,
-                evaluationParameters: evaluationParameters
-                  ? evaluationParameters
-                  : {
-                      eventType: ALL_EVENTS,
-                      metricType: METRIC_VALUE_TIMESTAMP,
-                      threshold: THRESHOLD_FLEXIBLE,
-                    },
-              },
-              { new: true },
-              (err5, ret) => {
-                if (err5) {
-                  next(databaseError(err5, 'Cannot update the score of the report'));
-                } else {
-                  console.log(`Report ${report._id} has score of ${newScore}`);
-                  res.send({
-                    report: ret,
-                  });
-                }
-              }
-            );
-          }
-        });
-      }
-    }
-  );
+  let originalEvents;
+  let newEvents;
+  try {
+    originalEvents = await EventSchema.findEventsBetweenTimes(
+      { datasetId: originalDatasetId },
+      startTime,
+      endTime
+    );
+  } catch (err3) {
+    return next(databaseError(err3, 'Cannot get the original events of the report'));
+  }
+  try {
+    newEvents = await EventSchema.findEventsWithOptions({ datasetId: newDatasetId });
+  } catch (err4) {
+    return next(databaseError(err4, 'Cannot get the new events of the report'));
+  }
+  let newScore = score;
+  if (evaluationParameters) {
+    const { threshold, eventType, metricType } = evaluationParameters;
+    newScore = evalulate(originalEvents, newEvents, eventType, metricType, threshold);
+  } else {
+    newScore = evalulate(originalEvents, newEvents);
+  }
+  // Going to save the score into the report
+  try {
+    const ret = await ReportSchema.findByIdAndUpdate(
+      _id,
+      {
+        score: newScore,
+        evaluationParameters: evaluationParameters
+          ? evaluationParameters
+          : {
+              eventType: ALL_EVENTS,
+              metricType: METRIC_VALUE_TIMESTAMP,
+              threshold: THRESHOLD_FLEXIBLE,
+            },
+      },
+      { returnDocument: 'after' }
+    );
+    console.log(`Report ${report._id} has score of ${newScore}`);
+    res.send({
+      report: ret,
+    });
+  } catch (err5) {
+    next(databaseError(err5, 'Cannot update the score of the report'));
+  }
 };
 
 /**
@@ -126,13 +122,11 @@ router.get(
   '/:reportId',
   validate({ params: { reportId: reportIdParam } }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { reportId } = req.params;
 
-    ReportSchema.findOne({ id: reportId }, (err2, report) => {
-      if (err2) {
-        return next(databaseError(err2, 'Failed to get report'));
-      }
+    try {
+      const report = await ReportSchema.findOne({ id: reportId });
       if (!report) {
         return next(notFound('Report not found'));
       }
@@ -143,7 +137,9 @@ router.get(
         });
       }
       return updateReportScore(report, res, next);
-    });
+    } catch (err2) {
+      return next(databaseError(err2, 'Failed to get report'));
+    }
   }
 );
 
@@ -154,13 +150,13 @@ router.post(
   '/:reportId',
   validate({ params: { reportId: reportIdParam }, body: reportBody }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { report, newScore } = req.body;
     const { reportId } = req.params;
-    ReportSchema.findByIdAndUpdate(reportId, report, { new: true }, (err, ts) => {
-      if (err) {
-        return next(databaseError(err, 'Failed to save a report'));
-      }
+    try {
+      const ts = await ReportSchema.findByIdAndUpdate(reportId, report, {
+        returnDocument: 'after',
+      });
       if (!ts) {
         return next(notFound('Report not found'));
       }
@@ -170,7 +166,9 @@ router.post(
         });
       }
       return updateReportScore(ts, res, next);
-    });
+    } catch (err) {
+      return next(databaseError(err, 'Failed to save a report'));
+    }
   }
 );
 
@@ -181,18 +179,17 @@ router.delete(
   '/:reportId',
   validate({ params: { reportId: reportIdParam } }),
   dbConnector,
-  function (req, res, next) {
+  async function (req, res, next) {
     const { reportId } = req.params;
 
-    ReportSchema.findByIdAndDelete(reportId, (err, ret) => {
-      if (err) {
-        next(databaseError(err, 'Failed to delete a report'));
-      } else {
-        res.send({
-          result: ret,
-        });
-      }
-    });
+    try {
+      const ret = await ReportSchema.findByIdAndDelete(reportId);
+      res.send({
+        result: ret,
+      });
+    } catch (err) {
+      next(databaseError(err, 'Failed to delete a report'));
+    }
   }
 );
 
