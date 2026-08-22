@@ -47,6 +47,31 @@ jobs:
       - name: Run the full test suite
         run: npm test
 
+  dependency-audit:
+    name: Production dependency advisories (high/critical gate)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Issue #71: `npm audit` never ran in CI, so a new high/critical advisory
+      # in the production manifest shipped silently. The gate fails on any
+      # unlisted high/critical advisory and on stale allowlist entries; every
+      # exception lives in .github/audit-allowlist.json with a written reason
+      # naming the issue that owns its fix.
+      - name: Gate on production dependency advisories
+        run: node scripts/audit-gate.js
+
   container:
     name: Container image runs as non-root
     runs-on: ubuntu-latest

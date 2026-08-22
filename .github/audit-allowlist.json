@@ -1,0 +1,14 @@
+{
+  "GHSA-vg7j-7cwx-8wgw": {
+    "reason": "Mongoose search injection — fixed only by the Mongoose 5 -> supported-major migration; upgrading is a breaking change tracked as its own task",
+    "dies_with": "#27"
+  },
+  "GHSA-wpg9-53fq-2r8h": {
+    "reason": "$nor sanitization gap in mongoose 5.x sanitizeFilter — same Mongoose major migration",
+    "dies_with": "#27"
+  },
+  "GHSA-664h-wqgq-64gw": {
+    "reason": "__proto__ dotted-path update casting in mongoose 5.x — same Mongoose major migration",
+    "dies_with": "#27"
+  }
+}
