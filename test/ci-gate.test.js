@@ -30,14 +30,36 @@ const topLevelBlock = (lines, key) => {
   return lines.slice(start + 1, end).join('\n');
 };
 
+/**
+ * Slice the body of a key nested inside a parent block (e.g. `push:` within
+ * `on:`), so an assertion about one trigger cannot be satisfied by another.
+ */
+const nestedBlock = (parentLines, key) => {
+  const start = parentLines.findIndex((l) => l.trim() === `${key}:`);
+  if (start === -1) return '';
+  const childIndent = parentLines[start].match(/^ */)[0].length;
+  let end = parentLines.length;
+  for (let i = start + 1; i < parentLines.length; i++) {
+    const line = parentLines[i];
+    if (line.trim() === '') continue;
+    if (/^\S/.test(line)) break;
+    if (line.match(/^ */)[0].length <= childIndent) {
+      end = i;
+      break;
+    }
+  }
+  return parentLines.slice(start + 1, end).join('\n');
+};
+
 // --- Issue #24: lint and the full test suite run on every pull request -------
 
 test('the CI gate workflow triggers on pull requests aimed at master', () => {
   const onBlock = topLevelBlock(ciLines, 'on');
   assert.match(onBlock, /^ {2}pull_request:\s*$/m, 'must declare a pull_request trigger');
+  const prBlock = nestedBlock(onBlock.split('\n'), 'pull_request');
   assert.match(
-    onBlock,
-    /^ {4}branches:\s*\['master'\]\s*$/m,
+    prBlock,
+    /branches:\s*\['master'\]\s*$/m,
     'the pull_request trigger must target master'
   );
 });
@@ -45,9 +67,10 @@ test('the CI gate workflow triggers on pull requests aimed at master', () => {
 test('the same checks run on pushes to the default branch', () => {
   const onBlock = topLevelBlock(ciLines, 'on');
   assert.match(onBlock, /^ {2}push:\s*$/m, 'must declare a push trigger');
-  // Both triggers must scope to master: exactly two branch pins, one per trigger.
-  const pins = onBlock.match(/branches:\s*\['master'\]/g) || [];
-  assert.ok(pins.length >= 2, 'both push and pull_request must target master');
+  // Scoped to the push sub-block: another trigger gaining a master pin must
+  // not satisfy this assertion while push itself lost its scoping.
+  const pushBlock = nestedBlock(onBlock.split('\n'), 'push');
+  assert.match(pushBlock, /^ {4}branches:\s*\['master'\]\s*$/m, 'push must target master');
 });
 
 test('lint runs on every pull request', () => {
