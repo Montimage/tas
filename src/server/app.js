@@ -276,6 +276,9 @@ module.exports = app;
 
 if (require.main === module) {
   var _server = app.listen(app.get('port'), config.host, function () {
+    // Readiness signal for the container health check (issue #45): the
+    // /api/health endpoint reports this flag once startup has completed.
+    app.set('ready', true);
     console.log(
       `[SERVER] Test and Simulation Server started on: http://${config.host}:${config.port}`
     );

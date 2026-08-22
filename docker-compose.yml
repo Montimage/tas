@@ -1,0 +1,123 @@
+# TaS composed deployment (issue #45).
+#
+# Three independently restartable services on one compose network:
+#
+#   broker   MQTT broker (eclipse-mosquitto). Publishes only the
+#            authenticated 1883 listener; the anonymous internal listener
+#            (1884) is reachable from inside the composition's network only.
+#   app      The TaS application — this repository's image. Talks to the
+#            broker over the internal listener via TAS_MQTT_HOST/TAS_MQTT_PORT.
+#   nodered  The Node-RED flow editor with the demo flow preloaded. Its flow
+#            resolves the broker through the same environment variables.
+#
+# Every long-running service declares a health check and restarts
+# (`unless-stopped`) on its own: `docker compose restart app` touches nothing
+# else. `docker compose up -d` is the whole quick start.
+#
+# Credentials: the composition seeds a development broker password file on
+# first start (change them via .env — see README.md) and passes optional
+# application credentials through to the app.
+
+services:
+  # One-shot seeding of the broker password file into a shared volume, so the
+  # quick start needs no manual mosquitto_passwd step. The file holds scrypt
+  # hashes, never plaintext; it is created once and reused afterwards.
+  broker-init:
+    image: eclipse-mosquitto:2.1-alpine
+    restart: 'no'
+    volumes:
+      - broker-passwd:/run/mosquitto
+    environment:
+      MOSQUITTO_USERNAME: ${MOSQUITTO_USERNAME:-tas}
+      MOSQUITTO_PASSWORD: ${MOSQUITTO_PASSWORD:-change-me-broker}
+    entrypoint:
+      - sh
+      - -c
+      - 'if [ ! -s /run/mosquitto/passwd ]; then mosquitto_passwd -c -b /run/mosquitto/passwd "$${MOSQUITTO_USERNAME}" "$${MOSQUITTO_PASSWORD}" && chmod 644 /run/mosquitto/passwd && echo "[broker-init] password file seeded"; else echo "[broker-init] password file already present"; fi'
+
+  broker:
+    image: eclipse-mosquitto:2.1-alpine
+    restart: unless-stopped
+    depends_on:
+      broker-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./deploy/compose/broker.conf:/mosquitto/config/mosquitto.conf:ro
+      - broker-data:/mosquitto/data
+      - broker-passwd:/run/mosquitto
+    ports:
+      # Only the authenticated listener is published. The anonymous internal
+      # listener (1884) stays inside the compose network by construction.
+      - '1883:1883'
+    healthcheck:
+      # Probe the anonymous loopback listener from inside the broker's own
+      # container: a broker that answers there is up and dispatching.
+      test:
+        [
+          'CMD-SHELL',
+          "mosquitto_sub -h 127.0.0.1 -p 1884 -t '$$SYS/broker/uptime' -C 1 -W 5 >/dev/null || exit 1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 10s
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      broker:
+        condition: service_healthy
+    environment:
+      # Core clients resolve their broker endpoint through these (see
+      # src/core/utils/mqtt-endpoint.js): model documents keep their
+      # localhost defaults; the container overrides them at runtime.
+      TAS_MQTT_HOST: broker
+      TAS_MQTT_PORT: '1884'
+      # Optional application credentials — provisioned via .env for real use,
+      # safe to leave empty for a throwaway local stack.
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      AUTH_ADMIN_USERNAME: ${AUTH_ADMIN_USERNAME:-admin}
+      AUTH_ADMIN_PASSWORD_HASH: ${AUTH_ADMIN_PASSWORD_HASH:-}
+    ports:
+      - '3004:3004'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q -O- http://127.0.0.1:$${SERVER_PORT:-3004}/api/health >/dev/null 2>&1 || exit 1',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  nodered:
+    image: nodered/node-red:latest
+    restart: unless-stopped
+    depends_on:
+      broker:
+        condition: service_healthy
+    environment:
+      TAS_MQTT_HOST: broker
+      TAS_MQTT_PORT: '1884'
+    volumes:
+      - ./node-red-flows/202402-temperature-controller.json:/data/flows.json:ro
+      - nodered-data:/data
+    ports:
+      - '1880:1880'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "require(''http'').get(''http://127.0.0.1:1880/'',r=>process.exit(r.statusCode===200?0:1)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 6
+      start_period: 30s
+
+volumes:
+  broker-data:
+  broker-passwd:
+  nodered-data:
