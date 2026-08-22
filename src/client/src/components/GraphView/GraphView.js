@@ -1,11 +1,11 @@
-import React from "react";
-import * as d3 from "d3";
+import React from 'react';
+import * as d3 from 'd3';
 
-import { connect } from "react-redux";
-import { requestStats } from "../../actions";
-import { isDataGenerator } from "../../utils";
-import graphConfig from "./GraphConfig";
-import CustomNode from "./CustomNode";
+import { connect } from 'react-redux';
+import { requestStats } from '../../actions';
+import { isDataGenerator } from '../../utils';
+import graphConfig from './GraphConfig';
+import CustomNode from './CustomNode';
 
 const NODE_BOX = 44;
 
@@ -29,7 +29,7 @@ const buildGraphData = (model, stats) => {
     nodes.push({
       id: thing.id,
       name: thing.name,
-      devType: "GATEWAY",
+      devType: 'GATEWAY',
       stats: thingStats,
     });
     const { sensors, actuators } = thing;
@@ -37,14 +37,12 @@ const buildGraphData = (model, stats) => {
       for (let sIndex = 0; sIndex < sensors.length; sIndex++) {
         const sensor = sensors[sIndex];
         const nodeID = `${thing.id}-${sensor.id}`;
-        const sensorStats = thingStats
-          ? getElementById(sensor.id, thingStats.sensorStats)
-          : null;
+        const sensorStats = thingStats ? getElementById(sensor.id, thingStats.sensorStats) : null;
         const numberOfData = sensorStats ? sensorStats.numberOfSentData : 0;
         nodes.push({
           id: nodeID,
           name: sensor.name,
-          devType: "SENSOR",
+          devType: 'SENSOR',
           stats: sensorStats,
         });
         links.push({ source: nodeID, target: thing.id, numberOfData });
@@ -57,17 +55,15 @@ const buildGraphData = (model, stats) => {
         const actuatorStats = thingStats
           ? getElementById(actuator.id, thingStats.actuatorStats)
           : null;
-        const numberOfData = actuatorStats
-          ? actuatorStats.numberOfReceivedData
-          : 0;
+        const numberOfData = actuatorStats ? actuatorStats.numberOfReceivedData : 0;
         if (actuatorStats) {
-          actuatorStats["status"] = thingStats.status;
-          actuatorStats["startedTime"] = thingStats.startedTime;
+          actuatorStats['status'] = thingStats.status;
+          actuatorStats['startedTime'] = thingStats.startedTime;
         }
         nodes.push({
           id: nodeID,
           name: actuator.name,
-          devType: "ACTUATOR",
+          devType: 'ACTUATOR',
           stats: actuatorStats,
         });
         links.push({
@@ -165,32 +161,34 @@ export class GraphView extends React.Component {
     this.simulation = d3
       .forceSimulation(this.simNodes)
       .force(
-        "link",
+        'link',
         d3
           .forceLink(this.simLinks)
           .id((d) => String(d.id))
           .distance(120)
       )
-      .force("charge", d3.forceManyBody().strength(-250))
+      .force('charge', d3.forceManyBody().strength(-250))
       .force(
-        "collide",
-        d3.forceCollide().radius(NODE_BOX / 2).iterations(2)
+        'collide',
+        d3
+          .forceCollide()
+          .radius(NODE_BOX / 2)
+          .iterations(2)
       )
-      .force(
-        "center",
-        d3.forceCenter(graphConfig.width / 2, graphConfig.height / 2)
-      )
-      .on("tick", () => this.handleTick());
+      .force('center', d3.forceCenter(graphConfig.width / 2, graphConfig.height / 2))
+      .on('tick', () => this.handleTick());
     return this.simulation;
   }
 
   handleTick() {
     for (const node of this.simNodes) {
       const el = this.nodeEls.get(String(node.id));
-      if (el) el.setAttribute("transform", `translate(${node.x},${node.y})`);
+      if (el) el.setAttribute('transform', `translate(${node.x},${node.y})`);
     }
     for (const link of this.simLinks) {
-      const el = this.linkEls.get(linkKey(link.source.id ?? link.source, link.target.id ?? link.target));
+      const el = this.linkEls.get(
+        linkKey(link.source.id ?? link.source, link.target.id ?? link.target)
+      );
       if (!el) continue;
       const x1 = link.source.x ?? 0;
       const y1 = link.source.y ?? 0;
@@ -202,17 +200,17 @@ export class GraphView extends React.Component {
       const trim = Math.min(NODE_BOX / 2, len / 2);
       const ex = x2 - (dx / len) * trim;
       const ey = y2 - (dy / len) * trim;
-      const line = el.querySelector("line");
+      const line = el.querySelector('line');
       if (line) {
-        line.setAttribute("x1", x1);
-        line.setAttribute("y1", y1);
-        line.setAttribute("x2", ex);
-        line.setAttribute("y2", ey);
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', ex);
+        line.setAttribute('y2', ey);
       }
-      const label = el.querySelector("text");
+      const label = el.querySelector('text');
       if (label) {
-        label.setAttribute("x", (x1 + ex) / 2);
-        label.setAttribute("y", (y1 + ey) / 2 - 4);
+        label.setAttribute('x', (x1 + ex) / 2);
+        label.setAttribute('y', (y1 + ey) / 2 - 4);
       }
     }
   }
@@ -234,69 +232,58 @@ export class GraphView extends React.Component {
     this.simNodes = data.nodes.map((node, index) => ({
       ...node,
       ...(this.positionCache.get(String(node.id)) ?? {
-        x:
-          graphConfig.width / 2 +
-          radius * Math.cos((2 * Math.PI * index) / count),
-        y:
-          graphConfig.height / 2 +
-          radius * Math.sin((2 * Math.PI * index) / count),
+        x: graphConfig.width / 2 + radius * Math.cos((2 * Math.PI * index) / count),
+        y: graphConfig.height / 2 + radius * Math.sin((2 * Math.PI * index) / count),
       }),
     }));
     this.simLinks = data.links.map((link) => ({ ...link }));
 
     const simulation = this.ensureSimulation();
     simulation.nodes(this.simNodes);
-    simulation.force("link").links(this.simLinks);
+    simulation.force('link').links(this.simLinks);
     simulation.alpha(1).restart();
 
-    const svgSel = d3.select(container).select("svg");
+    const svgSel = d3.select(container).select('svg');
     if (!svgSel.empty() && this.zoomAttachedEl !== svgSel.node()) {
       this.zoomAttachedEl = svgSel.node();
-      const zoomRoot = svgSel.select(".topology-zoom-root");
+      const zoomRoot = svgSel.select('.topology-zoom-root');
       const zoomBehavior = d3
         .zoom()
         .scaleExtent([graphConfig.minZoom, graphConfig.maxZoom])
         .filter((event) => {
           const target = event.target;
-          const onNode =
-            target &&
-            target.closest &&
-            target.closest(".topology-node");
-          if (onNode && event.type !== "wheel") {
+          const onNode = target && target.closest && target.closest('.topology-node');
+          if (onNode && event.type !== 'wheel') {
             return false;
           }
-          return (!event.ctrlKey || event.type === "wheel") && !event.button;
+          return (!event.ctrlKey || event.type === 'wheel') && !event.button;
         })
-        .on("zoom", (event) => {
-          zoomRoot.attr("transform", event.transform);
+        .on('zoom', (event) => {
+          zoomRoot.attr('transform', event.transform);
         });
-      svgSel.call(zoomBehavior).on("dblclick.zoom", null);
+      svgSel.call(zoomBehavior).on('dblclick.zoom', null);
     }
 
     if (!this.dragBehavior) {
       this.dragBehavior = d3
         .drag()
-        .on("start", (event, d) => {
+        .on('start', (event, d) => {
           if (!event.active) simulation.alphaTarget(0.3).restart();
           d.fx = d.x;
           d.fy = d.y;
         })
-        .on("drag", (event, d) => {
+        .on('drag', (event, d) => {
           d.fx = event.x;
           d.fy = event.y;
         })
-        .on("end", (event, d) => {
+        .on('end', (event, d) => {
           if (!event.active) simulation.alphaTarget(0);
         });
     }
-    const simNodeById = new Map(
-      this.simNodes.map((node) => [String(node.id), node])
-    );
-    container.querySelectorAll(".topology-node").forEach((el) => {
-      const id = el.getAttribute("data-id");
-      d3.select(el)
-        .datum(simNodeById.get(id))
-        .call(this.dragBehavior);
+    const simNodeById = new Map(this.simNodes.map((node) => [String(node.id), node]));
+    container.querySelectorAll('.topology-node').forEach((el) => {
+      const id = el.getAttribute('data-id');
+      d3.select(el).datum(simNodeById.get(id)).call(this.dragBehavior);
     });
   }
 
@@ -313,21 +300,19 @@ export class GraphView extends React.Component {
   render() {
     const { data, hoverId, selectedId } = this.state;
     if (!data) return <p>Empty model</p>;
+    const highlightCandidate =
+      graphConfig.nodeHighlightBehavior && hoverId !== null ? hoverId : selectedId;
     const activeId =
-      graphConfig.nodeHighlightBehavior && hoverId !== null
-        ? hoverId
-        : selectedId;
+      highlightCandidate != null && data.nodes.some((node) => node.id === highlightCandidate)
+        ? highlightCandidate
+        : null;
     const neighbours =
       activeId != null
         ? collectNeighbourhood(data.links, activeId, graphConfig.highlightDegree)
         : null;
     return (
       <div ref={this.containerRef}>
-        <svg
-          className="topology-svg"
-          width={graphConfig.width}
-          height={graphConfig.height}
-        >
+        <svg className="topology-svg" width={graphConfig.width} height={graphConfig.height}>
           <defs>
             <marker
               id="topology-arrow"
@@ -349,24 +334,16 @@ export class GraphView extends React.Component {
               markerHeight="8"
               orient="auto"
             >
-              <path
-                d="M0,-5L10,0L0,5"
-                fill={graphConfig.link.highlightColor}
-              />
+              <path d="M0,-5L10,0L0,5" fill={graphConfig.link.highlightColor} />
             </marker>
           </defs>
           <g className="topology-zoom-root">
             <g className="topology-links">
               {data.links.map((link) => {
                 const incident =
-                  activeId != null &&
-                  (link.source === activeId || link.target === activeId);
-                const dimmed =
-                  activeId != null &&
-                  graphConfig.linkHighlightBehavior &&
-                  !incident;
-                const highlighted =
-                  incident && graphConfig.linkHighlightBehavior;
+                  activeId != null && (link.source === activeId || link.target === activeId);
+                const dimmed = activeId != null && graphConfig.linkHighlightBehavior && !incident;
+                const highlighted = incident && graphConfig.linkHighlightBehavior;
                 return (
                   <g
                     key={linkKey(link.source, link.target)}
@@ -378,17 +355,19 @@ export class GraphView extends React.Component {
                   >
                     <line
                       stroke={
-                        highlighted
-                          ? graphConfig.link.highlightColor
-                          : graphConfig.link.color
+                        highlighted ? graphConfig.link.highlightColor : graphConfig.link.color
                       }
                       strokeWidth={graphConfig.link.strokeWidth}
-                      opacity={dimmed ? graphConfig.link.opacity * graphConfig.highlightOpacity : graphConfig.link.opacity}
+                      opacity={
+                        dimmed
+                          ? graphConfig.link.opacity * graphConfig.highlightOpacity
+                          : graphConfig.link.opacity
+                      }
                       markerEnd={
                         graphConfig.directed
                           ? highlighted
-                            ? "url(#topology-arrow-highlight)"
-                            : "url(#topology-arrow)"
+                            ? 'url(#topology-arrow-highlight)'
+                            : 'url(#topology-arrow)'
                           : undefined
                       }
                     />
@@ -397,7 +376,7 @@ export class GraphView extends React.Component {
                         fontSize="10"
                         fill="#555"
                         textAnchor="middle"
-                        style={{ pointerEvents: "none" }}
+                        style={{ pointerEvents: 'none' }}
                       >
                         {graphConfig.link.labelProperty(link)}
                       </text>
@@ -408,16 +387,13 @@ export class GraphView extends React.Component {
             </g>
             <g className="topology-nodes">
               {data.nodes.map((node) => {
-                const dimmed =
-                  activeId != null &&
-                  !neighbours.has(node.id) &&
-                  node.id !== activeId;
+                const dimmed = activeId != null && !neighbours.has(node.id) && node.id !== activeId;
                 return (
                   <g
                     key={node.id}
                     data-id={String(node.id)}
                     className="topology-node"
-                    style={{ cursor: "pointer" }}
+                    style={{ cursor: 'pointer' }}
                     opacity={dimmed ? graphConfig.highlightOpacity : 1}
                     onMouseOver={() => this.handleNodeHover(node.id)}
                     onMouseOut={() => this.handleNodeHover(null)}
@@ -438,9 +414,9 @@ export class GraphView extends React.Component {
                         style={{
                           width: NODE_BOX,
                           height: NODE_BOX,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
                         <CustomNode data={node} />
