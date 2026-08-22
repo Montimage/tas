@@ -221,7 +221,9 @@ TAS_IMAGE=montimage/tas:e2e node --test test/e2e/container-nonroot.test.js
 These assertions require the security fixes (path containment, CORS allowlist,
 body-size and rate limits, non-root image) to be present, and are enforced in
 CI on every push to `master` and every pull request via
-`.github/workflows/e2e-security.yml`.
+`.github/workflows/e2e-security.yml`, which also runs `npm run lint`. Updates
+for both dependency manifests (the server root and the dashboard client) are
+proposed weekly by Dependabot via `.github/dependabot.yml`.
 
 `npm test` runs everything under `test/`, including the end-to-end files, and
 is serialised with the same `--test-concurrency=1` for the same reason. Some

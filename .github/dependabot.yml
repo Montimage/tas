@@ -1,0 +1,26 @@
+# Issue #24 (AC5): automated dependency update proposals for both manifests.
+version: 2
+updates:
+  # Root manifest — the server runtime and its dev tooling.
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - 'minor'
+          - 'patch'
+
+  # Dashboard client manifest (src/client/package.json).
+  - package-ecosystem: 'npm'
+    directory: '/src/client'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - 'minor'
+          - 'patch'
