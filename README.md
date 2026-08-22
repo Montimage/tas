@@ -174,6 +174,11 @@ stored in the `broker-data` volume).
 
 ## Install from source code
 
+The runtime is pinned to the current Node LTS (**24**): `.nvmrc` carries the
+version for nvm/fnm/mise to select automatically, and both manifests declare it
+under `engines`, so installing on anything older prints a clear EBADENGINE
+warning (`nvm install` in the repo root picks the pinned version up).
+
 ```
 cd tas/
 npm install

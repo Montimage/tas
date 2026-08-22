@@ -22,9 +22,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          # Match the runtime the shipped container image uses, so the gate
+          # Run on the runtime the repository pins (.nvmrc), so the gate
           # exercises the same Node major as a deployed instance.
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -58,7 +58,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -104,7 +104,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies

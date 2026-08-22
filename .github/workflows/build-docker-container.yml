@@ -20,8 +20,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          # Match the runtime the shipped container image uses.
-          node-version: '22'
+          # Run on the runtime the repository pins (.nvmrc) — the same Node
+          # major the shipped container image uses.
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies

@@ -39,6 +39,9 @@
   ],
   "author": "Montimage",
   "license": "ISC",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "dependencies": {
     "compression": "^1.7.4",
     "cookie-parser": "~1.4.3",
