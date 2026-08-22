@@ -46,9 +46,13 @@ services:
       - broker-data:/mosquitto/data
       - broker-passwd:/run/mosquitto
     ports:
-      # Only the authenticated listener is published. The anonymous internal
-      # listener (1884) stays inside the compose network by construction.
-      - '1883:1883'
+      # Only the authenticated listener is published, and only on the host's
+      # loopback interface: the quick start is a local stack by default and
+      # the README forbids publishing these ports to 0.0.0.0. Operators
+      # override the bind address for trusted-network deployments. The
+      # anonymous internal listener (1884) stays inside the compose network
+      # by construction.
+      - '127.0.0.1:1883:1883'
     healthcheck:
       # Probe the anonymous loopback listener from inside the broker's own
       # container: a broker that answers there is up and dispatching.
@@ -80,7 +84,7 @@ services:
       AUTH_ADMIN_USERNAME: ${AUTH_ADMIN_USERNAME:-admin}
       AUTH_ADMIN_PASSWORD_HASH: ${AUTH_ADMIN_PASSWORD_HASH:-}
     ports:
-      - '3004:3004'
+      - '127.0.0.1:3004:3004'
     healthcheck:
       test:
         [
@@ -105,7 +109,7 @@ services:
       - ./node-red-flows/202402-temperature-controller.json:/data/flows.json:ro
       - nodered-data:/data
     ports:
-      - '1880:1880'
+      - '127.0.0.1:1880:1880'
     healthcheck:
       test:
         [
