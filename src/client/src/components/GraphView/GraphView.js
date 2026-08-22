@@ -109,7 +109,6 @@ export class GraphView extends React.Component {
     super(props);
     const { model, stats } = this.props;
     this.containerRef = React.createRef();
-    this.svgEl = null;
     this.zoomAttachedEl = null;
     this.nodeEls = new Map();
     this.linkEls = new Map();
@@ -259,11 +258,11 @@ export class GraphView extends React.Component {
         .scaleExtent([graphConfig.minZoom, graphConfig.maxZoom])
         .filter((event) => {
           const target = event.target;
-          if (
+          const onNode =
             target &&
             target.closest &&
-            target.closest(".topology-node")
-          ) {
+            target.closest(".topology-node");
+          if (onNode && event.type !== "wheel") {
             return false;
           }
           return (!event.ctrlKey || event.type === "wheel") && !event.button;
