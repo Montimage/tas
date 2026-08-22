@@ -1,5 +1,6 @@
 import React from "react";
-import { List, Avatar, PageHeader, Button, Switch } from "antd";
+import { List, Avatar, Button, Switch } from "antd";
+import PageHeader from "../../PageHeader";
 import {
   BugOutlined,
   PartitionOutlined,

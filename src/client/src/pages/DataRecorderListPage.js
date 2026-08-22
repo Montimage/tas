@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button, Menu, Dropdown, Table } from "antd";
+import { Button, Dropdown, Table } from "antd";
 import {
   ClearOutlined,
   ImportOutlined,
@@ -128,32 +128,40 @@ class DataRecorderListPage extends Component {
         pageTitle="DataRecorder"
         pageSubTitle="DataRecorder will collect data from the target environment and store the data into the DataStorage and also can forward the data into the simulation environment"
       >
+        {/* Hidden file input lives outside the antd Menu: v5+ menus take a
+            plain `items` array and would not render arbitrary children. */}
+        <input
+          type="file"
+          onChange={(event) => this.onUpload(event.target.files)}
+          ref={(input) => {
+            this.inputFileDOM = input;
+          }}
+          style={{ display: "none" }}
+          accept=".json"
+          multiple={false}
+        />
         <Dropdown
-          overlay={
-            <Menu>
-              <Menu.Item key="DataRecorder:3">
-                <a href={`/data-recorders/new-DataRecorder-${Date.now()}`}>
-                  <ClearOutlined /> Create New
-                </a>
-              </Menu.Item>
-              <Menu.Item
-                key="DataRecorder:1"
-                onClick={() => this.inputFileDOM.click()}
-              >
-                <ImportOutlined /> Import From File
-                <input
-                  type="file"
-                  onChange={(event) => this.onUpload(event.target.files)}
-                  ref={(input) => {
-                    this.inputFileDOM = input;
-                  }}
-                  style={{ display: "none" }}
-                  accept=".json"
-                  multiple={false}
-                />
-              </Menu.Item>
-            </Menu>
-          }
+          menu={{
+            items: [
+              {
+                key: "DataRecorder:3",
+                label: (
+                  <a href={`/data-recorders/new-DataRecorder-${Date.now()}`}>
+                    <ClearOutlined /> Create New
+                  </a>
+                ),
+              },
+              {
+                key: "DataRecorder:1",
+                label: (
+                  <span>
+                    <ImportOutlined /> Import From File
+                  </span>
+                ),
+                onClick: () => this.inputFileDOM.click(),
+              },
+            ],
+          }}
           trigger={["click"]}
         >
           <Button

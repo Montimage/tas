@@ -21,12 +21,12 @@ class SessionExpiredModal extends Component {
     return (
       <Modal
         title="Your session has expired"
-        visible={sessionExpired && !authenticated}
+        open={sessionExpired && !authenticated}
         footer={null}
         closable={false}
         maskClosable={false}
         keyboard={false}
-        destroyOnClose
+        destroyOnHidden
       >
         <Paragraph>
           Sign in again to carry on. Nothing on the page behind this window has

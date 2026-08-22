@@ -98,7 +98,7 @@ class GraphView extends React.Component {
     }
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     const isDG = isDataGenerator();
     const { model, stats } = newProps;
     const data = buildGraphData(model, stats);

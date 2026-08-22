@@ -1,15 +1,15 @@
 import React from "react";
 import { Form, DatePicker } from "antd";
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 
 const FormTimeRangeItem = ({ label, onChange, defaultValue, helpText = null }) => {
-  let startTime = moment();
-  let endTime = moment();
+  let startTime = dayjs();
+  let endTime = dayjs();
   if (defaultValue && defaultValue.length === 2) {
-    startTime = moment(defaultValue[0]);
-    endTime = moment(defaultValue[1]);
+    startTime = dayjs(defaultValue[0]);
+    endTime = dayjs(defaultValue[1]);
   }
   return (
     <Form.Item label={label} extra={helpText}>

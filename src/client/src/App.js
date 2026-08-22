@@ -1,14 +1,13 @@
 import React, { Component } from "react";
-import "antd/dist/antd.css";
 import { Layout, Spin } from "antd";
 import {
   BrowserRouter as Router,
-  Switch,
+  Routes,
   Route,
-  Redirect,
+  Navigate,
 } from "react-router-dom";
 
-import ErrorBoundary from "antd/lib/alert/ErrorBoundary";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { connect } from "react-redux";
 
 import { checkSession } from "./actions";
@@ -52,7 +51,10 @@ class App extends Component {
     if (checking) {
       return (
         <div style={{ textAlign: "center", marginTop: 60 }}>
-          <Spin tip="Loading..." />
+          {/* antd v5+ logs a console warning for `tip` on an unnested Spin,
+              so the label is rendered next to the spinner instead. */}
+          <Spin />
+          <div style={{ marginTop: 12 }}>Loading...</div>
         </div>
       );
     }
@@ -64,58 +66,33 @@ class App extends Component {
 
   renderRoutes() {
     return (
-      <Switch>
+      <Routes>
         <Route
-          exact
           path="/"
-          render={() => <Redirect to="/test-campaigns" />}
+          element={<Navigate to="/test-campaigns" replace />}
         />
-        <Route path="/test-campaigns/:testCampaignId">
-          <TestCampaignPage />
-        </Route>
-        <Route path="/logs/:tool">
-          <LogsPage message="This is the log file page" />
-        </Route>
-        <Route path="/test-campaigns">
-          <TestCampaignListPage />
-        </Route>
-        <Route path="/test-cases/:testCaseId">
-          <TestCasePage />
-        </Route>
-        <Route path="/test-cases">
-          <TestCaseListPage />
-        </Route>
-        <Route path="/data-sets/:datasetId">
-          <DatasetPage />
-        </Route>
-        <Route path="/data-sets">
-          <DatasetListPage />
-        </Route>
-        <Route path="/data-recorders/:dataRecorderId">
-          <DataRecorderPage />
-        </Route>
-        <Route path="/data-recorders">
-          <DataRecorderListPage />
-        </Route>
-        <Route path="/models/:modelId">
-          <ModelPage />
-        </Route>
-        <Route path="/models">
-          <ModelListPage />
-        </Route>
-        <Route path="/data-storage">
-          <DataStoragePage />
-        </Route>
-        <Route path="/simulation">
-          <SimulationPage />
-        </Route>
-        <Route path="/reports/:reportId">
-          <ReportPage />
-        </Route>
-        <Route path="/reports">
-          <ReportListPage />
-        </Route>
-      </Switch>
+        <Route
+          path="/test-campaigns/:testCampaignId"
+          element={<TestCampaignPage />}
+        />
+        <Route path="/logs/:tool" element={<LogsPage message="This is the log file page" />} />
+        <Route path="/test-campaigns" element={<TestCampaignListPage />} />
+        <Route path="/test-cases/:testCaseId" element={<TestCasePage />} />
+        <Route path="/test-cases" element={<TestCaseListPage />} />
+        <Route path="/data-sets/:datasetId" element={<DatasetPage />} />
+        <Route path="/data-sets" element={<DatasetListPage />} />
+        <Route
+          path="/data-recorders/:dataRecorderId"
+          element={<DataRecorderPage />}
+        />
+        <Route path="/data-recorders" element={<DataRecorderListPage />} />
+        <Route path="/models/:modelId" element={<ModelPage />} />
+        <Route path="/models" element={<ModelListPage />} />
+        <Route path="/data-storage" element={<DataStoragePage />} />
+        <Route path="/simulation" element={<SimulationPage />} />
+        <Route path="/reports/:reportId" element={<ReportPage />} />
+        <Route path="/reports" element={<ReportListPage />} />
+      </Routes>
     );
   }
 

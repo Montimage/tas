@@ -142,7 +142,7 @@ export default class Editor extends Component {
         }
     }
 
-    componentWillReceiveProps(newProps) {
+    UNSAFE_componentWillReceiveProps(newProps) {
         if (this.props.value !== newProps.value) {
             this.jsonEditor.set(newProps.value);
         }

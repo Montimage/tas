@@ -51,7 +51,7 @@ class SensorModal extends Component {
     return (
       <TSModal
         title={`Sensor ${sensorData.name}`}
-        visible={enable}
+        open={enable}
         onCancel={() => onClose()}
         footer={[
           <Button key="cancel" onClick={() => onClose()}>

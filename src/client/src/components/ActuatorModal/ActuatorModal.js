@@ -48,7 +48,7 @@ class ActuatorModal extends Component {
     return (
       <TSModal
         title={"Actuator"}
-        visible={enable}
+        open={enable}
         onCancel={() => onClose()}
         footer={
           [<Button key="cancel" onClick={() => onClose()}>

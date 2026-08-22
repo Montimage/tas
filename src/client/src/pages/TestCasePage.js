@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import moment from 'moment';
-import { Table, Menu, Dropdown, Button, Form } from "antd";
+import dayjs from "dayjs";
+import { Table, Dropdown, Button, Form } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
@@ -65,7 +65,7 @@ class TestCasePage extends Component {
     this.props.fetchDatasets();
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     const { testCase } = newProps;
     if (testCase) {
       const {
@@ -209,7 +209,7 @@ class TestCasePage extends Component {
         title: "Created At",
         key: "data",
         sorter: (a, b) => a.createdAt - b.createdAt,
-        render: (ds) => moment(ds.createdAt).format('MMMM Do YYYY, h:mm:ss a'),
+        render: (ds) => dayjs(ds.createdAt).format('MMMM Do YYYY, h:mm:ss a'),
         width: 300,
       },
       {
@@ -218,32 +218,25 @@ class TestCasePage extends Component {
         key: "data",
         render: (ds) => (
           <Dropdown
-            overlay={
-              <Menu>
-                {ds.key > 0 && (
-                  <Menu.Item
-                    key="moveup"
-                    onClick={() => this.moveDatasetUp(ds.key)}
-                  >
-                    Move Up
-                  </Menu.Item>
-                )}
-                {ds.key < dataSource.length - 1 && (
-                  <Menu.Item
-                    key="movedown"
-                    onClick={() => this.moveDatasetDown(ds.key)}
-                  >
-                    Move Down
-                  </Menu.Item>
-                )}
-                <Menu.Item
-                  key="delete"
-                  onClick={() => this.removeDataset(ds.key)}
-                >
-                  Remove
-                </Menu.Item>
-              </Menu>
-            }
+            menu={{
+              items: [
+                ds.key > 0 && {
+                  key: "moveup",
+                  label: "Move Up",
+                  onClick: () => this.moveDatasetUp(ds.key),
+                },
+                ds.key < dataSource.length - 1 && {
+                  key: "movedown",
+                  label: "Move Down",
+                  onClick: () => this.moveDatasetDown(ds.key),
+                },
+                {
+                  key: "delete",
+                  label: "Remove",
+                  onClick: () => this.removeDataset(ds.key),
+                },
+              ].filter(Boolean),
+            }}
           >
             <a
               className="ant-dropdown-link"

@@ -51,7 +51,7 @@ class EventModal extends Component {
     return (
       <TSModal
         title={"Event"}
-        visible={enable}
+        open={enable}
         onCancel={() => onCancel()}
         footer={footer}
       >

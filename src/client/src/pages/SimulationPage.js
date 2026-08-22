@@ -45,7 +45,7 @@ class SimulationPage extends Component {
     }, 3000);
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     if (!this.state.modelFileName && newProps.allModels) {
       this.setState({ modelFileName: newProps.allModels[0] });
     }

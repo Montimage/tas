@@ -46,7 +46,7 @@ class TestCampaignListPage extends Component {
     clearInterval(this.testCampaignStatusTimer);
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     if (newProps.devops) {
       this.setState(newProps.devops);
     }

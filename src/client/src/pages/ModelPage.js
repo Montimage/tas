@@ -561,7 +561,7 @@ class ModelPage extends Component {
     this.props.fetchSimulationStatus();
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     this.setState({
       tempModel: deepCloneObject(newProps.model),
     });

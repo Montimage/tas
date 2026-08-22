@@ -7,7 +7,7 @@ import {
 
 import EnergyForm from "./DataSourceForms/EnergyForm";
 import MultipleDataSources from "./DataSourceForms/MultipleDataSources";
-import { Button, Divider, Dropdown, Menu } from "antd";
+import { Button, Divider, Dropdown } from "antd";
 import { UpOutlined } from "@ant-design/icons";
 
 const initEnergy = () => ({
@@ -170,50 +170,46 @@ const DataGeneratorForm = ({ dataPath, dataSpecs, onDataChange }) => (
       onChange={(dPath, v) => onDataChange(dPath, v)}
     />
     <Dropdown
-      overlay={
-        <Menu>
-          <Menu.Item
-            key="1"
-            onClick={() => {
+      menu={{
+        items: [
+          {
+            key: "1",
+            label: "Boolean Data Type",
+            onClick: () => {
               const index = dataSpecs.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
               onDataChange(dPath, initBoolean());
-            }}
-          >
-            Boolean Data Type
-          </Menu.Item>
-          <Menu.Item
-            key="2"
-            onClick={() => {
+            },
+          },
+          {
+            key: "2",
+            label: "Enum Data Type",
+            onClick: () => {
               const index = dataSpecs.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
               onDataChange(dPath, initEnum());
-            }}
-          >
-            Enum Data Type
-          </Menu.Item>
-          <Menu.Item
-            key="3"
-            onClick={() => {
+            },
+          },
+          {
+            key: "3",
+            label: "Integer Data Type",
+            onClick: () => {
               const index = dataSpecs.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
               onDataChange(dPath, initInteger());
-            }}
-          >
-            Integer Data Type
-          </Menu.Item>
-          <Menu.Item
-            key="4"
-            onClick={() => {
+            },
+          },
+          {
+            key: "4",
+            label: "Float Data Type",
+            onClick: () => {
               const index = dataSpecs.sources.length;
               const dPath = `${dataPath}.sources[${index}]`;
               onDataChange(dPath, initFloat());
-            }}
-          >
-            Float Data Type
-          </Menu.Item>
-        </Menu>
-      }
+            },
+          },
+        ],
+      }}
       placement="topLeft"
     >
       <Button type="primary" style={{ margin: "20px" }}>

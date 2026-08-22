@@ -12,7 +12,7 @@ const SelectionModal = ({
 }) => (
   <TSModal
     title={title}
-    visible={enable}
+    open={enable}
     onCancel={() => onCancel()}
     footer={[]}
   >

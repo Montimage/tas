@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import moment from "moment";
+import dayjs from "dayjs";
 import { Table, Button } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
@@ -31,7 +31,7 @@ class ReportListPage extends Component {
         title: "Created At",
         key: "data",
         sorter: (a, b) => a.createdAt - b.createdAt,
-        render: (ds) => moment(ds.createdAt).format("MMMM Do YYYY, h:mm:ss a"),
+        render: (ds) => dayjs(ds.createdAt).format("MMMM Do YYYY, h:mm:ss a"),
         width: 270,
       },
       {

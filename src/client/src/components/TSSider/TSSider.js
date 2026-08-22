@@ -16,28 +16,13 @@ const TSSider = ({ defaultKey, items, rightSide, theme }) => (
       }
       defaultSelectedKeys={[`${defaultKey}`]}
       defaultOpenKeys={[`sub${defaultKey}`]}
-    >
-      {items.map((i) =>
-        i.action ? (
-          <Menu.Item key={i.key} onClick={i.action}>
-            {i.icon}
-            {i.text}
-          </Menu.Item>
-        ) : i.href ? (
-          <Menu.Item key={i.key}>
-            <a href={i.href}>
-              {i.icon}
-              {i.text}
-            </a>
-          </Menu.Item>
-        ) : (
-          <Menu.Item key={i.key}>
-            {i.icon}
-            {i.text}
-          </Menu.Item>
-        )
-      )}
-    </Menu>
+      items={items.map((i) => ({
+        key: i.key,
+        icon: i.icon,
+        label: i.href ? <a href={i.href}>{i.text}</a> : i.text,
+        onClick: i.action,
+      }))}
+    />
   </Sider>
 );
 

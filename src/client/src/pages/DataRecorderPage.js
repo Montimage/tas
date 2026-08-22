@@ -320,7 +320,7 @@ class DataRecorderPage extends Component {
     fetchDataStorage();
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     const { dataRecorder } = newProps;
     if (dataRecorder) {
       this.setState({
