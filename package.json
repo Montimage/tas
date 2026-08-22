@@ -64,7 +64,7 @@
     "eslint-plugin-react": "^7.34.0",
     "file-loader": "^5.1.0",
     "husky": "^9.1.0",
-    "lint-staged": "^15.2.0",
+    "lint-staged": "^17.3.0",
     "nodemon": "^3.1.14",
     "prettier": "^2.8.8"
   },
