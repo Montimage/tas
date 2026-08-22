@@ -25,10 +25,15 @@ RUN cd src/client && npm install && npm run build \
 # Copy supervisord.conf file
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Ship the committed broker policy in place of the distribution default
+# (issue #46): the access policy is stated in the repository, not inherited.
+COPY mosquitto.conf /etc/mosquitto/mosquitto.conf
+
 # Prepare runtime-writable locations for the unprivileged user
-RUN mkdir -p /var/lib/mosquitto /var/run/mosquitto /var/log \
+# (/run/mosquitto is where an operator mounts the broker password file).
+RUN mkdir -p /var/lib/mosquitto /run/mosquitto /var/log \
     src/server/logs/data-recorders src/server/logs/simulations src/server/logs/test-campaigns src/server/reports \
-    && chown -R node:node /usr/src/app /var/lib/mosquitto /var/run/mosquitto /var/log
+    && chown -R node:node /usr/src/app /var/lib/mosquitto /run/mosquitto /var/log
 # Run every supervised process as an unprivileged user
 USER node
 

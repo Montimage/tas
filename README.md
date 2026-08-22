@@ -38,8 +38,53 @@ A nodered server at the address: `http://127.0.0.1:1880`, and the nodered dashbo
 
 If you need other hosts on a **trusted private network** to reach the service, replace
 `127.0.0.1` with the machine's private interface address. Do not publish these ports to
-`0.0.0.0` or to the public internet, and keep in mind the MQTT broker and Node-RED
-listeners on the same container have no credential of their own.
+`0.0.0.0` or to the public internet, and keep in mind the Node-RED
+listener on the same container has no credential of its own. The MQTT broker
+does require authentication on its published port — see the next section.
+
+## MQTT broker access policy
+
+The broker is configured explicitly by [`mosquitto.conf`](mosquitto.conf)
+(issue #46) rather than by whatever default its distribution package ships:
+
+| Listener | Bound to                      | Access                                                                                                                      |
+| -------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `1883`   | all interfaces                | **Authenticated only.** Anonymous access is refused; credentials are checked against a password file you supply at runtime. |
+| `1884`   | loopback inside the container | Anonymous. Reachable only by processes running in the same container (TaS simulations, Node-RED flows).                     |
+
+### Provisioning the broker password file
+
+The password file is **never committed** to this repository or baked into the
+image — it is supplied through configuration like every other credential (the
+filename `mosquitto.passwd` is excluded by both `.gitignore` and
+`.dockerignore`).
+Generate one entry locally with the image's own `mosquitto_passwd`, then mount
+the file into `/run/mosquitto/passwd` when starting the container:
+
+```
+# Write username:hashed-password for the broker account into mosquitto.passwd.
+printf 'tas:change-me-broker' | docker run --rm -i "$TAS_IMAGE" \
+  sh -c 'cat > /tmp/plain && mosquitto_passwd -U /tmp/plain && cat /tmp/plain' \
+  > mosquitto.passwd
+
+docker run --name my-tas -d \
+  -p 127.0.0.1:1883:1883 -p 127.0.0.1:1880:1880 -p 127.0.0.1:3004:3004 \
+  -v "$PWD/mosquitto.passwd:/run/mosquitto/passwd:ro" \
+  -e SESSION_SECRET="$(openssl rand -hex 32)" \
+  -e AUTH_ADMIN_PASSWORD_HASH="$ADMIN_HASH" \
+  "$TAS_IMAGE"
+```
+
+External MQTT clients (sensors, gateways, test harnesses outside the container)
+connect to port 1883 with that username and password. Processes running inside
+the container can keep using the anonymous listener on port 1884 without any
+credential — point the model's broker connection at `localhost:1884`.
+
+Without a mounted password file the broker exits and reports the missing
+credential source loudly, and the supervisor keeps retrying — so an appliance
+cannot come up half-open, and mounting the file later brings the broker up
+without restarting anything. Retained messages survive container restarts
+(`persistence true`, stored under `/var/lib/mosquitto`).
 
 ## Install from source code
 
@@ -397,9 +442,11 @@ The API is authenticated, but the safe baseline is still defence in depth:
 - Bind published ports to loopback (`127.0.0.1`) or to a trusted private
   network interface rather than to `0.0.0.0`, unless the service is genuinely
   meant to be reachable from elsewhere.
-- The MQTT broker and Node-RED are **not** covered by any of this. They have no
-  credentials of their own, so anything that can reach their ports can still
-  publish, subscribe and edit flows — keep those ports off untrusted networks.
+- The MQTT broker requires authentication on its published port (1883) and
+  takes its credentials from a runtime-mounted password file — see
+  [MQTT broker access policy](#mqtt-broker-access-policy). Node-RED has no
+  credential of its own, so anything that can reach its port can still edit
+  flows — keep that port off untrusted networks.
 
 The quick-start `docker run` on this page already binds to loopback.
 
