@@ -18,6 +18,11 @@ import {
   addNewDatasetOK,
   deleteDatasetOK,
   setCurrentDataset,
+  requestDataset,
+  requestUpdateDataset,
+  requestAllDatasets,
+  requestAddNewDataset,
+  requestDeleteDataset,
 } from '../actions';
 
 function* handleRequestDataset(action) {
@@ -108,11 +113,11 @@ function* handleRequestDeleteDataset(action) {
 }
 
 function* watchDatasets() {
-  yield takeEvery('REQUEST_DATA_SET', handleRequestDataset);
-  yield takeEvery('REQUEST_UPDATE_DATA_SET', handleRequestUpdateDataset);
-  yield takeEvery('REQUEST_ALL_DATA_SETS', handleRequestAllDatasets);
-  yield takeEvery('REQUEST_ADD_NEW_DATA_SET', handleRequestAddNewDataset);
-  yield takeEvery('REQUEST_DELETE_DATA_SET', handleRequestDeleteDataset);
+  yield takeEvery(requestDataset, handleRequestDataset);
+  yield takeEvery(requestUpdateDataset, handleRequestUpdateDataset);
+  yield takeEvery(requestAllDatasets, handleRequestAllDatasets);
+  yield takeEvery(requestAddNewDataset, handleRequestAddNewDataset);
+  yield takeEvery(requestDeleteDataset, handleRequestDeleteDataset);
 }
 
 export default watchDatasets;

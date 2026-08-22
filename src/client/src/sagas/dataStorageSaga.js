@@ -13,7 +13,10 @@ import {
 import {
   setNotification,
   setDataStorage,
-  setDataStorageConnectionStatus
+  setDataStorageConnectionStatus,
+  requestDataStorage,
+  requestUpdateDataStorage,
+  requestTestDataStorageConnection
 } from '../actions';
 
 function* handleRequestDataStorage() {
@@ -53,9 +56,9 @@ function* handleRequestTestDataStorageConnection() {
 }
 
 function* watchRequestDataStorage() {
-  yield takeEvery('REQUEST_DATA_STORAGE', handleRequestDataStorage);
-  yield takeEvery('REQUEST_UPDATE_DATA_STORAGE', handleRequestUpdateDataStorage);
-  yield takeEvery('REQUEST_TEST_DATA_STORAGE_CONNECTION', handleRequestTestDataStorageConnection);
+  yield takeEvery(requestDataStorage, handleRequestDataStorage);
+  yield takeEvery(requestUpdateDataStorage, handleRequestUpdateDataStorage);
+  yield takeEvery(requestTestDataStorageConnection, handleRequestTestDataStorageConnection);
 }
 
 export default watchRequestDataStorage;

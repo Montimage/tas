@@ -14,11 +14,19 @@ import {
   updateModel
 } from '../api';
 import {
+  requestModel as requestModelAction,
+  requestAllModels as requestAllModelsAction,
+  requestDeleteModel as requestDeleteModelAction,
+  requestDuplicateModel as requestDuplicateModelAction,
+  requestAddNewModel,
+  requestUpdateModel,
+} from '../actions';
+import {
   setModel,
   setNotification,
-  setAllModels,  
-  deleteModelOK,  
-  duplicateModelOK,  
+  setAllModels,
+  deleteModelOK,
+  duplicateModelOK,
   addNewModelOK,
   updateModelOK
 } from '../actions';
@@ -99,12 +107,12 @@ function* handleRequestAllModels() {
 }
 
 function* watchRequestModel() {
-  yield takeEvery('REQUEST_MODEL', handleRequestModel);
-  yield takeEvery('REQUEST_ALL_MODELS', handleRequestAllModels);
-  yield takeEvery('REQUEST_DELETE_MODEL', handleRequestDeleteModel);
-  yield takeEvery('REQUEST_DUPLICATE_MODEL', handleRequestDuplicateModel);
-  yield takeEvery('REQUEST_ADD_NEW_MODEL', handleRequestAddNewModel);
-  yield takeEvery('REQUEST_UPDATE_MODEL', handleRequestUpdateModel);
+  yield takeEvery(requestModelAction, handleRequestModel);
+  yield takeEvery(requestAllModelsAction, handleRequestAllModels);
+  yield takeEvery(requestDeleteModelAction, handleRequestDeleteModel);
+  yield takeEvery(requestDuplicateModelAction, handleRequestDuplicateModel);
+  yield takeEvery(requestAddNewModel, handleRequestAddNewModel);
+  yield takeEvery(requestUpdateModel, handleRequestUpdateModel);
 }
 
 export default watchRequestModel;

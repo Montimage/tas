@@ -15,10 +15,13 @@ import {
   onSessionExpired,
 } from '../api';
 import {
+  checkSession,
   setNotification,
   setSession,
   setLoginError,
   sessionExpired,
+  login,
+  logout,
 } from '../actions';
 
 function* handleCheckSession() {
@@ -76,9 +79,9 @@ function* watchSessionExpiry() {
 
 function* watchAuth() {
   yield fork(watchSessionExpiry);
-  yield takeEvery('CHECK_SESSION', handleCheckSession);
-  yield takeEvery('LOGIN', handleLogin);
-  yield takeEvery('LOGOUT', handleLogout);
+  yield takeEvery(checkSession, handleCheckSession);
+  yield takeEvery(login, handleLogin);
+  yield takeEvery(logout, handleLogout);
 }
 
 export default watchAuth;

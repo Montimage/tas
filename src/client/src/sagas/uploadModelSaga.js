@@ -2,7 +2,7 @@
 import { call, put, takeEvery, select } from "redux-saga/effects";
 
 import { uploadModel } from "../api";
-import { uploadModelOK, setNotification } from "../actions";
+import { uploadModel as uploadModelAction, uploadModelOK, setNotification } from "../actions";
 
 const getModel = ({ model }) => model;
 
@@ -25,7 +25,7 @@ function* handleSaveModel(action) {
 }
 
 function* watchSaveModel() {
-  yield takeEvery("UPLOAD_MODEL", handleSaveModel);
+  yield takeEvery(uploadModelAction, handleSaveModel);
 }
 
 export default watchSaveModel;
