@@ -1,5 +1,8 @@
 // Evaluation scoring tests (issue #23, acceptance criterion 3).
 //
+// Moved here from src/core/evaluation/index.test.js by issue #80 so the
+// `npm test` glob (test/**/*.test.js) actually runs it.
+//
 // The evaluation module is pure logic: evalulate(originalEvents, newEvents,
 // eventType, metricType, threshold) returns a similarity score in [0, 1] (or
 // null for an unsupported event type, -1 for an unsupported metric). These
@@ -9,7 +12,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const evalMod = require('./index');
+const evalMod = require('../src/core/evaluation');
 const {
   evalulate,
   THRESHOLD_FLEXIBLE,
@@ -19,7 +22,6 @@ const {
   SENSOR_EVENTS,
   ACTUATOR_EVENTS,
   METRIC_VALUE,
-  METRIC_TIMESTAMP,
   METRIC_VALUE_TIMESTAMP,
 } = evalMod;
 
