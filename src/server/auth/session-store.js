@@ -103,7 +103,9 @@ function createSessionStore(options) {
         csrfToken: crypto.randomBytes(32).toString('base64url'),
         createdAt: now,
         lastSeenAt: now,
-        expiresAt: now + absoluteTtlMs,
+        // No `expiresAt`: expiry is computed from `createdAt + absoluteTtlMs`
+        // in `isExpired`, and a second copy of that deadline on the record
+        // would be a value nothing reads and no one keeps in step.
       };
       sessions.set(session.id, session);
       return session;

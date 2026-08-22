@@ -26,7 +26,6 @@ const simpleCompare = (v1, v2) => {
 
 /**
  * Compare two array
- * TODO: pass the comparing function to be more flexible
  * @param {Array} originalArray The original values
  * @param {Array} newArray The new values
  */

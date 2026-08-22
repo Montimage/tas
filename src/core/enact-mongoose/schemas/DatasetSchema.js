@@ -10,11 +10,7 @@
 const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
-/**
- * TODO:
- * - get Dataset by name/id
- * - get dataset by tags
- */
+
 const datasetSchema = new Schema({
   id: {
     type: String,

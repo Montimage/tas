@@ -53,7 +53,6 @@ class Gateway {
    * Handle the actuated's data which should be sent to the THING which contains the actuator
    * @param {String} extId The id of external communication
    * @param {String} topic The topic of the packet, the topic should contain the id of the actuator which will received the actuated data
-   * TODO: should the topic contain the id of the thing?
    *  - each downstream message should control 1 actuator which is belong to 1 thing
    *  - How about a broadcast ??? - should not
    * @param {String} message The payload of the packet
@@ -79,7 +78,6 @@ class Gateway {
       if (this.thingComms[pubID]) {
         foundPub = true;
         const mergedTopic = `things/${pubID}/actuators/${topic}`;
-        // TODO: can add more rules here to specific the Thing to be transfer the message to
         console.log(`[${this.id}] Going to send message to channel ${mergedTopic}`);
         this.thingComms[pubID].publish(mergedTopic, message);
       }

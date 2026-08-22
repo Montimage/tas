@@ -36,7 +36,6 @@
  * proxy deployment deliberately does not hand out.
  */
 const { unauthorized } = require('./errors');
-const { timingSafeCompare } = require('../auth/passwords');
 
 /**
  * How many delegated identities the proxy session cache remembers.
@@ -198,13 +197,16 @@ const normalizeAddress = (address) => String(address || '').replace(/^::ffff:/i,
 /**
  * Build the `/api` authentication gate.
  *
+ * The credential is deliberately not a dependency here: the gate decides
+ * whether a request carries a session, and the one place that checks the
+ * credential against a password is the login router.
+ *
  * @param {Object} deps
- * @param {Object} deps.credential The configured administrator credential
  * @param {Object} deps.sessions The session store
  * @param {Object} deps.config The loaded configuration
  * @returns {Function} Express middleware
  */
-function createAuthMiddleware({ credential, sessions, config }) {
+function createAuthMiddleware({ sessions, config }) {
   const trustedProxies = Array.isArray(config.authTrustedProxies)
     ? config.authTrustedProxies.map(normalizeAddress)
     : [];
@@ -332,8 +334,8 @@ module.exports = {
   resolveSession,
   isPublicRoute,
   isCorsPreflight,
+  normalizePath,
   normalizeAddress,
-  timingSafeCompare,
   PUBLIC_API_ROUTES,
   DELEGATED_IDENTITY_LIMIT,
   SESSION_COOKIE,
