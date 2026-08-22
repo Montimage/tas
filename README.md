@@ -584,6 +584,14 @@ Values are read from the process environment first, then from `.env`, then from
 these defaults — so a container or a CI job can override a setting without
 editing the operator's `.env` file.
 
+Every numeric value in this table must be an actual number: a non-numeric or
+negative value fails at startup with a message naming the setting, rather than
+silently falling back to the default. A deliberate `0` is accepted for
+`RATE_LIMIT_MAX` and `AUTH_LOGIN_RATE_LIMIT_MAX`, where it means what it says —
+no requests served, and no failed logins tolerated, respectively. For every
+other numeric setting a `0` cannot work (a zero-length window never closes, a
+zero timeout ends sessions immediately), so it is refused the same way.
+
 `CORS_ALLOWED_ORIGINS` is only needed when the dashboard is served from a
 different origin than the API. In the shipped image both are on the same port,
 so the default is already correct and no configuration is required.
