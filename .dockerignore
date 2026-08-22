@@ -8,6 +8,10 @@ light-controller.png
 homeio-models/
 .env
 
+# Broker credential (issue #46): supplied at runtime via a bind mount, never
+# baked into the image.
+mosquitto.passwd
+
 # Client source is needed in the image so the dashboard is built at image
 # build time (issue #42: stop committing the compiled bundle). It was
 # previously excluded here, which forced the image to ship a stale committed

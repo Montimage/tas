@@ -11,6 +11,10 @@ certs/
 ssh-remote-montimage
 .env
 
+# MQTT broker credential file (issue #46): generated locally per README,
+# mounted into the container at runtime — never committed.
+mosquitto.passwd
+
 # Local gitissue run state (issue analyses, run log)
 .gitissue/
 

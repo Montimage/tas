@@ -6,7 +6,7 @@
         "id": "thing-01",
         "mqttConfig": {
           "HOST": "localhost",
-          "PORT": "1883",
+          "PORT": "1884",
           "options": null
         }
       },
@@ -14,7 +14,7 @@
         "id": "thing-02",
         "mqttConfig": {
           "HOST": "localhost",
-          "PORT": "1883",
+          "PORT": "1884",
           "options": null
         }
       }
@@ -49,7 +49,7 @@
         "scale": 2,
         "mqttConfig": {
           "HOST": "localhost",
-          "PORT": "1883",
+          "PORT": "1884",
           "options": null
         }
       },
@@ -58,7 +58,7 @@
         "scale": 3,
         "mqttConfig": {
           "HOST": "localhost",
-          "PORT": "1883",
+          "PORT": "1884",
           "options": null
         }
       }
