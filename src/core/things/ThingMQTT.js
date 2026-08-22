@@ -1,6 +1,7 @@
 const mqtt = require('mqtt');
 const Thing = require('./Thing');
 const { ONLINE, OFFLINE, SIMULATING } = require('../DeviceStatus');
+const { resolveMqttEndpoint } = require('../utils/mqtt-endpoint');
 /**
  * The Thing class presents a THING component:
  * - List of sensors
@@ -61,7 +62,8 @@ class ThingMQTT extends Thing {
    */
   initThing(callback, mqttConfig) {
     this.mqttConfig = mqttConfig;
-    const mqttBrokerURL = `mqtt://${mqttConfig.host}:${mqttConfig.port}`;
+    const endpoint = resolveMqttEndpoint(mqttConfig);
+    const mqttBrokerURL = `mqtt://${endpoint.host}:${endpoint.port}`;
     let mqttClient = null;
     if (mqttConfig.options) {
       mqttClient = mqtt.connect(mqttBrokerURL, mqttConfig.options);

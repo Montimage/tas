@@ -137,7 +137,9 @@ test('the documented allowlist answers anonymously and nothing else does', async
   await withApp({}, { login: false }, async (ctx) => {
     const health = await call(ctx, 'GET', '/api/health');
     assert.equal(health.status, 200);
-    assert.deepEqual(health.body, { status: 'ok' });
+    // Issue #45: the anonymous payload is still exactly two fields — status
+    // plus the readiness flag startup sets once it has completed.
+    assert.deepEqual(health.body, { status: 'ok', ready: true });
 
     const session = await call(ctx, 'GET', '/api/auth/session');
     assert.equal(session.status, 200);

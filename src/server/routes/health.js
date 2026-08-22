@@ -1,11 +1,12 @@
 /**
- * The liveness probe.
+ * The liveness and readiness probe.
  *
  * Deliberately the thinnest possible endpoint, and deliberately the only one
  * outside the authentication gate that an anonymous caller may read. A
  * container orchestrator, a load balancer or an uptime monitor has to be able
  * to ask "is this process answering?" without holding a credential, so this
- * answers exactly that and nothing else.
+ * answers exactly that plus one boolean — whether startup has completed
+ * (issue #45) — and nothing else.
  *
  * It reports no uptime, no version, no build identifier and no dependency
  * status: every one of those is reconnaissance handed to an anonymous caller,
@@ -19,7 +20,7 @@ const { errorHandler } = require('../middleware/errors');
 const router = express.Router();
 
 router.get('/', validate(), (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', ready: req.app.get('ready') === true });
 });
 
 router.use(errorHandler);

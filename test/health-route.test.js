@@ -15,6 +15,9 @@ test('GET /api/health answers 200 with a minimal status payload', async () => {
     const res = await request(app.server, 'GET', '/api/health', undefined, { __anonymous: true });
     assert.equal(res.status, 200);
     assert.ok(res.body && res.body.status === 'ok', `body was ${res.raw}`);
+    // Issue #45: the endpoint reports readiness — true once startup has
+    // completed (the helper mirrors the production listen callback).
+    assert.equal(res.body.ready, true, `body was ${res.raw}`);
   } finally {
     await new Promise((resolve) => app.server.close(resolve));
     if (app.restore) app.restore();

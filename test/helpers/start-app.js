@@ -116,6 +116,9 @@ function startApp(envOverrides, opts) {
 
   return new Promise(function (resolve, reject) {
     var server = app.listen(0, host, function () {
+      // Mirror the production startup path: /api/health reports readiness
+      // once the listener is up (issue #45).
+      app.set('ready', true);
       var port = server.address().port;
       var ctx = {
         app: app,

@@ -1,10 +1,12 @@
 const mqtt = require('mqtt');
+const { resolveMqttEndpoint } = require('../utils/mqtt-endpoint');
 /**
  * MQTTBus is a wrapper for MQTT client
  */
 class MQTTBus {
   constructor(connConfig, protocol) {
-    this.connConfig = { ...connConfig, protocol };
+    const endpoint = resolveMqttEndpoint(connConfig);
+    this.connConfig = { ...connConfig, host: endpoint.host, port: endpoint.port, protocol };
     if (protocol === 'mqtt') {
       this.connConfig.ca = null;
       this.connConfig.cert = null;

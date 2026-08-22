@@ -44,6 +44,12 @@ ENACTDB.prototype.connect = function (callback) {
       console.error('[ENACTDB] ', error);
       return callback(error);
     }
+    if (mongoose.connection.readyState !== 1) {
+      console.error(
+        `[ENACTDB] connect resolved while readyState=${mongoose.connection.readyState}`
+      );
+      return callback(new Error('database connection did not reach the connected state'));
+    }
     console.log('[ENACTDB] New connection to database has been established!');
     this.isConnected = true;
     return callback(null);

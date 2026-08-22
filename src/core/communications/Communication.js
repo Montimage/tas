@@ -11,6 +11,8 @@
  * - subscribeURL
  * - publishURL
  */
+const { resolveMqttEndpoint } = require('../utils/mqtt-endpoint');
+
 class Communication {
   /**
    * Create a Communication instance
@@ -34,7 +36,8 @@ class Communication {
     if (this.mqttClient) {
       return callback(this.mqttClient);
     }
-    const mqttURL = `mqtt://${this.mqttConfig.host}:${this.mqttConfig.port}`;
+    const endpoint = resolveMqttEndpoint(this.mqttConfig);
+    const mqttURL = `mqtt://${endpoint.host}:${endpoint.port}`;
     let mqttClient = null;
     if (this.mqttConfig.options) {
       mqttClient = mqtt.connect(mqttURL, this.mqttConfig.options);

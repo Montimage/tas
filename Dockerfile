@@ -1,17 +1,18 @@
+# The application image (issue #45): TaS and nothing but TaS.
+#
+# The MQTT broker and the Node-RED flow editor are separate images wired
+# together by docker-compose.yml, so this image carries only the application
+# and its own dependencies. The single-container image that supervised all
+# three under supervisord is gone; see README.md ("Migrating from the
+# single-container deployment") for the upgrade path.
 FROM node:22-alpine
-# Create app directory
+
 WORKDIR /usr/src/app
 
-# Install mosquitto and supervisor
-RUN apk --no-cache add mosquitto supervisor
-RUN echo 'Installed mosquitto and supervisor'
-# Install nodered
-RUN npm install -g --unsafe-perm node-red
-RUN cd /usr/local/lib/node_modules/node-red && npm install node-red-dashboard node-red-mongodb
-RUN echo 'Installed nodered'
-# Install Tas production dependencies from the committed lockfile
+# Install TaS production dependencies from the committed lockfile
 COPY package*.json ./
 RUN npm ci --omit=dev
+
 # Bundle app source
 COPY . .
 
@@ -22,23 +23,20 @@ COPY . .
 RUN cd src/client && npm install && npm run build \
     && echo 'Built dashboard client into src/public'
 
-# Copy supervisord.conf file
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Ship the committed broker policy in place of the distribution default
-# (issue #46): the access policy is stated in the repository, not inherited.
-COPY mosquitto.conf /etc/mosquitto/mosquitto.conf
-
 # Prepare runtime-writable locations for the unprivileged user
-# (/run/mosquitto is where an operator mounts the broker password file).
-RUN mkdir -p /var/lib/mosquitto /run/mosquitto /var/log \
-    src/server/logs/data-recorders src/server/logs/simulations src/server/logs/test-campaigns src/server/reports \
-    && chown -R node:node /usr/src/app /var/lib/mosquitto /run/mosquitto /var/log
-# Run every supervised process as an unprivileged user
+RUN mkdir -p src/server/logs/data-recorders src/server/logs/simulations src/server/logs/test-campaigns src/server/reports \
+    && chown -R node:node /usr/src/app
+
+# Production mode exactly as `npm start` sets it (issue #76)
+ENV NODE_ENV=production
+
 USER node
 
-# Expose ports for Mosquitto and Node-RED
-EXPOSE 1883 1880 3004
-RUN echo 'Ready to launch'
-# Start supervisord
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+EXPOSE 3004
+
+# The same readiness probe the composition declares (issue #45): startup is
+# complete when /api/health answers.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=6 \
+  CMD wget -q -O- "http://127.0.0.1:${SERVER_PORT:-3004}/api/health" >/dev/null 2>&1 || exit 1
+
+CMD ["node", "src/server/app.js"]

@@ -2,16 +2,65 @@
 
 Test and Simulation
 
-## Use docker image
+## Quick start (composed deployment)
 
-> **Security note:** the TaS API requires an authenticated session. A deployment
-> must provision an administrator credential and a session secret — without
-> them the dashboard cannot log in (no credential) or every restart signs
-> everyone out (no secret). The quick-start below passes both. See the
+Since issue #45 TaS ships as **three separate images** — the application, the
+MQTT broker and the Node-RED flow editor — wired together by a composition.
+Each service is its own container with its own health check, so it can be
+restarted, upgraded, scaled and watched independently.
+
+The whole quick start is one command:
+
+```
+docker compose up -d
+```
+
+Then:
+
+| Service | Address                         | What it is                                                                                       |
+| ------- | ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| app     | `http://127.0.0.1:3004`         | The TaS dashboard and API.                                                                       |
+| broker  | `127.0.0.1:1883`                | An authenticated MQTT broker (account `tas`, password `change-me-broker` until you override it). |
+| nodered | `http://127.0.0.1:1880` (`/ui`) | The flow editor with the Temperature Controller demo preloaded.                                  |
+
+Health status of every service: `docker compose ps` — each long-running
+service declares a health check (`healthy` means its readiness probe answers).
+Restart any one service without touching the others:
+
+```
+docker compose restart app      # or broker, or nodered
+```
+
+### Provisioning real credentials
+
+The quick-start stack is convenient, not hardened: the broker password file is
+seeded into a volume on first start with development credentials, and the
+application starts without a session secret (sessions then end at every
+restart). For anything beyond a throwaway local stack, create a `.env` next to
+`docker-compose.yml` (compose reads it automatically; it is git-ignored and
+never baked into any image):
+
+```
+# Application credential and session secret (see Security below)
+SESSION_SECRET=$(openssl rand -hex 32)
+AUTH_ADMIN_USERNAME=admin
+AUTH_ADMIN_PASSWORD_HASH=scrypt$...   # see "Provisioning the administrator credential"
+
+# Broker account seeded on first start (delete the broker-passwd volume to re-seed)
+MOSQUITTO_USERNAME=tas
+MOSQUITTO_PASSWORD=change-me-broker
+```
+
+> **Security note:** the TaS API requires an authenticated session. A
+> production deployment must provision an administrator credential and a
+> session secret — without them the dashboard cannot log in (no credential)
+> or every restart signs everyone out (no secret). See the
 > [Security](#security) section before deploying.
 
-For a safe local start, bind the published ports to localhost (loopback only)
-and provision the credential and the session secret:
+### Running only the application container
+
+The application image is published on its own and can run standalone — point
+its clients at any reachable broker via `TAS_MQTT_HOST` / `TAS_MQTT_PORT`:
 
 ```
 TAS_IMAGE=ghcr.io/montimage/tas:v1.0.2
@@ -22,79 +71,106 @@ ADMIN_HASH="$(docker run --rm "$TAS_IMAGE" \
   node -e "console.log(require('./src/server/auth/passwords').hashPassword(process.argv[1]))" \
   'change-me-now')"
 
-# One-time MQTT broker credential (issue #46): the published 1883 listener
-# refuses anonymous access, so provision an entry before starting.
-printf 'tas:change-me-broker' | docker run --rm -i "$TAS_IMAGE" \
-  sh -c 'cat > /tmp/plain && mosquitto_passwd -U /tmp/plain && cat /tmp/plain' \
-  > mosquitto.passwd
-
 docker run --name my-tas -d \
-  -p 127.0.0.1:1883:1883 -p 127.0.0.1:1880:1880 -p 127.0.0.1:3004:3004 \
-  -v "$PWD/mosquitto.passwd:/run/mosquitto/passwd:ro" \
+  -p 127.0.0.1:3004:3004 \
   -e SESSION_SECRET="$(openssl rand -hex 32)" \
   -e AUTH_ADMIN_PASSWORD_HASH="$ADMIN_HASH" \
+  -e TAS_MQTT_HOST="host.containers.internal" \
   "$TAS_IMAGE"
 ```
-
-Then access to the tool at the address: `http://127.0.0.1:3004` and log in as
-`admin` with the password you hashed above — replace `change-me-now` with your
-own before running it.
-
-An authenticated MQTT broker server at the address: `127.0.0.1:1883` (the
-broker account is `tas` with the password you provisioned above — without its
-password file mounted the broker stays down by design),
-A nodered server at the address: `http://127.0.0.1:1880`, and the nodered dashboard at the address: `http://127.0.0.1:1880/ui`
 
 If you need other hosts on a **trusted private network** to reach the service, replace
 `127.0.0.1` with the machine's private interface address. Do not publish these ports to
 `0.0.0.0` or to the public internet, and keep in mind the Node-RED
-listener on the same container has no credential of its own. The MQTT broker
+editor has no credential of its own. The MQTT broker
 does require authentication on its published port — see the next section.
+
+## Architecture of the composition
+
+```
+┌─────────── compose network ────────────┐
+│  ┌────────┐   1883 (auth)   ┌────────┐ │
+│  │ broker │◄────publish─────│   app  │ │◄── 127.0.0.1:3004
+│  └────────┘                 └────────┘ │
+│       ▲ 1884 anonymous            ▲    │
+│       └────────────┐              │    │
+│               ┌────────┐          │    │
+│     broker-init (one-shot)  │    │    │
+│               └────────┘   ┌────────┐ │◄── 127.0.0.1:1880
+│                            │nodered │ │
+│                            └────────┘ │
+└────────────────────────────────────────┘
+```
+
+- **broker** runs [`deploy/compose/broker.conf`](deploy/compose/broker.conf):
+  port 1883 is authenticated and the only listener published to the host;
+  port 1884 is anonymous but exists only inside the compose network. A
+  one-shot `broker-init` service seeds the password file into a volume before
+  the broker starts.
+- **app** is built from this repository's `Dockerfile`: TaS and its own
+  dependencies only — no broker, no editor, no supervisor. It reports
+  readiness on `GET /api/health`, which is both the image's `HEALTHCHECK` and
+  the health check the composition declares.
+- **nodered** mounts the demo flow, whose broker address resolves through the
+  same `TAS_MQTT_HOST`/`TAS_MQTT_PORT` environment variables the app uses
+  (core simulation clients resolve their endpoints through them too — see
+  `src/core/utils/mqtt-endpoint.js`).
+
+Every service carries `restart: unless-stopped` and waits for its
+dependencies' health checks (`depends_on` + `condition`) so a cold start comes
+up in order while restarts stay independent.
+
+### Migrating from the single-container deployment
+
+Earlier releases supervised mosquitto, Node-RED and TaS under `supervisord`
+inside one image. That image is retired; the upgrade is:
+
+1. Note your broker password file (it was mounted at `/run/mosquitto/passwd`)
+   and your `SESSION_SECRET` / `AUTH_ADMIN_PASSWORD_HASH` values — they carry
+   over unchanged.
+2. Stop and remove the old container: `docker stop my-tas && docker rm my-tas`.
+3. Put the credentials in `.env` as shown above, using your existing values
+   (`MOSQUITTO_USERNAME`/`MOSQUITTO_PASSWORD` replace the old password-file
+   entry).
+4. `docker compose up -d`. Data written by simulations lives in MongoDB,
+   which is external to all three services and unaffected; retained MQTT
+   messages start empty unless you migrate `/var/lib/mosquitto` from the old
+   container into the `broker-data` volume.
 
 ## MQTT broker access policy
 
-The broker is configured explicitly by [`mosquitto.conf`](mosquitto.conf)
-(issue #46) rather than by whatever default its distribution package ships:
+Two policies are committed, both stated in the repository rather than
+inherited from distribution defaults (issue #46):
 
-| Listener | Bound to                      | Access                                                                                                                      |
-| -------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `1883`   | all interfaces                | **Authenticated only.** Anonymous access is refused; credentials are checked against a password file you supply at runtime. |
-| `1884`   | loopback inside the container | Anonymous. Reachable only by processes running in the same container (TaS simulations, Node-RED flows).                     |
+| Deployment                                               | Config file                                                | 1883                                 | Internal listener                                                  |
+| -------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| Composition ([`docker-compose.yml`](docker-compose.yml)) | [`deploy/compose/broker.conf`](deploy/compose/broker.conf) | Authenticated, published to the host | `1884` anonymous, bound to the compose network — **not** published |
+| Standalone broker container                              | [`mosquitto.conf`](mosquitto.conf)                         | Authenticated                        | `1884` anonymous, loopback inside the broker container             |
 
-### Provisioning the broker password file
+External MQTT clients (sensors, gateways, test harnesses outside the
+composition) connect to port 1883 with the broker username and password.
+Services inside the composition use the anonymous internal listener on port
+1884 without any credential — the bundled simulation assets and the demo
+Node-RED flow resolve it through `TAS_MQTT_HOST=broker`, `TAS_MQTT_PORT=1884`.
 
-The password file is **never committed** to this repository or baked into the
+### Broker credentials
+
+The password file is **never committed** to this repository or baked into an
 image — it is supplied through configuration like every other credential (the
 filename `mosquitto.passwd` is excluded by both `.gitignore` and
-`.dockerignore`).
-Generate one entry locally with the image's own `mosquitto_passwd`, then mount
-the file into `/run/mosquitto/passwd` when starting the container:
+`.dockerignore`). In the composition it is seeded into the `broker-passwd`
+volume on first start from `MOSQUITTO_USERNAME`/`MOSQUITTO_PASSWORD`; the file
+holds scrypt hashes, never plaintext. Delete the volume to re-seed:
 
 ```
-# Write username:hashed-password for the broker account into mosquitto.passwd.
-printf 'tas:change-me-broker' | docker run --rm -i "$TAS_IMAGE" \
-  sh -c 'cat > /tmp/plain && mosquitto_passwd -U /tmp/plain && cat /tmp/plain' \
-  > mosquitto.passwd
-
-docker run --name my-tas -d \
-  -p 127.0.0.1:1883:1883 -p 127.0.0.1:1880:1880 -p 127.0.0.1:3004:3004 \
-  -v "$PWD/mosquitto.passwd:/run/mosquitto/passwd:ro" \
-  -e SESSION_SECRET="$(openssl rand -hex 32)" \
-  -e AUTH_ADMIN_PASSWORD_HASH="$ADMIN_HASH" \
-  "$TAS_IMAGE"
+docker compose down && docker volume rm tas_broker-passwd && docker compose up -d
 ```
 
-External MQTT clients (sensors, gateways, test harnesses outside the container)
-connect to port 1883 with that username and password. Processes running inside
-the container can keep using the anonymous listener on port 1884 without any
-credential — the bundled simulation assets and the demo Node-RED flow already
-point at `localhost:1884`, and new models or flows should too.
-
-Without a mounted password file the broker exits and reports the missing
-credential source loudly, and the supervisor keeps retrying — so an appliance
-cannot come up half-open, and mounting the file later brings the broker up
-without restarting anything. Retained messages survive container restarts
-(`persistence true`, stored under `/var/lib/mosquitto`).
+For a standalone broker, generate a password file with `mosquitto_passwd` and
+mount it at `/run/mosquitto/passwd`. Without a password file the broker exits
+and reports the missing credential source loudly rather than coming up
+half-open. Retained messages survive container restarts (`persistence true`,
+stored in the `broker-data` volume).
 
 ## Install from source code
 
