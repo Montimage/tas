@@ -849,7 +849,7 @@ const PHASE_0_DIGESTS = {
     'e87f06ec6d8d4b79517e37cef2e7064d5ab935ca2c38a838cf62c849354423b9',
   'test/e2e/limits.test.js': 'a6094dfd19c166e847a7068c5b62c0f3bf369cf2bad84566ebacce27d9a589e2',
   'test/e2e/container-nonroot.test.js':
-    '619941b585bbe721e9d7fd993e32f7c84c552085b6eaafe5b01b4a1e3fd9d726',
+    '84a5ed18310375b34dbf85c3955b7268b2498d4254e2b064f9c3e917b2ea65ed',
   'test/e2e/helpers.js': '4a7794adf00813e01c9a36c416a14c40463f3aa59e16325b18a4f8850024f975',
 };
 
