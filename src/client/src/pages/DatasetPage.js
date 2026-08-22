@@ -109,7 +109,7 @@ class DatasetPage extends Component {
     this.requestEvents();
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     const { dataset, events } = newProps;
     if (dataset) {
       const {

@@ -34,7 +34,14 @@ class LayoutPage extends Component {
             {pageTitle && <Title level={2}>{pageTitle}</Title>}
             {pageSubTitle && <Text type="secondary">{pageSubTitle}</Text>}
             <div style={{ paddingTop: "30px" }} className="site-layout-content">
-              {requesting ? <div style={{textAlign: "center", marginTop: 30}}><Spin tip="Loading..." /></div> : this.props.children}
+              {/* antd v5+ logs a console warning for `tip` on an unnested
+                  Spin, so the label is rendered next to the spinner instead. */}
+              {requesting ? (
+                <div style={{ textAlign: "center", marginTop: 30 }}>
+                  <Spin />
+                  <div style={{ marginTop: 12 }}>Loading...</div>
+                </div>
+              ) : this.props.children}
               <TSFooter />
             </div>
           </Content>

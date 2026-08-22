@@ -52,62 +52,100 @@ class TSHeader extends Component {
             </a>
           </Col>
           <Col span={14} push={6}>
-            <Menu theme="light" mode="horizontal" style={{ lineHeight: "64px" }} selectedKeys={`${selectedMenu}`}>
-              <Menu.Item key="0">
-                <a href={menuLinks[0]}>
-                  <InteractionOutlined />
-                  Test Campaign
-                </a>
-              </Menu.Item>
-              <Menu.Item key="1">
-                <a href={menuLinks[1]}>
-                  <FolderOpenOutlined />
-                  Test Case
-                </a>
-              </Menu.Item>
-              <Menu.Item key="2">
-                <a href={menuLinks[2]}>
-                  <ClusterOutlined />
-                  Topology
-                </a>
-              </Menu.Item>
-              <Menu.Item key="3">
-                <a href={menuLinks[3]}>
-                  <DeploymentUnitOutlined />
-                  Simulation
-                </a>
-              </Menu.Item>
-              <Menu.Item key="4">
-                <a href={menuLinks[4]}>
-                  <EyeOutlined />
-                  Data Recorder
-                </a>
-              </Menu.Item>
-              <Menu.Item key="5">
-                <a href={menuLinks[5]}>
-                  <FileTextOutlined />
-                  Data Set
-                </a>
-              </Menu.Item>
-              <Menu.Item key="6">
-                <a href={menuLinks[6]}>
-                  <DatabaseOutlined />
-                  Data Storage
-                </a>
-              </Menu.Item>
-              <Menu.Item key="7">
-                <a href={menuLinks[7]}>
-                  <FileTextOutlined />
-                  Report
-                </a>
-              </Menu.Item>
-              {authenticated ? (
-                <Menu.Item key="logout" onClick={() => logout()}>
-                  <LogoutOutlined />
-                  {user ? `Sign out (${user})` : "Sign out"}
-                </Menu.Item>
-              ) : null}
-            </Menu>
+            <Menu
+              theme="light"
+              mode="horizontal"
+              style={{ lineHeight: "64px" }}
+              selectedKeys={[`${selectedMenu}`]}
+              items={[
+                {
+                  key: "0",
+                  label: (
+                    <a href={menuLinks[0]}>
+                      <InteractionOutlined />
+                      Test Campaign
+                    </a>
+                  ),
+                },
+                {
+                  key: "1",
+                  label: (
+                    <a href={menuLinks[1]}>
+                      <FolderOpenOutlined />
+                      Test Case
+                    </a>
+                  ),
+                },
+                {
+                  key: "2",
+                  label: (
+                    <a href={menuLinks[2]}>
+                      <ClusterOutlined />
+                      Topology
+                    </a>
+                  ),
+                },
+                {
+                  key: "3",
+                  label: (
+                    <a href={menuLinks[3]}>
+                      <DeploymentUnitOutlined />
+                      Simulation
+                    </a>
+                  ),
+                },
+                {
+                  key: "4",
+                  label: (
+                    <a href={menuLinks[4]}>
+                      <EyeOutlined />
+                      Data Recorder
+                    </a>
+                  ),
+                },
+                {
+                  key: "5",
+                  label: (
+                    <a href={menuLinks[5]}>
+                      <FileTextOutlined />
+                      Data Set
+                    </a>
+                  ),
+                },
+                {
+                  key: "6",
+                  label: (
+                    <a href={menuLinks[6]}>
+                      <DatabaseOutlined />
+                      Data Storage
+                    </a>
+                  ),
+                },
+                {
+                  key: "7",
+                  label: (
+                    <a href={menuLinks[7]}>
+                      <FileTextOutlined />
+                      Report
+                    </a>
+                  ),
+                },
+                ...(authenticated
+                  ? [
+                      {
+                        key: "logout",
+                        label: (
+                          <span>
+                            <LogoutOutlined />
+                            {user ? `Sign out (${user})` : "Sign out"}
+                          </span>
+                        ),
+                        onClick: () => logout(),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           </Col>
         </Row>
 

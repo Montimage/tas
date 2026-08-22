@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button, Menu, Dropdown, Table } from "antd";
+import { Button, Dropdown, Table } from "antd";
 import {
   ClearOutlined,
   ImportOutlined,
@@ -124,32 +124,40 @@ class ModelListPage extends Component {
         pageTitle="Topology"
         pageSubTitle="Defines the topology and the specification of the sensors, actuators and the gateways"
       >
+        {/* Hidden file input lives outside the antd Menu: v5+ menus take a
+            plain `items` array and would not render arbitrary children. */}
+        <input
+          type="file"
+          onChange={(event) => this.onUpload(event.target.files)}
+          ref={(input) => {
+            this.inputFileDOM = input;
+          }}
+          style={{ display: "none" }}
+          accept=".json"
+          multiple={false}
+        />
         <Dropdown
-          overlay={
-            <Menu>
-              <Menu.Item key="model:3">
-                <a href={`/models/new-model-${Date.now()}`}>
-                  <ClearOutlined /> Create New
-                </a>
-              </Menu.Item>
-              <Menu.Item
-                key="model:1"
-                onClick={() => this.inputFileDOM.click()}
-              >
-                <ImportOutlined /> Import From File
-                <input
-                  type="file"
-                  onChange={(event) => this.onUpload(event.target.files)}
-                  ref={(input) => {
-                    this.inputFileDOM = input;
-                  }}
-                  style={{ display: "none" }}
-                  accept=".json"
-                  multiple={false}
-                />
-              </Menu.Item>
-            </Menu>
-          }
+          menu={{
+            items: [
+              {
+                key: "model:3",
+                label: (
+                  <a href={`/models/new-model-${Date.now()}`}>
+                    <ClearOutlined /> Create New
+                  </a>
+                ),
+              },
+              {
+                key: "model:1",
+                label: (
+                  <span>
+                    <ImportOutlined /> Import From File
+                  </span>
+                ),
+                onClick: () => this.inputFileDOM.click(),
+              },
+            ],
+          }}
           trigger={["click"]}
         >
           <Button

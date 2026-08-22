@@ -1,5 +1,6 @@
 import React from "react";
-import { Row, Col, Typography, PageHeader } from "antd";
+import { Row, Col, Typography } from "antd";
+import PageHeader from "../components/PageHeader";
 import LayoutPage from "./LayoutPage";
 
 const { Text } = Typography;

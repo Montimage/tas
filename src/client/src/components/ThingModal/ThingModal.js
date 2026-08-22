@@ -144,7 +144,7 @@ class ThingModal extends Component {
     return (
       <TSModal
         title={"Device"}
-        visible={formID === "THING-FORM" ? true : false}
+        open={formID === "THING-FORM"}
         onCancel={() => this.handleCancel()}
         footer={footer}
       >

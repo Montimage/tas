@@ -1,7 +1,11 @@
 import React, { Component } from "react";
-import moment from "moment";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 import { connect } from "react-redux";
-import { Table, Button, PageHeader } from "antd";
+import { Table, Button } from "antd";
+import PageHeader from "../components/PageHeader";
 import { getCreatedTimeFromFileName, getLastPath, getQuery } from "../utils";
 
 import {
@@ -59,7 +63,7 @@ class LogsPage extends Component {
         key: "createdAt",
         dataIndex: "createdAt",
         sorter: (a, b) => a.createdAt - b.createdAt,
-        render: (createdAt) => moment(createdAt).fromNow(),
+        render: (createdAt) => dayjs(createdAt).fromNow(),
       },
       {
         title: "Action",

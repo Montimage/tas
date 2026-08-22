@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Table, Menu, Dropdown, Button, Form } from "antd";
+import { Table, Dropdown, Button, Form } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
 import {
@@ -52,7 +52,7 @@ class TestCampaignPage extends Component {
     this.props.fetchTestCases();
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     const { testCampaign } = newProps;
     if (testCampaign) {
       const { id, name, description, testCaseIds } = testCampaign;
@@ -157,32 +157,25 @@ class TestCampaignPage extends Component {
         key: "data",
         render: (tc) => (
           <Dropdown
-            overlay={
-              <Menu>
-                {tc.key > 0 && (
-                  <Menu.Item
-                    key="moveup"
-                    onClick={() => this.moveTestCaseUp(tc.key)}
-                  >
-                    Move Up
-                  </Menu.Item>
-                )}
-                {tc.key < testCaseIds.length - 1 && (
-                  <Menu.Item
-                    key="movedown"
-                    onClick={() => this.moveTestCaseDown(tc.key)}
-                  >
-                    Move Down
-                  </Menu.Item>
-                )}
-                <Menu.Item
-                  key="delete"
-                  onClick={() => this.removeTestCase(tc.key)}
-                >
-                  Remove
-                </Menu.Item>
-              </Menu>
-            }
+            menu={{
+              items: [
+                tc.key > 0 && {
+                  key: "moveup",
+                  label: "Move Up",
+                  onClick: () => this.moveTestCaseUp(tc.key),
+                },
+                tc.key < testCaseIds.length - 1 && {
+                  key: "movedown",
+                  label: "Move Down",
+                  onClick: () => this.moveTestCaseDown(tc.key),
+                },
+                {
+                  key: "delete",
+                  label: "Remove",
+                  onClick: () => this.removeTestCase(tc.key),
+                },
+              ].filter(Boolean),
+            }}
           >
             <a
               className="ant-dropdown-link"

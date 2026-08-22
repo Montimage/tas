@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 
-import { Table, Menu, Dropdown, Button } from "antd";
+import { Table, Dropdown, Button } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import EventModal from "../EventModal";
 import { FormParagraphItem } from "../FormItems";
@@ -161,57 +161,53 @@ class EventStream extends Component {
         key: "data",
         width: 100,
         render: (event) => (
-          <Dropdown
-            overlay={
-              <Menu>
-                {deleteEvent && (
-                  <Menu.Item
-                    key="delete"
-                    onClick={() => deleteEvent(event._id)}
-                  >
-                    Delete
-                  </Menu.Item>
-                )}
-                {addNewEvent && (
-                  <Menu.Item key="duplicate" onClick={() => addNewEvent(event)}>
-                    Duplicate
-                  </Menu.Item>
-                )}
-                {updateEvent && (
-                  <Menu.Item
-                    key="mutate"
-                    onClick={() => {
+          <React.Fragment>
+            <Dropdown
+              menu={{
+                items: [
+                  deleteEvent && {
+                    key: "delete",
+                    label: "Delete",
+                    onClick: () => deleteEvent(event._id),
+                  },
+                  addNewEvent && {
+                    key: "duplicate",
+                    label: "Duplicate",
+                    onClick: () => addNewEvent(event),
+                  },
+                  updateEvent && {
+                    key: "mutate",
+                    label: "Modify Value",
+                    onClick: () => {
                       if (this.state.activeEventModal === null) {
                         this.changeActiveEventModal(event._id);
                       }
-                    }}
-                  >
-                    Modify Value
-                    <EventModal
-                      event={event}
-                      enable={event._id === this.state.activeEventModal}
-                      onCancel={() => {
-                        this.changeActiveEventModal(null);
-                      }}
-                      onOK={(newEvent) => {
-                        updateEvent(event._id, newEvent);
-                        this.changeActiveEventModal(null);
-                      }}
-                    />
-                  </Menu.Item>
-                )}
-              </Menu>
-            }
-          >
-            <a
-              className="ant-dropdown-link"
-              onClick={(e) => e.preventDefault()}
+                    },
+                  },
+                ].filter(Boolean),
+              }}
             >
-              <Button>
-                Select Action <DownOutlined />
-              </Button>
-            </a>
-          </Dropdown>
+              <a
+                className="ant-dropdown-link"
+                onClick={(e) => e.preventDefault()}
+              >
+                <Button>
+                  Select Action <DownOutlined />
+                </Button>
+              </a>
+            </Dropdown>
+            <EventModal
+              event={event}
+              enable={event._id === this.state.activeEventModal}
+              onCancel={() => {
+                this.changeActiveEventModal(null);
+              }}
+              onOK={(newEvent) => {
+                updateEvent(event._id, newEvent);
+                this.changeActiveEventModal(null);
+              }}
+            />
+          </React.Fragment>
         ),
       });
     }

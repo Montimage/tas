@@ -29,7 +29,7 @@ class DataStoragePage extends Component {
     this.props.testConnection();
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     this.setState({
       tempDataStorage: deepCloneObject(newProps.dataStorage),
       connectionStatus: newProps.connectionStatus,

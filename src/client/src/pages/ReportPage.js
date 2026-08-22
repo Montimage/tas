@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { Button, Form } from "antd";
-import moment from "moment";
+import dayjs from "dayjs";
 import LayoutPage from "./LayoutPage";
 import {
   requestReport,
@@ -79,7 +79,7 @@ class ReportPage extends Component {
     this.props.fetchReport(reportId);
   }
 
-  componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps(newProps) {
     const { report, originalEvents, newEvents } = newProps;
     if (report) {
       const {
@@ -221,7 +221,7 @@ class ReportPage extends Component {
           <FormTextNotEditableItem label="Id" value={_id} />
           <FormTextNotEditableItem
             label="Created At"
-            value={moment(createdAt).format("MMMM Do YYYY, h:mm:ss a")}
+            value={dayjs(createdAt).format("MMMM Do YYYY, h:mm:ss a")}
           />
           <FormEditableTextItem
             label="Topology"
@@ -253,11 +253,11 @@ class ReportPage extends Component {
           />
           <FormTextNotEditableItem
             label="Start Time"
-            value={moment(startTime).format("MMMM Do YYYY, h:mm:ss a")}
+            value={dayjs(startTime).format("MMMM Do YYYY, h:mm:ss a")}
           />
           <FormTextNotEditableItem
             label="End Time"
-            value={moment(endTime).format("MMMM Do YYYY, h:mm:ss a")}
+            value={dayjs(endTime).format("MMMM Do YYYY, h:mm:ss a")}
           />
           <FormTextNotEditableItem label="Score" value={score} />
           {evaluationParameters ? (
