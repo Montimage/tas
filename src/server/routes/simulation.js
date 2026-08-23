@@ -1,3 +1,4 @@
+'use strict';
 /* Working with Data Generator */
 var express = require('express');
 const Joi = require('joi');
