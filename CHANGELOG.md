@@ -96,7 +96,7 @@ under its functional section below.
   are indexed by exact topic in a Map for constant-time lookup, and report
   scoring counts matches in linear time (multiset map for values, sorted
   interval sweep for timestamps) replacing an O(n·m) splice-in-loop (#31).
-  Measured results are recorded in `docs/benchmarks.md`.
+  Measured results are recorded in `BENCHMARKS.md`.
 - Documentation: deployment security posture (#53) and hardening
   configuration knobs (#56), credential provisioning (#97), contributing
   guide, security policy correction and this changelog (#48), README

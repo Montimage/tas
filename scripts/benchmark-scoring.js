@@ -11,7 +11,7 @@
  *   `insertMany` queue (size trigger), both against an in-memory stand-in so
  *   no MongoDB server participates.
  *
- * Recorded numbers live in docs/benchmarks.md. Re-run it after touching
+ * Recorded numbers live in BENCHMARKS.md. Re-run it after touching
  * src/core/evaluation or src/core/communications/DataStorage and update that
  * file when the shape of the result changes.
  */
@@ -191,5 +191,5 @@ const benchWrites = async (count, batchSize) => {
   }
   console.log('');
   console.log('The unbatched baseline opens one write call per event by definition;');
-  console.log('record its wall time from a real driver in docs/benchmarks.md.');
+  console.log('record its wall time from a real driver in BENCHMARKS.md.');
 })();
