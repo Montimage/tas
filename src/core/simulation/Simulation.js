@@ -8,6 +8,13 @@ const {
 } = require('../evaluation');
 const Thing = require('../things/Thing');
 
+// Scoring reads events through the same bound the reports route applies
+// (issue #31): a run longer than this cap is scored over its first events in
+// time order, so end-of-run scoring memory stays proportional to the cap
+// instead of to the run length. Keep in step with MAX_SCORING_EVENTS in
+// src/server/routes/reports.js.
+const MAX_SCORING_EVENTS = 10000;
+
 /**
  * Simulation class presents a simulation
  */
@@ -111,14 +118,18 @@ class Simulation {
       originalEvents = await EventSchema.findEventsBetweenTimes(
         { datasetId: originalDatasetId },
         startTime,
-        endTime
+        endTime,
+        MAX_SCORING_EVENTS
       );
     } catch (err3) {
       this.logger.error(`Cannot get original events of dataset ${originalDatasetId}`, err3);
       return stopSimulation();
     }
     try {
-      newEvents = await EventSchema.findEventsWithOptions({ datasetId: newDatasetId });
+      newEvents = await EventSchema.findEventsWithOptions(
+        { datasetId: newDatasetId },
+        MAX_SCORING_EVENTS
+      );
     } catch (err4) {
       this.logger.error(`Cannot get new events of dataset ${newDatasetId}`, err4);
       return stopSimulation();

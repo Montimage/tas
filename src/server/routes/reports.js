@@ -18,11 +18,29 @@ const { errorHandler, databaseError, notFound } = require('../middleware/errors'
 
 const reportIdParam = idSchema.required();
 
+// Pagination (F-PERF-004, issue #85): the list used to return every matching
+// report. A page is `limit` records after `skip` records; the default page
+// size keeps the unpaginated call of an older client bounded too.
+const REPORTS_DEFAULT_PAGE_SIZE = 50;
+const REPORTS_MAX_PAGE_SIZE = 500;
+
+// Scoring reads events through the same bound (issue #31): a report whose
+// window holds more events than this cap is scored over its first
+// `MAX_SCORING_EVENTS` events in time order, so scoring memory stays
+// proportional to the cap instead of to the run.
+const MAX_SCORING_EVENTS = 10000;
+
 // Both values are copied straight into the Mongo filter, so both are declared
 // as strings and can never arrive as operator documents.
 const reportQuery = Joi.object({
   topologyFileName: textSchema,
   testCampaignId: idSchema,
+  limit: Joi.number()
+    .integer()
+    .min(1)
+    .max(REPORTS_MAX_PAGE_SIZE)
+    .default(REPORTS_DEFAULT_PAGE_SIZE),
+  skip: Joi.number().integer().min(0).default(0),
 });
 
 const reportBody = Joi.object({
@@ -46,7 +64,7 @@ const reportBody = Joi.object({
 // Get all the reports
 router.get('/', validate({ query: reportQuery }), dbConnector, async function (req, res, next) {
   let options = {};
-  const { topologyFileName, testCampaignId } = req.query;
+  const { topologyFileName, testCampaignId, limit, skip } = req.query;
   if (topologyFileName) {
     options['topologyFileName'] = topologyFileName;
   }
@@ -55,9 +73,18 @@ router.get('/', validate({ query: reportQuery }), dbConnector, async function (r
   }
 
   try {
-    const reports = await ReportSchema.findReportsWithOptions(options);
+    const [reports, total] = await Promise.all([
+      ReportSchema.findReportsWithOptions(options, { limit, skip }),
+      ReportSchema.countDocuments(options),
+    ]);
+    // `total` lets a caller page without re-fetching; `limit`/`skip` echo the
+    // page actually served. The `reports` array keeps its position and shape,
+    // so a client written before pagination still reads the response.
     res.send({
       reports,
+      total,
+      limit,
+      skip,
     });
   } catch (err2) {
     next(databaseError(err2, 'Failed to get reports'));
@@ -73,13 +100,17 @@ const updateReportScore = async (report, res, next) => {
     originalEvents = await EventSchema.findEventsBetweenTimes(
       { datasetId: originalDatasetId },
       startTime,
-      endTime
+      endTime,
+      MAX_SCORING_EVENTS
     );
   } catch (err3) {
     return next(databaseError(err3, 'Cannot get the original events of the report'));
   }
   try {
-    newEvents = await EventSchema.findEventsWithOptions({ datasetId: newDatasetId });
+    newEvents = await EventSchema.findEventsWithOptions(
+      { datasetId: newDatasetId },
+      MAX_SCORING_EVENTS
+    );
   } catch (err4) {
     return next(databaseError(err4, 'Cannot get the new events of the report'));
   }

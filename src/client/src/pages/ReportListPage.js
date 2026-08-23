@@ -10,13 +10,17 @@ import { getQuery } from "../utils";
 
 class ReportListPage extends Component {
   componentDidMount() {
+    this.fetchPage(0);
+  }
+
+  fetchPage(skip) {
     const topologyFileName = getQuery("topologyFileName");
     const testCampaignId = getQuery("testCampaignId");
-    this.props.fetchReports({ topologyFileName, testCampaignId });
+    this.props.fetchReports({ topologyFileName, testCampaignId, skip });
   }
 
   render() {
-    const { reports, deleteReport, requesting, requestError, fetchReports } =
+    const { reports, total, limit, skip, deleteReport, requesting, requestError, fetchReports } =
       this.props;
     let pageSubTitle = "All reports";
     const topologyFileName = getQuery("topologyFileName");
@@ -28,6 +32,15 @@ class ReportListPage extends Component {
       pageSubTitle = `${pageSubTitle} of test campaign: ${testCampaignId}`;
     }
     const dataSource = reports.map((ds, index) => ({ ...ds, key: index }));
+    // Server-side pagination: the table moves the window with `skip`, and
+    // never asks for more than one page at a time (issue #85).
+    const pagination = {
+      pageSize: limit,
+      total: Math.max(total, reports.length),
+      current: Math.floor(skip / (limit || 1)) + 1,
+      showSizeChanger: false,
+      onChange: (page) => this.fetchPage((page - 1) * (limit || 1)),
+    };
     const columns = [
       {
         title: "Created At",
@@ -111,7 +124,12 @@ class ReportListPage extends Component {
       );
     return (
       <LayoutPage pageTitle="Reports" pageSubTitle={pageSubTitle}>
-        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
+        <Table
+          columns={columns}
+          dataSource={dataSource}
+          pagination={pagination}
+          locale={{ emptyText: emptyState }}
+        />
       </LayoutPage>
     );
   }
@@ -119,6 +137,9 @@ class ReportListPage extends Component {
 
 const mapPropsToStates = ({ reports, requesting, requestError }) => ({
   reports: reports.allReports,
+  total: reports.total,
+  limit: reports.limit,
+  skip: reports.skip,
   requesting,
   requestError,
 });

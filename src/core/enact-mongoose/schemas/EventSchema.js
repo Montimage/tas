@@ -56,12 +56,16 @@ eventSchema.statics.findEventsWithPagingOptions = async function (options, page)
   return data;
 };
 
-eventSchema.statics.findEventsWithOptions = async function (options) {
-  const data = await this.find(options)
-    .sort({
-      timestamp: 1,
-    })
-    .exec();
+// Bounded result sets (issue #31): the scoring path passes a `limit` so a
+// large run cannot pull its whole event stream into memory to be scored.
+eventSchema.statics.findEventsWithOptions = async function (options, limit = null) {
+  let query = this.find(options).sort({
+    timestamp: 1,
+  });
+  if (Number.isInteger(limit)) {
+    query = query.limit(limit);
+  }
+  const data = await query.exec();
 
   if (!data) {
     throw {
@@ -72,7 +76,7 @@ eventSchema.statics.findEventsWithOptions = async function (options) {
   return data;
 };
 
-eventSchema.statics.findEventsBetweenTimes = function (filter, startTime, endTime) {
+eventSchema.statics.findEventsBetweenTimes = function (filter, startTime, endTime, limit = null) {
   const options = {
     ...filter,
     $and: [
@@ -89,7 +93,7 @@ eventSchema.statics.findEventsBetweenTimes = function (filter, startTime, endTim
     ],
   };
   // console.log(JSON.stringify(filter));
-  return this.findEventsWithOptions(options);
+  return this.findEventsWithOptions(options, limit);
 };
 
 module.exports = mongoose.model('Event', eventSchema);

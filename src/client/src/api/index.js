@@ -605,24 +605,27 @@ export const sendRequestReport = async (rpId) => {
   return status;
 };
 
-export const sendRequestAllReports = async (options) => {
-  const { topologyFileName, testCampaignId } = options;
-  let query = "";
-  if (topologyFileName) {
-    query = `?topologyFileName=${topologyFileName}`;
-    if (testCampaignId) {
-      query = `&testCampaignId=${testCampaignId}`;
-    }
-  } else {
-    if (testCampaignId) {
-      query = `?testCampaignId=${testCampaignId}`;
-    }
-  }
+// Default page size for the paginated report list; mirrors the server's
+// `REPORTS_DEFAULT_PAGE_SIZE` (issue #85).
+export const REPORTS_PAGE_SIZE = 50;
 
-  const url = `${URL}/api/reports${query}`;
+export const sendRequestAllReports = async (options) => {
+  const { topologyFileName, testCampaignId, limit = REPORTS_PAGE_SIZE, skip = 0 } =
+    options || {};
+  const params = new URLSearchParams();
+  if (topologyFileName) {
+    params.append("topologyFileName", topologyFileName);
+  }
+  if (testCampaignId) {
+    params.append("testCampaignId", testCampaignId);
+  }
+  params.append("limit", String(limit));
+  params.append("skip", String(skip));
+
+  const url = `${URL}/api/reports?${params.toString()}`;
   const response = await apiFetch(url);
   const status = await parseResponse(response);
-  return status.reports;
+  return { reports: status.reports, total: status.total, limit, skip };
 };
 
 export const sendRequestDeleteReport = async (reportId) => {

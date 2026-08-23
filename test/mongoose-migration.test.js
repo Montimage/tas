@@ -277,24 +277,31 @@ test('DataStorage.getTestCaseById keeps its callback contract and NULL marker', 
   }
 });
 
-test('fire-and-forget writes swallow their rejections instead of crashing the process', async () => {
+test('batched writes report their rejections instead of crashing the process (issue #31)', async () => {
   const logger = fakeLogger();
-  const ds = new DataStorage({ protocol: 'MONGODB', connConfig: {} }, logger);
+  const ds = new DataStorage({ protocol: 'MONGODB', connConfig: {} }, logger, {
+    maxBatchSize: 1,
+    flushIntervalMs: 10,
+    writeRetries: 0,
+  });
 
-  const originalSave = EventSchema.prototype.save;
-  EventSchema.prototype.save = function () {
+  const originalInsertMany = EventSchema.insertMany;
+  EventSchema.insertMany = function () {
     return Promise.reject(new Error('write concern failed'));
   };
   try {
-    ds.saveEvent({ datasetId: 'ds-1', timestamp: 1, values: {}, isSensorData: true });
-    // A rejection escaping this call would fail the suite as an unhandled
-    // rejection; give the microtask queue time to prove it does not.
-    await new Promise((resolve) => setImmediate(resolve));
+    // The size trigger flushes on the first event; a rejection escaping the
+    // drain would fail the suite as an unhandled rejection.
+    await ds.saveEvent({ datasetId: 'ds-1', timestamp: 1, values: {}, isSensorData: true });
+    await ds.flushEvents();
+    assert.equal(ds.droppedEventCount, 1, 'the failed batch must be counted as dropped');
     assert.ok(
-      logger.lines.some(([level, first]) => level === 'error' && /Cannot save event/.test(first)),
-      'the swallowed write must be logged'
+      logger.lines.some(
+        ([level, first]) => level === 'error' && /Cannot save .*events/.test(first)
+      ),
+      'the dropped batch must be reported through the logger'
     );
   } finally {
-    EventSchema.prototype.save = originalSave;
+    EventSchema.insertMany = originalInsertMany;
   }
 });

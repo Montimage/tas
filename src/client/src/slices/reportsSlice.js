@@ -11,6 +11,10 @@ export const requestNewEvents = createAction('REQUEST_NEW_EVENTS');
 
 const reportsInitialState = {
   allReports: [],
+  // Server-side paging state for the report list (issue #85).
+  total: 0,
+  limit: 50,
+  skip: 0,
   currentReport: {
     report: null,
     originalEvents: [],
@@ -24,6 +28,12 @@ export const reportsSlice = createSlice({
   reducers: {
     setAllReports(state, action) {
       state.allReports = action.payload;
+    },
+    setReportsPaging(state, action) {
+      const { total, limit, skip } = action.payload;
+      if (total !== undefined) state.total = total;
+      if (limit !== undefined) state.limit = limit;
+      if (skip !== undefined) state.skip = skip;
     },
     deleteReportOK(state, action) {
       const newAllReports = state.allReports.filter(
@@ -61,6 +71,7 @@ export const reportsSlice = createSlice({
 
 export const {
   setAllReports,
+  setReportsPaging,
   setCurrentReport,
   deleteReportOK,
   updateReportOK,

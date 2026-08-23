@@ -54,12 +54,22 @@ const reportSchema = new Schema({
     type: Object,
   },
 });
-reportSchema.statics.findReportsWithOptions = async function (options) {
-  const data = await this.find(options)
-    .sort({
-      createdAt: 1,
-    })
-    .exec();
+reportSchema.statics.findReportsWithOptions = async function (options, paging = null) {
+  // Pagination (F-PERF-004, issue #85): the caller declares a page with
+  // `{ limit, skip }`. Without `paging` the query stays unbounded, which only
+  // the route-level default should ever rely on.
+  let query = this.find(options).sort({
+    createdAt: 1,
+  });
+  if (paging) {
+    if (Number.isInteger(paging.skip) && paging.skip > 0) {
+      query = query.skip(paging.skip);
+    }
+    if (Number.isInteger(paging.limit)) {
+      query = query.limit(paging.limit);
+    }
+  }
+  const data = await query.exec();
 
   if (!data) {
     throw {
