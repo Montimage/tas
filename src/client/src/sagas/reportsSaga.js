@@ -12,6 +12,7 @@ import {
   setNotification,
   setCurrentReport,
   setAllReports,
+  setReportsPaging,
   updateReportOK,
   deleteReportOK,
   setOriginalEvents,
@@ -107,8 +108,9 @@ function* handleRequestUpdateReport(action) {
 function* handleRequestAllReports(action) {
   try {
     const options = action.payload;
-    const allReports = yield call(() => sendRequestAllReports(options));
-    yield put(setAllReports(allReports));
+    const { reports, total, limit, skip } = yield call(() => sendRequestAllReports(options));
+    yield put(setAllReports(reports));
+    yield put(setReportsPaging({ total, limit, skip }));
     // dispatch data
   } catch (error) {
     // dispatch error

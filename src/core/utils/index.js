@@ -3,8 +3,36 @@ const path = require('path');
 const mqtt_regex = require('mqtt-regex');
 const crypto = require('crypto');
 
+// Compiled MQTT topic patterns, memoized by the pattern string (issue #31).
+// The data path used to recompile a pattern for every message inside a
+// per-device loop; `mqtt_regex` builds a fresh RegExp on every call, so the
+// hot path paid full parse cost per message. The compiled object is stateless
+// for matching (the generated regex carries no flags), so one instance per
+// pattern can be shared by every caller. The cache is bounded by clearing
+// once it exceeds the limit, which keeps a pathological stream of distinct
+// patterns from growing memory without bound.
+const COMPILED_TOPIC_PATTERN_CACHE_LIMIT = 1024;
+const compiledTopicPatterns = new Map();
+
+/**
+ * Compile an MQTT topic pattern once and reuse the compiled matcher.
+ * @param {String} pattern MQTT topic pattern, e.g. `devices/+/sensors/#`
+ * @returns {Object} The compiled pattern (carries `.exec(topic)`)
+ */
+const compileMQTTTopicPattern = (pattern) => {
+  let compiled = compiledTopicPatterns.get(pattern);
+  if (compiled === undefined) {
+    if (compiledTopicPatterns.size >= COMPILED_TOPIC_PATTERN_CACHE_LIMIT) {
+      compiledTopicPatterns.clear();
+    }
+    compiled = mqtt_regex(pattern);
+    compiledTopicPatterns.set(pattern, compiled);
+  }
+  return compiled;
+};
+
 const checkMQTTTopic = (topic, pattern) => {
-  const params = mqtt_regex(pattern).exec(topic);
+  const params = compileMQTTTopicPattern(pattern).exec(topic);
   return params !== undefined;
 };
 
@@ -60,25 +88,43 @@ const readJSONFile = (filePath, callback) => {
  * @param {Boolean} isOverwrite The flag to indicate if the file should be overwrite or not
  */
 const writeToFile = (_filePath, data, callback, isOverwrite = false) => {
-  let filePath = _filePath;
-  if (!isOverwrite) {
-    if (fs.existsSync(filePath)) {
-      // Need to change the file name;
-      const extName = path.extname(_filePath);
-      filePath = `${_filePath.replace(extName, '')}-${Date.now()}${extName}`;
+  const attemptWrite = (filePath) => {
+    try {
+      fs.writeFile(filePath, data, (err, result) => {
+        if (err) return callback(err);
+        return callback(null, result);
+      });
+    } catch (error) {
+      // A synchronous throw from fs.writeFile (invalid path or data) used to be
+      // swallowed here without calling back at all, so the request that asked for
+      // the write hung until its client gave up. Route it to the callback like
+      // every other function in this file does.
+      return callback(error);
     }
+  };
+
+  if (isOverwrite) {
+    return attemptWrite(_filePath);
   }
 
+  // Collision check (F-PERF-005, issue #85): this used to be `fs.existsSync`,
+  // which parked the event loop on every non-overwrite create. `fs.access`
+  // asks the same question without blocking; ENOENT means the name is free,
+  // any other failure (including a path fs.access rejects synchronously) is
+  // routed to the callback like every other error in this file.
   try {
-    fs.writeFile(filePath, data, (err, result) => {
-      if (err) return callback(err);
-      return callback(null, result);
+    fs.access(_filePath, (accessErr) => {
+      if (!accessErr) {
+        // Need to change the file name;
+        const extName = path.extname(_filePath);
+        return attemptWrite(`${_filePath.replace(extName, '')}-${Date.now()}${extName}`);
+      }
+      if (accessErr.code === 'ENOENT') {
+        return attemptWrite(_filePath);
+      }
+      return callback(accessErr);
     });
   } catch (error) {
-    // A synchronous throw from fs.writeFile (invalid path or data) used to be
-    // swallowed here without calling back at all, so the request that asked for
-    // the write hung until its client gave up. Route it to the callback like
-    // every other function in this file does.
     return callback(error);
   }
 };
@@ -281,5 +327,6 @@ module.exports = {
   readDir,
   deleteFile,
   checkMQTTTopic,
+  compileMQTTTopicPattern,
   getObjectId,
 };
