@@ -126,6 +126,9 @@ router.post(
         { id: datasetId },
         { ...dataset, lastModified: Date.now() }
       );
+      if (!ts) {
+        return next(notFound('Data set not found'));
+      }
       res.send({
         dataset: ts,
       });
