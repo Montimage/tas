@@ -249,7 +249,8 @@ class DatasetPage extends Component {
       newEvent,
       isNew,
     } = this.state;
-    const { addNewEvent, updateEvent, requesting, requestError } = this.props;
+    const { addNewEvent, updateEvent, requesting, requestError, totalNbEvents } =
+      this.props;
     const nbEvents = events.length;
     const startTime = events[0] ? events[0].timestamp : 0;
     const endTime = events[nbEvents - 1] ? events[nbEvents - 1].timestamp : 0;
@@ -268,13 +269,17 @@ class DatasetPage extends Component {
 
     // TODO: Make statistic beautiful
     // TODO: implement editting event
-    const datasetMissing = !isNew && !requesting && !id;
+    // A failed dataset fetch leaves the page without data; offer a retry.
+    // Stale errors from other pages are cleared on mount by this page's own
+    // request actions (any request start resets the record), so this banner
+    // only reflects this view's failed fetch.
+    const fetchFailed = !requesting && requestError;
     return (
       <LayoutPage
         pageTitle={name}
         pageSubTitle="View and update a dataset"
       >
-        {datasetMissing && requestError ? (
+        {fetchFailed ? (
           <Button onClick={() => this.refetch()}>Retry loading dataset</Button>
         ) : null}
         <Form labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
