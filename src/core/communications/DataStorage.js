@@ -106,7 +106,18 @@ class DataStorage {
    * @param {Object} data The event to be saved into the database
    */
   async saveEvent(data) {
-    this.pendingEvents.push(new EventSchema(data));
+    // The pre-batching saveEvent never rejected: its try/catch turned every
+    // failure into a logged line, and its callers (the message hot path)
+    // still fire-and-forget without a catch - an escaping rejection here
+    // would take the process down as an unhandled rejection.
+    let event;
+    try {
+      event = new EventSchema(data);
+    } catch (err) {
+      this.logger.error('[DataStorage] Cannot queue event:', err);
+      return;
+    }
+    this.pendingEvents.push(event);
     if (this.pendingEvents.length >= this.eventBatchSize) {
       this.flushEvents();
     } else {
