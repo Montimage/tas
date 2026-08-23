@@ -32,6 +32,11 @@ released as part of the next stable release or as a dedicated one.
 
 ## Known limitations
 
-As documented in the README, TaS currently has **no built-in authentication**.
-Until native authentication lands, operate the service on loopback or a trusted
-private network only, per the [deployment baseline](README.md#security).
+The API requires an authenticated session: there is a single administrator
+account, provisioned from configuration rather than from this repository, and
+every other caller is refused. There are no roles or per-user accounts —
+anyone holding the administrator credential can do everything — so operate
+the service on loopback or a trusted private network only, per the
+[deployment baseline](README.md#deployment-baseline). The MQTT broker
+requires authentication on its published port; the Node-RED editor has no
+credential of its own and must not be exposed to untrusted networks.
