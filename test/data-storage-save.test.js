@@ -119,7 +119,6 @@ before(() => {
   // freshApp, and after() guarantees restoration even on failure.
   const backup = `${dataStoragePath}.test-bak`;
   if (fs.existsSync(dataStoragePath)) fs.renameSync(dataStoragePath, backup);
-  fs.writeFileSync(dataStoragePath, JSON.stringify({ placeholder: true }), 'utf8');
   server = freshApp(workingConfig).listen(0);
 });
 
@@ -136,7 +135,7 @@ const assertErrorShape = (res, status, context) => {
   assert.ok(res.body, `${context} must answer with a JSON body (${res.raw})`);
   assert.equal(typeof res.body.error, 'string', `${context} must carry a string error`);
   assert.deepEqual(
-    Object.keys(res.body).filter((key) => key !== 'error' && 'details'),
+    Object.keys(res.body).filter((key) => key !== 'error' && key !== 'details'),
     [],
     `${context}: an error body carries nothing but error and details (${res.raw})`
   );
@@ -263,4 +262,26 @@ test('connection test and save share one verification seam (AC5)', async () => {
   });
   assert.equal(saveRes.status, 503, 'Save must report unreachability just like the test action');
   assert.ok(built.length > afterTest, 'the save must have probed the very same seam');
+});
+
+test('a malformed configuration reaches the error branch instead of throwing (F-BUG-002 seam)', async () => {
+  server.close();
+  server = freshApp(workingConfig).listen(0);
+  connectImpl = refuseExcept(27017);
+
+  // The route cannot send this (Joi refuses it first), but updateDataStorage
+  // is module API: a null configuration must be reported through its callback,
+  // never thrown synchronously inside an fs/connect callback.
+  const dbc = require(dbcPath);
+  await new Promise((resolve) => {
+    dbc.updateDataStorage(null, (err) => {
+      assert.ok(err, 'null configuration must be reported through the callback');
+      resolve();
+    });
+  });
+  assert.deepEqual(
+    JSON.parse(fs.readFileSync(dataStoragePath, 'utf8')),
+    workingConfig,
+    'disk must be untouched by a refused configuration'
+  );
 });

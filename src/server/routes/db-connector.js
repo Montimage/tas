@@ -28,10 +28,14 @@ let dbClient = null;
  * @param {Function} callback Invoked with (err, connectedClient)
  */
 const buildConnectedClient = (dataStorage, callback) => {
+  // A malformed configuration (the configuration itself missing, or connConfig
+  // not an object) must be reported through the error branch, not destructured
+  // and thrown as a TypeError. (F-BUG-002)
+  if (!dataStorage || typeof dataStorage !== 'object') {
+    console.error('[db-connector] data-storage configuration is missing');
+    return callback(new Error('data-storage configuration is missing'));
+  }
   const { protocol, connConfig } = dataStorage;
-  // A malformed configuration (connConfig missing or not an object) must
-  // be reported as an unavailable database (503), not destructured and
-  // thrown as a TypeError. (F-BUG-002)
   if (!connConfig || typeof connConfig !== 'object') {
     console.error('[db-connector] data-storage configuration is missing connConfig');
     return callback(new Error('data-storage configuration is missing connConfig'));
