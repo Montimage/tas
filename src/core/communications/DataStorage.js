@@ -7,6 +7,18 @@ const {
 } = require('../enact-mongoose');
 const ReportSchema = require('../enact-mongoose/schemas/ReportSchema');
 
+// Event-write batching (issue #31). The data path used to open one document
+// save per message, so a high-rate simulation paid a full round trip per
+// event and any failure was logged and forgotten. Writes now queue and flush
+// as one `insertMany` when either trigger fires: the queue reaches
+// DEFAULT_EVENT_BATCH_SIZE documents, or DEFAULT_EVENT_FLUSH_INTERVAL_MS
+// passes since the timer was armed. A failed batch is retried before it is
+// given up on, and a batch that still fails is counted and reported - it is
+// never dropped silently.
+const DEFAULT_EVENT_BATCH_SIZE = 50;
+const DEFAULT_EVENT_FLUSH_INTERVAL_MS = 200;
+const DEFAULT_EVENT_WRITE_RETRIES = 2;
+
 /**
  * DataStorage class presents the interface of a data base
  * - supports different database type: MONGODB, couchDB, etc.
@@ -16,7 +28,7 @@ const ReportSchema = require('../enact-mongoose/schemas/ReportSchema');
  *  + stop(): disconnect with the database
  */
 class DataStorage {
-  constructor(config, logger = null) {
+  constructor(config, logger = null, eventWriteOptions = {}) {
     const { protocol, connConfig } = config;
     this.protocol = protocol;
     this.connConfig = connConfig;
@@ -25,6 +37,26 @@ class DataStorage {
     // connection passes its own logger in; without one, fall back to the
     // process console.
     this.logger = logger || console;
+    // Batched-write tuning (issue #31); the defaults above serve the
+    // simulation paths, tests shrink them to make the triggers observable.
+    const options = eventWriteOptions || {};
+    this.eventBatchSize = options.maxBatchSize || DEFAULT_EVENT_BATCH_SIZE;
+    this.eventFlushIntervalMs =
+      options.flushIntervalMs !== undefined
+        ? options.flushIntervalMs
+        : DEFAULT_EVENT_FLUSH_INTERVAL_MS;
+    this.eventWriteRetries =
+      options.writeRetries !== undefined ? options.writeRetries : DEFAULT_EVENT_WRITE_RETRIES;
+    this.onEventsDropped = typeof options.onDrop === 'function' ? options.onDrop : null;
+    // Queue state. `eventFlushChain` serialises flushes so two triggers
+    // firing together cannot interleave two insertMany batches.
+    this.pendingEvents = [];
+    this.eventFlushTimer = null;
+    this.eventFlushChain = null;
+    // Write statistics: how many events were persisted, how many were given
+    // up on after their retries ran out.
+    this.savedEventCount = 0;
+    this.droppedEventCount = 0;
   }
 
   /**
@@ -65,15 +97,99 @@ class DataStorage {
   }
 
   /**
-   * Save data to database
-   * @param {Object} data The data to be saved into the database
+   * Queue one event for the next batched write (issue #31).
+   *
+   * The queue flushes as one `insertMany` when the size trigger fires (the
+   * queue reached `eventBatchSize` documents) or the time trigger fires
+   * (`eventFlushIntervalMs` since the timer was armed), whichever comes
+   * first.
+   * @param {Object} data The event to be saved into the database
    */
   async saveEvent(data) {
-    try {
-      const rcData = new EventSchema(data);
-      await rcData.save();
-    } catch (err) {
-      this.logger.error('[DataStorage] Cannot save event:', err);
+    this.pendingEvents.push(new EventSchema(data));
+    if (this.pendingEvents.length >= this.eventBatchSize) {
+      this.flushEvents();
+    } else {
+      this.scheduleEventFlush();
+    }
+  }
+
+  /**
+   * Arm the time trigger for the current queue, unless one is already armed.
+   */
+  scheduleEventFlush() {
+    if (this.eventFlushTimer) return;
+    const timer = setTimeout(() => {
+      this.eventFlushTimer = null;
+      this.flushEvents();
+    }, this.eventFlushIntervalMs);
+    // Never hold the process open for a pending batch: shutdown goes through
+    // `stop()`, which drains the queue explicitly.
+    if (typeof timer.unref === 'function') timer.unref();
+    this.eventFlushTimer = timer;
+  }
+
+  /**
+   * Write every queued event down. Concurrent calls share one drain: the
+   * first starts it and the rest await the same chain, so two triggers
+   * firing together cannot interleave two insertMany batches.
+   * @returns {Promise<void>} Resolves once the queue is empty or its
+   *   remainder was reported as dropped
+   */
+  flushEvents() {
+    if (!this.eventFlushChain) {
+      this.eventFlushChain = this.drainEventQueue().finally(() => {
+        this.eventFlushChain = null;
+      });
+    }
+    return this.eventFlushChain;
+  }
+
+  async drainEventQueue() {
+    if (this.eventFlushTimer) {
+      clearTimeout(this.eventFlushTimer);
+      this.eventFlushTimer = null;
+    }
+    while (this.pendingEvents.length > 0) {
+      const batch = this.pendingEvents.splice(0, this.pendingEvents.length);
+      await this.writeEventBatch(batch);
+    }
+  }
+
+  /**
+   * Persist one batch, retrying transient failures before giving up. A batch
+   * that exhausts its retries is counted and reported through the logger and
+   * the `onDrop` hook rather than lost silently (issue #31 acceptance 2).
+   * @param {Array} batch The queued Event documents
+   */
+  async writeEventBatch(batch) {
+    let attempt = 0;
+    for (;;) {
+      try {
+        await EventSchema.insertMany(batch, { ordered: false });
+        this.savedEventCount += batch.length;
+        return;
+      } catch (err) {
+        if (attempt < this.eventWriteRetries) {
+          attempt += 1;
+          continue;
+        }
+        this.droppedEventCount += batch.length;
+        this.logger.error(
+          `[DataStorage] Cannot save ${batch.length} events after ${
+            attempt + 1
+          } attempts - they are NOT stored:`,
+          err
+        );
+        if (this.onEventsDropped) {
+          try {
+            this.onEventsDropped(batch, err);
+          } catch (hookError) {
+            this.logger.error('[DataStorage] The onDrop hook itself failed:', hookError);
+          }
+        }
+        return;
+      }
     }
   }
 
@@ -179,10 +295,23 @@ class DataStorage {
   }
   /**
    * Disconnect with the database
+   *
+   * Any events still queued for a batched write are drained first (issue
+   * #31): stopping a run must not abandon what its devices already sent.
+   * @param {Function} [callback] Invoked once the queue is drained (or its
+   *   remainder was reported as dropped) and the client is closed
    */
-  stop() {
-    if (this.dsClient) {
-      this.dsClient.close();
+  stop(callback = null) {
+    const finish = () => {
+      if (this.dsClient) {
+        this.dsClient.close();
+      }
+      if (callback) callback();
+    };
+    if (this.pendingEvents.length > 0 || this.eventFlushChain) {
+      this.flushEvents().then(finish, finish);
+    } else {
+      finish();
     }
   }
 }

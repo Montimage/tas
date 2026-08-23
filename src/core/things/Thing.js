@@ -4,7 +4,7 @@ const { ONLINE, OFFLINE, SIMULATING } = require('../DeviceStatus');
 const MQBus = require('../communications/MQBus');
 const DataStorage = require('../communications/DataStorage');
 const { DS_RECORDER, DS_DATASET, DS_DATA_GENERATOR } = require('../DataSourceType');
-const { checkMQTTTopic } = require('../utils');
+const { checkMQTTTopic, compileMQTTTopicPattern } = require('../utils');
 
 const findDevice = (id, objectId, array) => {
   for (let index = 0; index < array.length; index++) {
@@ -12,6 +12,18 @@ const findDevice = (id, objectId, array) => {
     if (element.id === id && objectId === element.objectId) return index;
   }
   return -1;
+};
+
+/**
+ * Compile a topic matcher once for a sensor/actuator being registered
+ * (issue #31): the message hot path used to recompile the pattern inside its
+ * per-device loop for every arriving message.
+ * @param {String} topic The MQTT topic pattern to compile
+ * @returns {Function} A matcher answering whether a concrete topic matches
+ */
+const compileTopicMatcher = (topic) => {
+  const compiled = compileMQTTTopicPattern(topic);
+  return (concreteTopic) => compiled.exec(concreteTopic) !== undefined;
 };
 
 let startReplayingTime = Date.now();
@@ -81,6 +93,10 @@ class Device {
     // Instance need to be initialized
     this.sensors = []; // Add/Remove sensor method
     this.actuators = []; // Add/Remove actuator method
+    // Constant-time actuator lookup on the message hot path (issue #31):
+    // keyed by the actuator's exact topic, first registration wins, kept in
+    // step with `actuators` by add/remove.
+    this.actuatorsByTopic = new Map();
     this.testBroker = null; // The communication to publish the sensors data and receive the actuators data - cannot be null
     this.productionBroker = null; // The communication to collecting data in digitalTwins option - can be null
     this.dataStorage = null; // The connection with Data Storage to get the dataset or save the new dataset - can be null, in this case the simulated data will not be stored in the data storage, and the option simulate from a dataset will be disable
@@ -160,7 +176,7 @@ class Device {
     } else {
       for (let index = 0; index < this.sensors.length; index++) {
         const sensor = this.sensors[index];
-        if (checkMQTTTopic(topic, sensor.topic)) {
+        if (sensor.topicMatcher(topic)) {
           // publish data to the test broker
           this.testBroker.publish(topic, data);
           // store data into the data storage
@@ -195,29 +211,27 @@ class Device {
    */
   testBrokerMessagehandler(topic, message, packet) {
     const currentTime = Date.now();
-    // Update the actuator value
-    for (let index = 0; index < this.actuators.length; index++) {
-      const actuator = this.actuators[index];
-      if (actuator.topic === topic) {
-        actuator.updateActuatedData(message, currentTime);
-        // store data into the data storage
-        if (this.dataStorage) {
-          const event = {
-            timestamp: currentTime,
-            topic,
-            devId: actuator.id,
-            datasetId: this.newDatasetConfig.id,
-            isSensorData: false,
-            values: message,
-          };
-          this.dataStorage.saveEvent(event);
-        }
-
-        // Update statistics
-        this.lastActivity = currentTime;
-        this.numberOfReceivedData++;
-        return;
+    // Update the actuator value - O(1) topic lookup (issue #31)
+    const actuator = this.actuatorsByTopic.get(topic);
+    if (actuator) {
+      actuator.updateActuatedData(message, currentTime);
+      // store data into the data storage
+      if (this.dataStorage) {
+        const event = {
+          timestamp: currentTime,
+          topic,
+          devId: actuator.id,
+          datasetId: this.newDatasetConfig.id,
+          isSensorData: false,
+          values: message,
+        };
+        this.dataStorage.saveEvent(event);
       }
+
+      // Update statistics
+      this.lastActivity = currentTime;
+      this.numberOfReceivedData++;
+      return;
     }
     this.logger.error('Cannot find the actuator with the topic: ', topic);
   }
@@ -234,7 +248,7 @@ class Device {
     // find the sensor by topic - publisher
     for (let index = 0; index < this.sensors.length; index++) {
       const sensor = this.sensors[index];
-      if (checkMQTTTopic(topic, sensor.topic)) {
+      if (sensor.topicMatcher(topic)) {
         this.publishDataToTestBroker(topic, message);
         // Update the statistics
         this.numberOfForwardedData++;
@@ -306,6 +320,8 @@ class Device {
           },
           this.productionBroker
         );
+        // Compile the topic matcher once, at registration (issue #31).
+        newSensor.topicMatcher = compileTopicMatcher(topic);
         this.sensors.push(newSensor);
         // HOT reload sensor
         if (this.status === SIMULATING) {
@@ -334,6 +350,8 @@ class Device {
         startReplayingTime,
         () => this.sensorCallbackWhenFinish(id)
       );
+      // Compile the topic matcher once, at registration (issue #31).
+      newSensor.topicMatcher = compileTopicMatcher(topic);
       this.sensors.push(newSensor);
       // HOT reload sensor
       if (this.status === SIMULATING) {
@@ -354,6 +372,8 @@ class Device {
         }
       );
 
+      // Compile the topic matcher once, at registration (issue #31).
+      newSensor.topicMatcher = compileTopicMatcher(topic);
       this.sensors.push(newSensor);
       // HOT reload sensor
       if (this.status === SIMULATING) {
@@ -421,6 +441,12 @@ class Device {
       this.testBroker,
       objectId
     );
+    // Constant-time lookup on the message hot path (issue #31). First
+    // registration wins for a duplicated topic, matching the scan it
+    // replaces.
+    if (!this.actuatorsByTopic.has(topic)) {
+      this.actuatorsByTopic.set(topic, newActuator);
+    }
     this.actuators.push(newActuator);
     this.logger.log(`[${this.id}] added new actuator ${id} ${objectId}`);
 
@@ -449,6 +475,10 @@ class Device {
       actuator.stop();
     }
     this.actuators.splice(actuatorIndex, 1);
+    // Keep the topic index in step with the list (issue #31).
+    if (this.actuatorsByTopic.get(actuator.topic) === actuator) {
+      this.actuatorsByTopic.delete(actuator.topic);
+    }
     this.logger.log(`[${this.id}] Actuator ID ${id} ${objectId} has been removed!`);
   }
 
