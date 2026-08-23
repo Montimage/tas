@@ -18,7 +18,7 @@ import { reportsSlice } from '../slices/reportsSlice';
 import { authSlice } from '../slices/authSlice';
 import { editingFormSlice } from '../slices/editingFormSlice';
 import { notificationSlice } from '../slices/notificationSlice';
-import { requestingReducer } from '../slices/requestingSlice';
+import { requestingReducer, requestErrorReducer } from '../slices/requestingSlice';
 
 // State keys are the store's public shape - every component selects through
 // them, so they must not change even though the reducers are now slices.
@@ -33,6 +33,7 @@ const rootReducer = combineReducers({
   logs: logsSlice.reducer,
   notify: notificationSlice.reducer,
   requesting: requestingReducer,
+  requestError: requestErrorReducer,
   editingForm: editingFormSlice.reducer,
   simulationStatus: simulationStatusSlice.reducer,
   testCampaigns: testCampaignsSlice.reducer,

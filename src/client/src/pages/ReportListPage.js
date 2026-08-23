@@ -1,9 +1,10 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
 import dayjs from "dayjs";
-import { Table, Button } from "antd";
+import { Table, Button, Popconfirm } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
+import { ListStateEmpty, ListStateError } from "../components/ListStates";
 import { requestAllReports, requestDeleteReport } from "../actions";
 import { getQuery } from "../utils";
 
@@ -15,7 +16,8 @@ class ReportListPage extends Component {
   }
 
   render() {
-    const { reports, deleteReport } = this.props;
+    const { reports, deleteReport, requesting, requestError, fetchReports } =
+      this.props;
     let pageSubTitle = "All reports";
     const topologyFileName = getQuery("topologyFileName");
     if (topologyFileName) {
@@ -78,23 +80,47 @@ class ReportListPage extends Component {
         width: 100,
         render: (ds) => (
           <Fragment>
-            <Button size="small" danger onClick={() => deleteReport(ds._id)}>
-              <DeleteOutlined /> Delete
-            </Button>
+            <Popconfirm
+              title={`Delete report "${ds._id}"?`}
+              description="This permanently removes the report. It cannot be undone."
+              okText="Delete"
+              okButtonProps={{ danger: true }}
+              cancelText="Cancel"
+              onConfirm={() => deleteReport(ds._id)}
+            >
+              <Button size="small" danger>
+                <DeleteOutlined /> Delete
+              </Button>
+            </Popconfirm>
           </Fragment>
         ),
       },
     ];
+    const emptyState =
+      !requesting && requestError ? (
+        <ListStateError message={requestError.message} onRetry={fetchReports} />
+      ) : (
+        <ListStateEmpty
+          description="No reports yet"
+          action={
+            <a href="/test-campaigns">
+              <Button type="primary">Run a Test Campaign</Button>
+            </a>
+          }
+        />
+      );
     return (
       <LayoutPage pageTitle="Reports" pageSubTitle={pageSubTitle}>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );
   }
 }
 
-const mapPropsToStates = ({ reports }) => ({
+const mapPropsToStates = ({ reports, requesting, requestError }) => ({
   reports: reports.allReports,
+  requesting,
+  requestError,
 });
 
 const mapDispatchToProps = (dispatch) => ({

@@ -1,8 +1,9 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Table, Button } from "antd";
+import { Table, Button, Popconfirm } from "antd";
 import { DeleteOutlined, CopyOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
+import { ListStateEmpty, ListStateError } from "../components/ListStates";
 import {
   requestAllTestCases,
   requestAddNewTestCase,
@@ -26,7 +27,13 @@ class TestCaseListPage extends Component {
   }
 
   render() {
-    const { testCases, deleteTestCase } = this.props;
+    const {
+      testCases,
+      deleteTestCase,
+      requesting,
+      requestError,
+      fetchTestCases,
+    } = this.props;
     const dataSource = testCases.map((tc) => ({ ...tc, key: tc.id }));
     const columns = [
       {
@@ -41,13 +48,38 @@ class TestCaseListPage extends Component {
         render: (tc) => (
           <Fragment>
             <Button size="small" style={{marginRight: 10}} onClick={() => this.duplicateTestCase(tc)}><CopyOutlined/> Duplicate</Button>
-            <Button size="small" danger onClick={() => deleteTestCase(tc.id)}>
-            <DeleteOutlined /> Delete
-            </Button>
+            <Popconfirm
+              title={`Delete test case "${tc.id}"?`}
+              description="This permanently removes the test case. It cannot be undone."
+              okText="Delete"
+              okButtonProps={{ danger: true }}
+              cancelText="Cancel"
+              onConfirm={() => deleteTestCase(tc.id)}
+            >
+              <Button size="small" danger>
+                <DeleteOutlined /> Delete
+              </Button>
+            </Popconfirm>
           </Fragment>
         ),
       },
     ];
+    const emptyState =
+      !requesting && requestError ? (
+        <ListStateError
+          message={requestError.message}
+          onRetry={fetchTestCases}
+        />
+      ) : (
+        <ListStateEmpty
+          description="No test cases yet"
+          action={
+            <a href={`/test-cases/new-case-${Date.now()}`}>
+              <Button type="primary">Add New Case</Button>
+            </a>
+          }
+        />
+      );
     return (
       <LayoutPage
         pageTitle="Test Case"
@@ -56,14 +88,16 @@ class TestCaseListPage extends Component {
         <a href={`/test-cases/new-case-${Date.now()}`}>
           <Button style={{ marginBottom: "10px" }}>Add New Case</Button>
         </a>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );
   }
 }
 
-const mapPropsToStates = ({ testCases }) => ({
+const mapPropsToStates = ({ testCases, requesting, requestError }) => ({
   testCases: testCases.allTestCases,
+  requesting,
+  requestError,
 });
 
 const mapDispatchToProps = (dispatch) => ({

@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Button, Dropdown, Table } from "antd";
+import { Button, Dropdown, Popconfirm, Table } from "antd";
 import {
   ClearOutlined,
   ImportOutlined,
@@ -11,6 +11,7 @@ import {
   StopOutlined,
 } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
+import { ListStateEmpty, ListStateError } from "../components/ListStates";
 import {
   requestAllDataRecorders,
   requestDeleteDataRecorder,
@@ -49,6 +50,9 @@ class DataRecorderListPage extends Component {
       startDataRecorder,
       dataRecorderStatus,
       stopDataRecorder,
+      requesting,
+      requestError,
+      fetchAllDataRecorders,
     } = this.props;
     const dataSource = allDataRecorders.map((model, index) => {
       let recorderId = null;
@@ -84,15 +88,22 @@ class DataRecorderListPage extends Component {
         render: (item) => (
           <Fragment>
             {item.isRunning ? (
-              <Button
-                style={{ marginRight: 10, paddingRight: 10 }}
-                size="small"
-                type="primary"
-                danger
-                onClick={() => stopDataRecorder(item.name)}
+              <Popconfirm
+                title={`Stop data recorder "${item.name}"?`}
+                description="The recorder will stop collecting data."
+                okText="Stop"
+                cancelText="Cancel"
+                onConfirm={() => stopDataRecorder(item.name)}
               >
-                <StopOutlined /> Stop
-              </Button>
+                <Button
+                  style={{ marginRight: 10, paddingRight: 10 }}
+                  size="small"
+                  type="primary"
+                  danger
+                >
+                  <StopOutlined /> Stop
+                </Button>
+              </Popconfirm>
             ) : (
               <Button
                 style={{ marginRight: 10 }}
@@ -110,18 +121,40 @@ class DataRecorderListPage extends Component {
             >
               <CopyOutlined /> Duplicate
             </Button>
-            <Button
-              size="small"
-              onClick={() => deleteDataRecorder(item.name)}
-              danger
+            <Popconfirm
+              title={`Delete data recorder "${item.name}"?`}
+              description="This permanently removes the data recorder. It cannot be undone."
+              okText="Delete"
+              okButtonProps={{ danger: true }}
+              cancelText="Cancel"
+              onConfirm={() => deleteDataRecorder(item.name)}
             >
-              <DeleteOutlined />
-              Delete
-            </Button>
+              <Button size="small" danger>
+                <DeleteOutlined />
+                Delete
+              </Button>
+            </Popconfirm>
           </Fragment>
         ),
       },
     ];
+
+    const emptyState =
+      !requesting && requestError ? (
+        <ListStateError
+          message={requestError.message}
+          onRetry={fetchAllDataRecorders}
+        />
+      ) : (
+        <ListStateEmpty
+          description="No data recorders yet"
+          action={
+            <a href={`/data-recorders/new-DataRecorder-${Date.now()}`}>
+              <Button type="primary">Create New Data Recorder</Button>
+            </a>
+          }
+        />
+      );
 
     return (
       <LayoutPage
@@ -173,7 +206,7 @@ class DataRecorderListPage extends Component {
           </Button>
         </Dropdown>
 
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
         <p></p>
         <a href={`/logs/data-recorders`}>View Logs</a>
       </LayoutPage>
@@ -181,9 +214,16 @@ class DataRecorderListPage extends Component {
   }
 }
 
-const mapPropsToStates = ({ allDataRecorders, dataRecorderStatus }) => ({
+const mapPropsToStates = ({
   allDataRecorders,
   dataRecorderStatus,
+  requesting,
+  requestError,
+}) => ({
+  allDataRecorders,
+  dataRecorderStatus,
+  requesting,
+  requestError,
 });
 
 const mapDispatchToProps = (dispatch) => ({

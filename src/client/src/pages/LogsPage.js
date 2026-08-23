@@ -4,9 +4,10 @@ import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 import { connect } from "react-redux";
-import { Table, Button } from "antd";
+import { Table, Button, Popconfirm } from "antd";
 import PageHeader from "../components/PageHeader";
 import { getCreatedTimeFromFileName, getLastPath, getQuery } from "../utils";
+import { ListStateEmpty, ListStateError } from "../components/ListStates";
 
 import {
   requestAllLogFiles,
@@ -40,7 +41,14 @@ class LogsPage extends Component {
   }
 
   render() {
-    const { logFiles, logs, deleteLogFile } = this.props;
+    const {
+      logFiles,
+      logs,
+      deleteLogFile,
+      requesting,
+      requestError,
+      fetchAllLogFiles,
+    } = this.props;
     const { tool, isLogPage, logFile } = this.state;
     if (isLogPage) {
       return <LogFileContent logs={logs} logFile={logFile} />;
@@ -68,31 +76,47 @@ class LogsPage extends Component {
       {
         title: "Action",
         render: (file) => (
-          <Button
-            danger
-            size="small"
-            onClick={() => deleteLogFile(tool, file.name)}
+          <Popconfirm
+            title={`Delete log file "${file.name}"?`}
+            description="This permanently removes the log file. It cannot be undone."
+            okText="Delete"
+            okButtonProps={{ danger: true }}
+            cancelText="Cancel"
+            onConfirm={() => deleteLogFile(tool, file.name)}
           >
-            Delete
-          </Button>
+            <Button danger size="small">
+              Delete
+            </Button>
+          </Popconfirm>
         ),
       },
     ];
+    const emptyState =
+      !requesting && requestError ? (
+        <ListStateError
+          message={requestError.message}
+          onRetry={() => fetchAllLogFiles(tool)}
+        />
+      ) : (
+        <ListStateEmpty description="No log files yet" />
+      );
     return (
       <LayoutPage>
         <PageHeader
           className="site-page-header"
           title={`${logFiles.length} Log Files`}
         />
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );
   }
 }
 
-const mapPropsToStates = ({ logs }) => ({
+const mapPropsToStates = ({ logs, requesting, requestError }) => ({
   logFiles: logs.logFiles,
   logs: logs.logs,
+  requesting,
+  requestError,
 });
 
 const mapDispatchToProps = (dispatch) => ({

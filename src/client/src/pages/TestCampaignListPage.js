@@ -1,8 +1,9 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import { Table, Button, Form } from "antd";
+import { Table, Button, Form, Popconfirm } from "antd";
 import { BuildOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
+import { ListStateEmpty, ListStateError } from "../components/ListStates";
 import {
   requestAllTestCampaigns,
   requestAddNewTestCampaign,
@@ -78,6 +79,9 @@ class TestCampaignListPage extends Component {
       launchTestCampaign,
       stopTestCampaign,
       runningStatus,
+      requesting,
+      requestError,
+      fetchTestCampaigns,
     } = this.props;
     const { webhookURL, testCampaignId, isChanged, evaluationParameters } = this.state;
     const dataSource = testCampaigns.map((tc) => ({ ...tc, key: tc.id }));
@@ -134,17 +138,38 @@ class TestCampaignListPage extends Component {
                 </a>
               </Button>
             )}
-            <Button
-              size="small"
-              danger
-              onClick={() => deleteTestCampaign(tc.id)}
+            <Popconfirm
+              title={`Delete test campaign "${tc.id}"?`}
+              description="This permanently removes the test campaign. It cannot be undone."
+              okText="Delete"
+              okButtonProps={{ danger: true }}
+              cancelText="Cancel"
+              onConfirm={() => deleteTestCampaign(tc.id)}
             >
-              <DeleteOutlined /> Delete
-            </Button>
+              <Button size="small" danger>
+                <DeleteOutlined /> Delete
+              </Button>
+            </Popconfirm>
           </Fragment>
         ),
       },
     ];
+    const emptyState =
+      !requesting && requestError ? (
+        <ListStateError
+          message={requestError.message}
+          onRetry={fetchTestCampaigns}
+        />
+      ) : (
+        <ListStateEmpty
+          description="No test campaigns yet"
+          action={
+            <a href={`/test-campaigns/new-campaign-${Date.now()}`}>
+              <Button type="primary">Add New Campaign</Button>
+            </a>
+          }
+        />
+      );
     return (
       <LayoutPage
         pageTitle="Test Campaign"
@@ -235,13 +260,17 @@ class TestCampaignListPage extends Component {
               {runningStatus ? (
                 <Fragment>
                   {runningStatus.isRunning ? (
-                    <Button
-                      type="primary"
-                      danger
-                      onClick={() => stopTestCampaign()}
+                    <Popconfirm
+                      title="Stop the running test campaign build?"
+                      description="The running build will be stopped."
+                      okText="Stop"
+                      cancelText="Cancel"
+                      onConfirm={() => stopTestCampaign()}
                     >
-                      Stop
-                    </Button>
+                      <Button type="primary" danger>
+                        Stop
+                      </Button>
+                    </Popconfirm>
                   ) : (
                     <Button
                       type="primary"
@@ -275,7 +304,7 @@ class TestCampaignListPage extends Component {
         <a href={`/test-campaigns/new-campaign-${Date.now()}`}>
           <Button style={{ marginBottom: "10px" }}>Add New Campaign</Button>
         </a>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
         <p></p>
         <a href={`/logs/test-campaigns`}>View All Campaign Logs</a>
       </LayoutPage>
@@ -283,10 +312,12 @@ class TestCampaignListPage extends Component {
   }
 }
 
-const mapPropsToStates = ({ testCampaigns, devops }) => ({
+const mapPropsToStates = ({ testCampaigns, devops, requesting, requestError }) => ({
   testCampaigns: testCampaigns.allTestCampaigns,
   runningStatus: testCampaigns.runningStatus,
   devops,
+  requesting,
+  requestError,
 });
 
 const mapDispatchToProps = (dispatch) => ({
