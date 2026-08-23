@@ -59,11 +59,14 @@ MOSQUITTO_PASSWORD=change-me-broker
 
 ### Running only the application container
 
-The application image is published on its own and can run standalone — point
-its clients at any reachable broker via `TAS_MQTT_HOST` / `TAS_MQTT_PORT`:
+The application image can run standalone — point its clients at any reachable
+broker via `TAS_MQTT_HOST` / `TAS_MQTT_PORT`. The tags currently published to
+ghcr.io predate authentication (see the [changelog](CHANGELOG.md)), so build
+the image from this checkout instead of pulling one:
 
 ```
-TAS_IMAGE=ghcr.io/montimage/tas:v1.0.2
+docker build -t tas:local .
+TAS_IMAGE=tas:local
 
 # One-time administrator credential. The password is hashed where you type it;
 # only the scrypt hash reaches the container's environment.
@@ -218,6 +221,34 @@ Update the `host` and `port` then start the application.
 > it locally, and never commit a `.env` file. Without a local `.env`, the
 > server starts with the safe defaults from `env.example`.
 
+_Provision an administrator credential_
+
+Every API endpoint requires an authenticated session, so a fresh install
+cannot log in until the server has its administrator credential and session
+secret. Generate the password hash from this checkout and put both values in
+`.env`:
+
+```
+node -e "console.log(require('./src/server/auth/passwords').hashPassword(process.argv[1]))" 'your-password-here'
+# scrypt$16384$8$1$<salt>$<hash>
+```
+
+```
+AUTH_ADMIN_USERNAME=admin
+AUTH_ADMIN_PASSWORD_HASH=scrypt$16384$8$1$...   # output of the command above
+```
+
+Generate the session secret with `openssl rand -hex 32` and paste the value it
+prints on the `SESSION_SECRET` line (`.env` values are read literally, so do not
+put the `$(openssl …)` command itself there):
+
+```
+SESSION_SECRET=64-hex-characters-printed-by-openssl
+```
+
+See [Provisioning the administrator credential](#provisioning-the-administrator-credential)
+in the Security section for what these values mean and for alternatives.
+
 _Start the application_
 
 ```
@@ -225,6 +256,7 @@ npm run start
 ```
 
 Access to the Test and Simulation Enabler dashboard at: `http://your_ip:3004`
+Log in with the administrator username and password you provisioned above.
 
 ## Connect to a MongoDB Server
 
@@ -649,6 +681,13 @@ above is what replaces it. No header that was previously sent has been dropped.
 See [SECURITY.md](SECURITY.md) for how to report a vulnerability privately. We
 ask that you **do not** disclose unknown issues on public channels before they
 are triaged.
+
+## Contributing
+
+Contributions are welcome — [CONTRIBUTING.md](CONTRIBUTING.md) covers how to
+set up the project, run the tests, lint and submit a change. Notable changes
+per release, with security fixes flagged explicitly, are recorded in
+[CHANGELOG.md](CHANGELOG.md).
 
 # License
 
