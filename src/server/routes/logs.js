@@ -95,6 +95,10 @@ const parseByteRange = (header, size) => {
   if (rawEnd !== '') {
     const parsedEnd = Number(rawEnd);
     if (!Number.isInteger(parsedEnd)) return null;
+    // An interval whose end precedes its start is invalid, and an invalid
+    // Range is ignored entirely (RFC 9110 §14.1.1) - serving it would ask
+    // the file stream for a negative slice that never completes.
+    if (parsedEnd < start) return null;
     end = Math.min(parsedEnd, size - 1);
   }
   // One interval longer than the cap delivers only its first cap bytes; the

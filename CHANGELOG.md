@@ -73,6 +73,30 @@ under its functional section below.
   global console methods (#95); data-storage recovery path no longer crashes
   (#93).
 - Release workflow strips tag prefixes exactly when publishing images (#98).
+
+### Performance
+
+- Log reads bounded: `GET /api/logs/*/:fileName` streams any single-interval
+  `Range: bytes=` request straight to the socket (206) and caps the default
+  JSON envelope at the last `LOG_READ_MAX_BYTES` (1 MiB) of the file with
+  additive `truncated`/`totalSize`/`returnedSize`/`offset` metadata (#85).
+- Report list paginated: `GET /api/reports` accepts `limit` (default 50, max 500) and `skip`, answers `{reports, total, limit, skip}`, and the dashboard
+  table pages server-side; report scoring reads events through a documented
+  10000-event bound (#85, #31).
+- File writes unblocked: the shared helper's collision check uses async
+  `fs.access` instead of synchronous `fs.existsSync` on the request path
+  (#85).
+- Event writes batched: simulation events queue and flush as one `insertMany`
+  on a size trigger (50 documents) or time trigger (200 ms); failed batches
+  retry before being counted and reported through the logger and an `onDrop`
+  hook — never lost silently; run shutdown drains the queue before closing
+  the database client (#31).
+- Hot-path scans removed: MQTT topic patterns are compiled once per pattern
+  behind a bounded memo cache and once per sensor at registration, actuators
+  are indexed by exact topic in a Map for constant-time lookup, and report
+  scoring counts matches in linear time (multiset map for values, sorted
+  interval sweep for timestamps) replacing an O(n·m) splice-in-loop (#31).
+  Measured results are recorded in `docs/benchmarks.md`.
 - Documentation: deployment security posture (#53) and hardening
   configuration knobs (#56), credential provisioning (#97), contributing
   guide, security policy correction and this changelog (#48), README
