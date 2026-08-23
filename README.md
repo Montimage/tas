@@ -236,7 +236,14 @@ node -e "console.log(require('./src/server/auth/passwords').hashPassword(process
 ```
 AUTH_ADMIN_USERNAME=admin
 AUTH_ADMIN_PASSWORD_HASH=scrypt$16384$8$1$...   # output of the command above
-SESSION_SECRET=$(openssl rand -hex 32)
+```
+
+Generate the session secret with `openssl rand -hex 32` and paste the value it
+prints on the `SESSION_SECRET` line (`.env` values are read literally, so do not
+put the `$(openssl …)` command itself there):
+
+```
+SESSION_SECRET=64-hex-characters-printed-by-openssl
 ```
 
 See [Provisioning the administrator credential](#provisioning-the-administrator-credential)
