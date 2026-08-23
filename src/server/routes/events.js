@@ -200,6 +200,9 @@ router.post(
 
     try {
       const ts = await EventSchema.findByIdAndUpdate(eventId, event);
+      if (!ts) {
+        return next(notFound('Event not found'));
+      }
       res.send({
         event: ts,
       });

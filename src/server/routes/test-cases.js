@@ -173,6 +173,9 @@ router.post(
 
     try {
       const ts = await TestCaseSchema.findOneAndUpdate({ id: testCaseId }, update);
+      if (!ts) {
+        return next(notFound('Test case not found'));
+      }
       res.send({
         testCase: ts,
       });

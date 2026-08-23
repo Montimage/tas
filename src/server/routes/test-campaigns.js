@@ -115,6 +115,9 @@ router.post(
 
     try {
       const ts = await TestCampaignSchema.findOneAndUpdate({ id: testCampaignId }, testCampaign);
+      if (!ts) {
+        return next(notFound('Test campaign not found'));
+      }
       res.send({
         testCampaign: ts,
       });
