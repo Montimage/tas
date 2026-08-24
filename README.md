@@ -60,9 +60,9 @@ MOSQUITTO_PASSWORD=change-me-broker
 ### Running only the application container
 
 The application image can run standalone — point its clients at any reachable
-broker via `TAS_MQTT_HOST` / `TAS_MQTT_PORT`. The tags currently published to
-ghcr.io predate authentication (see the [changelog](CHANGELOG.md)), so build
-the image from this checkout instead of pulling one:
+broker via `TAS_MQTT_HOST` / `TAS_MQTT_PORT`. Container tags published before
+v2.0.0 predate authentication (see the [changelog](CHANGELOG.md)); use a tag
+of v2.0.0 or newer, or build the image from this checkout:
 
 ```
 docker build -t tas:local .
@@ -633,7 +633,7 @@ so the default is already correct and no configuration is required.
 The server sends a Content Security Policy that is written out in full in
 `src/server/middleware/security-headers.js` rather than inherited from the
 middleware's defaults, and is derived from what the shipped dashboard bundle
-actually loads: same-origin scripts plus the build's inline webpack runtime
+actually loads: same-origin scripts plus the inline runtime script emitted by the Vite build
 (allowed by its SHA-256 hash, not by `'unsafe-inline'`), same-origin styles plus
 the inline styles the component library injects, `data:` images, same-origin
 `fetch` calls, and a `blob:` worker for the embedded JSON editor. No third-party

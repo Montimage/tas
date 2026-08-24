@@ -4,7 +4,7 @@
 
 ## Environment
 
-- **Node.js:** v24.11.1 (system default). The project has **no version pinning** — no `.nvmrc`, `.node-version`, or `engines` field in `package.json`. Use a compatible Node 18+ runtime.
+- **Node.js:** 24 LTS, pinned by `.nvmrc` and by `engines.node >=24.0.0` in both `package.json` manifests (`nvm install` in the repo root selects the pinned version).
 
 ## Critical Commands
 
@@ -27,7 +27,7 @@ defect (F-BUG-001).
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `src/server/`     | Express API — routes, middleware, config, auth, logger                                      |
 | `src/core/`       | Simulation engine — things, gateways, sensors, communications, evaluation, Mongoose schemas |
-| `src/client/src/` | React dashboard (CRA 3, antd 4) — pages, components, reducers, sagas, API layer             |
+| `src/client/src/` | React dashboard (Vite 7, React 18, antd 6) — pages, components, slices, sagas, API layer    |
 | `src/public/`     | **Generated build output from `src/client`. Never edit manually.**                          |
 | `test/`           | All automated tests (node:test, ~286 cases)                                                 |
 
@@ -37,8 +37,7 @@ defect (F-BUG-001).
   here by hand — rebuild from `src/client/src` instead.
 - **`src/core/**/_.test.js`are NOT real tests.** They are ad-hoc scripts that open a live MongoDB and use no assertion framework. The`npm test` glob (`test/\*\*/_.test.js`) never
   runs them. Do not treat them as coverage.
-- **Lint is currently inoperable.** `.eslintrc.json` extends `"airbnb"` which is not installed.
-  `npm run lint` will fail with a config error. Do not assume lint passes.
+- **Lint must pass.** `.eslintrc.json` extends `eslint:recommended`, `plugin:react/recommended` and `prettier`; `npm run lint` runs clean and is enforced by CI on every pull request.
 - **Never commit `.env`.** It is gitignored and contains credentials. Use `cp env.example .env`
   to provision locally. The one-liner to generate a password hash is:
   `node -e "console.log(require('./src/server/auth/passwords').hashPassword(process.argv[1]))" 'password'`

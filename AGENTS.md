@@ -11,7 +11,7 @@ Review for:
 - Bugs: type errors, unhandled promises, incorrect status codes
 - Dead code: unused imports, unwritten fields, no-op try/catch blocks
   Focus on `src/server/` and `src/core/`. Provide line references and concrete fixes.
-  Do not review `src/client/` — that is handled by CRA's toolchain.
+  Do not review `src/client/` — that is handled by the Vite toolchain.
 
 ---
 

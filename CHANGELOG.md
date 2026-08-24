@@ -7,19 +7,49 @@ All notable changes to TaS are documented in this file. Releases are cut as
 
 ## [Unreleased]
 
-The 2026 hardening and modernisation programme. No release tag has been cut
-from this work yet — everything below is on `master`, and the newest published
-image tags (`v1.0.x`) still predate all of it.
+## [2.0.0] - 2026-08-24
 
-### Security
+The 2026 hardening and modernisation programme, cut as a major release: the
+API now requires authentication on every endpoint and the single container
+has been split into composed services, so upgrading deployments requires the
+migration steps below. Everything in this release postdates the `v1.0.x`
+tags, whose published images ship an unauthenticated API.
 
-Security fixes and hardening are listed here explicitly; each also appears
-under its functional section below.
+### Breaking Changes
 
 - **API authentication**: every endpoint requires an authenticated session;
   single administrator account provisioned from configuration, session
   cookies, CSRF protection, login rate limiting (#64), asserted end-to-end
-  (#66).
+  (#66). The unauthenticated API served by `v1.0.x` images is gone —
+  anonymous calls are rejected (#9).
+- **Composed deployment**: the monolith image split into separate `app`,
+  `broker` and `nodered` services wired by `docker compose`, each with its
+  own health check and independent restart (#45, #114).
+- **Node.js 24 LTS runtime**: pinned across manifests, image and CI (#32,
+  #120); older runtimes are no longer built or published.
+- **Dashboard build migrated from CRA to Vite** (#34, #89) and the compiled
+  client bundle is no longer committed to the repository — it is produced at
+  build time (#42, #90).
+
+#### Upgrading from 1.0.x
+
+1. Provision the single administrator account from configuration before
+   exposing the service; sessions are cookie-based with CSRF protection and
+   login rate limiting (#64, #97). Credential provisioning and the
+   hardening configuration knobs are documented (#56, #97).
+2. Deploy through the provided Compose topology so `app`, `broker` and
+   `nodered` start together with their health checks (#45, #114); the app
+   runs in production mode with explicit broker configuration (#46, #102).
+3. Run on Node.js >= 24 (#32, #120).
+4. If you build the dashboard from source, use the Vite build instead of CRA
+   (#34, #89); no prebuilt bundle is shipped in the repository anymore
+   (#42, #90).
+
+### Security
+
+Security fixes and hardening; several also appear above or under their
+functional section below.
+
 - **Filesystem containment**: name-derived file paths are contained and
   sanitised across models, devops and test-case routes (#50, #57).
 - **CORS allowlist**: cross-origin access restricted to an explicit allowlist,
@@ -39,9 +69,6 @@ under its functional section below.
 
 ### Added
 
-- Composed deployment: the monolith image split into separate `app`, `broker`
-  and `nodered` services wired by `docker compose`, each with its own health
-  check and independent restart (#114).
 - Graceful shutdown: in-flight requests drained and the database closed on
   `SIGTERM`/`SIGINT` (#99).
 - E2E security regression suite run on every push and pull request (#54),
@@ -53,34 +80,29 @@ under its functional section below.
 - Client: confirmation gates for destructive actions and request-state
   feedback on list views (#125).
 
-### Changed
+### Fixed
 
-- Dashboard build migrated from CRA to Vite (#89); the compiled client bundle
-  is no longer committed and is produced at build time (#90).
-- Frontend stack uplifted: React/Router/Ant Design/testing-library major
-  upgrades (#116), topology view rebuilt on d3 7 replacing react-d3-graph
-  (#118), state layer moved to Redux Toolkit slices (#119).
-- MongoDB layer migrated to mongoose v9 (#115).
-- Runtime pinned to Node.js 24 LTS across manifests, image and CI (#120).
-- Linting consolidated on ESLint + Prettier with a pre-commit hook (#88).
-- Dependency stack upgraded with body parser aligned to query parser (#100);
-  vestigial Babel configuration removed (#121).
-- Container runs the app in production mode with explicit broker
-  configuration (#102).
-- Server correctness: log router kind required and validated at mount time
-  (#122); numeric configuration parsing made explicit with dead code swept
-  (#123); model filename reported as written (#94); logger no longer replaces
-  global console methods (#95); data-storage recovery path no longer crashes
-  (#93); saving a data-storage configuration whose connection cannot be
-  established is refused with a JSON 503 naming what failed, and the previous
-  configuration stays on disk and live — it is no longer saved and reported as
-  success (#18); the dashboard's connection test and save path verify through
-  the same connector seam.
+- Saving a data-storage configuration whose connection cannot be established
+  is refused with a JSON 503 naming what failed, and the previous
+  configuration stays on disk and live — it is no longer saved and reported
+  as success (#18, #130); the dashboard's connection test and save path
+  verify through the same connector seam.
+- Simulation statistics responses hardened and the simulation update route
+  answers 404 for unknown identifiers (#16, #129).
+- Log router kind required and validated at mount time (#122).
+- Numeric configuration parsing made explicit with dead code swept (#123).
+- Model filename reported as written (#94).
+- Logger no longer replaces global console methods (#95).
+- Data-storage recovery path no longer crashes (#93).
 - Dashboard failure notifications always render a readable message: caught
   errors are coerced at one boundary (`describeError`) instead of being
   stringified into `{}`, a malformed topology import names the failing file
   instead of failing silently, and raw error detail stays in the browser
-  console (#40).
+  console (#40, #131).
+- Client navigates client-side instead of triggering full page reloads
+  (#36, #132).
+- Container runs the app in production mode with explicit broker
+  configuration (#102).
 - Release workflow strips tag prefixes exactly when publishing images (#98).
 
 ### Performance
@@ -106,10 +128,33 @@ under its functional section below.
   scoring counts matches in linear time (multiset map for values, sorted
   interval sweep for timestamps) replacing an O(n·m) splice-in-loop (#31).
   Measured results are recorded in `BENCHMARKS.md`.
-- Documentation: deployment security posture (#53) and hardening
-  configuration knobs (#56), credential provisioning (#97), contributing
-  guide, security policy correction and this changelog (#48), README
-  authentication consistency (#86).
+
+### Documentation
+
+- Deployment security posture (#53) and hardening configuration knobs (#56),
+  credential provisioning (#97), contributing guide, security policy
+  correction and this changelog (#48), README authentication consistency
+  (#86).
+
+### Dependencies
+
+- MongoDB layer migrated to mongoose v9 (#115).
+- Helmet upgraded with an explicit Content Security Policy served by default
+  (#63, #97).
+- Dependency stack upgraded with body parser aligned to query parser (#100);
+  vestigial Babel configuration removed (#121).
+- Frontend stack uplifted: React/Router/Ant Design/testing-library major
+  upgrades (#116), jsoneditor cleared on v10 (#117).
+
+### Other
+
+- Linting consolidated on ESLint + Prettier with a pre-commit hook (#88).
+- Topology view rebuilt on d3 7, replacing react-d3-graph (#118).
+- State layer moved to Redux Toolkit slices (#119).
+- Server correctness sweep folded dead code removal into the parsing work
+  (#123).
+
+**Full Changelog**: https://github.com/Montimage/tas/compare/v1.0.3...v2.0.0
 
 ## [1.0.3] - 2024-02-16
 
@@ -118,5 +163,6 @@ Last tagged release before the 2026 programme. The published image tags
 their API is unauthenticated, and they must not be exposed to untrusted
 networks. No in-repo changelog existed before this file.
 
-[Unreleased]: https://github.com/Montimage/tas/compare/v1.0.3...master
+[Unreleased]: https://github.com/Montimage/tas/compare/v2.0.0...master
+[2.0.0]: https://github.com/Montimage/tas/releases/tag/v2.0.0
 [1.0.3]: https://github.com/Montimage/tas/releases/tag/v1.0.3
