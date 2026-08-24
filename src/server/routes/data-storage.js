@@ -4,7 +4,7 @@ const Joi = require('joi');
 const { getDataStorage, dbConnector, updateDataStorage } = require('./db-connector');
 let router = express.Router();
 const { validate, dataStorageSchema } = require('../middleware/validate');
-const { errorHandler, internal } = require('../middleware/errors');
+const { errorHandler, ApiError, internal } = require('../middleware/errors');
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the data-storage endpoints (issue #10)
@@ -35,7 +35,10 @@ router.post('/', validate({ body: dataStorageBody }), function (req, res, next) 
   const { dataStorage } = req.body;
   updateDataStorage(dataStorage, (err, ds) => {
     if (err) {
-      next(internal('Failed to update data storage', err));
+      // A classified failure — the 503 an unreachable proposed configuration
+      // earns (#18) — already knows how to describe itself safely; anything
+      // else is a failure nobody classified and is answered as our own 500.
+      next(err instanceof ApiError ? err : internal('Failed to update data storage', err));
     } else {
       res.send({
         dataStorage: ds,

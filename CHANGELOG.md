@@ -71,7 +71,11 @@ under its functional section below.
   (#122); numeric configuration parsing made explicit with dead code swept
   (#123); model filename reported as written (#94); logger no longer replaces
   global console methods (#95); data-storage recovery path no longer crashes
-  (#93).
+  (#93); saving a data-storage configuration whose connection cannot be
+  established is refused with a JSON 503 naming what failed, and the previous
+  configuration stays on disk and live — it is no longer saved and reported as
+  success (#18); the dashboard's connection test and save path verify through
+  the same connector seam.
 - Release workflow strips tag prefixes exactly when publishing images (#98).
 
 ### Performance
