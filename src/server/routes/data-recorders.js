@@ -78,7 +78,7 @@ const dataRecorderStartBody = Joi.object({
 ///////////////
 
 /**
- * status
+ * The status shape each entry reports:
  * {
  *    isRunning: true|false,
  *    model: {},
@@ -86,8 +86,7 @@ const dataRecorderStartBody = Joi.object({
  *    stoppedTime: timestamp,
  *    logFile: String
  * }
- */
-/**
+ *
  * Strip the registry's bookkeeping fields from a record before it reaches a
  * response: clients see the run, not which pid owns it.
  */
@@ -99,11 +98,6 @@ const publicRecord = (record) => {
   void status;
   return rest;
 };
-
-// The final snapshots of recorders this instance stopped, held only long
-// enough for the stop response to report them. A later stop of the same id
-// replaces the snapshot, so repeated runs cannot grow this table.
-const lastStopped = {};
 
 /**
  * The status surface the dashboard reads: every record in the shared store,
@@ -121,7 +115,9 @@ const recorderStatusMap = async () => {
   return map;
 };
 
-/** Release a stopped recorder's log file handle and drop its registry entry. */
+/**
+ * Release a stopped recorder's log file handle and drop its registry entry.
+ */
 const reapRecorder = async (recorderId) => {
   const handle = runtimeState.getHandle('data-recorders', recorderId);
   if (handle && handle.logger) {
@@ -150,16 +146,17 @@ router.get(
     const { fileName } = req.params;
     const recorderId = getObjectId(fileName.replace('.json', ''));
     stopRecorderById(recorderId)
-      .then(() => recorderStatusMap())
-      .then((status) => {
+      .then((stopped) => recorderStatusMap().then((map) => ({ stopped, map })))
+      .then(({ stopped, map }) => {
         res.send({
           error: null,
           // The response still reports the recorder that was just stopped,
           // with its final state - while the registry itself has dropped it,
-          // so the tracking structures cannot grow over repeated runs.
+          // so the tracking structures cannot grow over repeated runs. Only
+          // a stop that actually happened contributes a snapshot.
           status: {
-            ...status,
-            ...(lastStopped[recorderId] ? { [recorderId]: lastStopped[recorderId] } : {}),
+            ...map,
+            ...(stopped ? { [recorderId]: stopped } : {}),
           },
         });
       })
@@ -169,9 +166,7 @@ router.get(
 
 const snapshotRecorder = (record, endTime) => {
   if (!record) return null;
-  const finalSnapshot = publicRecord({ ...record, isRunning: false, endTime });
-  lastStopped[finalSnapshot.id] = finalSnapshot;
-  return finalSnapshot;
+  return publicRecord({ ...record, isRunning: false, endTime });
 };
 
 /**

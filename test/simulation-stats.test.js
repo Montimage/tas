@@ -162,6 +162,45 @@ test('concurrent runs of different topologies keep their state apart', async () 
   }
 });
 
+test('a run that finishes on its own is reaped, not reported as running forever', async () => {
+  // Devices can complete without anyone calling /stop; the core then stops
+  // the run itself (issue #16's status predicate). The registry must notice
+  // on the next status poll and drop the record - and release the run's log
+  // handle while it still knows where it is (#29 review fix).
+  const name = unique('self-finish');
+  const runtimeState = require('../src/server/runtime-state');
+  const simId = getObjectId(name);
+  try {
+    const started = await request(server, 'POST', '/api/simulation/start', {
+      model: { name, devices: [] },
+      options: {},
+    });
+    assert.equal(started.status, 200, `the run must start (${started.raw})`);
+
+    // The natural end: the core run stops itself exactly as it does when its
+    // last device finishes.
+    const handle = runtimeState.getHandle('simulations', simId);
+    assert.ok(handle && handle.run, 'the running run has a handle');
+    handle.run.stop();
+
+    const res = await request(server, 'GET', '/api/simulation/status');
+    const entries = res.body.simulationStatus || {};
+    assert.equal(
+      entries[simId],
+      undefined,
+      'the self-finished run must be reaped from the status map'
+    );
+    assert.equal(
+      (await request(server, 'GET', '/api/simulation/stats')).body.stats,
+      null,
+      'and it no longer reports statistics'
+    );
+  } finally {
+    await request(server, 'GET', `/api/simulation/stop/${name}.json`);
+    removeRunLogs(name);
+  }
+});
+
 test('the module runs in strict mode so an undeclared assignment fails loudly', () => {
   // Strict mode is what turns this issue's whole bug class - assigning to a
   // name that was never declared - from a silent cross-request global into

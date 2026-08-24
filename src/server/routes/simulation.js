@@ -125,16 +125,18 @@ const publicRecord = (record) => {
  */
 const simulationStatusMap = async () => {
   // A run whose owning handle reports offline has finished on its own - its
-  // devices completed without anyone calling `/stop`; reconcile drops the
-  // record and detaches the handle, so the map only lists work still running.
-  const reaped = await runtimeState.reconcile('simulations', (record) => {
+  // devices completed without anyone calling `/stop`. The predicate closes
+  // the run's log file handle BEFORE reconcile drops the handle entry (after
+  // which it could not be found again), so a naturally finished run leaks no
+  // file descriptor.
+  await runtimeState.reconcile('simulations', (record) => {
     const handle = runtimeState.getHandle('simulations', record.id);
-    return !handle || !handle.run || handle.run.status === OFFLINE;
+    const finished = !handle || !handle.run || handle.run.status === OFFLINE;
+    if (finished && handle && handle.logger) {
+      handle.logger.close();
+    }
+    return finished;
   });
-  for (const record of reaped) {
-    const handle = runtimeState.getHandle('simulations', record.id);
-    if (handle && handle.logger) handle.logger.close();
-  }
   const records = await runtimeState.list('simulations');
   const map = {};
   for (const record of records) {
@@ -298,12 +300,6 @@ router.post('/start', validate({ body: simulationStartBody }), function (req, re
   }
 });
 
-// The final snapshots of runs this instance stopped, held only long enough
-// for the stop response to report them. A later stop of the same id replaces
-// the snapshot, and nothing else ever reads them, so repeated runs cannot
-// grow this table without bound.
-const lastStopped = {};
-
 /**
  * Stop whatever the id refers to, according to who owns it:
  *
@@ -315,8 +311,9 @@ const lastStopped = {};
  *    stays exactly as it is, still reported running;
  *  - an unknown id is answered with the current status, as before.
  *
- * Returns the final snapshot to report, or null when there was nothing here
- * to stop.
+ * Returns the final snapshot to report (null when nothing here was stopped);
+ * the route merges exactly that snapshot into its response, so a run this
+ * process did not stop can never be described as stopped.
  */
 const stopSimulationById = async (simId) => {
   const endTime = Date.now();
@@ -351,9 +348,7 @@ const stopSimulationById = async (simId) => {
 
 const snapshot = (record, endTime) => {
   if (!record) return null;
-  const finalSnapshot = publicRecord({ ...record, isRunning: false, endTime });
-  lastStopped[finalSnapshot.id] = finalSnapshot;
-  return finalSnapshot;
+  return publicRecord({ ...record, isRunning: false, endTime });
 };
 
 router.get(
@@ -363,16 +358,17 @@ router.get(
     const { fileName } = req.params;
     const simId = getObjectId(fileName.replace('.json', ''));
     stopSimulationById(simId)
-      .then(() => simulationStatusMap())
-      .then((simulationStatus) => {
+      .then((stopped) => simulationStatusMap().then((map) => ({ stopped, map })))
+      .then(({ stopped, map }) => {
         res.send({
           error: null,
-          // The response still reports the run that was just stopped, with its
-          // final state - while the registry itself has dropped it, so the
-          // tracking structures cannot grow over repeated runs.
+          // The response still reports the run that was just stopped, with
+          // its final state - while the registry itself has dropped it, so
+          // the tracking structures cannot grow over repeated runs. Only a
+          // stop that actually happened contributes a snapshot.
           simulationStatus: {
-            ...simulationStatus,
-            ...(lastStopped[simId] ? { [simId]: lastStopped[simId] } : {}),
+            ...map,
+            ...(stopped ? { [simId]: stopped } : {}),
           },
         });
       })
