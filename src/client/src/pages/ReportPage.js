@@ -217,7 +217,7 @@ class ReportPage extends Component {
     }
     return (
       <LayoutPage pageTitle={`Report ${_id}`} pageSubTitle="Report detail">
-        <Form labelCol={{ span: 8 }} wrapperCol={{ span: 16 }}>
+        <Form labelCol={{ xs: { span: 24 }, sm: { span: 8 } }} wrapperCol={{ xs: { span: 24 }, sm: { span: 16 } }}>
           <FormTextNotEditableItem label="Id" value={_id} />
           <FormTextNotEditableItem
             label="Created At"

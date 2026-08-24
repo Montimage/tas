@@ -190,7 +190,7 @@ class TestCampaignPage extends Component {
         pageTitle={name}
         pageSubTitle="View and update the test campaign detail"
       >
-        <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+        <Form labelCol={{ xs: { span: 24 }, sm: { span: 4 } }} wrapperCol={{ xs: { span: 24 }, sm: { span: 14 } }}>
           <FormEditableTextItem
             label="Id"
             defaultValue={id}

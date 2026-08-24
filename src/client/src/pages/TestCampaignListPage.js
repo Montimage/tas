@@ -170,7 +170,7 @@ class TestCampaignListPage extends Component {
         pageSubTitle="All the test campaigns"
       >
         <CollapseForm title="Configuration for next build" active={true}>
-          <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+          <Form labelCol={{ xs: { span: 24 }, sm: { span: 4 } }} wrapperCol={{ xs: { span: 24 }, sm: { span: 14 } }}>
             <FormEditableTextItem
               label="WebhookURL"
               defaultValue={webhookURL}
