@@ -9,6 +9,16 @@ All notable changes to TaS are documented in this file. Releases are cut as
 
 ### Added
 
+- **Phase 4 milestone gate** (#33): `test/e2e/modernised-workflow.test.js`
+  drives the complete product workflow end to end on the modernised stack —
+  define a topology, record data through a data recorder, replay the recorded
+  dataset in a simulation, and read the report's score — and asserts
+  pre-migration data stays readable, mid-simulation restarts leave `/status`
+  reporting the truth, concurrent edits of one topology never discard each
+  other, scoring still meets or exceeds its pre-migration baseline
+  (`test/scoring-determinism.test.js`, `test/throughput-baseline.test.js`),
+  and the dependency audit reports no unallowlisted high/critical advisories
+  for the server manifest (`test/dependency-audit.test.js`).
 - **Responsive dashboard layout** (#41): below the `md` breakpoint (768px)
   the header's section navigation collapses into a labelled, keyboard-operable
   dropdown; data tables scroll horizontally instead of stretching the page;
