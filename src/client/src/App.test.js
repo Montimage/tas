@@ -37,12 +37,17 @@ const makeStore = () => {
   return store;
 };
 
-const renderApp = () =>
-  render(
+const renderApp = () => {
+  // The signed-in assertions below read the desktop header ("Sign out (op)");
+  // pin the viewport wide so they exercise that layout, not the collapsed
+  // narrow one (issue #41).
+  setMatchMediaViewport(1280);
+  return render(
     <Provider store={makeStore()}>
       <App />
     </Provider>
   );
+};
 
 describe('App', () => {
   beforeEach(() => {
