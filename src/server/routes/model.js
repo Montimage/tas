@@ -1,10 +1,9 @@
+'use strict';
 /* Working with Data Generator */
 var express = require('express');
-var path = require('path');
-var fs = require('fs');
 const Joi = require('joi');
 
-const { readJSONFile, writeToFile, readDir, deleteFile } = require('../../core/utils');
+const { createArtifactStore } = require('../artifact-store');
 const { isValidName, resolveWithin, sendBadRequest } = require('./path-safety');
 const {
   validate,
@@ -14,8 +13,39 @@ const {
   simulationRunFields,
 } = require('../middleware/validate');
 const { errorHandler, fileError, internal, conflict } = require('../middleware/errors');
-const modelsPath = `${__dirname}/../data/models/`;
+
+// The topologies live as records of the artifact store (issue #30): writes are
+// serialized under the store's lock and land atomically, so concurrent edits
+// queue up instead of discarding one another and a crash mid-write cannot leave
+// a truncated file behind. Existing loose files in the directory are adopted
+// as they are - there is no migration step. `TAS_MODELS_DIR` moves the store
+// (tests use this to work against a scratch directory).
+const modelsPath = process.env.TAS_MODELS_DIR || `${__dirname}/../data/models/`;
+const modelsStore = createArtifactStore({ root: modelsPath, label: 'models' });
 let router = express.Router();
+
+/**
+ * Translate an artifact-store failure into its HTTP answer: a taken name is a
+ * conflict, anything else is ours. Missing records never reach here - the
+ * store throws them with a native ENOENT code, which `fileError` maps to 404.
+ */
+const saveError = (next, err) => {
+  if (err && err.code === 'EARTIFACTCONFLICT') {
+    return next(conflict('A model with this name already exists'));
+  }
+  return next(internal('Cannot save the new configuration', err));
+};
+
+/**
+ * The rename variant of `saveError`: renaming needs the source record to
+ * exist, so its absence is answered as the missing resource it is.
+ */
+const renameError = (next, err) => {
+  if (err && (err.code === 'ENOENT' || err.code === 'ENOTDIR')) {
+    return next(fileError(err, 'Model not found', 'Cannot read the model file'));
+  }
+  return saveError(next, err);
+};
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the model endpoints (issue #10)
@@ -56,16 +86,15 @@ const modelUpdateBody = Joi.object({
 
 // Read the list of models
 router.get('/', validate(), (req, res, next) => {
-  readDir(modelsPath, (err, files) => {
-    if (err) {
-      next(internal('Cannot read the models directory', err));
-    } else {
+  modelsStore
+    .list()
+    .then((models) => {
       res.send({
         error: null,
-        models: files.filter((f) => path.extname(f) === '.json'),
+        models,
       });
-    }
-  });
+    })
+    .catch((err) => next(internal('Cannot read the models directory', err)));
 });
 
 // Read a specific model by its name:
@@ -74,20 +103,20 @@ router.get(
   validate({ params: { fileName: modelNameParam } }),
   function (req, res, next) {
     const { fileName } = req.params;
-    const modelFile = resolveWithin(modelsPath, fileName);
-    if (!modelFile) {
+    // Containment, not validation: the schema has already established that the
+    // name is well formed, but the path it derives is still checked at the sink.
+    if (!resolveWithin(modelsStore.root, fileName)) {
       return sendBadRequest(res, 'Invalid model name');
     }
-    readJSONFile(modelFile, (err, data) => {
-      if (err) {
-        next(fileError(err, 'Model not found', 'Cannot read the model file'));
-      } else {
+    modelsStore
+      .read(fileName)
+      .then((data) => {
         res.send({
           error: null,
           model: data,
         });
-      }
-    });
+      })
+      .catch((err) => next(fileError(err, 'Model not found', 'Cannot read the model file')));
   }
 );
 
@@ -99,54 +128,64 @@ const MAX_DUPLICATE_CANDIDATES = 1000;
  * Derive the first available "<name> [Duplicated]" filename for a duplicate.
  * Every candidate is re-checked against the name allowlist, because the
  * suffix grows the name and the length cap may cut the search short.
+ *
+ * The search runs inside the caller's exclusive section, so no other mutation
+ * of the store can claim the found name between the probe and the write.
  * @param {String} sourceName The stored model name being duplicated
- * @returns {{name: String, path: String}|null} A free candidate, or null
+ * @param {Object} unlocked The artifact store's unlocked primitives
+ * @returns {Promise<{name: String, fileName: String}|null>} A free candidate, or null
  */
-const findFreeDuplicate = (sourceName) => {
+const findFreeDuplicate = async (sourceName, unlocked) => {
   for (let i = 1; i <= MAX_DUPLICATE_CANDIDATES; i++) {
     const candidate = i === 1 ? `${sourceName} [Duplicated]` : `${sourceName} [Duplicated] ${i}`;
     if (!isValidName(candidate)) continue;
-    const candidatePath = resolveWithin(modelsPath, `${candidate}.json`);
-    if (candidatePath && !fs.existsSync(candidatePath)) {
-      return { name: candidate, path: candidatePath };
+    const candidateFileName = `${candidate}.json`;
+    if (resolveWithin(modelsStore.root, candidateFileName)) {
+      try {
+        if (!(await unlocked.exists(candidateFileName))) {
+          return { name: candidate, fileName: candidateFileName };
+        }
+      } catch (_) {
+        // An unreadable directory answers "not free" and the search moves on.
+      }
     }
   }
   return null;
 };
 
 const duplicateModel = (fileName, res, next) => {
-  const modelFile = resolveWithin(modelsPath, fileName);
-  if (!modelFile) {
+  // Containment first: the rest of this handler works on names derived from it.
+  if (!resolveWithin(modelsStore.root, fileName)) {
     return sendBadRequest(res, 'Invalid model name');
   }
-  readJSONFile(modelFile, (err, data) => {
-    if (err) {
-      next(fileError(err, 'Model not found', 'Cannot read the model file'));
-    } else {
+  modelsStore
+    .withExclusive(async (unlocked) => {
+      const source = await unlocked.read(fileName);
       // Collision policy (issue #70): duplicating must never overwrite an
-      // earlier copy, so write to a name proven free and report exactly it.
-      const free = findFreeDuplicate(data.name);
+      // earlier copy, so write to a name proven free inside this exclusive
+      // section and report exactly it.
+      const free = await findFreeDuplicate(source.name, unlocked);
       if (!free) {
+        return { conflict: true };
+      }
+      await unlocked.writeRaw(`${free.name}.json`, { ...source, name: free.name });
+      return { modelFileName: `${free.name}.json` };
+    })
+    .then((outcome) => {
+      if (outcome.conflict) {
         return next(conflict('Cannot derive a free name for the duplicated model'));
       }
-      const newModel = { ...data, name: free.name };
-      const newFileName = `${free.name}.json`;
-      writeToFile(
-        free.path,
-        JSON.stringify(newModel),
-        (err2) => {
-          if (err2) {
-            next(internal('Cannot save the duplicated model', err2));
-          } else {
-            res.send({
-              modelFileName: newFileName,
-            });
-          }
-        },
-        true
-      );
-    }
-  });
+      res.send({ modelFileName: outcome.modelFileName });
+    })
+    .catch((err) => {
+      if (err.code === 'EARTIFACTPATH') {
+        return sendBadRequest(res, 'Invalid model name');
+      }
+      if (err.code === 'ENOENT' || err.code === 'ENOTDIR') {
+        return next(fileError(err, 'Model not found', 'Cannot read the model file'));
+      }
+      return next(internal('Cannot save the duplicated model', err));
+    });
 };
 
 const updateModel = (model, fileName, res, next) => {
@@ -157,54 +196,34 @@ const updateModel = (model, fileName, res, next) => {
     return sendBadRequest(res, 'Invalid model name');
   }
   const newName = `${name}.json`;
-  const oldModelFile = resolveWithin(modelsPath, fileName);
-  if (!oldModelFile) {
-    return sendBadRequest(res, 'Invalid model name');
-  }
-  const modelFile = resolveWithin(modelsPath, newName);
-  if (!modelFile) {
+  if (!resolveWithin(modelsStore.root, fileName) || !resolveWithin(modelsStore.root, newName)) {
     return sendBadRequest(res, 'Invalid model name');
   }
   if (fileName === newName) {
-    writeToFile(
-      modelFile,
-      JSON.stringify(model),
-      (err, data) => {
-        if (err) {
-          next(internal('Cannot save the new configuration', err));
-        } else {
-          res.send({
-            modelFileName: fileName,
-          });
-        }
-      },
-      true
-    );
+    modelsStore
+      .write(newName, model, { overwrite: true })
+      .then(() => {
+        res.send({
+          modelFileName: fileName,
+        });
+      })
+      .catch((err) => saveError(next, err));
   } else {
-    writeToFile(
-      modelFile,
-      JSON.stringify(model),
-      (err, data) => {
-        if (err) {
-          next(internal('Cannot save the new configuration', err));
-        } else {
-          // Delete the old model
-          deleteFile(oldModelFile, (err2) => {
-            if (err2) {
-              // The new file is already written, so the rename succeeded from the
-              // caller's point of view; the leftover is a server-side problem.
-              console.error(
-                `[SERVER] Cannot remove the renamed model file | ${err2.stack || err2}`
-              );
-            }
-            res.send({
-              modelFileName: newName,
-            });
-          });
-        }
-      },
-      true
-    );
+    // Rename inside the store: the copy under the new name lands atomically
+    // and the old one is removed within the same locked step, so a crash or a
+    // concurrent reader can never see both copies or neither.
+    modelsStore
+      .rename(fileName, newName)
+      .then(() => {
+        res.send({
+          modelFileName: newName,
+        });
+      })
+      .catch((err) =>
+        err && err.code === 'EARTIFACTCONFLICT'
+          ? next(conflict('A model with this name already exists'))
+          : renameError(next, err)
+      );
   }
 };
 
@@ -236,30 +255,21 @@ router.post('/', validate({ body: modelCreateBody }), function (req, res, next) 
   }
 
   const modelFileName = `${model.name}.json`;
-  const modelFilePath = resolveWithin(modelsPath, modelFileName);
-  if (!modelFilePath) {
+  if (!resolveWithin(modelsStore.root, modelFileName)) {
     return sendBadRequest(res, 'Invalid model name');
   }
-  // Collision policy (issue #70): refuse a duplicate name instead of letting
-  // writeToFile silently rename the target — the filename this handler returns
-  // must always be the exact file that was written.
-  if (fs.existsSync(modelFilePath)) {
-    return next(conflict('A model with this name already exists'));
-  }
-  writeToFile(
-    modelFilePath,
-    JSON.stringify(model),
-    (err, data) => {
-      if (err) {
-        next(internal('Cannot save the new configuration', err));
-      } else {
-        res.send({
-          modelFileName,
-        });
-      }
-    },
-    true
-  );
+  // Collision policy (issue #70), enforced by the store itself: the write
+  // refuses to replace an existing record, so duplicating a name is answered
+  // with a conflict and the filename this handler returns is always the exact
+  // record that was written.
+  modelsStore
+    .write(modelFileName, model)
+    .then(() => {
+      res.send({
+        modelFileName,
+      });
+    })
+    .catch((err) => saveError(next, err));
 });
 
 // Delete a model
@@ -268,19 +278,17 @@ router.delete(
   validate({ params: { fileName: modelNameParam } }),
   function (req, res, next) {
     const { fileName } = req.params;
-    const modelFile = resolveWithin(modelsPath, fileName);
-    if (!modelFile) {
+    if (!resolveWithin(modelsStore.root, fileName)) {
       return sendBadRequest(res, 'Invalid model name');
     }
-    deleteFile(modelFile, (err) => {
-      if (err) {
-        next(fileError(err, 'Model not found', 'Cannot delete the model file'));
-      } else {
+    modelsStore
+      .remove(fileName)
+      .then(() => {
         res.send({
           result: true,
         });
-      }
-    });
+      })
+      .catch((err) => next(fileError(err, 'Model not found', 'Cannot delete the model file')));
   }
 );
 
