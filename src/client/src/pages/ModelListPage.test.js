@@ -180,3 +180,54 @@ describe('ModelListPage', () => {
     expect(simulate.closest('a')).toBeNull();
   });
 });
+
+describe('ModelListPage accessibility (issue #39)', () => {
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  test('conveys simulation state by text, not colour alone', async () => {
+    const store = makeStore();
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <ModelListPage />
+        </MemoryRouter>
+      </Provider>
+    );
+    await screen.findByText('topo-a');
+    expect(screen.getByText('Stopped')).toBeInTheDocument();
+    store.dispatch(
+      setSimulationStatus({ [getObjectId('topo-a')]: { isRunning: true } })
+    );
+    expect(await screen.findByText('Running')).toBeInTheDocument();
+  });
+
+  test('keeps the file-import input reachable by keyboard and assistive tech', async () => {
+    const { container } = renderPage();
+    await screen.findByText('topo-a');
+    const input = container.querySelector('input[type="file"]');
+    expect(input).not.toBeNull();
+    // A named control: assistive tech announces it instead of "unlabelled".
+    expect(input).toHaveAttribute('aria-label', 'Import topology from file');
+    // Not display:none — that would remove it from the tab order and the
+    // accessibility tree entirely.
+    expect(input.className).toContain('visually-hidden');
+  });
+
+  test('reports no critical or serious axe violations on the list page', async () => {
+    const axe = (await import('axe-core')).default;
+    const { container } = renderPage();
+    await screen.findByText('topo-a');
+    const results = await new Promise((resolve, reject) => {
+      axe.run(container, { resultTypes: ['violations'] }, (err, res) =>
+        err ? reject(err) : resolve(res)
+      );
+    });
+    const blocking = results.violations.filter((v) =>
+      ['critical', 'serious'].includes(v.impact)
+    );
+    expect(blocking.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+  });
+});

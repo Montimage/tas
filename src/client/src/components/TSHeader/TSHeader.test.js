@@ -91,3 +91,29 @@ describe('TSHeader client-side navigation', () => {
     expect(isSelected(menuItem(/topology/i))).toBe(false);
   });
 });
+
+describe('TSHeader accessibility (issue #39)', () => {
+  afterEach(cleanup);
+
+  test('marks the active section with aria-current="page"', () => {
+    renderHeaderAt('/simulation');
+    // Programmatic current-page indication for assistive tech, independent
+    // of antd's visual highlight class.
+    expect(
+      menuItem(/simulation/i).querySelector('a[aria-current="page"]')
+    ).not.toBeNull();
+  });
+
+  test('does not mark inactive sections as current', () => {
+    renderHeaderAt('/simulation');
+    expect(
+      menuItem(/topology/i).querySelector('a[aria-current="page"]')
+    ).toBeNull();
+  });
+
+  test('the logo image describes what it represents, not just "Logo"', () => {
+    renderHeaderAt('/models');
+    const logo = screen.getByAltText(/taS dashboard home/i);
+    expect(logo).toHaveAttribute('alt', 'TaS dashboard home');
+  });
+});

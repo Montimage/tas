@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Button, Dropdown, Popconfirm, Table } from "antd";
+import { Badge, Button, Dropdown, Popconfirm, Table } from "antd";
 import {
   ClearOutlined,
   ImportOutlined,
@@ -87,6 +87,17 @@ class ModelListPage extends Component {
         ),
       },
       {
+        title: "State",
+        key: "state",
+        width: 110,
+        render: (item) =>
+          item.isRunning ? (
+            <Badge status="processing" text="Running" />
+          ) : (
+            <Badge status="default" text="Stopped" />
+          ),
+      },
+      {
         title: "Action",
         key: "action",
         width: 350,
@@ -165,14 +176,19 @@ class ModelListPage extends Component {
         pageSubTitle="Defines the topology and the specification of the sensors, actuators and the gateways"
       >
         {/* Hidden file input lives outside the antd Menu: v5+ menus take a
-            plain `items` array and would not render arbitrary children. */}
+            plain `items` array and would not render arbitrary children.
+            It is visually hidden but kept in the accessibility tree and tab
+            order (`.visually-hidden`, issue #39) so importing a topology is
+            reachable by keyboard and assistive tech directly, not only via
+            the programmatic click from the menu item. */}
         <input
           type="file"
           onChange={(event) => this.onUpload(event.target.files)}
           ref={(input) => {
             this.inputFileDOM = input;
           }}
-          style={{ display: "none" }}
+          className="visually-hidden"
+          aria-label="Import topology from file"
           accept=".json"
           multiple={false}
         />

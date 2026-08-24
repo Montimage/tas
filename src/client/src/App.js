@@ -1,16 +1,32 @@
-import React, { Component } from "react";
+import React, { Component, useEffect } from "react";
 import { Layout, Spin } from "antd";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 import { connect } from "react-redux";
 
 import { checkSession } from "./actions";
+
+/**
+ * Moves keyboard focus to the main content region after every client-side
+ * navigation (issue #39), so keyboard and screen-reader users land where the
+ * page content starts instead of staying on the last control they activated.
+ */
+const FocusOnNavigation = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const main = document.getElementById("main-content");
+    if (main) main.focus();
+  }, [pathname]);
+  return null;
+};
+
 import TSHeader from "./components/TSHeader";
 import SessionExpiredModal from "./components/SessionExpiredModal";
 import GraphView from "./components/GraphView";
@@ -103,8 +119,16 @@ class App extends Component {
       <Router>
         <ErrorBoundary>
           <Layout className="layout" style={{ height: "100%" }}>
+            {/* First focusable element on every page (issue #39): lets
+                keyboard users bypass the repeated navigation. */}
+            <a className="skip-link" href="#main-content">
+              Skip to main content
+            </a>
+            <FocusOnNavigation />
             <TSHeader />
-            {this.renderContent()}
+            <div id="main-content" tabIndex={-1}>
+              {this.renderContent()}
+            </div>
             <SessionExpiredModal />
           </Layout>
         </ErrorBoundary>
