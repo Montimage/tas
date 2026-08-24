@@ -18,6 +18,10 @@ const stopTestCampaign = () => {
 /**
  * Start the test campaign
  * @param {Object} model The model to be simulated
+ * @returns {TestCampaign} The campaign that was started. The caller - the
+ *   devops route, through the runtime registry (#29) - holds this instance so
+ *   it can be stopped again; the module-level variable below only remains for
+ *   the standalone CLI entry point at the bottom of this file.
  */
 const startTestCampaign = (
   testCampaignId,
@@ -29,11 +33,6 @@ const startTestCampaign = (
   // The run's own logger, obtained explicitly by the caller. Without one,
   // fall back to the process console.
   const log = logger || console;
-  // console.log("Start test campaign: ");
-  // console.log(testCampaignId);
-  // console.log(JSON.stringify(dataStorage));
-  // console.log(webhookURL);
-  // console.log(JSON.stringify(evaluationParameters));
   testCampaign = new TestCampaign(
     testCampaignId,
     dataStorage,
@@ -50,6 +49,7 @@ const startTestCampaign = (
       });
     }
   });
+  return testCampaign;
 };
 
 if (process.argv[2] === 'test') {

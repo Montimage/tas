@@ -23,7 +23,14 @@ const simulationLogsDir = path.resolve(__dirname, '../src/server/logs/simulation
 
 let server;
 
+// Issue #29: run state persists in a JSON store that real servers share.
+// This suite mounts the router in-process, so it pins its own empty store -
+// otherwise records left by another suite's process (or an earlier run of
+// this one) could bleed into what /status reports here.
+const runtimeStorePath = path.join(__dirname, `.runtime-state-${process.pid}.json`);
+
 before(() => {
+  process.env.TAS_RUNTIME_STATE_PATH = runtimeStorePath;
   // Nothing under src/server/logs is tracked, so on a fresh checkout the
   // directory does not exist and a start would have nowhere to log.
   fs.mkdirSync(simulationLogsDir, { recursive: true });
@@ -34,6 +41,9 @@ before(() => {
 });
 
 after(() => {
+  delete process.env.TAS_RUNTIME_STATE_PATH;
+  fs.rmSync(runtimeStorePath, { force: true });
+  fs.rmSync(`${runtimeStorePath}.lock`, { force: true });
   server.close();
 });
 
@@ -135,10 +145,13 @@ test('concurrent runs of different topologies keep their state apart', async () 
     await request(server, 'GET', `/api/simulation/stop/${first}.json`);
     const afterFirstStops = await request(server, 'GET', '/api/simulation/status');
     const entriesAfter = afterFirstStops.body.simulationStatus || {};
+    // Issue #29: a stopped entry is REAPED rather than left as a placeholder,
+    // so repeated runs cannot grow the tracking state - the first run is gone
+    // from the status map entirely while the other run is untouched.
     assert.equal(
-      entriesAfter[getObjectId(first)].isRunning,
-      false,
-      'the stopped run reports stopped'
+      entriesAfter[getObjectId(first)],
+      undefined,
+      'the stopped run is reaped, not kept as a placeholder'
     );
     assert.equal(entriesAfter[getObjectId(second)].isRunning, true, 'the other run is untouched');
   } finally {
