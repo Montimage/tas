@@ -65,3 +65,20 @@ code {
 .skip-link:focus {
   left: 8px;
 }
+
+/* Contrast fixes for the axe gate (issue #44): antd's secondary grey and the
+   default link blue both fall short of a 4.5:1 ratio on white. */
+.ant-layout .ant-typography-secondary,
+.ant-layout .ant-empty-description {
+  color: #595959;
+}
+
+a {
+  color: #0b57d0;
+}
+
+/* Links inside running text must be distinguishable without colour alone
+   (axe link-in-text-block, issue #44) — underline the footer credit. */
+.ant-layout-footer a {
+  text-decoration: underline;
+}

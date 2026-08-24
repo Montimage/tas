@@ -25,20 +25,26 @@ export default defineConfig(({ mode }) => ({
 
   // CRA exposed `process.env.NODE_ENV` and `process.env.PUBLIC_URL`; the app
   // still reads them (src/serviceWorker.js). Map them to Vite equivalents so
-  // the existing application code keeps working unchanged.
+  // the existing application code keeps working unchanged. `global` maps for
+  // the browserified shims, which expect Node's global object.
   define: {
     'process.env.NODE_ENV': JSON.stringify(mode),
     'process.env.PUBLIC_URL': JSON.stringify('/'),
+    global: 'globalThis',
   },
 
   // CRA's webpack config aliased the Node core module `crypto` to
   // `crypto-browserify`; src/utils.js uses crypto.createHash('md5'). Reproduce
   // that mapping so the browser bundle keeps the same behaviour.
   resolve: {
-    alias: {
-      crypto: 'crypto-browserify',
-      stream: 'stream-browserify',
-    },
+    alias: [
+      // Exact match only: a prefix rule here also rewrote this same
+      // replacement's own specifiers ("process/browser" →
+      // "process/browser/browser") and broke the build.
+      { find: /^process$/, replacement: 'process/browser' },
+      { find: /^crypto$/, replacement: 'crypto-browserify' },
+      { find: /^stream$/, replacement: 'stream-browserify' },
+    ],
   },
 
   server: {

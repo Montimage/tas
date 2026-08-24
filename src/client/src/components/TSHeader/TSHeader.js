@@ -182,12 +182,25 @@ const TSHeader = ({ authenticated, user, logout }) => {
             <img src={'/img/Logo.png'} className="logo" alt="TaS dashboard home" />
           </Link>
         </Col>
-        <Col xs={16} md={20} lg={{ span: 14, push: 6 }}>
+        {/* The menu column takes the full remaining width: with the old
+            14/24 split, the eight entries overflowed into antd's aria-hidden
+            "…" rest container on wide screens, which both buried sections and
+            failed the axe aria-hidden-focus check (issue #44). */}
+        <Col xs={16} sm={20}>
           <Menu
             theme="light"
             mode="horizontal"
             style={{ lineHeight: "64px" }}
             selectedKeys={selectedKey ? [selectedKey] : []}
+            /* antd collapses overflowing entries behind an icon-only "…"
+               control that assistive tech announces as unlabelled (issue #39's
+               rule: every interactive control has a name). The hidden text
+               names it without changing what is visible. */
+            overflowedIndicator={
+              <>
+                <span className="visually-hidden">More sections</span>•••
+              </>
+            }
             items={[
               ...buildSectionItems(selectedKey),
               ...signOutItem(authenticated, user, logout),
