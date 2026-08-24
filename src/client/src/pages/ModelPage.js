@@ -20,7 +20,8 @@ import {
   selectActuator,
   deleteSimulationActuator,
   changeStatusActuator,
-  requestDataStorage, requestSimulationStatus, requestStopSimulation
+  requestDataStorage, requestSimulationStatus, requestStopSimulation,
+  requestStartSimulation
 } from "../actions";
 import JSONView from "../components/JSONView";
 import LayoutPage from "./LayoutPage";
@@ -625,7 +626,7 @@ class ModelPage extends Component {
       selectedModalId,
       isChanged,
     } = this.state;
-    const {simulationStatus, stopSimulation } = this.props;
+    const { simulationStatus, stopSimulation, startSimulation } = this.props;
     let simId = null;
     if (tempModel) {
       if (tempModel.name) {
@@ -966,6 +967,8 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(changeStatusActuator({ actuatorID, thingID })),
   stopSimulation: (modelFileName) =>
     dispatch(requestStopSimulation(modelFileName)),
+  startSimulation: (modelFileName) =>
+    dispatch(requestStartSimulation({ modelFileName })),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(ModelPage);
