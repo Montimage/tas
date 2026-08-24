@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from "react";
+import { Link } from "react-router-dom";
 import { connect } from "react-redux";
 import { Button, Switch, Form, List, Typography, Divider, Alert } from "antd";
 import {
@@ -573,30 +574,28 @@ class DataRecorderPage extends Component {
                 )}
                 <p>
                   Log file:{" "}
-                  <a
-                    href={`/logs/data-recorders?logFile=${recorderStatus.logFile}`}
+                  <Link
+                    to={`/logs/data-recorders?logFile=${recorderStatus.logFile}`}
                   >
                     {recorderStatus.logFile}
-                  </a>
+                  </Link>
                   .
                 </p>
                 Dataset:{" "}
-                <a href={`/data-sets/${tempDataRecorder.dataset.id}`}>
+                <Link to={`/data-sets/${tempDataRecorder.dataset.id}`}>
                   {tempDataRecorder.dataset.name}
-                </a>
+                </Link>
               </div>
             }
             type={recorderStatus.isRunning ? "success" : "warning"}
           />
         )}
-        <a
-          href={`${window.location.pathname}?view=${
-            viewType === "json" ? "form" : "json"
-          }`}
+        <Link
+          to={`?view=${viewType === "json" ? "form" : "json"}`}
           style={{ marginRight: 10 }}
         >
           <SwitcherOutlined /> Switch View
-        </a>
+        </Link>
         <Button
           style={{ marginRight: 10 }}
           onClick={() => this.exportModel(tempDataRecorder)}

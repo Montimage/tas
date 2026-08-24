@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { Button, Dropdown, Popconfirm, Table } from "antd";
 import {
   ClearOutlined,
@@ -80,9 +81,9 @@ class ModelListPage extends Component {
         title: "Name",
         key: "data",
         render: (model) => (
-          <a href={`/models/${model.name}`}>
+          <Link to={`/models/${model.name}`}>
             {model.name.replace(".json", "")}
-          </a>
+          </Link>
         ),
       },
       {
@@ -109,16 +110,14 @@ class ModelListPage extends Component {
                 </Button>
               </Popconfirm>
             ) : (
-              <a type="button" href={`/simulation?model=${item.name}`}>
-                <Button
-                  style={{ marginRight: 10 }}
-                  size="small"
-                  type="dashed"
-                  onClick={() => startSimulation(item.name)}
-                >
-                  <CaretRightOutlined /> Simulate
-                </Button>
-              </a>
+              <Button
+                style={{ marginRight: 10 }}
+                size="small"
+                type="dashed"
+                onClick={() => startSimulation(item.name)}
+              >
+                <CaretRightOutlined /> Simulate
+              </Button>
             )}
 
             <Button
@@ -153,9 +152,9 @@ class ModelListPage extends Component {
         <ListStateEmpty
           description="No topologies yet"
           action={
-            <a href={`/models/new-model-${Date.now()}`}>
+            <Link to={`/models/new-model-${Date.now()}`}>
               <Button type="primary">Create New Topology</Button>
-            </a>
+            </Link>
           }
         />
       );
@@ -183,9 +182,9 @@ class ModelListPage extends Component {
               {
                 key: "model:3",
                 label: (
-                  <a href={`/models/new-model-${Date.now()}`}>
+                  <Link to={`/models/new-model-${Date.now()}`}>
                     <ClearOutlined /> Create New
-                  </a>
+                  </Link>
                 ),
               },
               {

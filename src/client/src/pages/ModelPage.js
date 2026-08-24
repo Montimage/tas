@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { Button, Switch, Form, List, Typography, Divider } from "antd";
 // all the edit forms
 import SensorModal from "../components/SensorModal";
@@ -20,7 +21,8 @@ import {
   selectActuator,
   deleteSimulationActuator,
   changeStatusActuator,
-  requestDataStorage, requestSimulationStatus, requestStopSimulation
+  requestDataStorage, requestSimulationStatus, requestStopSimulation,
+  requestStartSimulation
 } from "../actions";
 import JSONView from "../components/JSONView";
 import LayoutPage from "./LayoutPage";
@@ -625,7 +627,7 @@ class ModelPage extends Component {
       selectedModalId,
       isChanged,
     } = this.state;
-    const {simulationStatus, stopSimulation } = this.props;
+    const { simulationStatus, stopSimulation, startSimulation } = this.props;
     let simId = null;
     if (tempModel) {
       if (tempModel.name) {
@@ -883,15 +885,13 @@ class ModelPage extends Component {
     return (
       <Fragment>
         <LayoutPage>
-          <a
-            href={`${window.location.pathname}?view=${
-              viewType === "json" ? "form" : "json"
-            }`}
+          <Link
+            to={`?view=${viewType === "json" ? "form" : "json"}`}
             style={{ marginRight: 10 }}
           >
             {" "}
             <SwitcherOutlined /> Switch View
-          </a>
+          </Link>
           <Button
             onClick={() => this.exportModel(tempModel)}
             style={{ marginRight: 10 }}
@@ -904,11 +904,9 @@ class ModelPage extends Component {
               <StopOutlined /> Stop
             </Button>
           ) : (
-            <a type="button" href={`/simulation?model=${modelFileName}`}>
-              <Button type="primary">
-                <CaretRightOutlined /> Simulate
-              </Button>
-            </a>
+            <Button type="primary" onClick={() => startSimulation(modelFileName)}>
+              <CaretRightOutlined /> Simulate
+            </Button>
           )}
           <p></p>
           {view}
@@ -968,6 +966,8 @@ const mapDispatchToProps = (dispatch) => ({
     dispatch(changeStatusActuator({ actuatorID, thingID })),
   stopSimulation: (modelFileName) =>
     dispatch(requestStopSimulation(modelFileName)),
+  startSimulation: (modelFileName) =>
+    dispatch(requestStartSimulation({ modelFileName })),
 });
 
 export default connect(mapPropsToStates, mapDispatchToProps)(ModelPage);

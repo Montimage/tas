@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { Table, Button, Popconfirm } from "antd";
 import { DeleteOutlined, CopyOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
@@ -39,7 +40,7 @@ class TestCaseListPage extends Component {
       {
         title: "Id",
         key: "data",
-        render: (tc) => <a href={`/test-cases/${tc.id}`}> {tc.name} </a>,
+        render: (tc) => <Link to={`/test-cases/${tc.id}`}> {tc.name} </Link>,
       },
       {
         title: "Action",
@@ -74,9 +75,9 @@ class TestCaseListPage extends Component {
         <ListStateEmpty
           description="No test cases yet"
           action={
-            <a href={`/test-cases/new-case-${Date.now()}`}>
+            <Link to={`/test-cases/new-case-${Date.now()}`}>
               <Button type="primary">Add New Case</Button>
-            </a>
+            </Link>
           }
         />
       );
@@ -85,9 +86,9 @@ class TestCaseListPage extends Component {
         pageTitle="Test Case"
         pageSubTitle="All the test cases"
       >
-        <a href={`/test-cases/new-case-${Date.now()}`}>
+        <Link to={`/test-cases/new-case-${Date.now()}`}>
           <Button style={{ marginBottom: "10px" }}>Add New Case</Button>
-        </a>
+        </Link>
         <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );

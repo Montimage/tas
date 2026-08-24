@@ -4,6 +4,7 @@ import createSagaMiddleware from 'redux-saga';
 import { Provider } from 'react-redux';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Same harness as App.test.js: real store + sagas, mocked api boundary.
@@ -43,7 +44,9 @@ const makeStore = () => {
 const renderPage = () =>
   render(
     <Provider store={makeStore()}>
-      <TestCaseListPage />
+      <MemoryRouter>
+        <TestCaseListPage />
+      </MemoryRouter>
     </Provider>
   );
 

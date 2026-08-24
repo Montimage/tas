@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, test } from "vitest";
 
 import TSSider from "./TSSider";
@@ -16,7 +17,12 @@ describe("TSSider (antd v6 Menu items API)", () => {
       },
       { key: "3", icon: <span>d</span>, text: "Plain" },
     ];
-    render(<TSSider defaultKey="1" items={items} />);
+    // The labels are router Links (issue #36), so a router context is required.
+    render(
+      <MemoryRouter>
+        <TSSider defaultKey="1" items={items} />
+      </MemoryRouter>
+    );
     expect(screen.getByText("Topology")).toBeInTheDocument();
     expect(screen.getByText("Simulation")).toBeInTheDocument();
     const link = screen.getByText("Topology").closest("a");

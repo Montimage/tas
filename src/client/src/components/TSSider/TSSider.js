@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Layout, Menu } from "antd";
 
 import "./styles.css";
@@ -19,7 +20,11 @@ const TSSider = ({ defaultKey, items, rightSide, theme }) => (
       items={items.map((i) => ({
         key: i.key,
         icon: i.icon,
-        label: i.href ? <a href={i.href}>{i.text}</a> : i.text,
+        label: i.href ? (
+          <Link to={i.href}>{i.text}</Link>
+        ) : (
+          i.text
+        ),
         onClick: i.action,
       }))}
     />

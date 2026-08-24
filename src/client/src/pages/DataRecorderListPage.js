@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { Button, Dropdown, Popconfirm, Table } from "antd";
 import {
   ClearOutlined,
@@ -76,9 +77,9 @@ class DataRecorderListPage extends Component {
         title: "Name",
         key: "data",
         render: (model) => (
-          <a href={`/data-recorders/${model.name}`}>
+          <Link to={`/data-recorders/${model.name}`}>
             {model.name.replace(".json", "")}
-          </a>
+          </Link>
         ),
       },
       {
@@ -149,9 +150,9 @@ class DataRecorderListPage extends Component {
         <ListStateEmpty
           description="No data recorders yet"
           action={
-            <a href={`/data-recorders/new-DataRecorder-${Date.now()}`}>
+            <Link to={`/data-recorders/new-DataRecorder-${Date.now()}`}>
               <Button type="primary">Create New Data Recorder</Button>
-            </a>
+            </Link>
           }
         />
       );
@@ -179,9 +180,9 @@ class DataRecorderListPage extends Component {
               {
                 key: "DataRecorder:3",
                 label: (
-                  <a href={`/data-recorders/new-DataRecorder-${Date.now()}`}>
+                  <Link to={`/data-recorders/new-DataRecorder-${Date.now()}`}>
                     <ClearOutlined /> Create New
-                  </a>
+                  </Link>
                 ),
               },
               {
@@ -208,7 +209,7 @@ class DataRecorderListPage extends Component {
 
         <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
         <p></p>
-        <a href={`/logs/data-recorders`}>View Logs</a>
+        <Link to={`/logs/data-recorders`}>View Logs</Link>
       </LayoutPage>
     );
   }

@@ -1,5 +1,6 @@
-import React, { Component } from "react";
+import React from "react";
 import { connect } from "react-redux";
+import { Link, useLocation } from "react-router-dom";
 import { Layout, Menu, Row, Col } from "antd";
 import {
   ClusterOutlined, DatabaseOutlined, DeploymentUnitOutlined, InteractionOutlined, FileTextOutlined, FolderOpenOutlined, EyeOutlined, LogoutOutlined,
@@ -13,146 +14,117 @@ import "./styles.css";
 
 const { Header } = Layout;
 
-class TSHeader extends Component {
-  render() {
-    const { authenticated, user, logout } = this.props;
-    const menuLinks = [
-      '/test-campaigns',
-      '/test-cases',
-      '/models',
-      '/simulation',
-      '/data-recorders',
-      '/data-sets',
-      '/data-storage',
-      '/reports'
-    ];
-    // Calculate the selected menu
-    let selectedMenu = 0;
-    const fullPath = window.location.pathname;
-    let currentPositionIndex = fullPath.length - 1;
-    for (let index = 0; index < menuLinks.length; index++) {
-      const positionIndex = fullPath.indexOf(menuLinks[index]);
-      if ( positionIndex > -1 && positionIndex < currentPositionIndex) {
-        currentPositionIndex = positionIndex;
-        selectedMenu = index;
-      }
+export const menuLinks = [
+  '/test-campaigns',
+  '/test-cases',
+  '/models',
+  '/simulation',
+  '/data-recorders',
+  '/data-sets',
+  '/data-storage',
+  '/reports'
+];
+
+/**
+ * Picks the menu entry for a location pathname.
+ *
+ * The match is prefix-based but boundary-aware (a link matches only the whole
+ * segment it names) and specificity-ordered (the longest matching link wins),
+ * so `/test-campaigns/<id>` keeps Test Campaign highlighted while
+ * `/logs/test-campaigns` highlights nothing at all. Returns null when no
+ * entry matches, e.g. on `/` or any non-section page.
+ */
+export const selectMenuKey = (pathname) => {
+  let selected = null;
+  menuLinks.forEach((link, index) => {
+    const matches =
+      pathname === link || pathname.startsWith(`${link}/`);
+    if (matches && (selected === null || link.length > menuLinks[selected].length)) {
+      selected = index;
     }
+  });
+  return selected === null ? null : `${selected}`;
+};
 
-    return (
-      <Header>
-        <Row>
-          <Col span={4}>
-            <a href="/">
-              <img
-                src={'/img/Logo.png'}
-                className="logo"
-                alt="Logo"
-                style={{ maxWidth: "250px", objectFit: "contain" }}
-              />
-            </a>
-          </Col>
-          <Col span={14} push={6}>
-            <Menu
-              theme="light"
-              mode="horizontal"
-              style={{ lineHeight: "64px" }}
-              selectedKeys={[`${selectedMenu}`]}
-              items={[
-                {
-                  key: "0",
-                  label: (
-                    <a href={menuLinks[0]}>
-                      <InteractionOutlined />
-                      Test Campaign
-                    </a>
-                  ),
-                },
-                {
-                  key: "1",
-                  label: (
-                    <a href={menuLinks[1]}>
-                      <FolderOpenOutlined />
-                      Test Case
-                    </a>
-                  ),
-                },
-                {
-                  key: "2",
-                  label: (
-                    <a href={menuLinks[2]}>
-                      <ClusterOutlined />
-                      Topology
-                    </a>
-                  ),
-                },
-                {
-                  key: "3",
-                  label: (
-                    <a href={menuLinks[3]}>
-                      <DeploymentUnitOutlined />
-                      Simulation
-                    </a>
-                  ),
-                },
-                {
-                  key: "4",
-                  label: (
-                    <a href={menuLinks[4]}>
-                      <EyeOutlined />
-                      Data Recorder
-                    </a>
-                  ),
-                },
-                {
-                  key: "5",
-                  label: (
-                    <a href={menuLinks[5]}>
-                      <FileTextOutlined />
-                      Data Set
-                    </a>
-                  ),
-                },
-                {
-                  key: "6",
-                  label: (
-                    <a href={menuLinks[6]}>
-                      <DatabaseOutlined />
-                      Data Storage
-                    </a>
-                  ),
-                },
-                {
-                  key: "7",
-                  label: (
-                    <a href={menuLinks[7]}>
-                      <FileTextOutlined />
-                      Report
-                    </a>
-                  ),
-                },
-                ...(authenticated
-                  ? [
-                      {
-                        key: "logout",
-                        label: (
-                          <span>
-                            <LogoutOutlined />
-                            {user ? `Sign out (${user})` : "Sign out"}
-                          </span>
-                        ),
-                        onClick: () => logout(),
-                      },
-                    ]
-                  : []),
-              ]}
+const menuIcons = [
+  <InteractionOutlined key="icon-0" />,
+  <FolderOpenOutlined key="icon-1" />,
+  <ClusterOutlined key="icon-2" />,
+  <DeploymentUnitOutlined key="icon-3" />,
+  <EyeOutlined key="icon-4" />,
+  <FileTextOutlined key="icon-5" />,
+  <DatabaseOutlined key="icon-6" />,
+  <FileTextOutlined key="icon-7" />,
+];
+
+const menuNames = [
+  'Test Campaign',
+  'Test Case',
+  'Topology',
+  'Simulation',
+  'Data Recorder',
+  'Data Set',
+  'Data Storage',
+  'Report',
+];
+
+const TSHeader = ({ authenticated, user, logout }) => {
+  // The active entry follows the router: useLocation re-renders this header
+  // on every client-side navigation (issue #36).
+  const { pathname } = useLocation();
+  const selectedKey = selectMenuKey(pathname);
+
+  return (
+    <Header>
+      <Row>
+        <Col span={4}>
+          <Link to="/">
+            <img
+              src={'/img/Logo.png'}
+              className="logo"
+              alt="Logo"
+              style={{ maxWidth: "250px", objectFit: "contain" }}
             />
-          </Col>
-        </Row>
+          </Link>
+        </Col>
+        <Col span={14} push={6}>
+          <Menu
+            theme="light"
+            mode="horizontal"
+            style={{ lineHeight: "64px" }}
+            selectedKeys={selectedKey ? [selectedKey] : []}
+            items={[
+              ...menuLinks.map((link, index) => ({
+                key: `${index}`,
+                label: (
+                  <Link to={link}>
+                    {menuIcons[index]}
+                    {menuNames[index]}
+                  </Link>
+                ),
+              })),
+              ...(authenticated
+                ? [
+                    {
+                      key: "logout",
+                      label: (
+                        <span>
+                          <LogoutOutlined />
+                          {user ? `Sign out (${user})` : "Sign out"}
+                        </span>
+                      ),
+                      onClick: () => logout(),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </Col>
+      </Row>
 
-      </Header>
-    );
-  }
-}
+    </Header>
+  );
+};
 
 const mapPropsToStates = ({ requesting, auth }) => ({
   requesting,

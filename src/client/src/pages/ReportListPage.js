@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import { Table, Button, Popconfirm } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
@@ -52,24 +53,24 @@ class ReportListPage extends Component {
       {
         title: "Id",
         key: "data",
-        render: (ds) => <a href={`/reports/${ds.id}`}> {ds.id} </a>,
+        render: (ds) => <Link to={`/reports/${ds.id}`}> {ds.id} </Link>,
         width: 200,
       },
       {
         title: "Test Campaign Id",
         key: "data",
         render: (ds) => (
-          <a href={`/test-campaigns/${ds.testCampaignId}`}>
+          <Link to={`/test-campaigns/${ds.testCampaignId}`}>
             {" "}
             {ds.testCampaignId}{" "}
-          </a>
+          </Link>
         ),
       },
       {
         title: "Topology",
         key: "data",
         render: (ds) => (
-          <a href={`/models/${ds.topologyFileName}`}> {ds.topologyFileName} </a>
+          <Link to={`/models/${ds.topologyFileName}`}> {ds.topologyFileName} </Link>
         ),
       },
       {
@@ -116,9 +117,9 @@ class ReportListPage extends Component {
         <ListStateEmpty
           description="No reports yet"
           action={
-            <a href="/test-campaigns">
+            <Link to="/test-campaigns">
               <Button type="primary">Run a Test Campaign</Button>
-            </a>
+            </Link>
           }
         />
       );
