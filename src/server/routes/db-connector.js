@@ -7,13 +7,33 @@ const {
   TestCampaignSchema,
 } = require('../../core/enact-mongoose');
 
-const { readJSONFile, writeToFile } = require('../../core/utils');
+const { createArtifactStore } = require('../artifact-store');
 const { unavailable } = require('../middleware/errors');
 
-const dataStoragePath = `${__dirname}/../data/data-storage.json`;
+// The service configuration is a record of the artifact store (issue #30):
+// reads go through the store on EVERY call - there is no in-memory copy that
+// can go stale, so a configuration change takes effect without a restart -
+// and writes are serialized and atomic, so a crash mid-save cannot leave a
+// truncated configuration behind. `TAS_DATA_DIR` moves the store (tests use a
+// scratch directory).
+const dataStorageDir = process.env.TAS_DATA_DIR || `${__dirname}/../data`;
+const DATA_STORAGE_FILE = 'data-storage.json';
+const dataStorageStore = createArtifactStore({ root: dataStorageDir, label: 'data-storage' });
 
-let dataStorageConfig = null;
 let dbClient = null;
+
+/** The configuration served when no stored one exists yet (a fresh volume). */
+const DEFAULT_DATA_STORAGE = {
+  protocol: 'MONGODB',
+  connConfig: {
+    host: 'localhost',
+    port: 27017,
+    username: null,
+    password: null,
+    dbname: null,
+    options: null,
+  },
+};
 
 /**
  * Build an ENACTDB client from a data-storage configuration and prove it can
@@ -108,46 +128,45 @@ const getDBClient = (callback) => {
 ///////////////
 // Read a specific model by its name:
 
+/**
+ * Read the service configuration, straight from the store.
+ *
+ * Deliberately NOT cached: the configuration is one small file read locally,
+ * and serving it fresh is what lets a configuration change take effect
+ * without a restart (#30). A missing configuration - a fresh volume - is
+ * bootstrapped with the default. The default MUST use the same nested
+ * { protocol, connConfig: {…} } shape as a committed data-storage.json,
+ * otherwise getDBClient destructures connConfig (undefined) and throws a
+ * TypeError instead of reporting a clean failure. (F-BUG-002)
+ *
+ * @param {Function} callback Invoked with (err, dataStorage)
+ */
 const getDataStorage = (callback) => {
-  if (dataStorageConfig) return callback(null, dataStorageConfig);
-  return readJSONFile(dataStoragePath, (err, data) => {
-    if (err) {
-      console.error('[SERVER] reading data storage', err);
-      // The default MUST use the same nested { protocol, connConfig: {…} }
-      // shape as the committed data-storage.json, otherwise getDBClient
-      // destructures connConfig (undefined) and throws a TypeError inside this
-      // fs callback — an uncaught exception on the fresh-volume / first-run
-      // path instead of a clean 503. (F-BUG-002)
-      const defaultDataStorage = {
-        protocol: 'MONGODB',
-        connConfig: {
-          host: 'localhost',
-          port: 27017,
-          username: null,
-          password: null,
-          dbname: null,
-          options: null,
-        },
-      };
-      writeToFile(
-        dataStoragePath,
-        JSON.stringify(defaultDataStorage),
-        (err2, data) => {
-          if (err2) {
-            console.error('[SERVER] saving data storage', err2);
-            return callback(err2);
-          } else {
-            dataStorageConfig = defaultDataStorage;
-            return callback(null, dataStorageConfig);
+  dataStorageStore
+    .read(DATA_STORAGE_FILE)
+    .then((data) => callback(null, data))
+    .catch((err) => {
+      if (err.code !== 'ENOENT') {
+        console.error('[SERVER] reading data storage', err);
+        return callback(err);
+      }
+      // Bootstrap the default. The write refuses to replace an existing
+      // record: if another process bootstrapped first, serve what it wrote -
+      // which is byte-for-byte the same default anyway.
+      dataStorageStore
+        .write(DATA_STORAGE_FILE, DEFAULT_DATA_STORAGE)
+        .then(() => callback(null, DEFAULT_DATA_STORAGE))
+        .catch((writeErr) => {
+          if (writeErr && writeErr.code === 'EARTIFACTCONFLICT') {
+            return dataStorageStore
+              .read(DATA_STORAGE_FILE)
+              .then((winner) => callback(null, winner))
+              .catch((reErr) => callback(reErr));
           }
-        },
-        true
-      );
-    } else {
-      dataStorageConfig = data;
-      return callback(null, dataStorageConfig);
-    }
-  });
+          console.error('[SERVER] saving data storage', writeErr);
+          return callback(writeErr);
+        });
+    });
 };
 
 const updateDataStorage = (dataStorage, callback) => {
@@ -161,8 +180,8 @@ const updateDataStorage = (dataStorage, callback) => {
   // Mongoose's shared default connection: connecting the candidate replaces
   // that connection wholesale, so keeping the old wrapper would only leave a
   // stale handle. If the probe then fails, `dbClient` stays cleared and the
-  // next `getDBClient` reconnects lazily from `dataStorageConfig` — which
-  // this function has deliberately not touched yet.
+  // next `getDBClient` reconnects lazily from the stored configuration —
+  // which this function has deliberately not touched yet.
   const closeCurrent = (done) => {
     if (!dbClient) return done();
     const current = dbClient;
@@ -181,28 +200,24 @@ const updateDataStorage = (dataStorage, callback) => {
           unavailable('Data storage not updated: cannot connect to the proposed database', err2)
         );
       }
-      writeToFile(
-        dataStoragePath,
-        JSON.stringify(dataStorage),
-        (err, data) => {
-          if (err) {
-            console.error('[SERVER] Cannot save the new data storage configuration', err);
-            // The connection was proven but persistence failed: drop the
-            // verified candidate rather than run live against settings a
-            // restart would not load, and let `getDBClient` rebuild from the
-            // untouched previous configuration.
-            dbClient = null;
-            candidate.close(() => {});
-            return callback(err);
-          }
+      dataStorageStore
+        .write(DATA_STORAGE_FILE, dataStorage, { overwrite: true })
+        .then(() => {
           // Commit: the verified candidate becomes the live client and the new
           // configuration takes effect immediately, no restart needed.
           dbClient = candidate;
-          dataStorageConfig = dataStorage;
           return callback(null, dataStorage);
-        },
-        true
-      );
+        })
+        .catch((err) => {
+          console.error('[SERVER] Cannot save the new data storage configuration', err);
+          // The connection was proven but persistence failed: drop the
+          // verified candidate rather than run live against settings a
+          // restart would not load, and let `getDBClient` rebuild from the
+          // untouched previous configuration.
+          dbClient = null;
+          candidate.close(() => {});
+          return callback(err);
+        });
     });
   });
 };
