@@ -7,6 +7,14 @@ All notable changes to TaS are documented in this file. Releases are cut as
 
 ## [Unreleased]
 
+### Added
+
+- **Responsive dashboard layout** (#41): below the `md` breakpoint (768px)
+  the header's section navigation collapses into a labelled, keyboard-operable
+  dropdown; data tables scroll horizontally instead of stretching the page;
+  the page shell tightens its margins and forms stack their labels on small
+  screens.
+
 ## [2.0.0] - 2026-08-24
 
 The 2026 hardening and modernisation programme, cut as a major release: the
