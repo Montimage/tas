@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { Button, Switch, Form, List, Typography, Divider } from "antd";
 // all the edit forms
 import SensorModal from "../components/SensorModal";
