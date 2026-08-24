@@ -524,6 +524,18 @@ test('a verified working configuration survives a later refused save too', async
 
   const survived = await request(storageServer.baseUrl, 'GET', '/api/data-storage');
   assert.deepEqual(survived.body.dataStorage, working, 'the working configuration must survive');
+
+  // The successful save genuinely persisted through the API — that is the
+  // point. Restore the tracked file here already, rather than only in the
+  // file-level backstop, so the sections that follow this one can never
+  // inherit a mutated configuration and a hard crash cannot leave the
+  // checkout dirty.
+  if (
+    dataStorageBaseline !== null &&
+    fs.readFileSync(dataStoragePath, 'utf8') !== dataStorageBaseline
+  ) {
+    fs.writeFileSync(dataStoragePath, dataStorageBaseline);
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -572,7 +584,9 @@ test('a started simulation produces data and stops through the API', async (t) =
     await mongoose.connect(`mongodb://${mongoHost}:${mongoPort}`, { dbName: 'tas_e2e_lifecycle' });
     const { EventSchema, ReportSchema } = require('../../src/core/enact-mongoose');
     const eventsStored = await eventually(async () => {
-      const count = await EventSchema.countDocuments({ datasetId });
+      // A transient read failure is retried on the next poll, not surfaced
+      // as an unrelated rejection.
+      const count = await EventSchema.countDocuments({ datasetId }).catch(() => 0);
       return count > 0;
     }, 20000);
     assert.ok(eventsStored, 'generated readings must be persisted into the dataset');
@@ -591,11 +605,10 @@ test('a started simulation produces data and stops through the API', async (t) =
       'number',
       `a stopped run carries the time it stopped: ${stopped.raw}`
     );
-
-    removeRunLogs(name);
   } finally {
     await server.stop();
     await mongoose.disconnect().catch(() => {});
+    removeRunLogs(name);
   }
 });
 
