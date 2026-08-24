@@ -344,6 +344,25 @@ end-to-end assertions drive routes that need a database; with none reachable
 they wait out the connect timeout, so a full local run takes roughly half a
 minute even though the assertions themselves are fast.
 
+### Run the simulation lifecycle gate
+
+`test/e2e/simulation-lifecycle.test.js` is the Phase 2 milestone gate (issue
+#21): it starts simulations through the API and proves concurrent per-run log
+isolation, statistics behaviour, prompt failure of saves against unwritable
+locations, data-storage save refusal with survival of the working
+configuration, error detail in run logs, and stable open-handle counts across
+start-stop cycles.
+
+Most of it needs nothing but the application itself. Three tests additionally
+need an MQTT broker and/or MongoDB and probe for them at startup, skipping
+with an explicit reason when absent — point them at local services with:
+
+```
+TAS_E2E_MQTT_HOST=127.0.0.1 TAS_E2E_MQTT_PORT=1883 \
+TAS_E2E_MONGO_HOST=127.0.0.1 TAS_E2E_MONGO_PORT=27017 \
+node --test test/e2e/simulation-lifecycle.test.js
+```
+
 ### Create docker image for multiple platform
 
 Source: https://www.docker.com/blog/multi-arch-images/
