@@ -183,29 +183,33 @@ function createArtifactStore({ root, label }) {
   /**
    * Write one record atomically: temporary file in the same directory, fsync,
    * rename over the target. A crash at any point leaves either the old record
-   * or the new one - never a truncated file - with at worst an orphaned `.tmp`
-   * beside it, which `list()` ignores.
+   * or the new one - never a truncated file - and every failure before the
+   * rename cleans its temporary file up behind it.
    */
   const writeRecordAtomic = async (target, document) => {
     const tmp = `${target}.${process.pid}.${Date.now()}.tmp`;
     let handle = null;
     try {
+      // Serialising can throw on its own (a document JSON cannot represent);
+      // the cleanup below must cover that too, not just filesystem failures.
+      const serialized = JSON.stringify(document, null, 2);
       handle = await fsp.open(tmp, 'wx');
-      await handle.writeFile(JSON.stringify(document, null, 2));
+      await handle.writeFile(serialized);
       // Durability before the rename: once the rename lands the record must
       // already be on disk, or a crash could swap in a name whose contents
       // were still in page cache.
       await handle.sync();
+      await fsp.rename(tmp, target);
+    } catch (err) {
+      // Whatever failed - serialising, creating the temp file, writing,
+      // syncing or the rename itself - the previous record is untouched; just
+      // do not leave an orphaned temporary file behind.
+      await fsp.unlink(tmp).catch(() => {});
+      throw err;
     } finally {
       if (handle !== null) {
         await handle.close().catch(() => {});
       }
-    }
-    try {
-      await fsp.rename(tmp, target);
-    } catch (err) {
-      await fsp.unlink(tmp).catch(() => {});
-      throw err;
     }
   };
 

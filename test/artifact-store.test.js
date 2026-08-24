@@ -138,6 +138,23 @@ test('a failed write cleans its temporary file and leaves the target intact', as
   assert.deepEqual(leftovers, [], 'the failed temporary file must be cleaned up');
 });
 
+test('a record JSON cannot represent is refused without leaving artifacts', async (t) => {
+  const root = scratchDir(t);
+  const store = createArtifactStore({ root, label: 'unit' });
+  await store.write('safe.json', { v: 1 });
+
+  const circular = {};
+  circular.self = circular;
+  await assert.rejects(store.write('circular.json', circular), TypeError);
+  // The failure happened before any file was touched: the store is unchanged
+  // and no temporary artifact was left behind.
+  assert.deepEqual(await store.list(), ['safe.json']);
+  assert.deepEqual(
+    fs.readdirSync(root).filter((f) => f.endsWith('.tmp')),
+    []
+  );
+});
+
 test('an unparsable record is quarantined, not served or deleted', async (t) => {
   const root = scratchDir(t);
   const store = createArtifactStore({ root, label: 'unit' });
