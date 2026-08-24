@@ -11,7 +11,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
-  evalulate,
+  evaluate,
   ALL_EVENTS,
   METRIC_VALUE,
   THRESHOLD_FLEXIBLE,
@@ -76,7 +76,7 @@ test('randomized value-metric topics score exactly like the legacy scan', () => 
 
     const originalEvents = originalValues.map((v, i) => ev('t', [v], i));
     const newEvents = newValues.map((v, i) => ev('t', [v], i));
-    const freshScore = evalulate(originalEvents, newEvents, ALL_EVENTS, METRIC_VALUE);
+    const freshScore = evaluate(originalEvents, newEvents, ALL_EVENTS, METRIC_VALUE);
     assert.equal(freshScore, expectedScore, `trial ${trial}: legacy topic score ${topicScore}`);
   }
 });
@@ -89,7 +89,7 @@ test('a large identical run scores perfectly in bounded time', () => {
   const newEvents = mk(1000000000000);
 
   const start = process.hrtime.bigint();
-  const score = evalulate(originalEvents, newEvents, ALL_EVENTS, METRIC_VALUE);
+  const score = evaluate(originalEvents, newEvents, ALL_EVENTS, METRIC_VALUE);
   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
   assert.equal(score, 1);
   assert.ok(
@@ -114,7 +114,7 @@ test('the quadratic cost of the legacy scan is demonstrably gone', { timeout: 60
   const originalEvents = originalValues.map((v, i) => ev('t', v, i));
   const newEvents = newValues.map((v, i) => ev('t', v, i));
   const freshStart = process.hrtime.bigint();
-  const freshScore = evalulate(originalEvents, newEvents, ALL_EVENTS, METRIC_VALUE);
+  const freshScore = evaluate(originalEvents, newEvents, ALL_EVENTS, METRIC_VALUE);
   const freshMs = Number(process.hrtime.bigint() - freshStart) / 1e6;
 
   assert.equal(legacyTopicScore >= THRESHOLD_FLEXIBLE, false);

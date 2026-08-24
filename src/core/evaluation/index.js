@@ -4,6 +4,7 @@
  * There should be many different way to evaluate the result. In this version, we will go one by one
  * - 1: compare events order
  */
+const { deprecate } = require('util');
 
 // Threshold values
 const THRESHOLD_FLEXIBLE = 0.5;
@@ -307,7 +308,7 @@ const evaluateEvents = (originalEvents, newEvents, metricType, threshold) => {
  *  evalData: {} // more data on the evaluation
  * }
  */
-const evalulate = (
+const evaluate = (
   originalEvents,
   newEvents,
   eventType = ALL_EVENTS,
@@ -337,6 +338,13 @@ const evalulate = (
   }
 };
 
+// Deprecated misspelled name (issue #20): kept as an alias for one release,
+// then remove. Emits a DeprecationWarning on the first call per process.
+const evalulate = deprecate(
+  evaluate,
+  '[tas] evaluation.evalulate() is deprecated; use evaluation.evaluate() instead'
+);
+
 module.exports = {
   THRESHOLD_FLEXIBLE,
   THRESHOLD_NORMAL,
@@ -347,5 +355,6 @@ module.exports = {
   METRIC_VALUE,
   METRIC_TIMESTAMP,
   METRIC_VALUE_TIMESTAMP,
-  evalulate,
+  evaluate,
+  evalulate, // @deprecated use evaluate
 };

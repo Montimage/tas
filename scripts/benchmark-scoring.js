@@ -5,7 +5,7 @@
  *
  * It compares, on identical deterministic inputs:
  * - report scoring: the legacy O(n*m) greedy scan-and-splice (the code before
- *   issue #31) against the current `evalulate` (multiset map + interval
+ *   issue #31) against the current `evaluate` (multiset map + interval
  *   sweep), and
  * - event writes: one document save per event against DataStorage's batched
  *   `insertMany` queue (size trigger), both against an in-memory stand-in so
@@ -17,7 +17,7 @@
  */
 const { performance } = require('node:perf_hooks');
 
-const { evalulate, ALL_EVENTS, METRIC_VALUE } = require('../src/core/evaluation');
+const { evaluate, ALL_EVENTS, METRIC_VALUE } = require('../src/core/evaluation');
 const DataStorage = require('../src/core/communications/DataStorage');
 const EventSchema = require('../src/core/enact-mongoose/schemas/EventSchema');
 
@@ -98,7 +98,7 @@ const benchScoring = (count, runs) => {
             newEvents.map((e) => e.values)
           )
         );
-  const freshMs = timed(() => evalulate(originalEvents, newEvents, ALL_EVENTS, METRIC_VALUE));
+  const freshMs = timed(() => evaluate(originalEvents, newEvents, ALL_EVENTS, METRIC_VALUE));
   void runs;
   return { legacyMs, freshMs };
 };
@@ -162,7 +162,7 @@ const benchWrites = async (count, batchSize) => {
   console.log(`# benchmark-scoring (events=${baseEvents}, runs=${runs})`);
   console.log('');
   console.log('## Report scoring');
-  console.log('| events | legacy scan+splice | current evalulate | speedup |');
+  console.log('| events | legacy scan+splice | current evaluate | speedup |');
   console.log('|--------|--------------------|-------------------|---------|');
   for (const size of [baseEvents / 5, baseEvents, baseEvents * 4].map(Math.round)) {
     let legacyTotal = 0;

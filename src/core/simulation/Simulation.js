@@ -1,7 +1,7 @@
 const { OFFLINE, SIMULATING } = require('../DeviceStatus');
 const { EventSchema, ReportSchema } = require('../enact-mongoose');
 const {
-  evalulate,
+  evaluate,
   THRESHOLD_FLEXIBLE,
   ALL_EVENTS,
   METRIC_VALUE_TIMESTAMP,
@@ -135,7 +135,7 @@ class Simulation {
       return stopSimulation();
     }
     const { threshold, eventType, metricType } = this.evaluationParameters;
-    const score = evalulate(originalEvents, newEvents, eventType, metricType, threshold);
+    const score = evaluate(originalEvents, newEvents, eventType, metricType, threshold);
     // Going to save the score into the report
     try {
       await ReportSchema.findOneAndUpdate({ id }, { score });
