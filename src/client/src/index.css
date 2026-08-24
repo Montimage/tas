@@ -32,3 +32,36 @@ code {
 .ant-layout-header {
   background: white;
 }
+
+/* Accessibility helpers (issue #39). */
+
+/* Keeps a control in the accessibility tree and tab order while staying
+   invisible — unlike display:none, which assistive tech and the keyboard
+   both skip entirely. Used by the file-import inputs. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Skip link: hidden until it receives keyboard focus, then the first
+   stop on every page. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  background: #fff;
+  padding: 8px 16px;
+}
+
+.skip-link:focus {
+  left: 8px;
+}

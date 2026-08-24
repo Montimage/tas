@@ -82,7 +82,7 @@ const TSHeader = ({ authenticated, user, logout }) => {
             <img
               src={'/img/Logo.png'}
               className="logo"
-              alt="Logo"
+              alt="TaS dashboard home"
               style={{ maxWidth: "250px", objectFit: "contain" }}
             />
           </Link>
@@ -97,7 +97,10 @@ const TSHeader = ({ authenticated, user, logout }) => {
               ...menuLinks.map((link, index) => ({
                 key: `${index}`,
                 label: (
-                  <Link to={link}>
+                  <Link
+                    to={link}
+                    aria-current={selectedKey === `${index}` ? "page" : undefined}
+                  >
                     {menuIcons[index]}
                     {menuNames[index]}
                   </Link>

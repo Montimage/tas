@@ -32,13 +32,17 @@ class FormFileUploadItem extends Component {
       <Form.Item name="upload" label={label} extra={extra}>
         <Button onClick={() => this.inputFileDOM.click()}>
           <UploadOutlined /> {uploadButtonLabel}
+          {/* Visually hidden but in the accessibility tree and tab order
+              (issue #39): display:none would remove it from both, leaving
+              the upload reachable only through the programmatic click. */}
           <input
             type="file"
             onChange={(event) => this.onUpload(event.target.files)}
             ref={(input) => {
               this.inputFileDOM = input;
             }}
-            style={{ display: "none" }}
+            className="visually-hidden"
+            aria-label={`${uploadButtonLabel}: ${label || "file"}`}
             accept={fileType}
             multiple={false}
           />
