@@ -221,7 +221,7 @@ class DataRecorderListPage extends Component {
           </Button>
         </Dropdown>
 
-        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
+        <Table columns={columns} dataSource={dataSource} scroll={{ x: "max-content" }} locale={{ emptyText: emptyState }} />
         <p></p>
         <Link to={`/logs/data-recorders`}>View Logs</Link>
       </LayoutPage>

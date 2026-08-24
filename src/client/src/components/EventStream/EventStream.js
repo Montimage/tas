@@ -212,11 +212,19 @@ class EventStream extends Component {
           bordered
           columns={columns}
           dataSource={eventStreams}
+          scroll={{ x: "max-content" }}
           title={() => title}
         />
       );
     } else {
-      return <Table bordered columns={columns} dataSource={eventStreams} />;
+      return (
+        <Table
+          bordered
+          columns={columns}
+          dataSource={eventStreams}
+          scroll={{ x: "max-content" }}
+        />
+      );
     }
   }
 }

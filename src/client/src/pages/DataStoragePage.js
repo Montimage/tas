@@ -67,10 +67,12 @@ class DataStoragePage extends Component {
       view = (
         <Form
           labelCol={{
-            span: 4,
+            xs: { span: 24 },
+            sm: { span: 4 },
           }}
           wrapperCol={{
-            span: 14,
+            xs: { span: 24 },
+            sm: { span: 14 },
           }}
         >
           <ConnectionConfig

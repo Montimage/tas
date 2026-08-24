@@ -306,7 +306,7 @@ class TestCasePage extends Component {
             onChange={(values) => this.updateDatasets(values)}
           />
         </Button>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} scroll={{ x: "max-content" }} />
           <Button
             onClick={() => this.saveTestCase()}
             disabled={isChanged ? false : true}

@@ -84,7 +84,7 @@ const DataRecorderItem = ({
       </Fragment>
     }
   >
-    <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+    <Form labelCol={{ xs: { span: 24 }, sm: { span: 4 } }} wrapperCol={{ xs: { span: 24 }, sm: { span: 14 } }}>
       <FormEditableTextItem
         label="Name"
         defaultValue={data.name}
@@ -434,7 +434,7 @@ class DataRecorderPage extends Component {
             onChange={(newName) => this.onDataChange("name", newName)}
           />
           {tempDataRecorder.dataset && (
-            <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+            <Form labelCol={{ xs: { span: 24 }, sm: { span: 4 } }} wrapperCol={{ xs: { span: 24 }, sm: { span: 14 } }}>
               <Divider orientation="left">Data Storage </Divider>
               {tempDataRecorder.dataStorage ? (
                 <Fragment>

@@ -224,7 +224,7 @@ class ModelListPage extends Component {
             Add Model <DownOutlined />
           </Button>
         </Dropdown>
-        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
+        <Table columns={columns} dataSource={dataSource} scroll={{ x: "max-content" }} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );
   }

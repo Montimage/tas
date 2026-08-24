@@ -190,7 +190,7 @@ class TestCampaignPage extends Component {
         pageTitle={name}
         pageSubTitle="View and update the test campaign detail"
       >
-        <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+        <Form labelCol={{ xs: { span: 24 }, sm: { span: 4 } }} wrapperCol={{ xs: { span: 24 }, sm: { span: 14 } }}>
           <FormEditableTextItem
             label="Id"
             defaultValue={id}
@@ -232,7 +232,7 @@ class TestCampaignPage extends Component {
         <Link to={`/reports/?testCampaignId=${id}`}>
           <Button>View All Campaign's Reports</Button>
         </Link>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} scroll={{ x: "max-content" }} />
         <Button
           onClick={() => this.saveTestCampaign()}
           disabled={isChanged ? false : true}

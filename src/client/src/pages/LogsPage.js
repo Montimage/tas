@@ -107,7 +107,7 @@ class LogsPage extends Component {
           className="site-page-header"
           title={`${logFiles.length} Log Files`}
         />
-        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
+        <Table columns={columns} dataSource={dataSource} scroll={{ x: "max-content" }} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );
   }

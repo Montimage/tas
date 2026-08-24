@@ -161,7 +161,7 @@ const ModelDeviceItem = ({
       </Fragment>
     }
   >
-    <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+    <Form labelCol={{ xs: { span: 24 }, sm: { span: 4 } }} wrapperCol={{ xs: { span: 24 }, sm: { span: 14 } }}>
       <FormEditableTextItem
         label="Name"
         defaultValue={data.name}
@@ -657,7 +657,7 @@ class ModelPage extends Component {
       view = (
         <Fragment>
           <p></p>
-          <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+          <Form labelCol={{ xs: { span: 24 }, sm: { span: 4 } }} wrapperCol={{ xs: { span: 24 }, sm: { span: 14 } }}>
             <FormEditableTextItem
               label="Name"
               defaultValue={tempModel.name}

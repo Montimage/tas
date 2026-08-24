@@ -89,7 +89,7 @@ class TestCaseListPage extends Component {
         <Link to={`/test-cases/new-case-${Date.now()}`}>
           <Button style={{ marginBottom: "10px" }}>Add New Case</Button>
         </Link>
-        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
+        <Table columns={columns} dataSource={dataSource} scroll={{ x: "max-content" }} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );
   }

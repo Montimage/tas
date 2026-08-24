@@ -9,3 +9,17 @@
 .content>div {
     width: 100%;
 }
+
+/* Page shell: the fixed desktop margins from the inline style moved here so
+   narrow viewports can reclaim their width (issue #41). */
+.page-shell {
+    padding: 0 48px 48px;
+    margin: 30px 50px 50px;
+}
+
+@media (max-width: 767px) {
+    .page-shell {
+        padding: 0 12px 24px;
+        margin: 12px 8px 24px;
+    }
+}

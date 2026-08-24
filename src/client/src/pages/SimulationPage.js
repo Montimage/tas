@@ -105,7 +105,7 @@ class SimulationPage extends Component {
             pageTitle="Simulation Page"
             pageSubTitle="Manually perform a simulation"
           >
-            <Form labelCol={{ span: 4 }} wrapperCol={{ span: 14 }}>
+            <Form labelCol={{ xs: { span: 24 }, sm: { span: 4 } }} wrapperCol={{ xs: { span: 24 }, sm: { span: 14 } }}>
               <FormSelectItem
                 label={"Model File Name"}
                 defaultValue={modelFileName}
@@ -186,10 +186,12 @@ class SimulationPage extends Component {
       >
         <Form
           labelCol={{
-            span: 4,
+            xs: { span: 24 },
+            sm: { span: 4 },
           }}
           wrapperCol={{
-            span: 14,
+            xs: { span: 24 },
+            sm: { span: 14 },
           }}
         >
           <FormSelectItem

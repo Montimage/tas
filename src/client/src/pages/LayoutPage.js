@@ -27,7 +27,7 @@ class LayoutPage extends Component {
             description: describeError(notify.message),
             onClose: () => resetNotification(),
           })}
-        <Layout style={{ padding: "0px 48px 48px", margin: "30px 50px 50px" }}>
+        <Layout className="page-shell">
           <Content>
             {pageTitle && <Title level={2}>{pageTitle}</Title>}
             {pageSubTitle && <Text type="secondary">{pageSubTitle}</Text>}
