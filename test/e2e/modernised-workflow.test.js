@@ -37,7 +37,7 @@ const net = require('node:net');
 const os = require('node:os');
 const path = require('node:path');
 
-const mqtt = require('../../node_modules/mqtt');
+const mqtt = require('mqtt');
 
 const { startServer, request, unique, repoRoot } = require('./helpers');
 
