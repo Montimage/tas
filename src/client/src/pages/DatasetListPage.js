@@ -117,7 +117,7 @@ class DatasetListPage extends Component {
         <Link to={`/data-sets/new-dataset-${Date.now()}`}>
           <Button style={{ marginBottom: "10px" }}>Add New Dataset</Button>
         </Link>
-        <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
+        <Table columns={columns} dataSource={dataSource} scroll={{ x: "max-content" }} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );
   }

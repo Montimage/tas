@@ -129,6 +129,7 @@ class ReportListPage extends Component {
           columns={columns}
           dataSource={dataSource}
           pagination={pagination}
+          scroll={{ x: "max-content" }}
           locale={{ emptyText: emptyState }}
         />
       </LayoutPage>

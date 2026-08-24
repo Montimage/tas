@@ -232,7 +232,7 @@ class TestCampaignPage extends Component {
         <Link to={`/reports/?testCampaignId=${id}`}>
           <Button>View All Campaign's Reports</Button>
         </Link>
-        <Table columns={columns} dataSource={dataSource} />
+        <Table columns={columns} dataSource={dataSource} scroll={{ x: "max-content" }} />
         <Button
           onClick={() => this.saveTestCampaign()}
           disabled={isChanged ? false : true}
