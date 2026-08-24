@@ -155,6 +155,10 @@ const dashboardBuilt = () => fs.existsSync(distIndex);
 let server = null;
 let browser = null;
 let brokerProcess = null;
+// The `docker run -d` CLI exits the moment the container detaches, so its
+// liveness says nothing about the container itself. Cleanup keys off whether
+// THIS suite started a container, never off that already-exited handle.
+let brokerContainerStarted = false;
 let mqttUp = false;
 
 const BROKER_CONTAINER = 'tas-e2e-mosquitto';
@@ -190,7 +194,10 @@ async function provisionBroker() {
       setTimeout(resolve, 1500).unref();
     });
     for (let i = 0; i < 20; i += 1) {
-      if (await portOpen(mqttHost, mqttPort, 300)) return child;
+      if (await portOpen(mqttHost, mqttPort, 300)) {
+        brokerContainerStarted = true;
+        return child;
+      }
       await new Promise((r) => setTimeout(r, 300));
     }
     return null;
@@ -229,10 +236,14 @@ before(async () => {
 });
 
 after(async () => {
-  if (brokerProcess && brokerProcess.exitCode === null) {
-    const cleanup = spawn('docker', ['rm', '-f', BROKER_CONTAINER], { stdio: 'ignore' });
-    cleanup.once('error', () => {});
-    brokerProcess.kill('SIGKILL');
+  if (brokerContainerStarted) {
+    await new Promise((resolve) => {
+      const cleanup = spawn('docker', ['rm', '-f', BROKER_CONTAINER], { stdio: 'ignore' });
+      cleanup.once('error', resolve);
+      cleanup.once('close', resolve);
+      setTimeout(resolve, 5000).unref();
+    });
+    if (brokerProcess && brokerProcess.exitCode === null) brokerProcess.kill('SIGKILL');
   }
   if (browser) await browser.close();
   if (server) await server.stop();
