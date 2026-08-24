@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { notification, Spin, Layout, Typography } from "antd";
 import { resetNotification } from "../actions";
+import describeError from "../describeError";
 import TSFooter from "../components/TSFooter";
 import "./styles.css";
 const { Title, Text } = Typography;
@@ -23,10 +24,7 @@ class LayoutPage extends Component {
         {notify &&
           notification[notify.type]({
             message: notify.type.toUpperCase(),
-            description:
-              typeof notify.message === "object"
-                ? JSON.stringify(notify.message)
-                : notify.message,
+            description: describeError(notify.message),
             onClose: () => resetNotification(),
           })}
         <Layout style={{ padding: "0px 48px 48px", margin: "30px 50px 50px" }}>
