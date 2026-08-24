@@ -20,6 +20,7 @@ import {
   requestStartSimulation,
   requestSimulationStatus,
   requestStopSimulation,
+  setNotification,
 } from "../actions";
 import { getObjectId } from "../utils";
 
@@ -31,7 +32,13 @@ class ModelListPage extends Component {
         const newModel = JSON.parse(fileReader.result);
         this.props.importNewModel(newModel);
       } catch (error) {
-        this.props.setNotification({ type: "error", message: error });
+        // Name the failing import for the user; the raw parse error stays in
+        // the console for developers.
+        console.error(`Importing "${files[0].name}" failed:`, error);
+        this.props.setNotification({
+          type: "error",
+          message: `Import failed: "${files[0].name}" is not a valid model file (JSON parsing failed). Check the file and try again.`,
+        });
       }
     };
     fileReader.readAsText(files[0]);
@@ -222,6 +229,7 @@ const mapDispatchToProps = (dispatch) => ({
   duplicateModel: (modelFileName) =>
     dispatch(requestDuplicateModel(modelFileName)),
   importNewModel: (model) => dispatch(requestAddNewModel(model)),
+  setNotification: (notification) => dispatch(setNotification(notification)),
   startSimulation: (modelFileName) =>
     dispatch(requestStartSimulation({ modelFileName })),
   stopSimulation: (modelFileName) =>

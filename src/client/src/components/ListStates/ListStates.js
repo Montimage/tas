@@ -1,6 +1,8 @@
 import React from "react";
 import { Button, Empty } from "antd";
 
+import describeError from "../../describeError";
+
 /**
  * Shared list-view states. Every list page renders these through its antd
  * Table `locale.emptyText` slot so a genuinely empty table is
@@ -19,7 +21,7 @@ export const ListStateError = ({ message, onRetry }) => (
     image={Empty.PRESENTED_IMAGE_SIMPLE}
     description={
       <span>
-        Failed to load: {message === null || message === undefined ? "request failed" : String(message)}
+        Failed to load: {message === null || message === undefined ? "request failed" : describeError(message)}
       </span>
     }
   >

@@ -124,4 +124,27 @@ describe('ModelListPage', () => {
     expect(await screen.findByText('topo-a')).toBeInTheDocument();
     expect(requestAllModels).toHaveBeenCalledTimes(2);
   });
+
+  test('names the problem when an imported topology file is not valid JSON', async () => {
+    const sagaMiddleware = createSagaMiddleware();
+    const store = createStore(rootReducer, applyMiddleware(sagaMiddleware));
+    sagaMiddleware.run(rootSaga);
+    const { container } = render(
+      <Provider store={store}>
+        <ModelListPage />
+      </Provider>
+    );
+    await screen.findByText('topo-a');
+    // A malformed import used to surface as "{}" (issue #40); it must name
+    // the failing file instead.
+    const broken = new File(['{ "name": oops'], 'broken-topology.json', {
+      type: 'application/json',
+    });
+    await userEvent.upload(container.querySelector('input[type="file"]'), broken);
+    await waitFor(() =>
+      expect(store.getState().notify.message).toMatch(
+        /import failed.*broken-topology\.json.*not a valid model file/i
+      )
+    );
+  });
 });

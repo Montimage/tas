@@ -76,6 +76,11 @@ under its functional section below.
   configuration stays on disk and live — it is no longer saved and reported as
   success (#18); the dashboard's connection test and save path verify through
   the same connector seam.
+- Dashboard failure notifications always render a readable message: caught
+  errors are coerced at one boundary (`describeError`) instead of being
+  stringified into `{}`, a malformed topology import names the failing file
+  instead of failing silently, and raw error detail stays in the browser
+  console (#40).
 - Release workflow strips tag prefixes exactly when publishing images (#98).
 
 ### Performance
