@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import { Table, Dropdown, Button, Form } from "antd";
 import { DownOutlined } from "@ant-design/icons";
@@ -198,7 +199,7 @@ class TestCasePage extends Component {
         title: "Id",
         width: 300,
         key: "data",
-        render: (ds) => <a href={`/data-sets/${ds.id}`}>{ds.id}</a>,
+        render: (ds) => <Link to={`/data-sets/${ds.id}`}>{ds.id}</Link>,
       },
       {
         title: "Name",
@@ -238,14 +239,9 @@ class TestCasePage extends Component {
               ].filter(Boolean),
             }}
           >
-            <a
-              className="ant-dropdown-link"
-              onClick={(e) => e.preventDefault()}
-            >
-              <Button>
-                Action <DownOutlined />
-              </Button>
-            </a>
+            <Button>
+              Action <DownOutlined />
+            </Button>
           </Dropdown>
         ),
       },

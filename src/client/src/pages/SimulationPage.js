@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import LayoutPage from "./LayoutPage";
 import { getObjectId, getQuery } from "../utils";
 import {
@@ -133,7 +134,7 @@ class SimulationPage extends Component {
               <FormTextNotEditableItem
                 label="Dataset Id"
                 value={
-                  <a href={`/data-sets/${newDataset.id}`}>{newDataset.id}</a>
+                  <Link to={`/data-sets/${newDataset.id}`}>{newDataset.id}</Link>
                 }
               />
               <Form.Item
@@ -157,22 +158,22 @@ class SimulationPage extends Component {
                 >
                   Stop
                 </Button>
-                <a href={`/logs/simulations?logFile=${logFile}`}>
+                <Link to={`/logs/simulations?logFile=${logFile}`}>
                   <Button type="link">View Log</Button>
-                </a>
-                <a href={`/reports/${report.id}`}>
+                </Link>
+                <Link to={`/reports/${report.id}`}>
                   <Button type="link">View Report</Button>
-                </a>
-                <a href={`/graphview`}>
+                </Link>
+                <Link to={`/graphview`}>
                   <Button type="link">View Graph</Button>
-                </a>
+                </Link>
               </Form.Item>
             </Form>
             <p></p>
-            <a href={`/logs/simulations`} style={{ marginRight: 10 }}>
+            <Link to={`/logs/simulations`} style={{ marginRight: 10 }}>
               View Logs
-            </a>{" "}
-            <a href={`/reports`}>View Reports</a>
+            </Link>{" "}
+            <Link to={`/reports`}>View Reports</Link>
           </LayoutPage>
         );
       }
@@ -260,10 +261,10 @@ class SimulationPage extends Component {
           </Form.Item>
         </Form>
         <p></p>
-        <a href={`/logs/simulations`} style={{ marginRight: 10 }}>
+        <Link to={`/logs/simulations`} style={{ marginRight: 10 }}>
           View Logs
-        </a>{" "}
-        <a href={`/reports`}>View Reports</a>
+        </Link>{" "}
+        <Link to={`/reports`}>View Reports</Link>
       </LayoutPage>
     );
   }

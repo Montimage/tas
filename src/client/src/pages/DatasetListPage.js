@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import { Table, Button, Popconfirm } from "antd";
 import {
@@ -62,7 +63,7 @@ class DatasetListPage extends Component {
       {
         title: "Id",
         key: "data",
-        render: (ds) => <a href={`/data-sets/${ds.id}`}> {ds.id} </a>,
+        render: (ds) => <Link to={`/data-sets/${ds.id}`}> {ds.id} </Link>,
       },
       {
         title: "Action",
@@ -70,11 +71,11 @@ class DatasetListPage extends Component {
         width: 350,
         render: (ds) => (
           <Fragment>
-            <Button size="small" type="dashed" style={{ marginRight: 10 }}>
-              <a href={`/simulation?datasetId=${ds.id}`}>
+            <Link to={`/simulation?datasetId=${ds.id}`}>
+              <Button size="small" type="dashed" style={{ marginRight: 10 }}>
                 <CaretRightOutlined /> Simulate
-              </a>
-            </Button>
+              </Button>
+            </Link>
             <Button
               size="small"
               style={{ marginRight: 10 }}
@@ -105,17 +106,17 @@ class DatasetListPage extends Component {
         <ListStateEmpty
           description="No datasets yet"
           action={
-            <a href={`/data-sets/new-dataset-${Date.now()}`}>
+            <Link to={`/data-sets/new-dataset-${Date.now()}`}>
               <Button type="primary">Add New Dataset</Button>
-            </a>
+            </Link>
           }
         />
       );
     return (
       <LayoutPage pageTitle="Dataset" pageSubTitle="All the datasets">
-        <a href={`/data-sets/new-dataset-${Date.now()}`}>
+        <Link to={`/data-sets/new-dataset-${Date.now()}`}>
           <Button style={{ marginBottom: "10px" }}>Add New Dataset</Button>
-        </a>
+        </Link>
         <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
       </LayoutPage>
     );

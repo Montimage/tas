@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { Table, Button, Form, Popconfirm } from "antd";
 import { BuildOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
@@ -90,7 +91,7 @@ class TestCampaignListPage extends Component {
         title: "Id",
         key: "data",
         render: (tc) => (
-          <a href={`/test-campaigns/${tc.id}`}>
+          <Link to={`/test-campaigns/${tc.id}`}>
             {tc.id === testCampaignId ? (
               <strong>
                 {tc.id} <span style={{ color: "green" }}>**Next Build**</span>
@@ -98,7 +99,7 @@ class TestCampaignListPage extends Component {
             ) : (
               tc.id
             )}
-          </a>
+          </Link>
         ),
       },
       {
@@ -126,16 +127,9 @@ class TestCampaignListPage extends Component {
               <Button
                 size="small"
                 style={{ marginRight: 10 }}
-                onClick={() =>
-                  console.log(
-                    "[TestCampaignList] View report of test campaign: ",
-                    tc
-                  )
-                }
+                href={`/reports/test-campaigns/${tc.reportFileName}`}
               >
-                <a href={`/reports/test-campaigns/${tc.reportFileName}`}>
-                  View Report
-                </a>
+                View Report
               </Button>
             )}
             <Popconfirm
@@ -164,9 +158,9 @@ class TestCampaignListPage extends Component {
         <ListStateEmpty
           description="No test campaigns yet"
           action={
-            <a href={`/test-campaigns/new-campaign-${Date.now()}`}>
+            <Link to={`/test-campaigns/new-campaign-${Date.now()}`}>
               <Button type="primary">Add New Campaign</Button>
-            </a>
+            </Link>
           }
         />
       );
@@ -185,9 +179,9 @@ class TestCampaignListPage extends Component {
             <FormTextNotEditableItem
               label="Next build"
               value={
-                <a href={`/test-campaigns/${testCampaignId}`}>
+                <Link to={`/test-campaigns/${testCampaignId}`}>
                   <strong>{testCampaignId}</strong>
-                </a>
+                </Link>
               }
             />
             {evaluationParameters ? (
@@ -280,14 +274,14 @@ class TestCampaignListPage extends Component {
                       Launch
                     </Button>
                   )}
-                  <a
-                    href={`/logs/test-campaigns?logFile=${runningStatus.logFile}`}
+                  <Link
+                    to={`/logs/test-campaigns?logFile=${runningStatus.logFile}`}
                   >
                     <Button type="link">View Log</Button>
-                  </a>
-                  <a href={`/reports/?testCampaignId=${testCampaignId}`}>
+                  </Link>
+                  <Link to={`/reports/?testCampaignId=${testCampaignId}`}>
                     <Button type="link">View Report</Button>
-                  </a>
+                  </Link>
                 </Fragment>
               ) : (
                 <Button
@@ -301,12 +295,12 @@ class TestCampaignListPage extends Component {
             </Form.Item>
           </Form>
         </CollapseForm>
-        <a href={`/test-campaigns/new-campaign-${Date.now()}`}>
+        <Link to={`/test-campaigns/new-campaign-${Date.now()}`}>
           <Button style={{ marginBottom: "10px" }}>Add New Campaign</Button>
-        </a>
+        </Link>
         <Table columns={columns} dataSource={dataSource} locale={{ emptyText: emptyState }} />
         <p></p>
-        <a href={`/logs/test-campaigns`}>View All Campaign Logs</a>
+        <Link to={`/logs/test-campaigns`}>View All Campaign Logs</Link>
       </LayoutPage>
     );
   }

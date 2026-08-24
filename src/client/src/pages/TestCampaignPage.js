@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { Table, Dropdown, Button, Form } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import LayoutPage from "./LayoutPage";
@@ -150,7 +151,7 @@ class TestCampaignPage extends Component {
       {
         title: "Id",
         key: "data",
-        render: (tc) => <a href={`/test-cases/${tc.id}`}>{tc.id}</a>,
+        render: (tc) => <Link to={`/test-cases/${tc.id}`}>{tc.id}</Link>,
       },
       {
         title: "Action",
@@ -177,14 +178,9 @@ class TestCampaignPage extends Component {
               ].filter(Boolean),
             }}
           >
-            <a
-              className="ant-dropdown-link"
-              onClick={(e) => e.preventDefault()}
-            >
-              <Button>
-                Action <DownOutlined />
-              </Button>
-            </a>
+            <Button>
+              Action <DownOutlined />
+            </Button>
           </Dropdown>
         ),
       },
@@ -233,9 +229,9 @@ class TestCampaignPage extends Component {
             onChange={(values) => this.updateTestCaseIds(values)}
           />
         </Button>
-        <a href={`/reports/?testCampaignId=${id}`}>
+        <Link to={`/reports/?testCampaignId=${id}`}>
           <Button>View All Campaign's Reports</Button>
-        </a>
+        </Link>
         <Table columns={columns} dataSource={dataSource} />
         <Button
           onClick={() => this.saveTestCampaign()}

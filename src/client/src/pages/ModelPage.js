@@ -904,11 +904,9 @@ class ModelPage extends Component {
               <StopOutlined /> Stop
             </Button>
           ) : (
-            <a type="button" href={`/simulation?model=${modelFileName}`}>
-              <Button type="primary">
-                <CaretRightOutlined /> Simulate
-              </Button>
-            </a>
+            <Button type="primary" onClick={() => startSimulation(modelFileName)}>
+              <CaretRightOutlined /> Simulate
+            </Button>
           )}
           <p></p>
           {view}

@@ -4,6 +4,7 @@ import createSagaMiddleware from 'redux-saga';
 import { Provider } from 'react-redux';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // The api layer is the only boundary the dashboard talks to; mocking it lets
@@ -24,6 +25,7 @@ vi.mock('../api', async (importOriginal) => {
     requestDeleteModel: vi.fn(() => Promise.resolve()),
     sendRequestSimulationStatus: vi.fn(() => Promise.resolve({})),
     sendRequestStopSimulation: vi.fn(() => Promise.resolve()),
+    sendRequestStartSimulation: vi.fn(() => Promise.resolve({})),
   };
 });
 
@@ -43,7 +45,9 @@ const makeStore = () => {
 const renderPage = () =>
   render(
     <Provider store={makeStore()}>
-      <ModelListPage />
+      <MemoryRouter>
+        <ModelListPage />
+      </MemoryRouter>
     </Provider>
   );
 
@@ -87,7 +91,9 @@ describe('ModelListPage', () => {
     const store = makeStore();
     render(
       <Provider store={store}>
-        <ModelListPage />
+        <MemoryRouter>
+          <ModelListPage />
+        </MemoryRouter>
       </Provider>
     );
     await screen.findByText('topo-a');
@@ -131,7 +137,9 @@ describe('ModelListPage', () => {
     sagaMiddleware.run(rootSaga);
     const { container } = render(
       <Provider store={store}>
-        <ModelListPage />
+        <MemoryRouter>
+          <ModelListPage />
+        </MemoryRouter>
       </Provider>
     );
     await screen.findByText('topo-a');
@@ -146,5 +154,29 @@ describe('ModelListPage', () => {
         /import failed.*broken-topology\.json.*not a valid model file/i
       )
     );
+  });
+
+  // Issue #36: the Simulate control was an anchor wrapping its button, so one
+  // click both fired the request and navigated away — a race where the user
+  // could leave before the request was sent.
+  test('starts a simulation from an unambiguous button', async () => {
+    const { sendRequestStartSimulation } = await import('../api');
+    renderPage();
+    await screen.findByText('topo-a');
+    await userEvent.click(screen.getByRole('button', { name: /simulate/i }));
+    await waitFor(() =>
+      expect(sendRequestStartSimulation).toHaveBeenCalledWith(
+        'topo-a.json',
+        undefined,
+        undefined
+      )
+    );
+  });
+
+  test('does not nest the simulate button inside a navigation link', async () => {
+    renderPage();
+    await screen.findByText('topo-a');
+    const simulate = screen.getByRole('button', { name: /simulate/i });
+    expect(simulate.closest('a')).toBeNull();
   });
 });

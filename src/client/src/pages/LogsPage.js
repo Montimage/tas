@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
@@ -64,7 +65,7 @@ class LogsPage extends Component {
         key: "name",
         dataIndex: "name",
         sorter: (a, b) => a.name.localeCompare(b.name),
-        render: (name) => <a href={`/logs/${tool}?logFile=${name}`}>{name}</a>,
+        render: (name) => <Link to={`/logs/${tool}?logFile=${name}`}>{name}</Link>,
       },
       {
         title: "CreatedAt",
