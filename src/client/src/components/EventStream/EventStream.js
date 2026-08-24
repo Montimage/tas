@@ -187,14 +187,9 @@ class EventStream extends Component {
                 ].filter(Boolean),
               }}
             >
-              <a
-                className="ant-dropdown-link"
-                onClick={(e) => e.preventDefault()}
-              >
-                <Button>
-                  Select Action <DownOutlined />
-                </Button>
-              </a>
+              <Button>
+                Select Action <DownOutlined />
+              </Button>
             </Dropdown>
             <EventModal
               event={event}

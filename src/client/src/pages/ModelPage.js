@@ -884,15 +884,13 @@ class ModelPage extends Component {
     return (
       <Fragment>
         <LayoutPage>
-          <a
-            href={`${window.location.pathname}?view=${
-              viewType === "json" ? "form" : "json"
-            }`}
+          <Link
+            to={`?view=${viewType === "json" ? "form" : "json"}`}
             style={{ marginRight: 10 }}
           >
             {" "}
             <SwitcherOutlined /> Switch View
-          </a>
+          </Link>
           <Button
             onClick={() => this.exportModel(tempModel)}
             style={{ marginRight: 10 }}
