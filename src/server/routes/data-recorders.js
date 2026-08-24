@@ -1,10 +1,9 @@
 /* Working with Data Generator */
 var express = require('express');
-var path = require('path');
 const Joi = require('joi');
 const DataRecorder = require('../../core/data-recorder');
 
-const { readJSONFile, writeToFile, readDir, deleteFile, getObjectId } = require('../../core/utils');
+const { getObjectId } = require('../../core/utils');
 const { isValidName, resolveWithin, sendBadRequest } = require('./path-safety');
 const {
   validate,
@@ -23,10 +22,22 @@ const {
   internal,
   unavailable,
 } = require('../middleware/errors');
-const dataRecordersPath = `${__dirname}/../data/data-recorders/`;
+const { createArtifactStore } = require('../artifact-store');
 let router = express.Router();
 let getLogger = require('../logger');
 const { getDataStorage } = require('./db-connector');
+// The stored recorder definitions are records of the artifact store (issue
+// #30): writes are serialized under the store's lock and land atomically, so
+// concurrent edits queue up instead of discarding one another and a crash
+// mid-write cannot leave a truncated file behind. Existing loose files in the
+// directory are adopted as they are - there is no migration step.
+// `TAS_DATA_RECORDERS_DIR` moves the store (tests use a scratch directory).
+const dataRecordersPath =
+  process.env.TAS_DATA_RECORDERS_DIR || `${__dirname}/../data/data-recorders/`;
+const recordersStore = createArtifactStore({
+  root: dataRecordersPath,
+  label: 'data-recorders',
+});
 let logsPath = `${__dirname}/../logs/data-recorders/`;
 // Running-recorder records and handles live in the shared runtime registry
 // (issue #29): records persist across restarts and are visible to a second
@@ -310,17 +321,19 @@ router.post('/start', validate({ body: dataRecorderStartBody }), (req, res, next
   const { model, dataRecorderFileName } = req.body;
   if (dataRecorderFileName) {
     // start recorder by file name
-    const dataRecorderFile = resolveWithin(dataRecordersPath, dataRecorderFileName);
-    if (!dataRecorderFile) {
+    // Containment, not validation: the schema has already established that the
+    // name is well formed, but the path it derives is still checked at the sink.
+    if (!resolveWithin(recordersStore.root, dataRecorderFileName)) {
       return sendBadRequest(res, 'Invalid data recorder file name');
     }
-    readJSONFile(dataRecorderFile, (err, data) => {
-      if (err) {
-        next(fileError(err, 'Data recorder not found', 'Cannot read the data recorder file'));
-      } else {
+    recordersStore
+      .read(dataRecorderFileName)
+      .then((data) => {
         startRecorder(data, res, next).catch(next);
-      }
-    });
+      })
+      .catch((err) =>
+        next(fileError(err, 'Data recorder not found', 'Cannot read the data recorder file'))
+      );
   } else {
     // Start recorder by model
     startRecorder(model, res, next).catch(next);
@@ -329,16 +342,15 @@ router.post('/start', validate({ body: dataRecorderStartBody }), (req, res, next
 
 // Read the list of data recorders
 router.get('/models/', validate(), (req, res, next) => {
-  readDir(dataRecordersPath, (err, files) => {
-    if (err) {
-      next(internal('Cannot read the data recorders directory', err));
-    } else {
+  recordersStore
+    .list()
+    .then((dataRecorders) => {
       res.send({
         error: null,
-        dataRecorders: files.filter((f) => path.extname(f) === '.json'),
+        dataRecorders,
       });
-    }
-  });
+    })
+    .catch((err) => next(internal('Cannot read the data recorders directory', err)));
 });
 
 // Read a specific data recorder by its name:
@@ -347,22 +359,30 @@ router.get(
   validate({ params: { fileName: recorderNameParam } }),
   function (req, res, next) {
     const { fileName } = req.params;
-    const dataRecorderFile = resolveWithin(dataRecordersPath, fileName);
-    if (!dataRecorderFile) {
+    if (!resolveWithin(recordersStore.root, fileName)) {
       return sendBadRequest(res, 'Invalid data recorder name');
     }
-    readJSONFile(dataRecorderFile, (err, data) => {
-      if (err) {
-        next(fileError(err, 'Data recorder not found', 'Cannot read the data recorder file'));
-      } else {
+    recordersStore
+      .read(fileName)
+      .then((data) => {
         res.send({
           error: null,
           dataRecorder: data,
         });
-      }
-    });
+      })
+      .catch((err) =>
+        next(fileError(err, 'Data recorder not found', 'Cannot read the data recorder file'))
+      );
   }
 );
+
+/** Map a store write failure onto its HTTP answer; a taken name is a conflict. */
+const saveError = (message, next) => (err) => {
+  if (err && err.code === 'EARTIFACTCONFLICT') {
+    return next(conflict('A data recorder with this name already exists'));
+  }
+  return next(internal(message, err));
+};
 
 const updateDataRecorder = (fileName, dataRecorder, res, next) => {
   const { name } = dataRecorder;
@@ -372,89 +392,84 @@ const updateDataRecorder = (fileName, dataRecorder, res, next) => {
     return sendBadRequest(res, 'Invalid data recorder name');
   }
   const newName = `${name}.json`;
-  const oldDataRecorderFile = resolveWithin(dataRecordersPath, fileName);
-  const newDataRecorderFile = resolveWithin(dataRecordersPath, newName);
-  if (!oldDataRecorderFile || !newDataRecorderFile) {
+  if (
+    !resolveWithin(recordersStore.root, fileName) ||
+    !resolveWithin(recordersStore.root, newName)
+  ) {
     return sendBadRequest(res, 'Invalid data recorder name');
   }
+  const sameName = (message) => (err) => {
+    if (err && err.code === 'EARTIFACTCONFLICT') {
+      return next(conflict('A data recorder with this name already exists'));
+    }
+    return next(internal(message, err));
+  };
   if (newName === fileName) {
-    writeToFile(
-      newDataRecorderFile,
-      JSON.stringify(dataRecorder),
-      (err, data) => {
-        if (err) {
-          next(internal('Cannot save the new configuration', err));
-        } else {
-          res.send({
-            dataRecorderFileName: fileName,
-          });
-        }
-      },
-      true
-    );
+    recordersStore
+      .write(newName, dataRecorder, { overwrite: true })
+      .then(() => {
+        res.send({
+          dataRecorderFileName: fileName,
+        });
+      })
+      .catch(sameName('Cannot save the new configuration'));
   } else {
-    // new file
-    writeToFile(
-      newDataRecorderFile,
-      JSON.stringify(dataRecorder),
-      (err, data) => {
-        if (err) {
-          next(internal('Cannot save the new configuration', err));
-        } else {
-          deleteFile(oldDataRecorderFile, (err2) => {
-            if (err2) {
-              next(internal('Cannot remove the old data recorder file', err2));
-            } else {
-              res.send({
-                dataRecorderFileName: fileName,
-              });
-            }
-          });
+    // Rename inside the store: the copy under the new name lands atomically
+    // and the old one is removed within the same locked step.
+    recordersStore
+      .rename(fileName, newName)
+      .then(() => {
+        res.send({
+          dataRecorderFileName: fileName,
+        });
+      })
+      .catch((err) => {
+        if (err && err.code === 'EARTIFACTCONFLICT') {
+          return next(conflict('A data recorder with this name already exists'));
         }
-      },
-      true
-    );
+        if (err && (err.code === 'ENOENT' || err.code === 'ENOTDIR')) {
+          return next(
+            fileError(err, 'Data recorder not found', 'Cannot read the data recorder file')
+          );
+        }
+        return next(internal('Cannot save the new configuration', err));
+      });
   }
 };
 
 const duplicateDataRecorder = (fileName, res, next) => {
-  const dataRecorderFile = resolveWithin(dataRecordersPath, fileName);
-  if (!dataRecorderFile) {
+  if (!resolveWithin(recordersStore.root, fileName)) {
     return sendBadRequest(res, 'Invalid data recorder name');
   }
-  readJSONFile(dataRecorderFile, (err, data) => {
-    if (err) {
-      next(fileError(err, 'Data recorder not found', 'Cannot read the data recorder file'));
-    } else {
+  recordersStore
+    .withExclusive(async (unlocked) => {
+      const data = await unlocked.read(fileName);
       const newName = `${data.name} [Duplicated]`;
-      const newDataRecorder = {
-        ...data,
-        name: newName,
-      };
       if (!isValidName(newName)) {
-        return sendBadRequest(res, 'Invalid data recorder name');
+        const err = new Error('Invalid data recorder name');
+        err.code = 'EARTIFACTPATH';
+        throw err;
       }
       const newFileName = `${newName}.json`;
-      const newDataRecorderFile = resolveWithin(dataRecordersPath, newFileName);
-      if (!newDataRecorderFile) {
+      await unlocked.writeRaw(newFileName, { ...data, name: newName });
+      return { newFileName };
+    })
+    .then(({ newFileName }) => {
+      res.send({
+        dataRecorderFileName: newFileName,
+      });
+    })
+    .catch((err) => {
+      if (err.code === 'EARTIFACTPATH') {
         return sendBadRequest(res, 'Invalid data recorder name');
       }
-      writeToFile(
-        newDataRecorderFile,
-        JSON.stringify(newDataRecorder),
-        (err, dupDataRecorder) => {
-          if (err) {
-            next(internal('Cannot save the duplicated data recorder', err));
-          } else {
-            res.send({
-              dataRecorderFileName: newFileName,
-            });
-          }
-        },
-        true
-      );
-    }
-  });
+      if (err.code === 'ENOENT' || err.code === 'ENOTDIR') {
+        return next(
+          fileError(err, 'Data recorder not found', 'Cannot read the data recorder file')
+        );
+      }
+      return saveError('Cannot save the duplicated data recorder', next)(err);
+    });
 };
 
 // Update a data recorder
@@ -483,20 +498,20 @@ router.post('/models', validate({ body: dataRecorderCreateBody }), function (req
     return sendBadRequest(res, 'Invalid data recorder name');
   }
   const dataRecorderFileName = `${dataRecorder.name}.json`;
-  const dataRecorderFile = resolveWithin(dataRecordersPath, dataRecorderFileName);
-  if (!dataRecorderFile) {
+  if (!resolveWithin(recordersStore.root, dataRecorderFileName)) {
     return sendBadRequest(res, 'Invalid data recorder name');
   }
-  writeToFile(dataRecorderFile, JSON.stringify(dataRecorder), (err, data) => {
-    if (err) {
-      next(internal('Cannot save the new configuration', err));
-    } else {
+  // The store refuses to replace an existing record, so saving over a taken
+  // name is answered with a conflict instead of a silently renamed copy.
+  recordersStore
+    .write(dataRecorderFileName, dataRecorder)
+    .then(() => {
       res.send({
         error: null,
         dataRecorderFileName,
       });
-    }
-  });
+    })
+    .catch(saveError('Cannot save the new configuration', next));
 });
 
 // Delete a data recorder
@@ -505,20 +520,20 @@ router.delete(
   validate({ params: { fileName: recorderNameParam } }),
   function (req, res, next) {
     const { fileName } = req.params;
-    const dataRecorderFile = resolveWithin(dataRecordersPath, fileName);
-    if (!dataRecorderFile) {
+    if (!resolveWithin(recordersStore.root, fileName)) {
       return sendBadRequest(res, 'Invalid data recorder name');
     }
-    deleteFile(dataRecorderFile, (err) => {
-      if (err) {
-        next(fileError(err, 'Data recorder not found', 'Cannot delete the data recorder file'));
-      } else {
+    recordersStore
+      .remove(fileName)
+      .then(() => {
         res.send({
           error: null,
           result: true,
         });
-      }
-    });
+      })
+      .catch((err) =>
+        next(fileError(err, 'Data recorder not found', 'Cannot delete the data recorder file'))
+      );
   }
 );
 

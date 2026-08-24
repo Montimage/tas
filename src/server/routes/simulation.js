@@ -5,10 +5,9 @@ const Joi = require('joi');
 const { OFFLINE } = require('../../core/DeviceStatus');
 let getLogger = require('../logger');
 const Simulation = require('../../core/simulation');
-const { readJSONFile } = require('../../core/utils');
+const { getObjectId } = require('../../core/utils');
 const { isValidName, resolveWithin, sendBadRequest } = require('./path-safety');
 const { getDataStorage } = require('./db-connector');
-const { getObjectId } = require('../../core/utils');
 const {
   validate,
   documentSchema,
@@ -27,7 +26,15 @@ const {
 
 let router = express.Router();
 const logsPath = `${__dirname}/../logs/simulations/`;
-const modelsPath = `${__dirname}/../data/models/`;
+// Stored topologies are records of the artifact store (issue #30) shared with
+// the model routes: reads see either a complete previous record or a complete
+// new one, never a half-written file. `TAS_MODELS_DIR` moves it (tests use a
+// scratch directory); the same override configures `routes/model.js`.
+const modelsPath = process.env.TAS_MODELS_DIR || `${__dirname}/../data/models/`;
+const modelsStore = require('../artifact-store').createArtifactStore({
+  root: modelsPath,
+  label: 'models',
+});
 // Every running-run record and in-process handle lives in the shared runtime
 // registry (issue #29) - nothing is tracked in this module's own variables any
 // more. The records are persisted, so they survive a restart and can be seen
@@ -284,17 +291,17 @@ const respondWithStatus = (res, extra = {}) => {
 router.post('/start', validate({ body: simulationStartBody }), function (req, res, next) {
   const { model, modelFileName, options } = req.body;
   if (modelFileName) {
-    const modelFilePath = resolveWithin(modelsPath, modelFileName);
-    if (!modelFilePath) {
+    // Containment, not validation: the schema has already established that the
+    // name is well formed, but the path it derives is still checked at the sink.
+    if (!resolveWithin(modelsStore.root, modelFileName)) {
       return sendBadRequest(res, 'Invalid model file name');
     }
-    readJSONFile(modelFilePath, (err, myModel) => {
-      if (err) {
-        next(fileError(err, 'Model not found', 'Cannot read the model file'));
-      } else {
+    modelsStore
+      .read(modelFileName)
+      .then((myModel) => {
         startSimulation(myModel, options, res, next, modelFileName).catch(next);
-      }
-    });
+      })
+      .catch((err) => next(fileError(err, 'Model not found', 'Cannot read the model file')));
   } else {
     startSimulation(model, options, res, next).catch(next);
   }
