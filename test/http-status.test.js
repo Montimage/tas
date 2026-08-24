@@ -51,7 +51,14 @@ let server;
 let app;
 let originalDevops;
 
+// Issue #29: run state persists in a JSON store that real servers share.
+// This suite mounts the routers in-process, so it pins its own empty store -
+// otherwise records left by another suite's process (or an earlier run of
+// this one) could bleed into what these assertions see.
+const runtimeStorePath = path.join(__dirname, `.runtime-state-${process.pid}.json`);
+
 before(() => {
+  process.env.TAS_RUNTIME_STATE_PATH = runtimeStorePath;
   // One test below makes the devops configuration unreadable on purpose.
   originalDevops = fs.readFileSync(devopsFile, 'utf8');
   // Nothing under src/server/logs is tracked, so on a fresh checkout the
@@ -77,6 +84,9 @@ before(() => {
 });
 
 after(() => {
+  delete process.env.TAS_RUNTIME_STATE_PATH;
+  fs.rmSync(runtimeStorePath, { force: true });
+  fs.rmSync(`${runtimeStorePath}.lock`, { force: true });
   server.close();
   if (originalDevops !== undefined) fs.writeFileSync(devopsFile, originalDevops);
 });

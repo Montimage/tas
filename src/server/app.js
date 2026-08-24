@@ -289,5 +289,27 @@ if (require.main === module) {
    */
   const { installGracefulShutdown } = require('./shutdown');
   const { closeDBClient } = require('./routes/db-connector');
-  installGracefulShutdown(_server, { closeDb: closeDBClient });
+  const runtimeState = require('./runtime-state');
+
+  /**
+   * The runs a process takes down with itself are dropped from the shared
+   * store on the way out (issue #29): a clean restart reports no ghosts. What
+   * an UNCLEAN death leaves behind is exactly what the next boot's
+   * reconciliation detects and cleans up.
+   */
+  const closeDb = (done) => {
+    runtimeState
+      .deregisterOwned()
+      .catch(() => {})
+      .then(() => closeDBClient(done));
+  };
+  installGracefulShutdown(_server, { closeDb });
+
+  /**
+   * Reconcile the persisted store with reality before serving: work recorded
+   * as running by a process that no longer exists is reported and reaped, so
+   * the dashboard shows the true running state immediately after any restart
+   * (issue #29). File-only - it never waits for a database.
+   */
+  runtimeState.reconcileAll().catch(() => {});
 }

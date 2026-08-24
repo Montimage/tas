@@ -15,6 +15,28 @@ All notable changes to TaS are documented in this file. Releases are cut as
   the page shell tightens its margins and forms stack their labels on small
   screens.
 
+### Changed
+
+- **Runtime run state is now persistent and shared** (#29): which simulations,
+  data recorders and test campaigns are running used to live in module-level
+  variables that a restart wiped and that grew without bound on stopped runs.
+  All of it now flows through one registry (`src/server/runtime-state`)
+  backed by `src/server/data/runtime-state.json` — written atomically under a
+  lock, so two server processes on the same store observe one consistent view
+  and a topology in use on one process is refused on the other. Operators see
+  these behaviour changes:
+  - after any restart the dashboard reports the true running state; work
+    orphaned by an unclean shutdown is detected at boot, logged with its
+    owner, and cleaned up automatically;
+  - stopped entries are removed from `/status` rather than kept forever as
+    `isRunning: false` placeholders (the stop responses still report the final
+    state of what was just stopped);
+  - starting a test campaign while one is already running is now a `409`
+    conflict instead of silently orphaning the previous campaign.
+    The store path can be moved with `TAS_RUNTIME_STATE_PATH`. No database is
+    involved: tracking degrades to memory-only (with a warning) if the store is
+    unwritable, so the status endpoints never depend on database health.
+
 ## [2.0.0] - 2026-08-24
 
 The 2026 hardening and modernisation programme, cut as a major release: the

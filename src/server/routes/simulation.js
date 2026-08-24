@@ -28,6 +28,12 @@ const {
 let router = express.Router();
 const logsPath = `${__dirname}/../logs/simulations/`;
 const modelsPath = `${__dirname}/../data/models/`;
+// Every running-run record and in-process handle lives in the shared runtime
+// registry (issue #29) - nothing is tracked in this module's own variables any
+// more. The records are persisted, so they survive a restart and can be seen
+// by a second server process on the same store; the handles cannot, and are
+// only ever present in the process that started the run.
+const runtimeState = require('../runtime-state');
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the simulation endpoints (issue #10)
@@ -84,23 +90,68 @@ null
 }
 ```
  */
-let allSimulationStatus = {};
-let allSimulations = {};
-// The ids whose start is under way. On the default data storage path the run is
-// only registered inside the `getDataStorage` callback, an event-loop turn after
-// the guard below read the registry, so without something held across that turn
-// two concurrent starts of one topology both pass the guard and the first run is
-// left publishing with no handle to stop it. A reservation rather than a
-// placeholder in `allSimulations`: `/stop` calls `stop()` on whatever it finds
-// there.
-const startingSimulations = new Set();
-// The logger of each running simulation, held here so `/stop` can release the
-// run's file handle once the run stops. The logger is passed explicitly to the
-// run; global console methods are never touched.
-const runLoggers = {};
-// Start simulating a model
+/**
+ * Reap a run's leftovers once it has stopped: release its log file handle and
+ * drop the registry entry, so repeated runs cannot grow the tracking state.
+ * Returns the last known record, for the stop response to report.
+ */
+const reapSimulation = async (simId) => {
+  const handle = runtimeState.getHandle('simulations', simId);
+  if (handle && handle.logger) {
+    // The run has stopped: release its log file handle.
+    handle.logger.close();
+  }
+  return runtimeState.reap('simulations', simId);
+};
 
-const startSimulation = (model, options = {}, res, next, modelFileName = null) => {
+/**
+ * Strip the registry's bookkeeping fields from a record before it reaches a
+ * response: clients see the run, not which pid owns it.
+ */
+const publicRecord = (record) => {
+  if (!record) return record;
+  const { owner, kind, status, ...rest } = record;
+  void owner;
+  void kind;
+  void status;
+  return rest;
+};
+
+/**
+ * The status surface the dashboard reads: every record in the shared store,
+ * keyed by run id. Self-finished runs are reaped on the way (their devices
+ * completed without anyone calling `/stop`), so the map only ever describes
+ * work that is still running.
+ */
+const simulationStatusMap = async () => {
+  // A run whose owning handle reports offline has finished on its own - its
+  // devices completed without anyone calling `/stop`. The predicate closes
+  // the run's log file handle BEFORE reconcile drops the handle entry (after
+  // which it could not be found again), so a naturally finished run leaks no
+  // file descriptor.
+  await runtimeState.reconcile('simulations', (record) => {
+    const handle = runtimeState.getHandle('simulations', record.id);
+    const finished = !handle || !handle.run || handle.run.status === OFFLINE;
+    if (finished && handle && handle.logger) {
+      handle.logger.close();
+    }
+    return finished;
+  });
+  const records = await runtimeState.list('simulations');
+  const map = {};
+  for (const record of records) {
+    map[record.id] = publicRecord(record);
+  }
+  return map;
+};
+
+/**
+ * The final snapshot a stopped run leaves behind: the stop response reports
+ * `isRunning: false` with the time it stopped, while the registry itself no
+ * longer holds the entry.
+ */
+
+const startSimulation = async (model, options = {}, res, next, modelFileName = null) => {
   // Check if there is a configuration
   if (!model) {
     return next(badRequest('Cannot simulate a null model'));
@@ -117,73 +168,117 @@ const startSimulation = (model, options = {}, res, next, modelFileName = null) =
   // `Simulation` tracks running-ness as `status`, which `start()` sets
   // synchronously; it has no `isRunning`, so the guard this replaces was never
   // true and a topology could be started twice, orphaning the first run.
+  //
+  // The reservation is claimed BEFORE anything asynchronous runs: two starts
+  // arriving together must not both get past the check. The SHARED store is
+  // read as well, so another server process on the same store running the
+  // topology is a conflict too - the consistent view means neither process
+  // will double-start it. (`startingSimulations` used to be a module-level
+  // Set; the reservation now lives in the registry.)
   if (
-    startingSimulations.has(simId) ||
-    (allSimulations[simId] && allSimulations[simId].status !== OFFLINE)
+    runtimeState.isReserved('simulations', simId) ||
+    (() => {
+      const ownHandle = runtimeState.getHandle('simulations', simId);
+      return Boolean(ownHandle && ownHandle.run && ownHandle.run.status !== OFFLINE);
+    })()
   ) {
     // The topology is already in use: the request cannot be applied to the
     // state the resource is in, which is a conflict rather than a fault.
-    next(
+    return next(
       conflict(
         'A running simulation is using this topology. A topology can be used only in one running simulation'
       )
     );
-  } else {
-    const startedTime = Date.now();
-    const logFile = `${name}_${Date.now()}.log`;
-    const logger = getLogger('SIMULATION', `${logsPath}${logFile}`);
-    runLoggers[simId] = logger;
-    if (!model.dataStorage && !options.dataStorage) {
-      // Use default data storage
-      startingSimulations.add(simId);
-      getDataStorage((err, ds) => {
-        // Released first, so the reservation cannot outlive the start on either
-        // path, nor if registering the run throws.
-        startingSimulations.delete(simId);
-        if (err) {
-          next(unavailable('No data storage', err));
-        } else {
-          const simulation = new Simulation({ ...model, dataStorage: ds }, options, null, logger);
-          simulation.start();
-          allSimulations[simId] = simulation;
-          allSimulationStatus[simId] = {
-            model: model.name,
-            startedTime,
-            logFile,
-            datasetId: simulation.datasetId,
-            newDataset: simulation.newDataset,
-            report: simulation.report,
-            modelFileName,
-            isRunning: true,
-          };
-
-          res.send({
-            model: model,
-            simulationStatus: allSimulationStatus,
-          });
-        }
-      });
-    } else {
-      const simulation = new Simulation(model, options, null, logger);
-      simulation.start();
-      allSimulations[simId] = simulation;
-      allSimulationStatus[simId] = {
-        model: model.name,
-        startedTime,
-        logFile,
-        datasetId: simulation.datasetId,
-        newDataset: simulation.newDataset,
-        report: simulation.report,
-        modelFileName,
-        isRunning: true,
-      };
-
-      res.send({
-        model: model,
-        simulationStatus: allSimulationStatus,
-      });
-    }
   }
+  runtimeState.reserve('simulations', simId);
+  const foreignRecord = await runtimeState
+    .list('simulations')
+    .then((records) => records.some((record) => record.id === simId))
+    .catch(() => false);
+  if (foreignRecord) {
+    runtimeState.releaseReservation('simulations', simId);
+    return next(
+      conflict(
+        'A running simulation is using this topology. A topology can be used only in one running simulation'
+      )
+    );
+  }
+  const startedTime = Date.now();
+  const logFile = `${name}_${Date.now()}.log`;
+  const logger = getLogger('SIMULATION', `${logsPath}${logFile}`);
+  if (!model.dataStorage && !options.dataStorage) {
+    // Use default data storage
+    getDataStorage(async (err, ds) => {
+      // Released first, so the reservation cannot outlive the start on either
+      // path, nor if registering the run throws.
+      runtimeState.releaseReservation('simulations', simId);
+      if (err) {
+        next(unavailable('No data storage', err));
+      } else {
+        const simulation = new Simulation({ ...model, dataStorage: ds }, options, null, logger);
+        simulation.start();
+        // The start answer follows the persisted record: once it has been
+        // sent, any later status read - here or from another process - sees
+        // the run.
+        await registerStarted(simulation, logger, {
+          id: simId,
+          model: model.name,
+          startedTime,
+          logFile,
+          datasetId: simulation.datasetId,
+          newDataset: simulation.newDataset,
+          report: simulation.report,
+          modelFileName,
+          isRunning: true,
+        });
+
+        respondWithStatus(res, { model });
+      }
+    });
+  } else {
+    const simulation = new Simulation(model, options, null, logger);
+    simulation.start();
+    // The start answer follows the persisted record: once it has been sent,
+    // any later status read - here or from another process - sees the run.
+    await registerStarted(simulation, logger, {
+      id: simId,
+      model: model.name,
+      startedTime,
+      logFile,
+      datasetId: simulation.datasetId,
+      newDataset: simulation.newDataset,
+      report: simulation.report,
+      modelFileName,
+      isRunning: true,
+    });
+    // The handle table now answers the guard for this topology.
+    runtimeState.releaseReservation('simulations', simId);
+
+    respondWithStatus(res, { model });
+  }
+};
+
+/**
+ * Pair a freshly started run with its persisted record: the record goes to the
+ * shared store (visible after restarts and to other processes), the live
+ * object and its logger stay with this process so `/stop` can reach them.
+ */
+const registerStarted = (simulation, logger, record) =>
+  // Persistence failures degrade to memory-only tracking (warned once inside
+  // the registry); they never fail a start that itself succeeded.
+  runtimeState.register('simulations', record, { run: simulation, logger }).catch(() => {});
+
+/**
+ * Answer with the current status map, whatever the endpoint otherwise returns.
+ */
+const respondWithStatus = (res, extra = {}) => {
+  simulationStatusMap()
+    .then((simulationStatus) => {
+      res.send({ ...extra, simulationStatus });
+    })
+    .catch(() => {
+      res.send({ ...extra, simulationStatus: {} });
+    });
 };
 
 router.post('/start', validate({ body: simulationStartBody }), function (req, res, next) {
@@ -197,13 +292,64 @@ router.post('/start', validate({ body: simulationStartBody }), function (req, re
       if (err) {
         next(fileError(err, 'Model not found', 'Cannot read the model file'));
       } else {
-        startSimulation(myModel, options, res, next, modelFileName);
+        startSimulation(myModel, options, res, next, modelFileName).catch(next);
       }
     });
   } else {
-    startSimulation(model, options, res, next);
+    startSimulation(model, options, res, next).catch(next);
   }
 });
+
+/**
+ * Stop whatever the id refers to, according to who owns it:
+ *
+ *  - a run this process owns is stopped for real (its handle is called) and
+ *    reaped from the registry;
+ *  - a record whose owner is gone - work orphaned by an unclean shutdown - is
+ *    reaped, which is how a restart cleans up what it can no longer stop;
+ *  - a run another live process owns cannot be stopped from here: its record
+ *    stays exactly as it is, still reported running;
+ *  - an unknown id is answered with the current status, as before.
+ *
+ * Returns the final snapshot to report (null when nothing here was stopped);
+ * the route merges exactly that snapshot into its response, so a run this
+ * process did not stop can never be described as stopped.
+ */
+const stopSimulationById = async (simId) => {
+  const endTime = Date.now();
+  const handle = runtimeState.getHandle('simulations', simId);
+  let records = [];
+  try {
+    records = await runtimeState.list('simulations');
+  } catch (_) {
+    records = [];
+  }
+  const record = records.find((entry) => entry.id === simId) || null;
+
+  if (handle) {
+    // This process owns the run: stop it for real and take its entry out of
+    // the registry.
+    if (handle.run) {
+      handle.run.stop();
+    }
+    const stopped = await reapSimulation(simId);
+    return snapshot(stopped || record, endTime);
+  }
+  if (record && !runtimeState.ownerIsAlive(record)) {
+    // Work orphaned by an unclean shutdown: nothing can ever stop it again,
+    // so stopping means reaping what it left behind.
+    const stopped = await runtimeState.reap('simulations', simId);
+    return snapshot(stopped || record, endTime);
+  }
+  // Someone else's live run, or an id nothing is tracking: visible through
+  // the status map at most, never stoppable from this process.
+  return null;
+};
+
+const snapshot = (record, endTime) => {
+  if (!record) return null;
+  return publicRecord({ ...record, isRunning: false, endTime });
+};
 
 router.get(
   '/stop/:fileName',
@@ -211,51 +357,48 @@ router.get(
   function (req, res, next) {
     const { fileName } = req.params;
     const simId = getObjectId(fileName.replace('.json', ''));
-    if (allSimulations[simId]) {
-      allSimulations[simId].stop();
-      allSimulations[simId] = null;
-    }
-    if (runLoggers[simId]) {
-      // The run has stopped: release its log file handle.
-      runLoggers[simId].close();
-      delete runLoggers[simId];
-    }
-    if (allSimulationStatus[simId]) {
-      allSimulationStatus[simId].isRunning = false;
-      allSimulationStatus[simId].endTime = Date.now();
-    }
-    res.send({
-      error: null,
-      simulationStatus: allSimulationStatus,
-    });
+    stopSimulationById(simId)
+      .then((stopped) => simulationStatusMap().then((map) => ({ stopped, map })))
+      .then(({ stopped, map }) => {
+        res.send({
+          error: null,
+          // The response still reports the run that was just stopped, with
+          // its final state - while the registry itself has dropped it, so
+          // the tracking structures cannot grow over repeated runs. Only a
+          // stop that actually happened contributes a snapshot.
+          simulationStatus: {
+            ...map,
+            ...(stopped ? { [simId]: stopped } : {}),
+          },
+        });
+      })
+      .catch(next);
   }
 );
 
 router.get('/status', validate(), (req, res, next) => {
-  const keys = Object.keys(allSimulationStatus);
-  for (let index = 0; index < keys.length; index++) {
-    const key = keys[index];
-    if (allSimulations[key]) {
-      allSimulationStatus[key].isRunning = allSimulations[key].status !== OFFLINE;
-    }
-  }
-  res.send({
-    simulationStatus: allSimulationStatus,
-  });
+  simulationStatusMap()
+    .then((simulationStatus) => {
+      res.send({
+        simulationStatus,
+      });
+    })
+    .catch(next);
 });
 
 router.get('/stats', validate(), (req, res, next) => {
-  // Read from the registry the rest of this router keeps. It used to read a
-  // `simulation` binding that is never assigned, so every call threw a
-  // ReferenceError and was answered with a stack trace. With more than one run
-  // in progress this reports the first of them, which is as much as the
-  // single-valued response shape can say.
-  const running = Object.keys(allSimulations)
-    .map((simId) => allSimulations[simId])
-    .find((simulation) => simulation && simulation.status !== OFFLINE);
+  // Read from the shared registry. It used to read a `simulation` binding that
+  // is never assigned, so every call threw a ReferenceError and was answered
+  // with a stack trace. With more than one run in progress this reports the
+  // first of them, which is as much as the single-valued response shape can
+  // say; runs owned by another process have no handle here and report null.
+  const running = runtimeState
+    .ownHandles('simulations')
+    .map(({ handle }) => handle)
+    .find((handle) => handle && handle.run && handle.run.status !== OFFLINE);
   res.send({
     error: null,
-    stats: running ? running.getStats() : null,
+    stats: running ? running.run.getStats() : null,
   });
 });
 

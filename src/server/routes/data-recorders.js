@@ -28,6 +28,10 @@ let router = express.Router();
 let getLogger = require('../logger');
 const { getDataStorage } = require('./db-connector');
 let logsPath = `${__dirname}/../logs/data-recorders/`;
+// Running-recorder records and handles live in the shared runtime registry
+// (issue #29): records persist across restarts and are visible to a second
+// server process on the same store, handles stay with the owning process.
+const runtimeState = require('../runtime-state');
 
 // ---------------------------------------------------------------------------
 // Validation schemas for the data-recorder endpoints (issue #10)
@@ -74,7 +78,7 @@ const dataRecorderStartBody = Joi.object({
 ///////////////
 
 /**
- * status
+ * The status shape each entry reports:
  * {
  *    isRunning: true|false,
  *    model: {},
@@ -82,29 +86,56 @@ const dataRecorderStartBody = Joi.object({
  *    stoppedTime: timestamp,
  *    logFile: String
  * }
+ *
+ * Strip the registry's bookkeeping fields from a record before it reaches a
+ * response: clients see the run, not which pid owns it.
  */
-let allRunningStatus = {};
-let allDataRecorders = {};
-// The ids whose start is under way. On the default data storage path the
-// recorder is only registered inside the `getDataStorage` callback, an
-// event-loop turn after the guard below read the registry, so without something
-// held across that turn two concurrent starts of one recorder both pass the
-// guard and the first one is left recording with no handle to stop it. A
-// reservation rather than a placeholder in `allDataRecorders`: `/stop` calls
-// `stop()` on whatever it finds there.
-const startingDataRecorders = new Set();
-// The logger of each running recorder, held here so `/stop` can release the
-// run's file handle once the recorder stops. The logger is passed explicitly
-// to the run; global console methods are never touched.
-const runLoggers = {};
+const publicRecord = (record) => {
+  if (!record) return record;
+  const { owner, kind, status, ...rest } = record;
+  void owner;
+  void kind;
+  void status;
+  return rest;
+};
+
+/**
+ * The status surface the dashboard reads: every record in the shared store,
+ * keyed by recorder id. Records whose owner is gone - work orphaned by an
+ * unclean shutdown - are reaped on the way, so the map only ever describes
+ * work that is still running somewhere live.
+ */
+const recorderStatusMap = async () => {
+  await runtimeState.reconcile('data-recorders');
+  const records = await runtimeState.list('data-recorders');
+  const map = {};
+  for (const record of records) {
+    map[record.id] = publicRecord(record);
+  }
+  return map;
+};
+
+/**
+ * Release a stopped recorder's log file handle and drop its registry entry.
+ */
+const reapRecorder = async (recorderId) => {
+  const handle = runtimeState.getHandle('data-recorders', recorderId);
+  if (handle && handle.logger) {
+    // The run has stopped: release its log file handle.
+    handle.logger.close();
+  }
+  return runtimeState.reap('data-recorders', recorderId);
+};
 
 /**
  * Get the running status of data recorder
  */
 router.get('/status', validate(), (req, res, next) => {
-  res.send({
-    status: allRunningStatus,
-  });
+  recorderStatusMap()
+    .then((status) => {
+      res.send({ status });
+    })
+    .catch(next);
 });
 
 // Stop the running data recorder
@@ -114,99 +145,164 @@ router.get(
   function (req, res, next) {
     const { fileName } = req.params;
     const recorderId = getObjectId(fileName.replace('.json', ''));
-    if (allDataRecorders[recorderId]) {
-      allDataRecorders[recorderId].stop();
-      allDataRecorders[recorderId] = null;
-    }
-    if (runLoggers[recorderId]) {
-      // The run has stopped: release its log file handle.
-      runLoggers[recorderId].close();
-      delete runLoggers[recorderId];
-    }
-    if (allRunningStatus[recorderId]) {
-      allRunningStatus[recorderId].isRunning = false;
-      allRunningStatus[recorderId].endTime = Date.now();
-    }
-    res.send({
-      error: null,
-      status: allRunningStatus,
-    });
+    stopRecorderById(recorderId)
+      .then((stopped) => recorderStatusMap().then((map) => ({ stopped, map })))
+      .then(({ stopped, map }) => {
+        res.send({
+          error: null,
+          // The response still reports the recorder that was just stopped,
+          // with its final state - while the registry itself has dropped it,
+          // so the tracking structures cannot grow over repeated runs. Only
+          // a stop that actually happened contributes a snapshot.
+          status: {
+            ...map,
+            ...(stopped ? { [recorderId]: stopped } : {}),
+          },
+        });
+      })
+      .catch(next);
   }
 );
 
-const startRecorder = (model, res, next) => {
-  if (!model) {
-    next(badRequest('Cannot find data recorder configuration'));
-  } else {
-    const { name, dataRecorders, dataStorage } = model;
-    if (!name || !dataRecorders) {
-      next(badRequest('Invalid data recorder model'));
-    } else if (!isValidName(name)) {
-      next(badRequest('Invalid data recorder name'));
-    } else {
-      const recorderId = getObjectId(name);
-      if (startingDataRecorders.has(recorderId) || allDataRecorders[recorderId]) {
-        // The recorder is already running: the request cannot be applied to the
-        // state the resource is in, which is a conflict rather than a fault.
-        next(conflict('Recorder has already started'));
-      } else {
-        const startedTime = Date.now();
-        const logFile = `${name}_${startedTime}.log`;
-        const logger = getLogger('DATA-RECORDER', `${logsPath}${logFile}`);
-        runLoggers[recorderId] = logger;
-        if (!dataStorage) {
-          // use default data storage
-          startingDataRecorders.add(recorderId);
-          getDataStorage((err, ds) => {
-            // Released first, so the reservation cannot outlive the start on
-            // either path, nor if registering the recorder throws.
-            startingDataRecorders.delete(recorderId);
-            if (err) {
-              next(unavailable('No data storage', err));
-            } else {
-              const dataRecorder = new DataRecorder(
-                {
-                  ...model,
-                  dataStorage: ds,
-                },
-                logger
-              );
-              dataRecorder.start();
-              logger.log('[data-recorders] A data recorder has been started ...');
-              allDataRecorders[`${recorderId}`] = dataRecorder;
-              allRunningStatus[`${recorderId}`] = {
-                isRunning: true,
-                model: name,
-                startedTime,
-                endTime: null,
-                logFile,
-              };
-              res.send({
-                model,
-                status: allRunningStatus,
-              });
-            }
-          });
-        } else {
-          const dataRecorder = new DataRecorder(model, logger);
-          dataRecorder.start();
-          logger.log('[data-recorders] A data recorder has been started ...');
-          allDataRecorders[`${recorderId}`] = dataRecorder;
-          allRunningStatus[`${recorderId}`] = {
-            isRunning: true,
-            model: name,
-            startedTime,
-            endTime: null,
-            logFile,
-          };
-          res.send({
-            model,
-            status: allRunningStatus,
-          });
-        }
-      }
-    }
+const snapshotRecorder = (record, endTime) => {
+  if (!record) return null;
+  return publicRecord({ ...record, isRunning: false, endTime });
+};
+
+/**
+ * Stop whatever the id refers to, according to who owns it - mirroring the
+ * simulation router: own runs are stopped and reaped, orphans left by an
+ * unclean shutdown are reaped, another live process's recorder is visible but
+ * not stoppable from here, and an unknown id answers with the current status.
+ */
+const stopRecorderById = async (recorderId) => {
+  const endTime = Date.now();
+  const handle = runtimeState.getHandle('data-recorders', recorderId);
+  let records = [];
+  try {
+    records = await runtimeState.list('data-recorders');
+  } catch (_) {
+    records = [];
   }
+  const record = records.find((entry) => entry.id === recorderId) || null;
+
+  if (handle) {
+    // This process owns the recorder: stop it for real.
+    if (handle.run) {
+      handle.run.stop();
+    }
+    const stopped = await reapRecorder(recorderId);
+    return snapshotRecorder(stopped || record, endTime);
+  }
+  if (record && !runtimeState.ownerIsAlive(record)) {
+    const stopped = await runtimeState.reap('data-recorders', recorderId);
+    return snapshotRecorder(stopped || record, endTime);
+  }
+  return null;
+};
+
+const startRecorder = async (model, res, next) => {
+  if (!model) {
+    return next(badRequest('Cannot find data recorder configuration'));
+  }
+  const { name, dataRecorders, dataStorage } = model;
+  if (!name || !dataRecorders) {
+    return next(badRequest('Invalid data recorder model'));
+  }
+  if (!isValidName(name)) {
+    return next(badRequest('Invalid data recorder name'));
+  }
+  const recorderId = getObjectId(name);
+  // The reservation is claimed BEFORE anything asynchronous runs, so two
+  // starts arriving together cannot both get past the check. The SHARED store
+  // is read as well: a recorder another process on the same store runs is a
+  // conflict too.
+  if (
+    runtimeState.isReserved('data-recorders', recorderId) ||
+    runtimeState.getHandle('data-recorders', recorderId)
+  ) {
+    // The recorder is already running: the request cannot be applied to the
+    // state the resource is in, which is a conflict rather than a fault.
+    return next(conflict('Recorder has already started'));
+  }
+  runtimeState.reserve('data-recorders', recorderId);
+  const foreignRecord = await runtimeState
+    .list('data-recorders')
+    .then((records) => records.some((record) => record.id === recorderId))
+    .catch(() => false);
+  if (foreignRecord) {
+    runtimeState.releaseReservation('data-recorders', recorderId);
+    return next(conflict('Recorder has already started'));
+  }
+  const startedTime = Date.now();
+  const logFile = `${name}_${startedTime}.log`;
+  const logger = getLogger('DATA-RECORDER', `${logsPath}${logFile}`);
+  // Persistence failures degrade to memory-only tracking (warned once inside
+  // the registry); they never fail a start that itself succeeded.
+  const registerStarted = (recorder, record) =>
+    runtimeState.register('data-recorders', record, { run: recorder, logger }).catch(() => {});
+  if (!dataStorage) {
+    // use default data storage
+    getDataStorage(async (err, ds) => {
+      // Released first, so the reservation cannot outlive the start on
+      // either path, nor if registering the recorder throws.
+      runtimeState.releaseReservation('data-recorders', recorderId);
+      if (err) {
+        next(unavailable('No data storage', err));
+      } else {
+        const dataRecorder = new DataRecorder(
+          {
+            ...model,
+            dataStorage: ds,
+          },
+          logger
+        );
+        dataRecorder.start();
+        logger.log('[data-recorders] A data recorder has been started ...');
+        // The start answer follows the persisted record: once it has been
+        // sent, any later status read - here or from another process - sees
+        // the recorder.
+        await registerStarted(dataRecorder, {
+          id: recorderId,
+          isRunning: true,
+          model: name,
+          startedTime,
+          endTime: null,
+          logFile,
+        });
+        respondWithStatus(res, { model });
+      }
+    });
+  } else {
+    const dataRecorder = new DataRecorder(model, logger);
+    dataRecorder.start();
+    logger.log('[data-recorders] A data recorder has been started ...');
+    // The start answer follows the persisted record.
+    await registerStarted(dataRecorder, {
+      id: recorderId,
+      isRunning: true,
+      model: name,
+      startedTime,
+      endTime: null,
+      logFile,
+    });
+    // The handle table now answers the guard for this recorder.
+    runtimeState.releaseReservation('data-recorders', recorderId);
+    respondWithStatus(res, { model });
+  }
+};
+
+/**
+ * Answer with the current status map, whatever the endpoint otherwise returns.
+ */
+const respondWithStatus = (res, extra = {}) => {
+  recorderStatusMap()
+    .then((status) => {
+      res.send({ ...extra, status });
+    })
+    .catch(() => {
+      res.send({ ...extra, status: {} });
+    });
 };
 
 // Start a data recorder
@@ -222,12 +318,12 @@ router.post('/start', validate({ body: dataRecorderStartBody }), (req, res, next
       if (err) {
         next(fileError(err, 'Data recorder not found', 'Cannot read the data recorder file'));
       } else {
-        startRecorder(data, res, next);
+        startRecorder(data, res, next).catch(next);
       }
     });
   } else {
     // Start recorder by model
-    startRecorder(model, res, next);
+    startRecorder(model, res, next).catch(next);
   }
 });
 

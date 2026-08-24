@@ -18,6 +18,11 @@ mosquitto.passwd
 # Local gitissue run state (issue analyses, run log)
 .gitissue/
 
+# Runtime run-state registry (issue #29): which simulations, data recorders
+# and test campaigns are running is runtime data - written by the server,
+# never committed. The .lock and .corrupt-* siblings belong to the same story.
+src/server/data/runtime-state.json*
+
 # Husky v9 internal helper (regenerated on `npm install` via the prepare script)
 .husky/_/
 
