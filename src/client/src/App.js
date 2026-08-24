@@ -1,5 +1,5 @@
 import React, { Component, useEffect } from "react";
-import { Layout, Spin } from "antd";
+import { ConfigProvider, Layout, Spin } from "antd";
 import {
   BrowserRouter as Router,
   Routes,
@@ -118,19 +118,34 @@ class App extends Component {
     return (
       <Router>
         <ErrorBoundary>
-          <Layout className="layout" style={{ height: "100%" }}>
-            {/* First focusable element on every page (issue #39): lets
-                keyboard users bypass the repeated navigation. */}
-            <a className="skip-link" href="#main-content">
-              Skip to main content
-            </a>
-            <FocusOnNavigation />
-            <TSHeader />
-            <div id="main-content" tabIndex={-1}>
-              {this.renderContent()}
-            </div>
-            <SessionExpiredModal />
-          </Layout>
+          <ConfigProvider
+            /* Issue #44: the axe gate flagged antd's default primary blue and
+               secondary grey as failing 4.5:1 contrast on white. The theme
+               tokens darken both globally instead of scattering overrides. */
+            theme={{
+              token: {
+                colorPrimary: "#0b57d0",
+                colorLink: "#0b57d0",
+                colorTextSecondary: "#595959",
+                colorTextDescription: "#595959",
+                colorError: "#b42318",
+              },
+            }}
+          >
+            <Layout className="layout" style={{ height: "100%" }}>
+              {/* First focusable element on every page (issue #39): lets
+                  keyboard users bypass the repeated navigation. */}
+              <a className="skip-link" href="#main-content">
+                Skip to main content
+              </a>
+              <FocusOnNavigation />
+              <TSHeader />
+              <div id="main-content" tabIndex={-1}>
+                {this.renderContent()}
+              </div>
+              <SessionExpiredModal />
+            </Layout>
+          </ConfigProvider>
         </ErrorBoundary>
       </Router>
     );

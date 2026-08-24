@@ -1,3 +1,7 @@
+// Installs the Node `process` shim before anything that uses it (issue #44).
+// Must stay the first import so the shim exists before any dep module runs.
+import "./processShim";
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
