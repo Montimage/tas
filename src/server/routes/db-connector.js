@@ -126,7 +126,6 @@ const getDBClient = (callback) => {
 ///////////////
 // Data Storage
 ///////////////
-// Read a specific model by its name:
 
 /**
  * Read the service configuration, straight from the store.
