@@ -2,7 +2,7 @@
 const express = require('express');
 const Joi = require('joi');
 const {
-  evalulate,
+  evaluate,
   ALL_EVENTS,
   METRIC_VALUE_TIMESTAMP,
   THRESHOLD_FLEXIBLE,
@@ -117,9 +117,9 @@ const updateReportScore = async (report, res, next) => {
   let newScore = score;
   if (evaluationParameters) {
     const { threshold, eventType, metricType } = evaluationParameters;
-    newScore = evalulate(originalEvents, newEvents, eventType, metricType, threshold);
+    newScore = evaluate(originalEvents, newEvents, eventType, metricType, threshold);
   } else {
-    newScore = evalulate(originalEvents, newEvents);
+    newScore = evaluate(originalEvents, newEvents);
   }
   // Going to save the score into the report
   try {

@@ -9,7 +9,7 @@ the results changes:
 node scripts/benchmark-scoring.js --events 5000
 ```
 
-## Report scoring (`evalulate`, value metric)
+## Report scoring (`evaluate`, value metric)
 
 The legacy baseline is the pre-#31 implementation: a greedy first-match scan
 with `splice` inside the inner loop, O(n·m) in the event counts. The current
@@ -23,11 +23,11 @@ some noise (the realistic scoring case), scored per topic.
 Source: `scripts/benchmark-scoring.js`. Recorded run below from this working
 copy (Node v22.18.0, linux x64):
 
-| events scored | legacy scan+splice | current `evalulate` | speedup |
-| ------------- | ------------------ | ------------------- | ------- |
-| 1,000         | 143.7 ms           | 2.8 ms              | 50.7x   |
-| 5,000         | 1,396.0 ms         | 18.2 ms             | 76.6x   |
-| 20,000        | 7,922.8 ms         | 60.9 ms             | 130.0x  |
+| events scored | legacy scan+splice | current `evaluate` | speedup |
+| ------------- | ------------------ | ------------------ | ------- |
+| 1,000         | 143.7 ms           | 2.8 ms             | 50.7x   |
+| 5,000         | 1,396.0 ms         | 18.2 ms            | 76.6x   |
+| 20,000        | 7,922.8 ms         | 60.9 ms            | 130.0x  |
 
 The quadratic cost is also why scoring now reads events through a documented
 bound: `updateReportScore` loads at most `MAX_SCORING_EVENTS` (10000) events
