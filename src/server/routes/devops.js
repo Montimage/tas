@@ -7,6 +7,7 @@ let router = express.Router();
 const devopsFilePath = `${__dirname}/../data/devops.json`;
 let getLogger = require('../logger');
 const { readJSONFile, writeToFile } = require('../../core/utils');
+const { OFFLINE } = require('../../core/DeviceStatus');
 const { isValidName, resolveWithin, sendBadRequest } = require('./path-safety');
 const {
   validate,
@@ -68,11 +69,20 @@ const publicRecord = (record) => {
 
 /**
  * The campaign this store says is running, if any: the persisted record, or
- * null when nothing is. Orphaned records - whose owner died uncleanly - are
- * reaped on the way, because nothing can ever stop them again.
+ * null when nothing is. Orphaned records - whose owner died uncleanly - and
+ * runs this process owns that finished on their own (a test campaign works
+ * through its cases and stops itself) are reaped on the way, because neither
+ * can ever be stopped again.
  */
 const runningCampaign = async () => {
-  await runtimeState.reconcile(CAMPAIGN_KIND);
+  await runtimeState.reconcile(CAMPAIGN_KIND, (record) => {
+    const handle = runtimeState.getHandle(CAMPAIGN_KIND, record.id);
+    const finished = Boolean(handle && handle.run && handle.run.status === OFFLINE);
+    if (finished && handle.logger) {
+      handle.logger.close();
+    }
+    return finished;
+  });
   const records = await runtimeState.list(CAMPAIGN_KIND);
   return records.length > 0 ? records[0] : null;
 };
@@ -87,8 +97,11 @@ router.get('/status', validate(), (req, res, next) => {
       // process that started the run; the persisted part is what any
       // observer can know for sure.
       const handle = record ? runtimeState.getHandle(CAMPAIGN_KIND, record.id) : null;
+      // A foreign record cannot be probed deeper and is presumed running;
+      // an own record answers from the live campaign's own status.
+      const isRunning = handle && handle.run ? handle.run.status !== OFFLINE : true;
       const composed = record
-        ? { ...publicRecord(record), ...(handle && handle.extra), isRunning: true }
+        ? { ...publicRecord(record), ...(handle && handle.extra), isRunning }
         : null;
       res.send({
         runningStatus: composed,
