@@ -151,7 +151,7 @@ const benchWrites = async (count, batchSize) => {
 
 // --- main -------------------------------------------------------------------
 
-(async () => {
+const main = async () => {
   const arg = (name, fallback) => {
     const index = process.argv.indexOf(`--${name}`);
     return index > -1 && process.argv[index + 1] ? Number(process.argv[index + 1]) : fallback;
@@ -192,4 +192,13 @@ const benchWrites = async (count, batchSize) => {
   console.log('');
   console.log('The unbatched baseline opens one write call per event by definition;');
   console.log('record its wall time from a real driver in BENCHMARKS.md.');
-})();
+};
+
+if (require.main === module) {
+  main();
+}
+
+// Exported for the throughput-baseline gate (issue #33): the suite reuses the
+// very same inputs and the very same "before" implementation the recorded
+// numbers above come from, so a regression cannot hide behind a reimplementation.
+module.exports = { lcg, makeEvents, legacyCompareArray, benchScoring, benchWrites };
