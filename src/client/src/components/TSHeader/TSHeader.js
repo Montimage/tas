@@ -111,6 +111,7 @@ const signOutItem = (authenticated, user, logout) =>
  */
 export const NarrowNav = ({ selectedKey, authenticated, user, logout }) => {
   const [open, setOpen] = useState(false);
+  const signOut = signOutItem(authenticated, user, logout);
   return (
     <Dropdown
       trigger={["click"]}
@@ -119,9 +120,7 @@ export const NarrowNav = ({ selectedKey, authenticated, user, logout }) => {
       menu={{
         items: [
           ...buildSectionItems(selectedKey),
-          ...(signOutItem(authenticated, user, logout).length
-            ? [{ type: "divider" }, ...signOutItem(authenticated, user, logout)]
-            : []),
+          ...(signOut.length ? [{ type: "divider" }, ...signOut] : []),
         ],
         selectedKeys: selectedKey ? [selectedKey] : [],
       }}
