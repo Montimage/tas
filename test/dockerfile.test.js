@@ -160,9 +160,11 @@ test('startup order follows health, not guesswork', () => {
 });
 
 test('only the loopback-bound authenticated broker listener is published to the host', () => {
+  // The published host side is movable for busy machines (issue #49) but the
+  // default stays 1883 and the container side never changes.
   assert.match(
     serviceBlock('broker'),
-    /-\s*['"]127\.0\.0\.1:1883:1883['"]/,
+    /-\s*['"]127\.0\.0\.1:\$\{TAS_HOST_BROKER_PORT:-1883\}:1883['"]/,
     'the broker must publish 1883 on the host loopback interface'
   );
   // Every published mapping of every service binds its host side to
@@ -170,7 +172,7 @@ test('only the loopback-bound authenticated broker listener is published to the 
   // forbids publishing these ports to 0.0.0.0. Operators override for
   // trusted-network deployments.
   for (const service of ['broker', 'app', 'nodered']) {
-    const maps = serviceBlock(service).match(/-\s*['"][\w.]*:?\d+:\d+['"]/g) || [];
+    const maps = serviceBlock(service).match(/-\s*['"][^'"]+:\d+['"]/g) || [];
     assert.ok(maps.length > 0, `${service} must publish at least one port`);
     for (const mapping of maps) {
       assert.match(
@@ -182,7 +184,7 @@ test('only the loopback-bound authenticated broker listener is published to the 
   }
   // Only quoted host:container mappings count as publications; prose comments
   // mention the internal port by name.
-  const published = (serviceBlock('broker').match(/-\s*['"][\w.]*:?\d+:\d+['"]/g) || []).join('\n');
+  const published = (serviceBlock('broker').match(/-\s*['"][^'"]+:\d+['"]/g) || []).join('\n');
   assert.ok(!/\b1884\b/.test(published), 'the anonymous internal listener must never be published');
   assert.match(
     composedBrokerConf,

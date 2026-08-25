@@ -39,7 +39,7 @@ jobs:
 
   publish:
     name: Build, scan and publish the image
-    needs: test
+    needs: [test, smoke]
     runs-on: ubuntu-latest
 
     steps:
@@ -83,9 +83,11 @@ jobs:
         with:
           image-ref: 'tas:release-scan'
           format: table
-          exit-code: '0'
+          # A known, fixable CRITICAL in a published image blocks the release
+          # (issue #49): this gate runs before anything is pushed.
+          exit-code: '1'
           ignore-unfixed: true
-          severity: CRITICAL,HIGH
+          severity: CRITICAL
 
       - name: Push version tag
         run: docker push "ghcr.io/montimage/tas:${PACKAGE_VERSION}"
@@ -95,3 +97,54 @@ jobs:
       - name: Push latest tag
         if: env.IS_STABLE == 'true'
         run: docker push "ghcr.io/montimage/tas:latest"
+
+  smoke:
+    name: Deployment smoke test on the composed stack
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # The smoke suite drives the composition over its published ports and
+      # hashes the administrator credential locally; production dependencies
+      # (the mqtt client among them) are all it needs.
+      - name: Install dependencies
+        run: npm ci --omit=dev
+
+      # Provision exactly as README.md documents for real use: hash the
+      # password where it is set and hand the composition only the scrypt
+      # digest plus a session secret. docker-compose.yml interpolates them.
+      - name: Provision the smoke administrator credential
+        env:
+          TAS_SMOKE_ADMIN_USERNAME: smoke-admin
+          TAS_SMOKE_ADMIN_PASSWORD: change-me-smoke-admin
+        run: |
+          HASH="$(node -p 'require("./src/server/auth/passwords").hashPassword(process.env.TAS_SMOKE_ADMIN_PASSWORD)')"
+          echo "TAS_SMOKE_ADMIN_USERNAME=$TAS_SMOKE_ADMIN_USERNAME" >> "$GITHUB_ENV"
+          echo "TAS_SMOKE_ADMIN_PASSWORD=$TAS_SMOKE_ADMIN_PASSWORD" >> "$GITHUB_ENV"
+          echo "AUTH_ADMIN_USERNAME=$TAS_SMOKE_ADMIN_USERNAME" >> "$GITHUB_ENV"
+          echo "AUTH_ADMIN_PASSWORD_HASH=$HASH" >> "$GITHUB_ENV"
+          echo "SESSION_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
+      # The documented quick start, verbatim: one command from a clean
+      # checkout brings up broker, app and flow editor with their health
+      # checks. A failure here fails the job before anything is published.
+      - name: Bring up the composed stack
+        run: docker compose up -d
+
+      - name: Run the deployment smoke suite
+        env:
+          TAS_SMOKE_COMPOSE: '1'
+        run: node --test test/e2e/deployment-smoke.test.js
+
+      - name: Tear the composed stack down
+        if: always()
+        run: docker compose down -v --remove-orphans
