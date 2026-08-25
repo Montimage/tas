@@ -9,6 +9,20 @@ All notable changes to TaS are documented in this file. Releases are cut as
 
 ### Added
 
+- **Phase 6 milestone gate — deployment smoke test** (#49):
+  `test/e2e/deployment-smoke.test.js` brings up the published composition
+  exactly as a new user would (`docker compose up -d`, credentials provisioned
+  as README.md documents) and asserts the dashboard, API health, authenticated
+  broker and flow editor are reachable; a complete workflow (topology →
+  producing simulation through the internal broker listener → clean stop)
+  succeeds against the deployed stack; restarting each service independently
+  leaves the others running and everything recovers; the application runs as a
+  non-root user with Phase 0 containment and anonymous-access rejection intact.
+  The release workflow runs it on every `v*` tag between the test gate and
+  publishing (`needs: [test, smoke]`), and its Trivy scan now blocks
+  publication on any known fixable CRITICAL vulnerability. Published host
+  ports became overridable (`TAS_HOST_BROKER_PORT`, `TAS_HOST_APP_PORT`,
+  `TAS_HOST_NODERED_PORT`) without changing any default.
 - **Phase 4 milestone gate** (#33): `test/e2e/modernised-workflow.test.js`
   drives the complete product workflow end to end on the modernised stack —
   define a topology, record data through a data recorder, replay the recorded
