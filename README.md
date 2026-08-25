@@ -363,6 +363,32 @@ TAS_E2E_MONGO_HOST=127.0.0.1 TAS_E2E_MONGO_PORT=27017 \
 node --test test/e2e/simulation-lifecycle.test.js
 ```
 
+### Run the modernised-stack gate
+
+`test/e2e/modernised-workflow.test.js` is the Phase 4 milestone gate (issue
+#33): it drives the complete product workflow against the migrated server —
+define a topology through the API, record real data with a data recorder,
+replay the recorded dataset in a simulation, and read the generated report's
+score — and asserts what else the migration had to preserve: documents written
+by the pre-migration version stay readable, restarting mid-simulation leaves
+`/api/simulation/status` reporting the truth, and two concurrent edits of one
+topology land as one complete record instead of discarding each other.
+
+Three supporting suites complete the gate outside the e2e file:
+`test/scoring-determinism.test.js` pins report scores on a fixed input dataset
+to the pre-migration algorithm and hand-derived literals;
+`test/throughput-baseline.test.js` asserts scoring still meets or exceeds the
+pre-migration baseline and event writes keep their batching shape; and
+`test/dependency-audit.test.js` re-runs CI's advisory gate over the server
+manifest. As with the lifecycle gate, service-dependent tests probe for MQTT
+and MongoDB at startup and skip with an explicit reason when absent:
+
+```
+TAS_E2E_MQTT_HOST=127.0.0.1 TAS_E2E_MQTT_PORT=1883 \
+TAS_E2E_MONGO_HOST=127.0.0.1 TAS_E2E_MONGO_PORT=27017 \
+node --test test/e2e/modernised-workflow.test.js
+```
+
 ### Create docker image for multiple platform
 
 Source: https://www.docker.com/blog/multi-arch-images/

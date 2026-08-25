@@ -11,8 +11,16 @@ class DataRecorder {
     const { id, name, source, forward } = drConfig;
     this.id = id;
     this.name = name;
-    this.source = source;
-    this.forwarder = forward;
+    // The source/forwarder configurations are never written to: the connected
+    // buses used to be attached straight onto them (`source.mqClient`), and a
+    // recorder started through the API echoes its model back in the response -
+    // serialising a live bus (open sockets, timer handles) crashed
+    // JSON.stringify and took the whole server down (issue #33). The buses
+    // live on `this` instead.
+    this.sourceConfig = source;
+    this.forwardConfig = forward;
+    this.sourceBus = null;
+    this.forwardBus = null;
     this.dataStorage = dataStorage;
     this.dataset = dataset;
     // Where this run writes its log lines; defaults to the process console.
@@ -25,7 +33,7 @@ class DataRecorder {
    * @param {Object} packet The attribute of the received message
    */
   isSensorData(_topic, packet) {
-    const { upStreams } = this.source;
+    const { upStreams } = this.sourceConfig;
     // Check by topic name
     for (let index = 0; index < upStreams.length; index++) {
       const topic = upStreams[index];
@@ -47,8 +55,8 @@ class DataRecorder {
     if (this.isSensorData(topic, packet)) {
       isSensorData = true;
       // Forward message, keep the original topic name
-      if (this.forwarder) {
-        this.forwarder.mqClient.publish(topic, message);
+      if (this.forwardBus) {
+        this.forwardBus.publish(topic, message);
       }
     }
 
@@ -92,9 +100,9 @@ class DataRecorder {
    * - subscribe to the register topics
    */
   initSource() {
-    const { upStreams, downStreams } = this.source;
+    const { upStreams, downStreams } = this.sourceConfig;
     // Init source
-    const mqClient = new MQBus(this.source);
+    const mqClient = new MQBus(this.sourceConfig);
     // Setup message handler
     mqClient.setupMessageHandler((topic, message, packet) =>
       this.messageHandler(topic, message, packet)
@@ -109,8 +117,8 @@ class DataRecorder {
         mqClient.subscribe(downStreams);
       }
     });
-    // Save the configuration
-    this.source['mqClient'] = mqClient;
+    // Keep the live bus off the caller's configuration object.
+    this.sourceBus = mqClient;
   }
 
   /**
@@ -131,9 +139,9 @@ class DataRecorder {
    * @param {Function} callback the callback function
    */
   initForwarder(callback) {
-    const fw = new MQBus(this.forwarder);
+    const fw = new MQBus(this.forwardConfig);
     fw.connect(() => {
-      this.forwarder['mqClient'] = fw;
+      this.forwardBus = fw;
       return callback();
     });
   }
@@ -146,19 +154,19 @@ class DataRecorder {
    */
   init() {
     // Check source
-    if (!this.source) {
+    if (!this.sourceConfig) {
       this.logger.error('[DataRecorder] Source is not found!');
       return false;
     }
 
     // Check output
-    if (!this.forwarder) {
+    if (!this.forwardConfig) {
       this.logger.warn('[DataRecorder] forward are not found!');
       this.initSource();
     } else {
       // Init the forwarder
       this.initForwarder(() => {
-        this.logger.error('[DataRecorder] Forwarder has been created!', this.forwarder);
+        this.logger.error('[DataRecorder] Forwarder has been created!', this.forwardConfig);
         this.initSource();
       });
     }
@@ -172,11 +180,11 @@ class DataRecorder {
    * - Stop the data storage
    */
   stop() {
-    if (this.source && this.source.mqClient) {
-      this.source.mqClient.close();
+    if (this.sourceBus) {
+      this.sourceBus.close();
     }
-    if (this.forwarder && this.forwarder.mqClient) {
-      this.forwarder.mqClient.close();
+    if (this.forwardBus) {
+      this.forwardBus.close();
     }
   }
 }
