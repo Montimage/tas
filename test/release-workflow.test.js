@@ -12,7 +12,9 @@ const workflow = rawWorkflow
   .map((l) => l.replace(/(^|\s)#.*$/, '$1'))
   .join('\n');
 
-// The publish job must be gated on the test job.
+// The publish job must be gated on the test job and on the deployment smoke
+// test (issue #49): nothing publishes unless the suite passes and the composed
+// stack comes up and behaves.
 test('publishing is gated on a passing test suite', () => {
   const lines = workflow.split('\n');
   const start = lines.findIndex((l) => l.trim() === 'publish:');
@@ -27,10 +29,72 @@ test('publishing is gated on a passing test suite', () => {
   const publish = lines.slice(start + 1, end).join('\n');
   assert.match(
     publish,
-    /^ {4}needs:\s*test\s*$/m,
-    'publish job must declare needs: test so a failing suite blocks the release'
+    /^ {4}needs:\s*\[test,\s*smoke\]\s*$/m,
+    'publish job must need both the test and smoke jobs so a failing check blocks the release'
   );
   assert.match(workflow, /run:\s*npm test/, 'the gate must run the full test suite');
+});
+
+// Issue #49: the deployment smoke test runs on every release tag and blocks
+// publication — its job sits between the test gate and the publish job.
+test('the deployment smoke test gates publication (issue #49)', () => {
+  const lines = workflow.split('\n');
+  const start = lines.findIndex((l) => l.trim() === 'smoke:');
+  assert.ok(start !== -1, 'workflow must define a smoke job');
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^ {2}\S+:\s*$/.test(lines[i])) {
+      end = i;
+      break;
+    }
+  }
+  const smoke = lines.slice(start + 1, end).join('\n');
+  assert.match(smoke, /^ {4}needs:\s*test\s*$/m, 'the smoke job must run after the test gate');
+  assert.match(
+    smoke,
+    /run:\s*docker compose up -d\s*$/m,
+    'the smoke job must bring up the documented quick-start deployment'
+  );
+  assert.match(
+    smoke,
+    /^ {8,10}TAS_SMOKE_COMPOSE:\s*['"]?1['"]?\s*$/m,
+    'the smoke job must opt the e2e suite into composing the stack'
+  );
+  assert.match(
+    smoke,
+    /run:\s*node --test test\/e2e\/deployment-smoke\.test\.js\s*$/m,
+    'the smoke job must run the deployment smoke suite'
+  );
+  assert.match(smoke, /docker compose down -v --remove-orphans/, 'the stack must be torn down');
+  // The teardown may never be skipped by an earlier failure.
+  const teardown = smoke.split('\n').findIndex((l) => l.includes('Tear the composed stack down'));
+  assert.ok(teardown !== -1);
+  assert.match(
+    smoke
+      .split('\n')
+      .slice(teardown, teardown + 3)
+      .join('\n'),
+    /if:\s*always\(\)/,
+    'teardown must run even when the suite fails'
+  );
+});
+
+// Issue #49 AC7: published images carry no known critical vulnerabilities —
+// the scan's exit code decides, not just its table output.
+test('a critical vulnerability in the built image blocks publication', () => {
+  const lines = workflow.split('\n');
+  const uses = lines.findIndex((l) => l.includes('aquasecurity/trivy-action@'));
+  assert.ok(uses !== -1, 'Trivy scan must run in the workflow');
+  let start = uses;
+  while (start > 0 && !lines[start].trim().startsWith('- name:')) start -= 1;
+  let end = uses;
+  do {
+    end += 1;
+  } while (end < lines.length && !lines[end].trim().startsWith('- name:'));
+  const step = lines.slice(start, end).join('\n');
+  assert.match(step, /exit-code:\s*['"]1['"]/, 'the scan must fail the job on findings');
+  assert.match(step, /severity:\s*['"]?CRITICAL['"]?\s*$/m, 'the gate must fire on CRITICAL');
+  assert.match(step, /ignore-unfixed:\s*true/, 'unfixable findings must not block forever');
 });
 
 // Issue #19: the old extraction was `tr -d 'refs/tags/'`, which deletes every

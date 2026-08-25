@@ -51,8 +51,9 @@ services:
       # the README forbids publishing these ports to 0.0.0.0. Operators
       # override the bind address for trusted-network deployments. The
       # anonymous internal listener (1884) stays inside the compose network
-      # by construction.
-      - '127.0.0.1:1883:1883'
+      # by construction. Set TAS_HOST_BROKER_PORT to move the published side
+      # when the host already owns 1883.
+      - '127.0.0.1:${TAS_HOST_BROKER_PORT:-1883}:1883'
     healthcheck:
       # Probe the anonymous loopback listener from inside the broker's own
       # container: a broker that answers there is up and dispatching.
@@ -84,7 +85,9 @@ services:
       AUTH_ADMIN_USERNAME: ${AUTH_ADMIN_USERNAME:-admin}
       AUTH_ADMIN_PASSWORD_HASH: ${AUTH_ADMIN_PASSWORD_HASH:-}
     ports:
-      - '127.0.0.1:3004:3004'
+      # Published host sides are movable for busy machines; the container
+      # sides never change.
+      - '127.0.0.1:${TAS_HOST_APP_PORT:-3004}:3004'
     healthcheck:
       test:
         [
@@ -109,7 +112,7 @@ services:
       - ./node-red-flows/202402-temperature-controller.json:/data/flows.json:ro
       - nodered-data:/data
     ports:
-      - '127.0.0.1:1880:1880'
+      - '127.0.0.1:${TAS_HOST_NODERED_PORT:-1880}:1880'
     healthcheck:
       test:
         [

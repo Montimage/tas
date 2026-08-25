@@ -109,6 +109,10 @@ test('dependabot proposes npm updates for both manifests, weekly', () => {
 
 test('the image publish is gated by the same suite command the PR gate runs', () => {
   const release = stripComments(readWorkflow('build-docker-container.yml'));
-  assert.match(release, /^ {4}needs:\s*test\s*$/m, 'publish must need the test job');
+  assert.match(
+    release,
+    /^ {4}needs:\s*\[test,\s*smoke\]\s*$/m,
+    'publish must need the test and smoke jobs'
+  );
   assert.match(release, /run:\s*npm test\s*$/m, 'the release gate must run the full suite');
 });
