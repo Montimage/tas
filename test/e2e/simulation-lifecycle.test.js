@@ -651,7 +651,9 @@ test('a run whose data storage fails logs the message together with the underlyi
 
     // The message alone is not enough: the same output must carry the
     // underlying error and the connection parameters the logger was handed,
-    // exactly the detail a single-argument console replacement drops.
+    // exactly the detail a single-argument console replacement drops. Records
+    // are structured now (issue #47): the connection parameters arrive as
+    // top-level JSON fields rather than inspected into the message text.
     assert.match(
       content,
       /ECONNREFUSED/,
@@ -659,7 +661,7 @@ test('a run whose data storage fails logs the message together with the underlyi
     );
     assert.match(
       content,
-      /dbname:\s*'tas-e2e-unreachable'/,
+      /"dbname"\s*:\s*"tas-e2e-unreachable"/,
       `the logged context must name the failed connection:\n${content}`
     );
   } finally {

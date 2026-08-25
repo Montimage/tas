@@ -247,7 +247,10 @@ const startRecorder = async (model, res, next) => {
   }
   const startedTime = Date.now();
   const logFile = `${name}_${startedTime}.log`;
-  const logger = getLogger('DATA-RECORDER', `${logsPath}${logFile}`);
+  // Every record of this run carries the recorder's id (issue #47).
+  const logger = getLogger('DATA-RECORDER', `${logsPath}${logFile}`, {
+    correlationId: recorderId,
+  });
   // Persistence failures degrade to memory-only tracking (warned once inside
   // the registry); they never fail a start that itself succeeded.
   const registerStarted = (recorder, record) =>

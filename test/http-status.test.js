@@ -465,22 +465,19 @@ test('a database failure the schemas cannot express maps onto its own status', a
 test('an unreadable server configuration answers 500 and keeps the detail in the log', async () => {
   // A Node fs error carries the absolute path it failed to open in its own
   // enumerable properties. The response must carry a constant message, and the
-  // log must still carry enough to diagnose it.
+  // structured server log (issue #47) must still carry enough to diagnose it.
   const modulePath = require.resolve('../src/server/routes/devops');
-  const lines = [];
-  const realConsoleError = console.error;
+  const serverLogPath = path.join(__dirname, '..', 'src', 'server', 'logs', 'server.log');
   fs.unlinkSync(devopsFile);
   delete require.cache[modulePath];
   const coldApp = express();
   coldApp.use(express.json());
   coldApp.use('/api/devops', require(modulePath));
   const coldServer = coldApp.listen(0);
-  console.error = (message) => lines.push(String(message));
   let res;
   try {
     res = await request(coldServer, 'GET', '/api/devops');
   } finally {
-    console.error = realConsoleError;
     coldServer.close();
     fs.writeFileSync(devopsFile, originalDevops);
     delete require.cache[modulePath];
@@ -490,32 +487,67 @@ test('an unreadable server configuration answers 500 and keeps the detail in the
   assert.equal(res.body.error, 'Cannot get devops configuration');
   assert.ok(!res.raw.includes('devops.json'), `must not disclose the config path: ${res.raw}`);
 
-  const logged = lines.join('\n');
-  assert.ok(logged.includes('GET /api/devops'), `the log must name the request: ${logged}`);
-  assert.ok(logged.includes('500'), `the log must carry the status: ${logged}`);
-  assert.ok(
-    logged.includes('ENOENT') && logged.includes('devops.json'),
-    `the log must keep the detail the response no longer carries: ${logged}`
-  );
+  // The failure record is one JSON line naming the request, the status and
+  // the cause detail the response no longer carries. Winston writes
+  // asynchronously, so poll for the line before asserting on it.
+  let record = null;
+  for (let i = 0; i < 50 && !record; i += 1) {
+    try {
+      for (const line of fs.readFileSync(serverLogPath, 'utf8').split('\n')) {
+        if (
+          line.includes('GET /api/devops') &&
+          line.includes('Cannot get devops configuration') &&
+          line.includes('ENOENT') &&
+          line.includes('devops.json')
+        ) {
+          record = JSON.parse(line);
+        }
+      }
+    } catch (_) {
+      /* log not written yet */
+    }
+    if (!record) await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  assert.ok(record, 'the failure must be recorded as one structured line');
+  assert.match(record.message, /GET \/api\/devops -> 500/);
 });
 
-test('the log keeps the detail of every failure, in one line the file logger keeps', async () => {
-  // `logger/index.js` replaces console.error with a single-argument function,
-  // so a handler that logged the error as a second argument would drop exactly
-  // the detail it removed from the response.
+test('the log keeps the detail of every failure, in one record the file logger keeps', async () => {
+  // A failure is recorded once, as one structured record carrying both the
+  // caller-safe message and the full underlying cause - the detail the
+  // response itself must never disclose.
   const probe = probeApp().listen(0);
-  const lines = [];
-  const realConsoleError = console.error;
-  console.error = (...args) => lines.push(args);
+  const serverLogPath = path.join(__dirname, '..', 'src', 'server', 'logs', 'server.log');
+  const readRecords = () =>
+    fs
+      .readFileSync(serverLogPath, 'utf8')
+      .split('\n')
+      .filter((line) => line.includes('/unclassified'))
+      .map((line) => JSON.parse(line));
+  const before = (() => {
+    try {
+      return readRecords().length;
+    } catch (_) {
+      return 0;
+    }
+  })();
   try {
     await request(probe, 'GET', '/unclassified');
   } finally {
-    console.error = realConsoleError;
     probe.close();
   }
-  assert.equal(lines.length, 1, 'one failure must produce one log line');
-  assert.equal(lines[0].length, 1, 'the whole detail must be in the first argument');
-  const logged = String(lines[0][0]);
+  let records = [];
+  for (let i = 0; i < 50 && records.length === 0; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    try {
+      records = readRecords();
+    } catch (_) {
+      /* log not written yet */
+    }
+  }
+  assert.equal(records.length - before, 1, 'one failure must produce one error record');
+  const logged = JSON.stringify(records[records.length - 1]);
+  assert.match(records[records.length - 1].message, /GET \/unclassified -> 500/);
   assert.ok(logged.includes('/home/secret'), `the log must keep the path: ${logged}`);
   assert.ok(logged.includes('ENOENT'), `the log must keep the cause: ${logged}`);
 });

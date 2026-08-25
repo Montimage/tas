@@ -199,22 +199,29 @@ const describe = (value) => {
 /**
  * Record the full detail of a failure server-side.
  *
- * Deliberately one string: `logger/index.js` replaces `console.error` with a
- * single-argument function, so anything passed as a second argument is dropped
- * on the floor once a logger exists — which is how the detail that is no longer
- * in the response would otherwise be lost altogether.
+ * Written to the structured server log (issue #47): the record carries the
+ * request's correlation id when the request context middleware assigned one,
+ * so a client reporting the `X-Request-Id` response header leads straight to
+ * every line this failure produced. The underlying cause travels as its own
+ * argument so the logger's secret redaction walks it before anything lands
+ * in the file.
  *
  * @param {Object} req The request, when there is one
  * @param {ApiError} apiError The normalised failure
  */
 const logFailure = (req, apiError) => {
   const where = req && req.method ? `${req.method} ${req.originalUrl || req.url}` : 'request';
-  const detail = apiError.cause === undefined ? '' : describe(apiError.cause);
   const details = apiError.details ? ` details=${describe(apiError.details)}` : '';
-  console.error(
-    `[SERVER] ${where} -> ${apiError.status} ${apiError.message}${details}${
-      detail ? ` | ${detail}` : ''
-    }`
+  const message = `${where} -> ${apiError.status} ${apiError.message}${details}`;
+  const requestId = req && req.requestId;
+  // Lazy-required: errors.js sits below half the server in the require graph,
+  // and the server log must exist wherever a failure is reported - including
+  // routers mounted standalone in tests.
+  const { getServerLogger } = require('./request-context');
+  getServerLogger().error(
+    message,
+    ...(apiError.cause !== undefined ? [apiError.cause] : []),
+    ...(requestId ? [{ requestId }] : [])
   );
 };
 
