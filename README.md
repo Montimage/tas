@@ -313,6 +313,39 @@ response body never carries a stack trace, a server filesystem path or the raw
 underlying error — that detail is written to the server log instead, where it
 stays available for diagnosis.
 
+## API specification
+
+The complete API — every endpoint, its parameters, request bodies and
+responses, with the exact constraints the server validates — is published as an
+OpenAPI 3.0 document:
+
+- **Served live:** `GET /openapi.json` (no session required).
+- **Committed:** [`openapi.json`](openapi.json) at the repository root,
+  regenerated with `npm run spec`.
+
+The document is generated from the same mounted routers and validation schemas
+the server enforces (`src/server/openapi/`), so it cannot drift from the
+implementation: an endpoint added to a router appears in the next generated
+specification with exactly what its schema accepts.
+
+## Structured logs and correlation ids
+
+Log records are one machine-parseable JSON object per line, carrying `timestamp`,
+`level`, `label`, `message` and any structured fields. Two correlation
+identifiers tie records together (issue #47):
+
+- **Requests:** every request is assigned an id (an incoming trusted
+  `X-Request-Id` header is honoured), echoed back in the `X-Request-Id`
+  response header, and attached to the access record written when the response
+  finishes plus any failure record the central handler writes.
+- **Runs:** a simulation, data recorder or test campaign writes all of its own
+  lines into its log file under its run id as `correlationId`.
+
+Verbosity is configurable without a code change via `LOG_LEVEL`
+(`error` | `warn` | `info` | `debug`, default `info`; see `env.example`). Values
+reached through sensitive keys — passwords, tokens, secrets — are redacted
+before anything is written.
+
 ## DEVELOPMENT
 
 ### Run the E2E security regression suite

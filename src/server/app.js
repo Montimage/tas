@@ -8,6 +8,8 @@ var { errorHandler, apiNotFound, forbidden, ApiError, sendError } = require('./m
 var { securityHeaders } = require('./middleware/security-headers');
 var { createAuthMiddleware } = require('./middleware/auth');
 var { createCsrfMiddleware } = require('./middleware/csrf');
+var { requestContext } = require('./middleware/request-context');
+var { buildOpenApiDocument } = require('./openapi/generate-openapi');
 var { createCredential } = require('./auth/credentials');
 var { createSessionStore } = require('./auth/session-store');
 
@@ -174,6 +176,13 @@ app.use(
 app.use(cookieParser(config.sessionSecret));
 app.use(express.static(path.join(__dirname, '../public')));
 
+/**
+ * Request correlation (issue #47): every request gets an id (an incoming
+ * `X-Request-Id` is honoured), echoed back in the response header, and carried
+ * on the structured access and error records the server writes.
+ */
+app.use(requestContext());
+
 // Per-client rate limiting on the unauthenticated API surface.
 const apiLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
@@ -220,29 +229,61 @@ app.use('/api/auth/login', loginLimiter);
 app.use('/api', createAuthMiddleware({ sessions: sessions, config: config }));
 app.use('/api', createCsrfMiddleware());
 
-app.use('/api/health', healthRouter);
-app.use(
-  '/api/auth',
-  createAuthRouter({ credential: credential, sessions: sessions, config: config })
-);
+/**
+ * The API surface, declared once (issue #47).
+ *
+ * The same array drives both the mounting below and the OpenAPI generator:
+ * the specification is produced from what is actually mounted, so a router
+ * added here appears in it and one removed here disappears - there is no
+ * second list to forget. `public: true` marks routers whose endpoints answer
+ * without a session (`middleware/auth.js` allowlist), which the generator
+ * documents without the authentication error.
+ */
+const apiMounts = [
+  { prefix: '/api/health', router: healthRouter, public: true },
+  {
+    prefix: '/api/auth',
+    router: createAuthRouter({ credential: credential, sessions: sessions, config: config }),
+    public: true,
+  },
+  { prefix: '/api/models', router: modelRouter },
+  { prefix: '/api/data-recorders', router: dataRecorderRouter },
+  { prefix: '/api/data-storage', router: dataStorageRouter },
+  { prefix: '/api/logs/data-recorders', router: createLogRouter('data-recorders') },
+  { prefix: '/api/logs/simulations', router: createLogRouter('simulations') },
+  { prefix: '/api/logs/test-campaigns', router: createLogRouter('test-campaigns') },
+  { prefix: '/api/data-sets', router: dataSetRouter },
+  { prefix: '/api/test-cases', router: testCaseRouter },
+  { prefix: '/api/test-campaigns', router: testCampaignRouter },
+  { prefix: '/api/events', router: eventRouter },
+  { prefix: '/api/reports', router: reportRouter },
+  { prefix: '/api/simulation', router: simulationRouter },
+  { prefix: '/api/devops', router: devopsRouter },
+];
 
-app.use('/api/models', modelRouter);
-app.use('/api/data-recorders', dataRecorderRouter);
-app.use('/api/data-storage', dataStorageRouter);
-app.use('/api/logs/data-recorders', createLogRouter('data-recorders'));
-app.use('/api/logs/simulations', createLogRouter('simulations'));
-app.use('/api/logs/test-campaigns', createLogRouter('test-campaigns'));
-app.use('/api/data-sets', dataSetRouter);
-app.use('/api/test-cases', testCaseRouter);
-app.use('/api/test-campaigns', testCampaignRouter);
-app.use('/api/events', eventRouter);
-app.use('/api/reports', reportRouter);
-app.use('/api/simulation', simulationRouter);
-app.use('/api/devops', devopsRouter);
+for (const { prefix, router } of apiMounts) {
+  app.use(prefix, router);
+}
 // An API path no router claimed is a missing resource, not the dashboard: it
 // must not fall through to the single-page app below, which would answer 200
 // with an HTML page a client cannot tell from a successful call.
 app.use('/api', apiNotFound);
+
+/**
+ * The published API specification (issue #47), generated from the mounted
+ * routers and their validation schemas. Served outside `/api`, before the
+ * authentication middleware: an integrator reads the spec to learn how to
+ * authenticate, and a description of shapes discloses nothing the route list
+ * does not already announce. Built once per process; the routes cannot change
+ * while it runs.
+ */
+const openApiDocument = buildOpenApiDocument({
+  mounts: apiMounts,
+  version: require('../../package.json').version,
+});
+app.get('/openapi.json', function serveOpenApi(req, res) {
+  res.json(openApiDocument);
+});
 
 /**
  * The single-page app catch-all (Express 5 / path-to-regexp v8).
@@ -270,6 +311,10 @@ app.get('/*splat', serveDashboard);
 app.use(errorHandler);
 
 module.exports = app;
+// For tooling that needs the mount manifest without re-deriving it (the
+// specification generator, tests). Assigned after the module export above,
+// which replaces `module.exports` wholesale.
+module.exports.getApiMounts = () => apiMounts;
 
 if (require.main === module) {
   var _server = app.listen(app.get('port'), config.host, function () {
