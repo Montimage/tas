@@ -6,6 +6,7 @@ const { OFFLINE } = require('../../core/DeviceStatus');
 let getLogger = require('../logger');
 const Simulation = require('../../core/simulation');
 const { getObjectId } = require('../../core/utils');
+const path = require('path');
 const { isValidName, resolveWithin, sendBadRequest } = require('./path-safety');
 const { getDataStorage } = require('./db-connector');
 const {
@@ -25,12 +26,16 @@ const {
 } = require('../middleware/errors');
 
 let router = express.Router();
-const logsPath = `${__dirname}/../logs/simulations/`;
+// Log and topology locations come from the central storage-root resolution
+// (issue #58): `TAS_MODELS_DIR` still moves the store on its own, and
+// `TAS_STORAGE_ROOT` relocates the whole tree.
+const { DATA_DIR, LOGS_DIR } = require('../paths');
+const logsPath = path.join(LOGS_DIR, 'simulations') + path.sep;
 // Stored topologies are records of the artifact store (issue #30) shared with
 // the model routes: reads see either a complete previous record or a complete
 // new one, never a half-written file. `TAS_MODELS_DIR` moves it (tests use a
 // scratch directory); the same override configures `routes/model.js`.
-const modelsPath = process.env.TAS_MODELS_DIR || `${__dirname}/../data/models/`;
+const modelsPath = process.env.TAS_MODELS_DIR || path.join(DATA_DIR, 'models');
 const modelsStore = require('../artifact-store').createArtifactStore({
   root: modelsPath,
   label: 'models',

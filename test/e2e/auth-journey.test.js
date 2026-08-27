@@ -45,6 +45,7 @@ const {
   repoRoot,
   modelsDir,
   inModelsDir,
+  simulationsLogsDir,
   removeIfPresent,
 } = require('./helpers');
 const { PUBLIC_API_ROUTES } = require('../../src/server/middleware/auth');
@@ -309,15 +310,15 @@ after(async () => {
   // run writes a real log file (gitignored, but still this suite's litter).
   if (journeyFileName) removeIfPresent(inModelsDir(journeyFileName));
   if (journeyName) {
-    const simulationLogs = path.resolve(repoRoot, 'src/server/logs/simulations');
     let entries = [];
     try {
-      entries = fs.readdirSync(simulationLogs);
+      entries = fs.readdirSync(simulationsLogsDir);
     } catch (_) {
       entries = []; // absent, which is the expected case on a fresh checkout
     }
     for (const entry of entries) {
-      if (entry.startsWith(`${journeyName}_`)) removeIfPresent(path.join(simulationLogs, entry));
+      if (entry.startsWith(`${journeyName}_`))
+        removeIfPresent(path.join(simulationsLogsDir, entry));
     }
   }
 });
@@ -846,13 +847,18 @@ test('the database-unavailable refusal is a documented 503 that discloses nothin
  */
 const PHASE_0_DIGESTS = {
   'test/e2e/security-suite.test.js':
-    'e87f06ec6d8d4b79517e37cef2e7064d5ab935ca2c38a838cf62c849354423b9',
+    // Updated with issue #58: the devops snapshot/restore became a baseline
+    // read against the suite's own temporary storage root.
+    'd4dc3b76d63383ff455e4652447553f4da81fa2a73fd442cdc32f680db6d334f',
   'test/e2e/limits.test.js': 'a6094dfd19c166e847a7068c5b62c0f3bf369cf2bad84566ebacce27d9a589e2',
   'test/e2e/container-nonroot.test.js':
     // Updated with issue #45: the runtime assertions now cover the
     // application-only image (no broker/supervisor inside, direct node CMD).
     '32afd58fff17f4e540da1d71c1d250e38ee99343c276d1666812957e2dfa67db',
-  'test/e2e/helpers.js': '4a7794adf00813e01c9a36c416a14c40463f3aa59e16325b18a4f8850024f975',
+  'test/e2e/helpers.js':
+    // Updated with issue #58: every spawned instance now runs against a
+    // temporary storage root under the system temp dir.
+    '9b8cae30899e0e6a10e4b01a0e5da4acfefb5d1c68d7fb8f308f1bff5c2d0a6a',
 };
 
 /**

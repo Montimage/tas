@@ -39,14 +39,17 @@ const path = require('node:path');
 
 const mqtt = require('mqtt');
 
-const { startServer, request, unique, repoRoot } = require('./helpers');
+const {
+  startServer,
+  request,
+  unique,
+  simulationsLogsDir,
+  dataRecordersLogsDir,
+  dataStoragePath,
+} = require('./helpers');
 
 /** A ceiling high enough that no test in this file trips the limiter. */
 const NO_RATE_LIMIT = '100000';
-
-const simulationLogsDir = path.resolve(repoRoot, 'src/server/logs/simulations');
-const dataRecordersLogsDir = path.resolve(repoRoot, 'src/server/logs/data-recorders');
-const dataStoragePath = path.resolve(repoRoot, 'src/server/data/data-storage.json');
 
 const mongoHost = process.env.TAS_E2E_MONGO_HOST || '127.0.0.1';
 const mongoPort = Number(process.env.TAS_E2E_MONGO_PORT || 27017);
@@ -222,7 +225,7 @@ const removeIfPresent = (filePath) => {
 
 /** Delete every run log this suite created for a topology or recorder name. */
 const removeRunLogs = (name) => {
-  for (const dir of [simulationLogsDir, dataRecordersLogsDir]) {
+  for (const dir of [simulationsLogsDir, dataRecordersLogsDir]) {
     let entries = [];
     try {
       entries = fs.readdirSync(dir);
@@ -286,7 +289,7 @@ before(async () => {
   modelsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tas-phase4-models-'));
   recordersDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tas-phase4-recorders-'));
   // Nothing under src/server/logs is created up front by the application.
-  fs.mkdirSync(simulationLogsDir, { recursive: true });
+  fs.mkdirSync(simulationsLogsDir, { recursive: true });
   fs.mkdirSync(dataRecordersLogsDir, { recursive: true });
   [mongoUp, mqttUp] = await Promise.all([
     probeTcp(mongoHost, mongoPort),

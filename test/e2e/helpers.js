@@ -10,14 +10,72 @@ const http = require('node:http');
 const net = require('node:net');
 const path = require('node:path');
 const fs = require('node:fs');
+const os = require('node:os');
 const { spawn } = require('node:child_process');
+const { after } = require('node:test');
 
 const repoRoot = path.resolve(__dirname, '../..');
-const modelsDir = path.resolve(repoRoot, 'src/server/data/models');
-const recordersDir = path.resolve(repoRoot, 'src/server/data/data-recorders');
+const repoDataDir = path.resolve(repoRoot, 'src/server/data');
 const repoPackageJson = path.resolve(repoRoot, 'package.json');
-const devopsConfigPath = path.resolve(repoRoot, 'src/server/data/devops.json');
-const campaignLogsDir = path.resolve(repoRoot, 'src/server/logs/test-campaigns');
+
+/**
+ * This suite's own temporary storage root (issue #58).
+ *
+ * Every instance spawned by a suite in this directory is pointed at
+ * `<temp root>/data` and `<temp root>/logs` through `TAS_STORAGE_ROOT`, so
+ * the suites no longer create, rename or delete anything under the checkout.
+ * A run that crashes between create and cleanup can therefore only leave
+ * residue in a throwaway directory under the system temp dir, and two suites
+ * no longer contend for one on-disk root. The root is removed when the
+ * process's test run finishes; the shipped defaults it seeds are copied, so
+ * the shipped files themselves are never touched.
+ */
+const storageRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'tas-e2e-storage-'));
+const dataDir = path.join(storageRoot, 'data');
+const logsDir = path.join(storageRoot, 'logs');
+// Pre-create the directory layout a deployed instance ships with, so suites
+// can stat, chmod and list the stores exactly as they could the checkout's
+// own directories (the application only creates them on first write).
+const modelsDir = path.join(dataDir, 'models');
+const recordersDir = path.join(dataDir, 'data-recorders');
+const campaignLogsDir = path.join(logsDir, 'test-campaigns');
+const simulationsLogsDir = path.join(logsDir, 'simulations');
+const dataRecordersLogsDir = path.join(logsDir, 'data-recorders');
+for (const dir of [
+  modelsDir,
+  recordersDir,
+  campaignLogsDir,
+  simulationsLogsDir,
+  dataRecordersLogsDir,
+]) {
+  fs.mkdirSync(dir, { recursive: true });
+}
+const devopsConfigPath = path.join(dataDir, 'devops.json');
+const dataStoragePath = path.join(dataDir, 'data-storage.json');
+
+// Seed the throwaway root with the shipped defaults, so the instances see the
+// same starting configuration a fresh deployment does. The files are copied
+// READ-ONLY as far as the checkout is concerned - all writes land in the
+// temporary root.
+const seedFromRepo = (fileName) => {
+  const source = path.join(repoDataDir, fileName);
+  if (fs.existsSync(source)) {
+    fs.copyFileSync(source, path.join(dataDir, fileName));
+  }
+};
+seedFromRepo('devops.json');
+seedFromRepo('data-storage.json');
+
+after(() => {
+  // Runs last (child hooks first): by the time this fires, every suite has
+  // already stopped its instances, so a failed or crashed run still leaves
+  // nothing behind in the checkout - and this removes even that residue.
+  try {
+    fs.rmSync(storageRoot, { recursive: true, force: true });
+  } catch (_) {
+    /* best effort: a leftover temp dir is preferable to masking a test failure */
+  }
+});
 
 /** An origin the server will be configured to allow via CORS_ALLOWED_ORIGINS. */
 const allowedOrigin = 'http://allowed.example';
@@ -155,6 +213,10 @@ async function startServer(env = {}) {
       ...process.env,
       SERVER_HOST: '127.0.0.1',
       SERVER_PORT: String(seedPort),
+      // Each suite runs its instances against this suite's own throwaway
+      // storage root (issue #58). A caller-supplied per-directory override
+      // (TAS_MODELS_DIR, ...) still wins in the route modules.
+      TAS_STORAGE_ROOT: storageRoot,
       ...testCredentials,
       ...env,
     },
@@ -224,10 +286,11 @@ const inRecordersDir = (fileName) => path.join(recordersDir, fileName);
 
 /**
  * Every location a traversal payload in this suite would land a file if
- * containment regressed. The storage root is `src/server/data/models`, so
- * `../` escapes to `src/server/data` and `../../` to `src/server` - NOT to the
- * repo root. Canaries must check the real targets, otherwise a successful
- * escape passes unnoticed.
+ * containment regressed. The storage root is the suite's temporary
+ * `data/models` directory, so `../` escapes to the temporary `data` dir and
+ * `../../` to the temporary storage root - NOT to the repo root, which is the
+ * last canary and must never be touched either. Canaries must check the real
+ * targets, otherwise a successful escape passes unnoticed.
  * @param {String} baseName Artifact name without the `.json` extension
  * @returns {String[]} Absolute paths that must never exist after a hostile name
  */
@@ -290,11 +353,17 @@ const listDir = (dir) =>
 
 module.exports = {
   repoRoot,
+  storageRoot,
+  dataDir,
+  logsDir,
   modelsDir,
   recordersDir,
   repoPackageJson,
   devopsConfigPath,
+  dataStoragePath,
   campaignLogsDir,
+  simulationsLogsDir,
+  dataRecordersLogsDir,
   allowedOrigin,
   hostileOrigin,
   request,

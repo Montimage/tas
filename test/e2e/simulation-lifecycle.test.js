@@ -29,13 +29,17 @@ const fs = require('node:fs');
 const net = require('node:net');
 const path = require('node:path');
 
-const { startServer, request, unique, repoRoot, modelsDir } = require('./helpers');
+const {
+  startServer,
+  request,
+  unique,
+  modelsDir,
+  simulationsLogsDir,
+  dataStoragePath,
+} = require('./helpers');
 
 /** A ceiling high enough that no test in this file trips the limiter. */
 const NO_RATE_LIMIT = '100000';
-
-const simulationLogsDir = path.resolve(repoRoot, 'src/server/logs/simulations');
-const dataStoragePath = path.resolve(repoRoot, 'src/server/data/data-storage.json');
 
 const mongoHost = process.env.TAS_E2E_MONGO_HOST || '127.0.0.1';
 const mongoPort = Number(process.env.TAS_E2E_MONGO_PORT || 27017);
@@ -172,12 +176,12 @@ const readSimulationLog = async (baseUrl, logFile) => {
 const removeRunLogs = (name) => {
   let entries = [];
   try {
-    entries = fs.readdirSync(simulationLogsDir);
+    entries = fs.readdirSync(simulationsLogsDir);
   } catch (_) {
     return; // absent, which is the expected case on a fresh checkout
   }
   for (const entry of entries) {
-    if (entry.startsWith(`${name}_`)) removeIfPresent(path.join(simulationLogsDir, entry));
+    if (entry.startsWith(`${name}_`)) removeIfPresent(path.join(simulationsLogsDir, entry));
   }
 };
 
@@ -200,7 +204,7 @@ const stopRun = (baseUrl, name) =>
 before(async () => {
   // Nothing under src/server/logs is created up front by the application, so
   // give the run loggers their directory before anything starts.
-  fs.mkdirSync(simulationLogsDir, { recursive: true });
+  fs.mkdirSync(simulationsLogsDir, { recursive: true });
   [mongoUp, mqttUp] = await Promise.all([
     probeTcp(mongoHost, mongoPort),
     probeTcp(mqttHost, mqttPort),
