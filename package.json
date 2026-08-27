@@ -11,7 +11,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "spec": "node scripts/generate-openapi.js"
   },
   "nodemonConfig": {
     "verbose": true,

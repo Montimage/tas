@@ -212,7 +212,9 @@ const startSimulation = async (model, options = {}, res, next, modelFileName = n
   }
   const startedTime = Date.now();
   const logFile = `${name}_${Date.now()}.log`;
-  const logger = getLogger('SIMULATION', `${logsPath}${logFile}`);
+  // The run's own records all carry the run id, so everything one simulation
+  // wrote can be pulled out of its file (and the server log) with one filter.
+  const logger = getLogger('SIMULATION', `${logsPath}${logFile}`, { correlationId: simId });
   if (!model.dataStorage && !options.dataStorage) {
     // Use default data storage
     getDataStorage(async (err, ds) => {

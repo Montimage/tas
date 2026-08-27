@@ -220,7 +220,7 @@ router.get('/start', validate(), loadValidatedDevops, dbConnector, (req, res, ne
       releaseSlot();
       return sendBadRequest(res, 'Invalid test campaign id');
     }
-    const logger = getLogger('TEST-CAMPAIGN', logFilePath);
+    const logger = getLogger('TEST-CAMPAIGN', logFilePath, { correlationId: testCampaignId });
     logger.log('[devops] A test campaign is going to be started ...');
 
     const launch = async (storage, withDevops) => {

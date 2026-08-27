@@ -68,6 +68,7 @@ const validate = (schemas = {}) => {
   const compiled = SECTIONS.map(({ key, options }) => ({
     key,
     options,
+    declared: schemas[key] !== undefined && schemas[key] !== null,
     schema: compileSchema(
       schemas[key] === undefined || schemas[key] === null ? NOTHING_DECLARED : schemas[key]
     ),
@@ -75,7 +76,7 @@ const validate = (schemas = {}) => {
 
   // Named so a route's middleware stack can be inspected for it: the test
   // suite asserts every endpoint declares a schema by looking for this layer.
-  return function validateRequest(req, res, next) {
+  const validateRequest = function validateRequest(req, res, next) {
     const details = [];
     const validated = [];
 
@@ -110,6 +111,18 @@ const validate = (schemas = {}) => {
 
     return next();
   };
+
+  // Published on the middleware itself (issue #47): the OpenAPI generator
+  // reads these compiled schemas off each route's stack instead of anyone
+  // restating them elsewhere, which is what makes a generated specification
+  // unable to drift from what actually validates a request. Sections the
+  // endpoint did not declare are absent rather than empty-schema entries.
+  validateRequest.validationSchemas = compiled.reduce((acc, { key, declared, schema }) => {
+    if (declared) acc[key] = schema;
+    return acc;
+  }, {});
+
+  return validateRequest;
 };
 
 /**

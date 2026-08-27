@@ -1,0 +1,4114 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TaS API",
+    "description": "Test and Simulation Enabler API. Generated from the request validation schemas the server enforces, so it cannot drift from the implementation.",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "A caller-safe failure message."
+          },
+          "details": {
+            "type": "array",
+            "description": "Per-field breakdown, carried by validation failures.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "enum": ["params", "query", "body"]
+                },
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": ["error"]
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "The request was malformed or failed validation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "No session, or it has expired.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The session may not do this (missing CSRF token, disallowed origin).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The addressed resource does not exist.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "The request cannot be applied to the current resource state.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests from this client; retry later.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "An unclassified server-side failure.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "maxLength": 256
+                  },
+                  "password": {
+                    "type": "string",
+                    "maxLength": 1024
+                  }
+                },
+                "required": ["password", "username"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/auth/session": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/models": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128
+                      },
+                      "devices": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false
+                        }
+                      },
+                      "datasetId": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "nullable": true
+                      },
+                      "newDataset": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "name": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256
+                            }
+                          },
+                          "source": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "replayOptions": {
+                        "type": "object",
+                        "properties": {
+                          "startTime": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "nullable": true
+                          },
+                          "endTime": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "nullable": true
+                          },
+                          "repeat": {
+                            "type": "boolean"
+                          },
+                          "speedup": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "dataStorage": {
+                        "type": "object",
+                        "properties": {
+                          "protocol": {
+                            "type": "string",
+                            "enum": ["MONGODB"]
+                          },
+                          "connConfig": {
+                            "type": "object",
+                            "properties": {
+                              "host": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 253
+                              },
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "username": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "password": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "dbname": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2048
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["host", "port"],
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": ["connConfig", "protocol"],
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "testCampaignId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128,
+                        "nullable": true
+                      },
+                      "evaluationParameters": {
+                        "type": "object",
+                        "properties": {
+                          "threshold": {
+                            "type": "number"
+                          },
+                          "eventType": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "metricType": {
+                            "type": "string",
+                            "maxLength": 256
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      }
+                    },
+                    "required": ["devices", "name"],
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["model"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/models/{fileName}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.json$",
+              "maxLength": 133
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.json$",
+              "maxLength": 133
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128
+                      },
+                      "devices": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false
+                        }
+                      },
+                      "datasetId": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "nullable": true
+                      },
+                      "newDataset": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "name": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256
+                            }
+                          },
+                          "source": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "replayOptions": {
+                        "type": "object",
+                        "properties": {
+                          "startTime": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "nullable": true
+                          },
+                          "endTime": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "nullable": true
+                          },
+                          "repeat": {
+                            "type": "boolean"
+                          },
+                          "speedup": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "dataStorage": {
+                        "type": "object",
+                        "properties": {
+                          "protocol": {
+                            "type": "string",
+                            "enum": ["MONGODB"]
+                          },
+                          "connConfig": {
+                            "type": "object",
+                            "properties": {
+                              "host": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 253
+                              },
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "username": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "password": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "dbname": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2048
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["host", "port"],
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": ["connConfig", "protocol"],
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "testCampaignId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128,
+                        "nullable": true
+                      },
+                      "evaluationParameters": {
+                        "type": "object",
+                        "properties": {
+                          "threshold": {
+                            "type": "number"
+                          },
+                          "eventType": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "metricType": {
+                            "type": "string",
+                            "maxLength": 256
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      }
+                    },
+                    "required": ["devices", "name"],
+                    "additionalProperties": true
+                  },
+                  "isDuplicated": {
+                    "type": "string",
+                    "enum": [true]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.json$",
+              "maxLength": 133
+            }
+          }
+        ]
+      }
+    },
+    "/api/data-recorders/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/data-recorders/stop/{fileName}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.json$",
+              "maxLength": 133
+            }
+          }
+        ]
+      }
+    },
+    "/api/data-recorders/start": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128
+                      },
+                      "dataRecorders": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false
+                        }
+                      },
+                      "dataStorage": {
+                        "type": "object",
+                        "properties": {
+                          "protocol": {
+                            "type": "string",
+                            "enum": ["MONGODB"]
+                          },
+                          "connConfig": {
+                            "type": "object",
+                            "properties": {
+                              "host": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 253
+                              },
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "username": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "password": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "dbname": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2048
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["host", "port"],
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": ["connConfig", "protocol"],
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "dataset": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "name": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256
+                            }
+                          },
+                          "source": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      }
+                    },
+                    "required": ["dataRecorders", "name"],
+                    "additionalProperties": true
+                  },
+                  "dataRecorderFileName": {
+                    "type": "string",
+                    "maxLength": 133
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/data-recorders/models/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/data-recorders/models/{fileName}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.json$",
+              "maxLength": 133
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.json$",
+              "maxLength": 133
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dataRecorder": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128
+                      },
+                      "dataRecorders": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false
+                        }
+                      },
+                      "dataStorage": {
+                        "type": "object",
+                        "properties": {
+                          "protocol": {
+                            "type": "string",
+                            "enum": ["MONGODB"]
+                          },
+                          "connConfig": {
+                            "type": "object",
+                            "properties": {
+                              "host": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 253
+                              },
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "username": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "password": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "dbname": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2048
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["host", "port"],
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": ["connConfig", "protocol"],
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "dataset": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "name": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256
+                            }
+                          },
+                          "source": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      }
+                    },
+                    "required": ["dataRecorders", "name"],
+                    "additionalProperties": true
+                  },
+                  "isDuplicated": {
+                    "type": "string",
+                    "enum": [true]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.json$",
+              "maxLength": 133
+            }
+          }
+        ]
+      }
+    },
+    "/api/data-recorders/models": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dataRecorder": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128
+                      },
+                      "dataRecorders": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false
+                        }
+                      },
+                      "dataStorage": {
+                        "type": "object",
+                        "properties": {
+                          "protocol": {
+                            "type": "string",
+                            "enum": ["MONGODB"]
+                          },
+                          "connConfig": {
+                            "type": "object",
+                            "properties": {
+                              "host": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 253
+                              },
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "username": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "password": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "dbname": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2048
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["host", "port"],
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": ["connConfig", "protocol"],
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "dataset": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "name": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256
+                            }
+                          },
+                          "source": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      }
+                    },
+                    "required": ["dataRecorders", "name"],
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["dataRecorder"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/data-storage": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dataStorage": {
+                    "type": "object",
+                    "properties": {
+                      "protocol": {
+                        "type": "string",
+                        "enum": ["MONGODB"]
+                      },
+                      "connConfig": {
+                        "type": "object",
+                        "properties": {
+                          "host": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9._-]+$",
+                            "maxLength": 253
+                          },
+                          "port": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
+                          },
+                          "username": {
+                            "type": "string",
+                            "maxLength": 256,
+                            "nullable": true
+                          },
+                          "password": {
+                            "type": "string",
+                            "maxLength": 256,
+                            "nullable": true
+                          },
+                          "dbname": {
+                            "type": "string",
+                            "maxLength": 256,
+                            "nullable": true
+                          },
+                          "options": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "string",
+                                "maxLength": 2048
+                              }
+                            ]
+                          }
+                        },
+                        "required": ["host", "port"],
+                        "additionalProperties": true
+                      }
+                    },
+                    "required": ["connConfig", "protocol"],
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["dataStorage"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/data-storage/test": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/logs/data-recorders": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/logs/data-recorders/{fileName}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.log$",
+              "maxLength": 146
+            }
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.log$",
+              "maxLength": 146
+            }
+          }
+        ]
+      }
+    },
+    "/api/logs/simulations": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/logs/simulations/{fileName}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.log$",
+              "maxLength": 146
+            }
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.log$",
+              "maxLength": 146
+            }
+          }
+        ]
+      }
+    },
+    "/api/logs/test-campaigns": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/logs/test-campaigns/{fileName}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.log$",
+              "maxLength": 146
+            }
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.log$",
+              "maxLength": 146
+            }
+          }
+        ]
+      }
+    },
+    "/api/data-sets": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dataset": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 256
+                      },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 1024
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256
+                        }
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 1024,
+                        "nullable": true
+                      },
+                      "source": {
+                        "type": "string",
+                        "maxLength": 1024,
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name"],
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["dataset"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/data-sets/{datasetId}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "datasetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "datasetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dataset": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 256
+                      },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 1024
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256
+                        }
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 1024,
+                        "nullable": true
+                      },
+                      "source": {
+                        "type": "string",
+                        "maxLength": 1024,
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["dataset"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "datasetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      }
+    },
+    "/api/test-cases": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "testCase": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 256
+                      },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 1024
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256
+                        }
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 1024,
+                        "nullable": true
+                      },
+                      "datasetIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256
+                        }
+                      },
+                      "modelFileName": {
+                        "type": "string",
+                        "maxLength": 133,
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id"],
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["testCase"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/test-cases/{testCaseId}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "testCaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "testCaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "testCase": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 256
+                      },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 1024
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256
+                        }
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 1024,
+                        "nullable": true
+                      },
+                      "datasetIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256
+                        }
+                      },
+                      "modelFileName": {
+                        "type": "string",
+                        "maxLength": 133,
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["testCase"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "testCaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      }
+    },
+    "/api/test-campaigns": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "testCampaign": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 256
+                      },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 1024
+                      },
+                      "isDefault": {
+                        "type": "boolean"
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 1024,
+                        "nullable": true
+                      },
+                      "testCaseIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256
+                        }
+                      },
+                      "webhookURL": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 2048,
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id"],
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["testCampaign"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/test-campaigns/{testCampaignId}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "testCampaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "testCampaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "testCampaign": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 256
+                      },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 1024
+                      },
+                      "isDefault": {
+                        "type": "boolean"
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 1024,
+                        "nullable": true
+                      },
+                      "testCaseIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 256
+                        }
+                      },
+                      "webhookURL": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 2048,
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["testCampaign"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "testCampaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      }
+    },
+    "/api/events": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "startTime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "endTime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "datasetId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          },
+          {
+            "name": "topic",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "type": "object",
+                    "properties": {
+                      "timestamp": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "topic": {
+                        "type": "string",
+                        "maxLength": 1024
+                      },
+                      "datasetId": {
+                        "type": "string",
+                        "maxLength": 256
+                      },
+                      "isSensorData": {
+                        "type": "boolean"
+                      },
+                      "values": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["datasetId", "isSensorData", "timestamp", "topic", "values"],
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["event"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "type": "object",
+                    "properties": {
+                      "timestamp": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "topic": {
+                        "type": "string",
+                        "maxLength": 1024
+                      },
+                      "datasetId": {
+                        "type": "string",
+                        "maxLength": 256
+                      },
+                      "isSensorData": {
+                        "type": "boolean"
+                      },
+                      "values": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["event"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      }
+    },
+    "/api/reports": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "topologyFileName",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          },
+          {
+            "name": "testCampaignId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 50
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ]
+      }
+    },
+    "/api/reports/{reportId}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "report": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 256
+                      },
+                      "testCampaignId": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "nullable": true
+                      },
+                      "originalDatasetId": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "nullable": true
+                      },
+                      "newDatasetId": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "nullable": true
+                      },
+                      "topologyFileName": {
+                        "type": "string",
+                        "maxLength": 1024,
+                        "nullable": true
+                      },
+                      "createdAt": {
+                        "type": "number"
+                      },
+                      "startTime": {
+                        "type": "number"
+                      },
+                      "endTime": {
+                        "type": "number"
+                      },
+                      "score": {
+                        "type": "number"
+                      },
+                      "evaluationParameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": true
+                  },
+                  "newScore": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
+      }
+    },
+    "/api/simulation/start": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128
+                      },
+                      "devices": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false
+                        }
+                      },
+                      "datasetId": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "nullable": true
+                      },
+                      "newDataset": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "name": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256
+                            }
+                          },
+                          "source": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "replayOptions": {
+                        "type": "object",
+                        "properties": {
+                          "startTime": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "nullable": true
+                          },
+                          "endTime": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "nullable": true
+                          },
+                          "repeat": {
+                            "type": "boolean"
+                          },
+                          "speedup": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "dataStorage": {
+                        "type": "object",
+                        "properties": {
+                          "protocol": {
+                            "type": "string",
+                            "enum": ["MONGODB"]
+                          },
+                          "connConfig": {
+                            "type": "object",
+                            "properties": {
+                              "host": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 253
+                              },
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "username": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "password": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "dbname": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2048
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["host", "port"],
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": ["connConfig", "protocol"],
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "testCampaignId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128,
+                        "nullable": true
+                      },
+                      "evaluationParameters": {
+                        "type": "object",
+                        "properties": {
+                          "threshold": {
+                            "type": "number"
+                          },
+                          "eventType": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "metricType": {
+                            "type": "string",
+                            "maxLength": 256
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      }
+                    },
+                    "required": ["devices", "name"],
+                    "additionalProperties": true
+                  },
+                  "modelFileName": {
+                    "type": "string",
+                    "maxLength": 133
+                  },
+                  "options": {
+                    "type": "object",
+                    "properties": {
+                      "datasetId": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "nullable": true
+                      },
+                      "newDataset": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "name": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 256
+                            }
+                          },
+                          "source": {
+                            "type": "string",
+                            "maxLength": 1024,
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "replayOptions": {
+                        "type": "object",
+                        "properties": {
+                          "startTime": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "nullable": true
+                          },
+                          "endTime": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "nullable": true
+                          },
+                          "repeat": {
+                            "type": "boolean"
+                          },
+                          "speedup": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "dataStorage": {
+                        "type": "object",
+                        "properties": {
+                          "protocol": {
+                            "type": "string",
+                            "enum": ["MONGODB"]
+                          },
+                          "connConfig": {
+                            "type": "object",
+                            "properties": {
+                              "host": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 253
+                              },
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "username": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "password": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "dbname": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2048
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["host", "port"],
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": ["connConfig", "protocol"],
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "testCampaignId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128,
+                        "nullable": true
+                      },
+                      "evaluationParameters": {
+                        "type": "object",
+                        "properties": {
+                          "threshold": {
+                            "type": "number"
+                          },
+                          "eventType": {
+                            "type": "string",
+                            "maxLength": 256
+                          },
+                          "metricType": {
+                            "type": "string",
+                            "maxLength": 256
+                          }
+                        },
+                        "additionalProperties": true,
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": false,
+                    "default": {}
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/simulation/stop/{fileName}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()\\[\\]+@'#]*\\.json$",
+              "maxLength": 133
+            }
+          }
+        ]
+      }
+    },
+    "/api/simulation/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/simulation/stats": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/devops/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/devops": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "devops": {
+                    "type": "object",
+                    "properties": {
+                      "webhookURL": {
+                        "type": "string",
+                        "format": "uri",
+                        "maxLength": 2048,
+                        "nullable": true
+                      },
+                      "testCampaignId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 _\\-.()[\\]+@'#]*$",
+                        "maxLength": 128,
+                        "nullable": true
+                      },
+                      "dataStorage": {
+                        "type": "object",
+                        "properties": {
+                          "protocol": {
+                            "type": "string",
+                            "enum": ["MONGODB"]
+                          },
+                          "connConfig": {
+                            "type": "object",
+                            "properties": {
+                              "host": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9._-]+$",
+                                "maxLength": 253
+                              },
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "username": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "password": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "dbname": {
+                                "type": "string",
+                                "maxLength": 256,
+                                "nullable": true
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2048
+                                  }
+                                ]
+                              }
+                            },
+                            "required": ["host", "port"],
+                            "additionalProperties": true
+                          }
+                        },
+                        "required": ["connConfig", "protocol"],
+                        "additionalProperties": true,
+                        "nullable": true
+                      },
+                      "evaluationParameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "required": ["devops"],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/devops/start": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/devops/stop": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    }
+  }
+}

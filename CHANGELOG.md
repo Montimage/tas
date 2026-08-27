@@ -9,6 +9,20 @@ All notable changes to TaS are documented in this file. Releases are cut as
 
 ### Added
 
+- **Structured logging with correlation ids and a published API specification**
+  (#47): log records are one machine-parseable JSON object per line carrying
+  `timestamp`, `level`, `label` and structured fields; every request is assigned
+  a correlation id (an incoming `X-Request-Id` is honoured) that is echoed in
+  the response header and attached to the access record and any failure record,
+  and each simulation, data-recorder or test-campaign run stamps all of its own
+  lines with its run id. Verbosity is operator-configurable via `LOG_LEVEL`
+  (`error|warn|info|debug`, default `info`; an unsupported value falls back to
+  `info` with a warning). Values reached through sensitive keys are redacted
+  before anything is written, on top of the existing credential-redaction
+  guarantees (#72). The API specification is generated from the mounted routers
+  and the compiled validation schemas the server enforces — served live at
+  `GET /openapi.json` and committed at the repository root (`npm run spec`
+  regenerates it) — so it cannot drift from the implementation.
 - **Phase 6 milestone gate — deployment smoke test** (#49):
   `test/e2e/deployment-smoke.test.js` brings up the published composition
   exactly as a new user would (`docker compose up -d`, credentials provisioned
