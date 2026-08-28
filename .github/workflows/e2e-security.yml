@@ -116,3 +116,125 @@ jobs:
       # suite job, so lint reports independently of the database-backed suites.
       - name: Run eslint
         run: npm run lint
+
+  # ---------------------------------------------------------------------------
+  # Issue #92: coverage gate — enforce a minimum line-coverage threshold on
+  # the infra-free test suites (the ones that run without a live MongoDB).
+  # ---------------------------------------------------------------------------
+  coverage:
+    name: Test coverage gate (≥ 60 % line coverage)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build the dashboard client so that routes which reference it do not
+      # fail at boot time (the same prerequisite the other jobs already run).
+      - name: Build the dashboard client
+        run: cd src/client && npm install && npm run build
+
+      # Run the infra-free suites under `--experimental-test-coverage` and
+      # assert that the overall line coverage meets the threshold.  The
+      # `--test` glob is narrowed to the suites that do not need a live
+      # database; the DB-backed suites are exercised in the http-suite job
+      # and their coverage is reported separately.
+      - name: Run coverage on infra-free suites
+        run: |
+          node --test-concurrency=1 \
+            --experimental-test-coverage \
+            --test \
+              "test/events-route.test.js" \
+              "test/reports-route.test.js" \
+              "test/simulation-lifecycle.test.js" \
+              "test/data-recorder-lifecycle.test.js" \
+              "test/health-route.test.js" \
+              "test/model-persistence.test.js" \
+              "test/data-storage-save.test.js" \
+              "test/simulation-stats.test.js" \
+              "test/reports-pagination.test.js" \
+              "test/data-storage.test.js" \
+              "test/auth.test.js" \
+              "test/auth-primitives.test.js" \
+              "test/input-validation.test.js" \
+              "test/core-utils.test.js" \
+              "test/env-config.test.js" \
+              "test/config.test.js" \
+              "test/ci-gate.test.js" \
+              "test/package-manifest.test.js" \
+              "test/generator.test.js" \
+              "test/scoring-determinism.test.js" \
+              "test/evaluation.test.js" \
+              "test/sensor-data-sources.test.js" \
+              "test/rate-limit.test.js" \
+              "test/body-limit.test.js" \
+              "test/security-headers.test.js" \
+              "test/routes-security.test.js" \
+              "test/openapi.test.js" \
+              "test/http-status.test.js" \
+              "test/request-correlation.test.js" \
+              "test/logger.test.js" \
+              "test/mongoose-migration.test.js" \
+              "test/db-connector-credential-redaction.test.js" \
+              "test/db-connector-recovery.test.js" \
+              "test/runtime-state-registry.test.js" \
+              "test/runtime.test.js" \
+              "test/evaluation-linear.test.js" \
+              "test/data-storage-batching.test.js" \
+              "test/log-read-bounds.test.js" \
+              "test/log-router-kind.test.js" \
+              "test/cors.test.js" \
+              "test/path-safety.test.js" \
+              "test/auth-csrf.test.js" \
+              "test/auth-logging.test.js" \
+              "test/auth-proxy.test.js" \
+              "test/enact-db.test.js" \
+              "test/dependency-audit.test.js" \
+              "test/release-workflow.test.js" \
+              "test/deployment-docs.test.js" \
+              "test/dockerfile.test.js" \
+              "test/graceful-shutdown.test.js" \
+              "test/mqtt-endpoint.test.js" \
+              "test/env-not-tracked.test.js" \
+              "test/config-reload.test.js" \
+              "test/artifact-store.test.js" \
+              "test/audit-gate.test.js" \
+              "test/model-collision.test.js" \
+              "test/simulation-scoring-bound.test.js" \
+              "test/thing-hotpath.test.js" \
+              "test/update-not-found.test.js" \
+              "test/core-utils.test.js" \
+              "test/throughput-baseline.test.js" \
+              "test/server-smoke.test.js" \
+              2>&1 | tee /tmp/coverage-run.log
+
+      # Parse the coverage summary from the Node.js test runner output and
+      # fail if the overall line coverage is below 60 %.
+      - name: Enforce coverage threshold
+        run: |
+          # The Node test runner prints a summary line like:
+          #   ℹ coverage ... line: 62.34%
+          # Extract the percentage and compare against the threshold.
+          COV=$(grep -oP 'line:\s+\K[0-9.]+' /tmp/coverage-run.log | head -1)
+          if [ -z "$COV" ]; then
+            echo "::error::Could not parse coverage from test output" >&2
+            exit 1
+          fi
+          echo "Line coverage: ${COV}%"
+          THRESHOLD=60
+          PASS=$(echo "$COV >= $THRESHOLD" | bc -l 2>/dev/null || python3 -c "import sys; sys.exit(0 if float('$COV') >= $THRESHOLD else 1)")
+          if [ "$PASS" = "1" ] || [ "$PASS" = "True" ]; then
+            echo "Coverage ${COV}% meets the ${THRESHOLD}% threshold."
+          else
+            echo "::error::Coverage ${COV}% is below the ${THRESHOLD}% threshold"
+            exit 1
+          fi
