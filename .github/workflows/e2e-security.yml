@@ -222,9 +222,9 @@ jobs:
       - name: Enforce coverage threshold
         run: |
           # The Node test runner prints a summary line like:
-          #   ℹ coverage ... line: 62.34%
-          # Extract the percentage and compare against the threshold.
-          COV=$(grep -oP 'line:\s+\K[0-9.]+' /tmp/coverage-run.log | head -1)
+          #   ℹ all files                 |  62.34 |    65.44 |   42.30 |
+          # The first numeric column after the pipe is line coverage.
+          COV=$(grep 'ℹ all files' /tmp/coverage-run.log | grep -oP '\|\s+\K[0-9.]+' | head -1)
           if [ -z "$COV" ]; then
             echo "::error::Could not parse coverage from test output" >&2
             exit 1
