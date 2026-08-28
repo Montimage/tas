@@ -5,7 +5,7 @@ All notable changes to TaS are documented in this file. Releases are cut as
 `vX.Y.Z` tags also move the `latest` tag). The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.1.0] - 2026-08-28
 
 ### Added
 
@@ -52,6 +52,10 @@ All notable changes to TaS are documented in this file. Releases are cut as
   dropdown; data tables scroll horizontally instead of stretching the page;
   the page shell tightens its margins and forms stack their labels on small
   screens.
+- **Accessibility improvements** (#39): confirmation gates for destructive
+  actions and request-state feedback on list views in the dashboard (#125).
+- **E2E simulation lifecycle test** (#21): covers start, run, stop, restart
+  and concurrent runs of the simulation and data-recorder lifecycles.
 
 ### Changed
 
@@ -74,6 +78,26 @@ All notable changes to TaS are documented in this file. Releases are cut as
     The store path can be moved with `TAS_RUNTIME_STATE_PATH`. No database is
     involved: tracking degrades to memory-only (with a warning) if the store is
     unwritable, so the status endpoints never depend on database health.
+
+### Fixed
+
+- **Recorder response crash** (#33): the recorder response endpoint no longer
+  crashes on missing data; a phase-4 milestone gate was added to prevent
+  regressions.
+
+### Changed
+
+- **Store topologies and recorders durably** (#30): topology and recorder data
+  is now persisted to disk, surviving restarts.
+- **Rename misspelled `evalulate` export** (#20): the evaluation module's
+  export was corrected from `evalulate` to `evaluate`.
+- **Remove redundant try/catch in `readJSONFileSync`** (#59): the no-op
+  rethrow was removed for clarity.
+
+### Tests
+
+- **E2E storage root isolation** (#58): each e2e suite now runs against its
+  own temporary storage root, eliminating cross-suite interference.
 
 ## [2.0.0] - 2026-08-24
 
