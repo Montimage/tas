@@ -45,12 +45,8 @@ const readDir = (dirPath, callback) => {
  * @param {String} filePath Path to file
  */
 const readJSONFileSync = (filePath) => {
-  try {
-    const data = fs.readFileSync(filePath);
-    return JSON.parse(data);
-  } catch (error) {
-    throw error;
-  }
+  const data = fs.readFileSync(filePath);
+  return JSON.parse(data);
 };
 
 /**
