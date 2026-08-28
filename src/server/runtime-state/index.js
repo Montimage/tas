@@ -32,7 +32,9 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 
-const DEFAULT_STORE_PATH = path.join(__dirname, '..', 'data', 'runtime-state.json');
+const { DATA_DIR } = require('../paths');
+
+const DEFAULT_STORE_PATH = path.join(DATA_DIR, 'runtime-state.json');
 const LOCK_RETRY_MS = 25;
 const LOCK_TIMEOUT_MS = 5000;
 const LOCK_STALE_MS = 10000;

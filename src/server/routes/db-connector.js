@@ -9,14 +9,15 @@ const {
 
 const { createArtifactStore } = require('../artifact-store');
 const { unavailable } = require('../middleware/errors');
+const { DATA_DIR } = require('../paths');
 
 // The service configuration is a record of the artifact store (issue #30):
 // reads go through the store on EVERY call - there is no in-memory copy that
 // can go stale, so a configuration change takes effect without a restart -
 // and writes are serialized and atomic, so a crash mid-save cannot leave a
 // truncated configuration behind. `TAS_DATA_DIR` moves the store (tests use a
-// scratch directory).
-const dataStorageDir = process.env.TAS_DATA_DIR || `${__dirname}/../data`;
+// scratch directory); `TAS_STORAGE_ROOT` relocates the whole tree (issue #58).
+const dataStorageDir = process.env.TAS_DATA_DIR || DATA_DIR;
 const DATA_STORAGE_FILE = 'data-storage.json';
 const dataStorageStore = createArtifactStore({ root: dataStorageDir, label: 'data-storage' });
 

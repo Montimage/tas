@@ -2,7 +2,9 @@
 const express = require('express');
 const Joi = require('joi');
 const router = express.Router();
-const modelsPath = `${__dirname}/../data/models/`;
+const { DATA_DIR } = require('../paths');
+const path = require('path');
+const modelsPath = path.join(DATA_DIR, 'models');
 const { TestCaseSchema, dbConnector } = require('./db-connector');
 const { resolveWithin, sendBadRequest } = require('./path-safety');
 const {

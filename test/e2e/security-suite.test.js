@@ -35,13 +35,12 @@ const escapeNames = ['escape', 'pwned'];
 /** Hostile test campaign id used to probe the devops log path (issue #55). */
 const hostileCampaignId = '../../../pwned-campaign';
 
+/** The suite's baseline devops configuration, read from the temporary root. */
+const baselineDevops = fs.readFileSync(devopsConfigPath, 'utf8');
+
 let server;
-let originalDevops;
 
 before(async () => {
-  // The devops tests below overwrite the shipped configuration, so snapshot it
-  // and restore it in `after` - a failing run must not leave the checkout dirty.
-  originalDevops = fs.readFileSync(devopsConfigPath, 'utf8');
   // Configure the real instance with the trusted origin shipped in tests.
   server = await startServer({ CORS_ALLOWED_ORIGINS: allowedOrigin });
 });
@@ -49,16 +48,13 @@ before(async () => {
 after(async () => {
   if (server) await server.stop();
   // This suite is the regression gate, so it runs red against an unfixed
-  // instance - which really does escape files into the source tree. Remove
-  // them so a failing run never leaves the checkout dirty.
+  // instance - which really does escape files into the suite's storage root.
+  // Remove them so the root handed to the final cleanup is as clean as the
+  // run allowed (issue #58: nothing here can touch the checkout any more).
   for (const name of escapeNames) {
     escapeArtifacts(name).forEach(removeIfPresent);
   }
   escapedCampaignLogs('pwned-campaign').forEach(removeIfPresent);
-  // Guarded: if the snapshot itself failed, restoring would mask the real error.
-  if (originalDevops !== undefined) {
-    fs.writeFileSync(devopsConfigPath, originalDevops);
-  }
 });
 
 // ---------------------------------------------------------------------------
@@ -221,7 +217,9 @@ test('path containment: a persisted hostile testCampaignId is rejected on read-b
     );
   } finally {
     await poisoned.stop();
-    fs.writeFileSync(devopsConfigPath, originalDevops);
+    // Restore the suite's baseline configuration: the temp-root copy is this
+    // suite's own file now, so this touches nothing in the checkout.
+    fs.writeFileSync(devopsConfigPath, baselineDevops);
   }
 });
 

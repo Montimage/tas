@@ -6,8 +6,11 @@ const { readDir, deleteFile } = require('../../core/utils');
 const { resolveWithin, sendBadRequest } = require('./path-safety');
 const { validate, fileNameParam, generatedFileNameMaxLength } = require('../middleware/validate');
 const { errorHandler, fileError, internal } = require('../middleware/errors');
+const { LOGS_DIR } = require('../paths');
 
-const _logsPath = `${__dirname}/../logs/`;
+// The log root resolves through the central storage-root resolution (issue
+// #58): `<server>/logs` by default, relocated by `TAS_STORAGE_ROOT`.
+const _logsPath = LOGS_DIR;
 
 // The log root has one subdirectory per kind of log the server writes, and
 // each mounted instance reads exactly one of them (issue #84). Keeping the
@@ -114,7 +117,7 @@ const createRouter = (appLog) => {
     );
   }
   let router = express.Router();
-  let logsPath = `${_logsPath}${appLog}/`;
+  let logsPath = path.join(_logsPath, appLog) + path.sep;
 
   /////////////
   // LOG FILES

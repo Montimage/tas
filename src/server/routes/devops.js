@@ -1,10 +1,15 @@
 /* Working with Data Generator */
 var express = require('express');
+const path = require('path');
 const Joi = require('joi');
 const { dbConnector, getDataStorage } = require('./db-connector');
 const { startTestCampaign } = require('../../core/devops-flow');
+// The devops configuration and the campaign-log root resolve through the
+// central storage-root resolution (issue #58): unchanged by default,
+// relocated together by `TAS_STORAGE_ROOT`.
+const { DATA_DIR, LOGS_DIR } = require('../paths');
 let router = express.Router();
-const devopsFilePath = `${__dirname}/../data/devops.json`;
+const devopsFilePath = path.join(DATA_DIR, 'devops.json');
 let getLogger = require('../logger');
 const { readJSONFile, writeToFile } = require('../../core/utils');
 const { OFFLINE } = require('../../core/DeviceStatus');
@@ -23,7 +28,7 @@ const {
   internal,
   unavailable,
 } = require('../middleware/errors');
-let logsPath = `${__dirname}/../logs/test-campaigns/`;
+let logsPath = path.join(LOGS_DIR, 'test-campaigns') + path.sep;
 // Running-campaign records and handles live in the shared runtime registry
 // (issue #29): the record persists across restarts and is visible to a second
 // server process on the same store; the live campaign object stays with the

@@ -23,6 +23,8 @@ const {
   unavailable,
 } = require('../middleware/errors');
 const { createArtifactStore } = require('../artifact-store');
+const { DATA_DIR, LOGS_DIR } = require('../paths');
+const path = require('path');
 let router = express.Router();
 let getLogger = require('../logger');
 const { getDataStorage } = require('./db-connector');
@@ -31,14 +33,15 @@ const { getDataStorage } = require('./db-connector');
 // concurrent edits queue up instead of discarding one another and a crash
 // mid-write cannot leave a truncated file behind. Existing loose files in the
 // directory are adopted as they are - there is no migration step.
-// `TAS_DATA_RECORDERS_DIR` moves the store (tests use a scratch directory).
+// `TAS_DATA_RECORDERS_DIR` moves the store (tests use a scratch directory);
+// `TAS_STORAGE_ROOT` relocates the whole tree (issue #58).
 const dataRecordersPath =
-  process.env.TAS_DATA_RECORDERS_DIR || `${__dirname}/../data/data-recorders/`;
+  process.env.TAS_DATA_RECORDERS_DIR || path.join(DATA_DIR, 'data-recorders');
 const recordersStore = createArtifactStore({
   root: dataRecordersPath,
   label: 'data-recorders',
 });
-let logsPath = `${__dirname}/../logs/data-recorders/`;
+let logsPath = path.join(LOGS_DIR, 'data-recorders') + path.sep;
 // Running-recorder records and handles live in the shared runtime registry
 // (issue #29): records persist across restarts and are visible to a second
 // server process on the same store, handles stay with the owning process.

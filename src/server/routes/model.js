@@ -1,6 +1,7 @@
 'use strict';
 /* Working with Data Generator */
 var express = require('express');
+const path = require('path');
 const Joi = require('joi');
 
 const { createArtifactStore } = require('../artifact-store');
@@ -13,14 +14,16 @@ const {
   simulationRunFields,
 } = require('../middleware/validate');
 const { errorHandler, fileError, internal, conflict } = require('../middleware/errors');
+const { DATA_DIR } = require('../paths');
 
 // The topologies live as records of the artifact store (issue #30): writes are
 // serialized under the store's lock and land atomically, so concurrent edits
 // queue up instead of discarding one another and a crash mid-write cannot leave
 // a truncated file behind. Existing loose files in the directory are adopted
 // as they are - there is no migration step. `TAS_MODELS_DIR` moves the store
-// (tests use this to work against a scratch directory).
-const modelsPath = process.env.TAS_MODELS_DIR || `${__dirname}/../data/models/`;
+// (tests use this to work against a scratch directory); `TAS_STORAGE_ROOT`
+// relocates the whole tree (issue #58).
+const modelsPath = process.env.TAS_MODELS_DIR || path.join(DATA_DIR, 'models');
 const modelsStore = createArtifactStore({ root: modelsPath, label: 'models' });
 let router = express.Router();
 

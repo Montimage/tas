@@ -36,12 +36,13 @@ jobs:
       - name: Build the dashboard client
         run: cd src/client && npm install && npm run build
 
-      # Serialised: several files spawn their own real instance and the suites
-      # share the on-disk storage root, so running them in parallel makes the
-      # directory snapshots race and the instances contend for the same port.
-      # `npm test` is `node --test-concurrency=1 --test "test/**/*.test.js"`, so
-      # it keeps that serialisation while also gating the unit-level regression
-      # guards that naming the e2e files individually left unable to fail a PR.
+      # Serialised: each suite drives its own real instance, and while those
+      # now run against throwaway storage roots (issue #58), some in-process
+      # suites (test/http-status.test.js) still exercise the checkout's own
+      # data files, so parallel runs could race on them. `npm test` is
+      # `node --test-concurrency=1 --test "test/**/*.test.js"`, which keeps
+      # that serialisation while also gating the unit-level regression guards
+      # that naming the e2e files individually left unable to fail a PR.
       # The container image assertion is part of the glob but skips itself here:
       # its runtime half is guarded on TAS_IMAGE, which only the job below sets.
       - name: Run the full test suite
