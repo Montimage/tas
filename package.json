@@ -59,7 +59,7 @@
     "morgan": "^1.9.1",
     "mqtt": "^5.15.2",
     "mqtt-regex": "^1.0.5",
-    "stompit": "^0.26.0",
+    "stompit": "^1.0.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
